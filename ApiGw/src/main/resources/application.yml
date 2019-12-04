@@ -1,0 +1,45 @@
+spring.application.name: api-gw
+
+spring:
+  mvc:
+    static-path-pattern: /static/**
+  resources:
+    static-locations: classpath:/static/
+    add-mappings: true
+  webflux:
+    static-path-pattern: /static/**
+    
+#server:
+#  port: 8180
+#  servlet:
+#    context-path: /
+  
+zuul:
+  sensitiveHeaders: Cookie,Set-Cookie
+  routes: 
+    spring-security-oauth-resource:
+      path: /ifa/**
+      url: http://192.168.111.13:8180/ifa
+    oauth:
+      path: /ifw/**
+      url: http://192.168.111.15/ifw
+    #static:
+    #  path: /static/**
+    #  service-id: static
+
+
+#static:
+#  ribbon:
+#    listOfServers: http://localhost:8080/static    
+    
+logging:
+  level:
+    root: warn
+  org.springframework:
+    web: warn
+    security: info
+    boot: info
+  org.hibernate:
+    SQL: warn
+  com.isu.ifa: debug
+    
