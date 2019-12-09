@@ -1,6 +1,8 @@
 package com.isu.ifw.service;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +57,36 @@ public class WtmPushMgrServiceImpl implements WtmPushMgrService{
 		}
 		
 		return codeList;
+	}
+	
+	@Override
+	public List<Map<String, Object>> allPushMgrList(String ymd) {
+		List<Map<String, Object>> pushList = new ArrayList();	
+		try {
+			List<WtmPushMgr> list = pushMgrRepository.findBySymdAndEymd(ymd);
+			
+			for(WtmPushMgr l : list) {
+				Map<String, Object> push = new HashMap();
+				push.put("pushMgrId", l.getPushMgrId());
+				push.put("tenantId", l.getTenantId());
+				push.put("enterCd", l.getEnterCd());
+				push.put("businessPlaceCd", l.getBusinessPlaceCd());
+				push.put("symd", l.getSymd());
+				push.put("eymd", l.getEymd());
+				push.put("pushObj", l.getPushObj());
+				push.put("stdMinute", l.getStdMinute());
+				push.put("stdType", l.getStdType());
+				push.put("pushMsg", l.getPushMsg());
+				push.put("mobileYn", l.getMobileYn());
+				push.put("emailYn", l.getEmailYn());
+				push.put("note", l.getNote());
+				pushList.add(push);
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		return pushList;
 	}
 	
 	@Override

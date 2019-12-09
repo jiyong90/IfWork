@@ -13,6 +13,6 @@ import org.springframework.stereotype.Service;
 public interface WtmPushMgrService {
 	
 	public List<Map<String, Object>> getPushMgrList(Long tenantId, String enterCd);
-
+	public List<Map<String, Object>> allPushMgrList(String ymd);
 	public int setPushMgrList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap);
 }
