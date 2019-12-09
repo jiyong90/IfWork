@@ -1111,6 +1111,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
 		// 계획 종료 시간 보다 인정종료시간이 빠를 경우 BASE중에 
 		// 조퇴 데이터 생성
+		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
+		paramMap.put("taaCd", leaveTaaCode.getTaaCd());
 		flexEmpMapper.createDayResultByTimeTypeAndApprEdateLessThanPlanEdate(paramMap);
 		
 		// 계획 시작 시간보다 인정시작시간이 늦을 경우 BASE중에 
