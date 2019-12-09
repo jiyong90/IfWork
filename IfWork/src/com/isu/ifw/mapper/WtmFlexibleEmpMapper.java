@@ -243,11 +243,11 @@ public interface WtmFlexibleEmpMapper {
 	public List<Map<String, Object>> getFlexibleEmpListForPlan(Map<String, Object> paramMap);
 	
 	/**
-	 * calendar Id로 일근무 데이터 전체 조회(관리자용)
+	 * 해당일의 일근무 데이터 전체 조회(관리자용)
 	 * @param paramMap
 	 * @return 
 	 */
-	public List<Map<String, Object>> getWorkDayResultByCalendarId(Map<String, Object> paramMap);
+	public List<Map<String, Object>> getDayResultByYmd(Map<String, Object> paramMap);
 	
 	/**
 	 * 근무 시간 조회

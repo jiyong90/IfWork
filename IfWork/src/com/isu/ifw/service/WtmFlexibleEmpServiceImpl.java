@@ -15,9 +15,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmEmpHis;
 import com.isu.ifw.entity.WtmFlexibleAppl;
 import com.isu.ifw.entity.WtmFlexibleApplDet;
@@ -263,7 +261,165 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("enterCd", enterCd);
 		paramMap.put("sabun", sabun);
 		
-		return flexEmpMapper.getFlexibleDayInfo(paramMap);
+		String ymd = paramMap.get("ymd").toString();
+		
+		Map<String, Object> dayInfo = flexEmpMapper.getFlexibleDayInfo(paramMap);
+		
+		//근무제의 근태가산여부, 근태일 근무여부 조회
+		Map<String, Object> flexEmp = flexEmpMapper.getFlexibleEmp(paramMap);
+		String taaTimeYn = null;
+		String taaWorkYn = null;
+		if(flexEmp!=null) {
+			if(flexEmp.get("taaTimeYn")!=null)
+				taaTimeYn = flexEmp.get("taaTimeYn").toString();
+			if(flexEmp.get("taaWorkYn")!=null)
+				taaWorkYn = flexEmp.get("taaWorkYn").toString();
+		}
+		
+		//휴게시간 기준
+		Long timeCdMgrId = null;
+		String breakTypeCd = null;
+		if(dayInfo!=null) {
+			if(dayInfo.get("timeCdMgrId")!=null && !"".equals(dayInfo.get("timeCdMgrId")))
+				timeCdMgrId = Long.valueOf(dayInfo.get("timeCdMgrId").toString());
+			if(dayInfo.get("breakTypeCd")!=null)
+				breakTypeCd = dayInfo.get("breakTypeCd").toString();
+		}
+		
+		//심야근무 시간
+		Date nightSdate = WtmUtil.toDate( ymd + "220000" , "yyyyMMddHHmmss");
+		Date nightEdate = WtmUtil.addDate(WtmUtil.toDate( ymd + "060000" , "yyyyMMddHHmmss"), 1);
+		
+		paramMap.put("timeCdMgrId", timeCdMgrId);
+		List<Map<String, Object>> dayResult = flexEmpMapper.getDayResultByYmd(paramMap);
+		if(dayResult!=null && dayResult.size()>0) {
+			Float workMin = 0f;
+			Map<String, Object> taaMap = new HashMap<String, Object>();
+			Float noPayBreakMin = 0f;
+			Float paidBreakMin = 0f;
+			Float otMin = 0f;
+			Float otNightMin = 0f;
+			
+			for(Map<String, Object> r : dayResult) {
+				String timeTypeCd = r.get("timeTypeCd").toString();
+				String taaNm = null;
+				
+				if(r.get("taaNm")!=null)
+					taaNm = r.get("taaNm").toString().replaceAll("\\p{Z}", "");
+				
+				//System.out.println("timeTypeCd : " + timeTypeCd);
+				//System.out.println("taaNm : " + taaNm);
+				
+				String sDate = null;
+				String eDate = null;
+				Float min = 0f;
+				
+				if(r.get("apprSdate")!=null && !"".equals(r.get("apprSdate"))) {
+					sDate = r.get("apprSdate").toString();
+				} else {
+					if(r.get("planSdate")!=null && !"".equals(r.get("planSdate"))) {
+						sDate = r.get("planSdate").toString();
+					}
+				}
+				
+				if(r.get("apprEdate")!=null && !"".equals(r.get("apprEdate"))) {
+					eDate = r.get("apprEdate").toString();
+				} else {
+					if(r.get("planEdate")!=null && !"".equals(r.get("planEdate"))) {
+						eDate = r.get("planEdate").toString();
+					}
+				}
+				
+				if(r.get("apprMinute")!=null && !"".equals(r.get("apprMinute"))) {
+					min = Float.valueOf(r.get("apprMinute").toString());
+				} else {
+					if(r.get("planMinute")!=null && !"".equals(r.get("planMinute"))) {
+						min = Float.valueOf(r.get("planMinute").toString());
+					}
+				}
+				
+				Date sd = WtmUtil.toDate(sDate, "yyyyMMddHHmm");
+				Date ed = WtmUtil.toDate(eDate, "yyyyMMddHHmm");
+				
+				//휴게시간
+				//breakTypeCd가 TIME이나 TIMEFIX 인 경우엔 유급 휴게는 0
+				Float break01 = 0f;
+				Float break02 = 0f;
+				
+				SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+				paramMap.put("shm", sdf.format(sd));
+				paramMap.put("ehm", sdf.format(ed));
+				Map<String, Object> breakMap = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, sabun);
+				if(breakMap!=null && breakMap.get("breakMinute")!=null) {
+					if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
+						break01 =  Float.valueOf(breakMap.get("breakMinuteNoPay").toString());
+						break02 = Float.valueOf(breakMap.get("breakMinutePaid").toString());
+					} else {
+						break01 = Float.valueOf(breakMap.get("breakMinute").toString());
+					} 
+					
+					noPayBreakMin += break01;
+					paidBreakMin += break02;
+				}
+				//System.out.println("break01: " + break01);
+				//System.out.println("break02: " + break02);
+				
+				if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE)) {
+					workMin += min;
+				} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_FIXOT)) {
+					otMin += min;
+				} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT)) {
+					otNightMin += min;
+				} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_TAA) || timeTypeCd.equals(WtmApplService.TIME_TYPE_SUBS)) {
+					//근태 현황
+					//근태시간 포함여부와 근태일근무여부가 모두 Y이면, 휴게시간 포함한 근무시간
+					Float taa = min;
+					
+					//System.out.println("taa : " + taa);
+					
+					if(timeTypeCd.equals(WtmApplService.TIME_TYPE_SUBS))
+						taaNm = "대체휴가";
+					
+					if(taaMap.get(taaNm)!=null && !"".equals(taaMap.get(taaNm))) {
+						taaMap.put(taaNm, Float.parseFloat(taaMap.get(taaNm).toString()) + taa);
+					} else {
+						taaMap.put(taaNm, taa);
+					}
+					
+				}
+			}
+		
+			dayInfo.put("workHour", minToHHmmStr(workMin+""));
+			dayInfo.put("otHour", minToHHmmStr((otMin+otNightMin)+""));
+			dayInfo.put("otBasicHour", minToHHmmStr(otMin+""));
+			dayInfo.put("otNightHour", minToHHmmStr(otNightMin+""));
+			
+			Map<String, Object> taa = new HashMap<String, Object>();
+			if(taaMap!=null) {
+				for(String k : taaMap.keySet()) {
+					taa.put(k, minToHHmmStr(taaMap.get(k).toString()));
+				}
+			}
+			
+			dayInfo.put("taa", taa);
+			dayInfo.put("breakHour", minToHHmmStr(noPayBreakMin+""));
+			dayInfo.put("paidHour", minToHHmmStr(paidBreakMin+""));
+		}
+		
+		return dayInfo;
+	}
+	
+	protected String minToHHmmStr(String min) {
+		if(min==null || "".equals(min) || Float.parseFloat(min)==0)
+			return "";
+	
+		Float H = 0f;
+		Float i = 0f;
+		
+		H = Float.parseFloat(min)/60;
+		i = (H - H.intValue()) * 60;
+		
+		return ((H.intValue()>0)?String.format("%02d", H.intValue()):"00")+":"+((i.intValue()>0)?i.intValue():"00");
 	}
 	
 	@Override
@@ -1076,7 +1232,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	 * calendar id로 일근무표 조회(관리자용)
 	 * @param tenantId
 	 * @param enterCd
-	 * @param workCalendarId
+	 * @param sabun
+	 * @param ymd
+	 * @param timeCdMgrId
 	 * @return
 	 */
 	@Override
@@ -1090,7 +1248,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			paramMap.put("ymd", ymd);
 			paramMap.put("timeCdMgrId", timeCdMgrId);
 			
-			workDayResult = flexEmpMapper.getWorkDayResultByCalendarId(paramMap);
+			workDayResult = flexEmpMapper.getDayResultByYmd(paramMap);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1291,7 +1449,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		Map<String, Object> addMap = new HashMap<>();
 		addMap.putAll(pMap);
 		
-		String shm = sdf.format(addEdate);
+		String shm = sdf.format(addSdate);
 		String ehm = sdf.format(addEdate); 
 		addMap.put("shm", shm);
 		addMap.put("ehm", ehm);
