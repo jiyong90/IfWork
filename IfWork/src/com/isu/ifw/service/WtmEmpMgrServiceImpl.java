@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.mapper.WtmEmpHisMapper;
 import com.isu.ifw.mapper.WtmIfEmpMsgMapper;
 import com.isu.ifw.repository.WtmEmpHisRepository;
@@ -51,6 +53,7 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 			paramMap.put("sYmd", "");
 		} else {
 			sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+			paramMap.put("sYmd", sYmd);
 		}
 		
 		List<String> auths = empService.getAuth(tenantId, enterCd, sabun);
