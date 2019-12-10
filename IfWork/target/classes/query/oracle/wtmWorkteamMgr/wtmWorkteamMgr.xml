@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmWorkteamMgrMapper">
+    <select id="getWorkteamCdList" parameterType="map" resultType="wtmGeneral">
+        <![CDATA[
+			SELECT WORKTEAM_MGR_ID as CODE
+			     , WORKTEAM_NM as CODE_NM
+			  FROM WTM_WORKTEAM_MGR 
+			 WHERE TENANT_ID = #{tenantId}
+			   AND ENTER_CD = #{enterCd}
+			 ORDER BY WORKTEAM_MGR_ID
+        ]]>
+    </select>
+</mapper>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0/EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+ 
+<configuration>
+    <settings>
+        <setting name="mapUnderscoreToCamelCase" value="true" />
+    </settings> 
+    <typeAliases>
+    	<typeAlias type="com.isu.ifw.vo.Login" alias="login"/>
+    	<typeAlias type="com.isu.ifw.vo.StdManagement" alias="stdmanagement"/>
+		<typeAlias type="com.isu.ifw.vo.EmpSearch" alias="empsearch"/>
+    	<typeAlias type="com.isu.ifw.vo.School" alias="school"/>
+    	<typeAlias type="com.isu.ifw.vo.Language" alias="language"/>
+    	<typeAlias type="com.isu.ifw.vo.License" alias="license"/>
+    	<typeAlias type="com.isu.ifw.vo.WtmFlexibleStdVO" alias="wtmFlexibleStd"/>
+    	<typeAlias type="com.isu.ifw.vo.WtmApplLineVO" alias="wtmApplLine"/>
+    	<typeAlias type="com.isu.ifw.vo.WtmFlexibleEmpVO" alias="wtmFlexibleEmp"/>
+    	<typeAlias type="com.isu.ifw.vo.WtmFlexibleApplVO" alias="wtmFlexibleAppl"/>
+    	<typeAlias type="com.isu.ifw.vo.WtmWorkTermTimeVO" alias="wtmWorkTermTime"/>
+    	<typeAlias type="com.isu.ifw.vo.WtmFlexibleApplDetVO" alias="wtmFlexibleApplDet"/>
+    	<typeAlias type="com.isu.ifw.vo.WtmGeneralVO" alias="wtmGeneral"/>
+    </typeAliases>
+</configuration>

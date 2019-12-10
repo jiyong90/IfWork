@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmEntryApplMapper">
+	<select id="checkDuplicateEntryAppl" parameterType="map" resultType="map">
+  		<![CDATA[
+  		SELECT COUNT(*) AS chgCnt FROM (
+			SELECT 1 
+			  FROM WTM_APPL A
+			  JOIN WTM_ENTRY_APPL E
+			    ON A.APPL_ID = E.APPL_ID
+			 WHERE A.TENANT_ID = #{tenantId}
+			   AND A.ENTER_CD = #{enterCd}
+			   AND A.APPL_IN_SABUN = #{sabun}
+			   AND (A.APPL_ID <> #{applId} OR #{applId} IS NULL OR #{applId} = '')
+			   AND A.APPL_STATUS_CD IN ('21','31')
+			   AND E.YMD = #{ymd}
+		) X
+		]]>	
+  	</select>
+</mapper>

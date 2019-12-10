@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmOrgChartMapper">
+	<select id="getLowLevelOrg" parameterType="map" resultType="hashmap">
+        <![CDATA[
+			SELECT #{orgCd} AS orgCd
+			  FROM DUAL
+			UNION ALL
+			SELECT S.ORG_CD AS orgCd
+			  FROM (
+			        SELECT F_WTM_GET_LOW_LEVEL_ORG(O.TENANT_ID, O.ENTER_CD, O.SYMD) AS ORG_CD
+						     , @level AS level
+						  FROM
+						     (
+						         SELECT @start_with:=#{orgCd}
+									     , @org_cd:=@start_with
+						              , @level:=1
+						     ) vars
+						     JOIN 
+							  (
+						        SELECT C.TENANT_ID
+						             , C.ENTER_CD
+						             , C.SYMD
+						             , C.EYMD
+								       , D.*  
+								    FROM WTM_ORG_CHART C
+									 JOIN WTM_ORG_CHART_DET D
+									   ON C.ORG_CHART_ID = D.ORG_CHART_ID
+								   WHERE C.TENANT_ID = #{tenantId}
+							   	  AND C.ENTER_CD = #{enterCd}
+							        AND F_WTM_DATE_FORMAT(#{ymd}, 'YMD') BETWEEN C.SYMD AND C.EYMD
+							   ) O
+				 ) S
+			 WHERE S.ORG_CD IS NOT NULL
+        ]]>
+    </select>
+</mapper>

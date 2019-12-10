@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmInboxMapper">
+	<!--
+   		근무 계획 잔여 일 수(0이 아니면 근무 계획 작성 알림)
+     -->
+	<select id="getToDoPlanDays" parameterType="map" resultType="hashmap">
+        <![CDATA[
+			SELECT A.FLEXIBLE_EMP_ID AS flexibleEmpId
+			     , A.SYMD AS sYmd
+			     , B.toDoPlanDays
+			  FROM WTM_FLEXIBLE_EMP A
+			  JOIN ( SELECT E.TENANT_ID
+						     , E.ENTER_CD
+						     , E.SABUN
+						     , MIN(E.SYMD) AS SYMD
+						     , CASE WHEN SUM(CASE WHEN C.HOLIDAY_YN = 'N' THEN 1 ELSE 0 END) = 0 THEN -1
+							        ELSE SUM(CASE WHEN C.HOLIDAY_YN = 'N' THEN 1 ELSE 0 END) - SUM(CASE WHEN C.HOLIDAY_YN = 'N' AND C.WORK_CALENDAR_ID IS NOT NULL AND R.TIME_TYPE_CD = 'BASE' THEN 1 ELSE 0 END) END AS toDoPlanDays
+						  FROM WTM_FLEXIBLE_EMP E
+						  LEFT OUTER JOIN WTM_WORK_CALENDAR C
+						    ON E.TENANT_ID = C.TENANT_ID
+						   AND E.ENTER_CD = C.ENTER_CD
+						   AND E.SABUN = C.SABUN
+						   AND C.YMD BETWEEN E.SYMD AND E.EYMD
+						  LEFT OUTER JOIN WTM_WORK_DAY_RESULT R
+						    ON C.TENANT_ID = R.TENANT_ID
+						   AND C.ENTER_CD = R.ENTER_CD
+						   AND C.YMD = R.YMD
+						   AND C.SABUN = R.SABUN
+						 WHERE E.TENANT_ID = #{tenantId}
+						   AND E.ENTER_CD = #{enterCd}
+						   AND E.SABUN = #{sabun}
+						   AND E.WORK_TYPE_CD IN ('SELE_F', 'SELE_C')
+						   AND (#{ymd} BETWEEN E.SYMD AND E.EYMD OR F_WTM_TO_DATE(#{ymd},'YMD') < F_WTM_TO_DATE(E.EYMD,'YMD'))
+						 GROUP BY E.TENANT_ID, E.ENTER_CD, E.SABUN
+						   ) B
+			    ON A.TENANT_ID = B.TENANT_ID
+			   AND A.ENTER_CD = B.ENTER_CD
+			   AND A.SABUN = B.SABUN
+			   AND A.SYMD = B.SYMD
+			  WHERE B.toDoPlanDays <> 0
+        ]]>
+    </select>
+</mapper>

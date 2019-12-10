@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmWorkteamEmpMapper">
+    <select id="getWorkteamEmpList" parameterType="map" resultType="hashmap">
+        <![CDATA[
+			SELECT E.WORKTEAM_EMP_ID as workteamEmpId
+			    , E.WORKTEAM_MGR_ID as workteamMgrId
+			    , E.SABUN as sabun
+			    , E.SYMD as symd
+			    , E.EYMD as eymd
+			    , E.NOTE as note
+			    , C.ORG_CD as orgCd
+			    , C.CLASS_CD as classCd
+			    , C.EMP_NM as empNm 
+			  FROM WTM_WORKTEAM_EMP E, WTM_EMP_HIS C 
+			 WHERE C.TENANT_ID= #{tenantId} 
+			   AND E.SABUN = C.SABUN 
+			   AND #{ymd} BETWEEN C.SYMD AND C.EYMD 
+			   AND C.ENTER_CD= #{enterCd}
+			   AND #{ymd} BETWEEN E.SYMD AND E.EYMD 
+			   AND (E.SABUN like CONCAT('%', #{searchKeyword, jdbcType=VARCHAR}, '%')  OR C.EMP_NM like CONCAT('%', #{searchKeyword, jdbcType=VARCHAR}, '%')
+        ]]>
+    </select>
+    
+    <select id="dupCheckByYmd" parameterType="map" resultType="hashmap">
+        <![CDATA[
+			SELECT A.SABUN AS sabun
+			     , A.SYMD AS symd
+			     , A.EYMD AS eymd
+			     , B.TENANT_ID AS tenantId
+			     , B.ENTER_CD AS enterCd
+			     , B.WORKTEAM_MGR_ID AS workteamMgrId
+			     , A.WORKTEAM_EMP_ID AS workteamEmpId
+			  FROM WTM_WORKTEAM_EMP A 
+			  JOIN WTM_WORKTEAM_MGR B 
+			    ON A.WORKTEAM_MGR_ID = B.WORKTEAM_MGR_ID 
+			   AND B.TENANT_ID = #{tenantId} 
+			   AND B.ENTER_CD = #{enterCd}
+			  WHERE A.SABUN=#{sabun} 
+			    AND (#{sYmd} BETWEEN A.SYMD AND A.EYMD OR #{eYmd} BETWEEN A.SYMD AND A.EYMD) 
+			    AND #{workteamEmpId} != A.WORKTEAM_EMP_ID
+        ]]>
+    </select>
+</mapper>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.CodeSearchMapper">
+
+	<!-- 채용사이트에서 대학교 검색  -->
+	<select id="getSchoolList" parameterType="hashmap" resultType="school">
+		<![CDATA[
+				SELECT
+						X.CODE
+						,X.RN
+						,X.CAMPUS_NAME
+						,X.COLLEGEINFOURL
+						,X.SCHOOL_TYPE
+						,X.LINK
+						,X.SCHOOL_GUBUN
+						,X.ADRESS
+						,X.SCHOOL_NAME
+						,X.REGION
+						,X.TOTAL_COUNT
+						,X.EST_TYPE
+						,X.SEQ
+					FROM
+					(
+					SELECT 
+						A.CODE
+						,'' AS CAMPUS_NAME
+						,'' AS COLLEGEINFOURL
+						,(CASE WHEN NOTE2 = 'M' THEN '고등학교' ELSE '일반대학' END) AS SCHOOL_TYPE
+						,'' AS LINK
+						,'' AS SCHOOL_GUBUN
+						,'' AS ADRESS
+						,A.CODE_NM AS SCHOOL_NAME
+						,'' AS REGION
+						,'' AS TOTAL_COUNT
+						,'' AS EST_TYPE
+						,SEQ 
+						,ROWNUM AS RN
+					FROM 
+						TSYS005 A
+					WHERE A.ENTER_CD = 'TY'
+					AND A.GRCODE_CD = 'H20145'
+		]]>
+					<choose>
+						<when test="type!=null and type.equals('high')">
+							AND A.NOTE2 IN ( 'M' )
+						</when>
+						<when test="type!=null and type.equals('coll')">
+							AND A.NOTE2 IN ( 'P','U' )
+						</when>
+					</choose>
+					<if test="searchWord!=null and !searchWord.equals('')">
+							AND A.CODE_NM LIKE '%'|| #{searchWord} ||'%'
+					</if>
+		<![CDATA[		
+					)X
+					WHERE RN < 11
+					ORDER BY X.SCHOOL_NAME
+		]]>
+	</select>
+
+	<select id="getLicenseList"  parameterType="hashmap" resultType="license">
+		<![CDATA[
+			SELECT
+				X.CODE
+				,X.RN
+				,X.NAME
+				,X.ORG
+			FROM
+			(
+			SELECT 
+				A.CODE
+				,A.CODE_NM AS NAME
+				,'' AS ORG
+				,ROWNUM AS RN
+			FROM 
+				TSYS005 A
+			WHERE A.ENTER_CD = 'TY'
+			AND A.GRCODE_CD = 'H20160'	
+		]]>
+		<if test="searchWord!=null and !searchWord.equals('')">
+			AND A.CODE_NM LIKE '%'|| #{searchWord} ||'%'
+		</if>
+		<![CDATA[				
+					)X
+					WHERE RN < 11
+					ORDER BY X.NAME
+		]]>
+	</select>
+
+	<select id="getLangList" parameterType="hashmap" resultType="language">
+		<![CDATA[
+			SELECT
+				X.CODE
+				,X.RN
+				,X.NAME
+				,X.TYPE
+				,X.SCORE
+				,X.EVAL_TYPE
+				,X.COLLECTION
+			FROM
+			(
+			SELECT 
+				A.CODE
+				,A.CODE_NM AS NAME
+				,'' AS TYPE 
+				,'' AS SCORE
+				,'' AS EVAL_TYPE
+				,'' AS COLLECTION
+				,ROWNUM AS RN
+			FROM 
+				TSYS005 A
+			WHERE A.ENTER_CD = 'TY'
+			AND A.GRCODE_CD = 'H20307'
+		]]>
+		<if test="searchWord!=null and !searchWord.equals('')">
+			AND UPPER(A.CODE_NM) LIKE UPPER('%'|| #{searchWord} ||'%')
+		</if>
+		<![CDATA[
+			)X
+			WHERE RN < 11
+			ORDER BY X.NAME
+		]]>
+	</select>
+</mapper>

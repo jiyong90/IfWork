@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmFlexibleStdMapper">
+    <select id="getWtmFlexibleStd" parameterType="map" resultType="wtmFlexibleStd">
+        <![CDATA[
+			SELECT C.APPL_NM AS WORK_TYPE_NM 
+			     , S.*
+			     , C.*
+			     , CASE F_WTM_WEEKDAY(use_symd) 
+						WHEN 1 THEN '일요일'
+						WHEN 2 THEN '월요일'
+						WHEN 3 THEN '화요일'
+						WHEN 4 THEN '수요일'
+						WHEN 5 THEN '목요일'
+						WHEN 6 THEN '금요일'
+						WHEN 7 THEN '토요일' END AS WEEK_DAY
+			  FROM WTM_FLEXIBLE_STD_MGR S 
+			  JOIN WTM_APPL_CODE C
+			    ON C.ENTER_CD = S.ENTER_CD
+			   AND C.TENANT_ID = S.TENANT_ID
+			   AND S.WORK_TYPE_CD = C.APPL_CD
+			 WHERE S.TENANT_ID = #{tenantId}
+			   AND S.ENTER_CD = #{enterCd}
+			   AND #{d} BETWEEN S.USE_SYMD AND S.USE_EYMD
+			   AND S.BASE_WORK_YN = 'N'
+			   AND S.APPL_YN = 'Y'
+			 ORDER BY S.USE_SYMD DESC
+        ]]>
+    </select>
+    <select id="checkRequestDate" parameterType="map" resultType="map"> 
+        <![CDATA[
+        	SELECT SUM(XX.CNT) AS cnt FROM (
+			SELECT COUNT(*) AS CNT
+			  FROM WTM_APPL A
+			  JOIN WTM_FLEXIBLE_APPL F
+			   ON A.APPL_ID = F.APPL_ID
+			  JOIN (
+				SELECT A.TENANT_ID, A.ENTER_CD, A.APPL_ID, A.APPL_SABUN, F.SYMD, F.EYMD
+				  FROM WTM_APPL A
+				  JOIN WTM_FLEXIBLE_APPL F
+				    ON A.APPL_ID = F.APPL_ID
+				   AND A.APPL_ID = #{applId}
+			  ) X
+			   ON A.TENANT_ID = X.TENANT_ID AND A.ENTER_CD = X.ENTER_CD AND A.APPL_SABUN = X.APPL_SABUN
+			WHERE A.APPL_STATUS_CD NOT IN ('11','22','44','32','99') 
+			  AND (X.SYMD <= F.EYMD AND X.EYMD >= F.SYMD)
+			  AND A.APPL_ID <> X.APPL_ID
+			UNION
+		   SELECT COUNT(*)
+		     FROM WTM_FLEXIBLE_EMP A
+		     JOIN WTM_FLEXIBLE_STD_MGR M
+		       ON A.FLEXIBLE_STD_MGR_ID = M.FLEXIBLE_STD_MGR_ID  
+            WHERE A.TENANT_ID = #{tenantId} AND A.ENTER_CD = #{enterCd} AND A.SABUN = #{sabun}
+              AND (#{symd} BETWEEN A.SYMD AND A.EYMD OR #{eymd} BETWEEN A.SYMD AND A.EYMD)
+              AND M.BASE_WORK_YN = 'N' 
+            ) XX
+        ]]>
+    </select>
+     
+    <select id="getWtmFlexibleStdList" parameterType="map" resultType="hashmap">
+        <![CDATA[
+			SELECT FLEXIBLE_STD_MGR_ID as code
+			     , FLEXIBLE_NM as codeNm
+			  FROM WTM_FLEXIBLE_STD_MGR 
+			 WHERE TENANT_ID = #{tenantId}
+			   AND ENTER_CD = #{enterCd}
+			 ORDER BY FLEXIBLE_STD_MGR_ID
+        ]]>
+    </select>
+    
+    <select id="getWtmFlexibleStdWorkTypeList" parameterType="map" resultType="hashmap">
+        <![CDATA[
+			SELECT FLEXIBLE_STD_MGR_ID as code
+			     , FLEXIBLE_NM as codeNm
+			  FROM WTM_FLEXIBLE_STD_MGR 
+			 WHERE TENANT_ID = #{tenantId}
+			   AND ENTER_CD = #{enterCd}
+			   AND WORK_TYPE_CD = #{workTypeCd}
+			 ORDER BY FLEXIBLE_STD_MGR_ID
+        ]]>
+    </select>
+    
+    <select id="getRangeWeekDay" parameterType="map" resultType="map">
+    	<![CDATA[
+    	SELECT X.FIRST_DAY AS symd
+    		 , F_WTM_DATE_FORMAT(F_WTM_DATE_ADD(F_WTM_TO_DATE(X.FIRST_DAY,'YMD'), 6, 'D'), 'YMD')  AS eymd
+		  FROM (
+		SELECT CASE WHEN  P.INFO_VALUE < F_WTM_WEEKDAY(#{d}) THEN MAX(D.SUN_YMD)
+				  	WHEN  P.INFO_VALUE > F_WTM_WEEKDAY(#{d}) THEN MIN(D.SUN_YMD)
+                    ELSE D.SUN_YMD END AS FIRST_DAY
+		  FROM WTM_DAY_MGR D
+		  JOIN WTM_PROPERTIE P
+		    ON 1=1
+		 WHERE 1=1
+		   AND (
+			( P.INFO_VALUE < F_WTM_WEEKDAY(#{d}) AND D.SUN_YMD BETWEEN F_WTM_DATE_ADD(F_WTM_TO_DATE(#{d},'YMD'), -6, 'D') AND  #{d}  AND D.DAY_NM = P.INFO_VALUE)
+			OR
+			( P.INFO_VALUE > F_WTM_WEEKDAY(#{d}) AND D.SUN_YMD BETWEEN  #{d} AND F_WTM_DATE_ADD(F_WTM_TO_DATE(#{d},'YMD'), 6, 'D')   AND D.DAY_NM = P.INFO_VALUE)
+		    OR 
+		    ( P.INFO_VALUE = F_WTM_WEEKDAY(#{d}) AND D.SUN_YMD =  #{d} )
+		 	)
+		   AND P.TENANT_ID = #{tenantId}
+		   AND P.ENTER_CD = #{enterCd}
+		   AND P.INFO_KEY = 'OPTION_FIRSTDAY_OF_WEEK'
+		   AND D.SUN_YMD BETWEEN #{sYmd} AND #{eYmd}
+		   GROUP BY D.SUN_YMD, P.INFO_VALUE
+		 ) X
+		 ]]>
+    </select>
+    
+    <update id="insertFlexibleStd" parameterType="java.util.HashMap">
+		INSERT INTO WTM_FLEXIBLE_STD_MGR 
+				(TENANT_ID, 
+				ENTER_CD, 
+				WORK_TYPE_CD, 
+				FLEXIBLE_NM, 
+				USE_SYMD, 
+				USE_EYMD, 
+				BASE_WORK_YN,
+				UPDATE_DATE,
+				UPDATE_ID)
+			VALUES
+			<foreach collection="list" item="item" separator=", ">
+				(#{item.tenantId},
+				 #{item.enterCd} ,
+				 #{item.workTypeCd} ,
+				 #{item.flexibleNm} ,
+				 #{item.useSymd} ,
+				 #{item.useEymd} ,
+				 #{item.baseWorkYn} ,
+				 now(),
+				 #{item.userId}
+				)
+			</foreach>
+	</update>
+
+	<update id="updateFlexibleStd" parameterType="java.util.List">
+		<foreach collection="list" item="item" separator=";">
+			UPDATE WTM_FLEXIBLE_STD_MGR SET 
+				USE_EYMD =  #{item.useEymd}
+				, WORK_SHM = #{item.workShm} 
+				, WORK_EHM = #{item.workEhm} 
+				, CORE_SHM = #{item.coreShm} 
+				, CORE_EHM = #{item.coreEhm} 
+				, DEFAULT_WORK_USE_YN = #{item.defaultWorkUseYn}
+				, UNIT_MINUTE = #{item.unitMinute} 
+				, EXHAUSTION_YN = #{item.exhaustionYn} 
+				, HOL_EXCEPT_YN = #{item.holExceptYn} 
+				, WORK_DAYS_OPT = #{item.workDaysOpt} 
+				, USED_TERM_OPT = #{item.usedTermOpt} 
+				, APPL_TERM_OPT = #{item.applTermOpt} 
+				, CORE_CHK_YN = #{item.coreChkYn} 
+				, REGARD_TIME_CD_ID = #{item.regardTimeCdId} 
+				, FIXOT_USE_TYPE = #{item.fixotUseType} 
+				, FIXOT_USE_LIMIT = #{item.fixotUseLimit}
+				, TAA_TIME_YN = #{item.taaTimeYn}
+				, TAA_WORK_YN = #{item.taaWorkYn}
+				, DAY_OPEN_TYPE = #{item.dayOpenType}
+				, DAY_CLOSE_TYPE = #{item.dayCloseType}
+				, UNPLANNED_YN = #{item.unplannedYn} 
+				, APPL_YN = #{item.applYn} 
+				, NOTE = #{item.note}  
+				, UPDATE_DATE = NOW()
+				, UPDATE_ID = #{item.userId}
+			WHERE FLEXIBLE_STD_MGR_ID = #{item.flexibleStdMgrId}
+		</foreach>
+	</update>
+	
+	<select id="getStdListWeb" parameterType="map" resultType="hashmap">
+        <![CDATA[
+			SELECT FLEXIBLE_STD_MGR_ID AS flexibleStdMgrId
+				 , TENANT_ID AS tenantId
+				 , ENTER_CD AS enterCd
+				 , WORK_TYPE_CD AS workTypeCd
+				 , FLEXIBLE_NM AS flexibleNm
+				 , USE_SYMD AS useSymd
+				 , USE_EYMD AS useEymd
+				 , WORK_SHM AS workShm
+				 , WORK_EHM AS workEhm
+				 , CORE_SHM AS coreShm
+				 , CORE_EHM AS coreEhm
+				 , DEFAULT_WORK_USE_YN AS defaultWorkUseYn
+				 , UNIT_MINUTE AS unitMinute
+				 , EXHAUSTION_YN AS exhaustionYn
+				 , HOL_EXCEPT_YN AS holExceptYn
+				 , USED_TERM_OPT AS usedTermOpt
+				 , APPL_TERM_OPT AS applTermOpt
+				 , CORE_CHK_YN AS coreChkYn
+				 , BASE_WORK_YN AS baseWorkYn
+				 , REGARD_TIME_CD_ID AS regardTimeCdId
+				 , FIXOT_USE_TYPE AS fixotUseType
+				 , FIXOT_USE_LIMIT AS fixotUseLimit
+				 , TAA_TIME_YN AS taaTimeYn
+				 , TAA_WORK_YN AS taaWorkYn
+				 , DAY_OPEN_TYPE AS dayOpenType
+				 , DAY_CLOSE_TYPE AS dayCloseType
+				 , UNPLANNED_YN AS unplannedYn
+				 , CASE F_WTM_WEEKDAY(use_symd) 
+						WHEN 1 THEN '일요일'
+						WHEN 2 THEN '월요일'
+						WHEN 3 THEN '화요일'
+						WHEN 4 THEN '수요일'
+						WHEN 5 THEN '목요일'
+						WHEN 6 THEN '금요일'
+						WHEN 7 THEN '토요일' END AS baseDay
+				 , APPL_YN AS applYn
+				 , NOTE AS note
+		      FROM WTM_FLEXIBLE_STD_MGR 
+		     WHERE TENANT_ID = #{tenantId}
+			   AND ENTER_CD = #{enterCd}
+			   AND REPLACE(#{ymd}, '-', '') BETWEEN USE_SYMD AND F_WTM_NVL(USE_EYMD, '99991231') 
+			 ORDER BY WORK_TYPE_CD, USE_SYMD DESC
+        ]]>
+    </select>
+    
+    <select id="getWeekday" parameterType="map" resultType="hashmap">
+        <![CDATA[
+			SELECT CASE F_WTM_WEEKDAY(#{d}) 
+						WHEN 1 THEN '일요일'
+						WHEN 2 THEN '월요일'
+						WHEN 3 THEN '화요일'
+						WHEN 4 THEN '수요일'
+						WHEN 5 THEN '목요일'
+						WHEN 6 THEN '금요일'
+						WHEN 7 THEN '토요일' END AS weekDay
+		      FROM DUAL 
+        ]]>
+    </select>
+</mapper>

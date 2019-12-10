@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmApplListMapper">
+	<select id="getOtList" parameterType="map" resultType="wtmGeneral">
+		SELECT B.TENANT_ID
+			   , B.ENTER_CD
+		       , C.SABUN
+		       , F_WTM_GET_EMP_ORG_NM(C.TENANT_ID, C.ENTER_CD, C.SABUN, A.YMD) AS ORG_NM
+		       , C.EMP_NM
+		       , DECODE(A.HOLIDAY_YN, 'Y', '휴일근무', '연장근무') AS APPL_NM
+		       , A.YMD
+		       , A.OT_SDATE
+		       , A.OT_EDATE
+		       , A.OT_MINUTE
+		       , A.REASON_CD
+		       , A.REASON
+		       , D.SUBS_SDATE
+		       , D.SUBS_EDATE
+		  FROM WTM_OT_APPL A
+		 INNER JOIN WTM_APPL B
+		     ON A.APPL_ID = B.APPL_ID
+		 INNER JOIN WTM_EMP_HIS C
+		     ON B.TENANT_ID = C.TENANT_ID
+		   AND B.ENTER_CD = C.ENTER_CD
+		   AND B.APPL_SABUN = C.SABUN
+		   AND B.APPL_YMD BETWEEN C.SYMD AND C.EYMD
+		    LEFT OUTER JOIN WTM_OT_SUBS_APPL D
+		     ON  A.OT_APPL_ID = D.OT_APPL_ID
+		  WHERE B.TENANT_ID = #{tenantId}
+		    AND B.ENTER_CD = #{enterCd}
+		    AND A.YMD BETWEEN #{sYmd} AND #{eYmd}
+		  <if test="searchValue!=''">
+		  	AND (C.SABUN = #{searchKeyword} OR C.EMP_NM LIKE #{searchKeyword} || '%')
+		  </if>
+		  <if test="orgList!=null">
+		   AND C.ORG_CD IN (NULL, 
+	       <foreach collection="orgList" item="org" separator=", ">
+			   #{org}
+		   </foreach>
+		   )
+		   </if>
+    </select>
+</mapper>

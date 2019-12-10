@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.LoginMapper">
+    <select id="loginTryCnt" resultType="wtmGeneral">
+        <![CDATA[
+			SELECT DECODE(T2.ID,NULL,'N','Y') AS id_exst
+	              ,NVL(T2.ROCKING_YN,'N')     AS ROCKING_YN
+	              ,NVL(T2.LOGIN_FAIL_CNT,'0') AS LOGIN_FAIL_CNT
+	              ,CASE WHEN T2.PASSWORD <> CRYPTIT.CRYPT(TRIM(#{loginPassword}), #{loginEnterCd}) THEN 'Y'
+	               ELSE 'N'
+	               END AS PSWD_CLCT
+	              ,F_COM_GET_STD_CD_VALUE(#{loginEnterCd}, 'LOGIN_FAIL_CNT') AS  LOGIN_FAIL_CNT_STD
+	              , #{loginPassword} AS PASS
+	
+	              ,CASE WHEN NVL(T2.LOGIN_FAIL_CNT,'0') >= F_COM_GET_STD_CD_VALUE(#{loginEnterCd}, 'LOGIN_FAIL_CNT') THEN 'Y'
+	               ELSE 'N'
+	               END AS LOGIN_FAIL_CNT_YN
+	        FROM
+	        (
+	        SELECT  UPPER(TRIM(#{loginUserId})) AS ID
+	              , '' AS ROCKING_YN
+	              , '' AS LOGIN_FAIL_CNT
+	        FROM    DUAL
+	        ) T1
+	        ,(
+	        SELECT  UPPER(TRIM(ID)) AS ID
+	              , ROCKING_YN
+	              , LOGIN_FAIL_CNT
+	              , PASSWORD
+	        FROM  TSYS305 D
+	        WHERE 1=1
+	        AND   D.ENTER_CD  = #{loginEnterCd}
+	        AND   UPPER(D.ID) = UPPER(TRIM(#{loginUserId}))
+	        ) T2
+	        WHERE T1.ID = T2.ID(+)
+        ]]>
+    </select>
+    
+	<select id="loginUser"  parameterType="hashmap" resultType="login">
+		<![CDATA[
+	       SELECT A.SABUN									AS SSN_SABUN		--사번
+				, A.ENTER_CD								AS SSN_ENTER_CD		--회사코드
+				, E.ENTER_NM								AS SSN_ENTER_NM		--회사명	
+				, NVL(F_COM_GET_NAMES( A.ENTER_CD, A.SABUN, #{ssnLocaleCd}),'유저') AS EMP_NM	--성명
+				, B.ORG_CD									AS SSN_ORG_CD		--조직코드
+				, F_COM_GET_ORG_NM(B.ENTER_CD, B.ORG_CD , TO_CHAR(SYSDATE,'YYYYMMDD'), #{ssnLocaleCd}) AS SSN_ORG_NM
+				, F_REC_ADMIN_YN(A.ENTER_CD,A.SABUN) AS REC_ADMIN_YN
+			FROM THRM100 A
+		   INNER JOIN THRM151 B
+			  ON A.ENTER_CD  = B.ENTER_CD
+			 AND NVL(B.STATUS_CD,'RA') <> 'RA'
+			 AND A.SABUN 	= B.SABUN
+			 AND TO_CHAR(SYSDATE, 'YYYYMMDD') BETWEEN B.SDATE AND NVL(B.EDATE, '99991231')
+		   INNER JOIN TSYS305 D
+		      ON A.ENTER_CD 	= D.ENTER_CD
+		     AND A.SABUN 	= D.SABUN
+		   INNER JOIN TORG900 E
+		      ON A.ENTER_CD  = E.ENTER_CD
+		    LEFT OUTER JOIN TORG999 H
+		      ON A.ENTER_CD 	= H.ENTER_CD
+		   WHERE 1=1
+			 AND D.ENTER_CD 	= #{loginEnterCd}
+			 AND UPPER(D.ID) = UPPER(TRIM(#{loginUserId}))
+			 AND ROWNUM 		= 1
+			 AND D.ROCKING_YN = 'N'
+		]]>
+		<if test="ssnSso.equals('Y')">
+			<![CDATA[
+				AND D.PASSWORD = CRYPTIT.CRYPT(TRIM(#{loginPassword}), A.ENTER_CD)
+			]]>
+		</if>
+    </select>
+ 
+</mapper>

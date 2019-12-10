@@ -1,0 +1,923 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.AppointmentMapper">
+
+	<update id="saveAnnouncementInfomation" parameterType="hashmap">
+		<![CDATA[
+			MERGE INTO TSTF501 e 
+			USING  (
+				SELECT A.ANNO_ID
+					 , A.ANNO_TITLE
+				  FROM (
+				  	SELECT #{annoId} AS ANNO_ID
+				  		 , #{annoTitle} AS ANNO_TITLE
+				  	  FROM DUAL
+				  ) A 
+				 WHERE A.ANNO_ID IS NOT NULL
+				   AND A.ANNO_TITLE IS NOT NULL
+			) eq
+			  ON ( eq.ANNO_ID = e.ANNO_ID )
+			WHEN MATCHED THEN
+				UPDATE SET e.ANNO_TITLE = eq.ANNO_TITLE 
+			WHEN NOT MATCHED THEN
+				INSERT
+				(
+					  e.ANNO_ID
+					, e.ANNO_TITLE 
+				)
+				VALUES
+				(
+					  eq.ANNO_ID
+					, eq.ANNO_TITLE 
+				)
+		]]>
+	</update>
+	
+	<update id="saveBasicInfomation" parameterType="hashmap">
+		MERGE INTO TSTF502 e 
+		USING  (
+			SELECT A.ANNO_ID
+				 , A.APPL_ID
+				 , A.NAME
+				 , A.ENAME
+				 , A.CNAME
+				 , A.BIRTH_DATE
+				 , A.GENDER
+				 , A.IS_MARRIED
+				 , A.PHONE
+				 , A.ADDR_ZIPCODE
+				 , A.ADDR_PART1
+				 , A.ADDR_PART2
+				 , A.ADDR_DETAIL
+				 , A.EMAIL
+				 , A.IS_HANDICAP
+				 , A.IS_LESSION 
+			  FROM (
+			  	SELECT NULL AS ANNO_ID
+					 , NULL AS APPL_ID
+					 , NULL AS NAME
+					 , NULL AS ENAME
+					 , NULL AS CNAME
+					 , NULL AS BIRTH_DATE
+					 , NULL AS GENDER
+					 , NULL AS IS_MARRIED
+					 , NULL AS PHONE
+					 , NULL AS ADDR_ZIPCODE
+					 , NULL AS ADDR_PART1
+					 , NULL AS ADDR_PART2
+					 , NULL AS ADDR_DETAIL
+					 , NULL AS EMAIL
+					 , NULL AS IS_HANDICAP
+					 , NULL AS IS_LESSION
+			  	  FROM DUAL 
+		 <if test="mergeRows!=null and mergeRows.size()>0">
+			 <foreach collection="mergeRows" item="rm">	  	  
+				 UNION ALL
+				SELECT TRIM( #{rm.annoId} ) AS ANNO_ID
+					 , TRIM( #{rm.applId} ) AS APPL_ID
+					 , TRIM( #{rm.name} ) AS NAME
+					 , TRIM( #{rm.ename} ) AS ENAME
+					 , TRIM( #{rm.cname} ) AS CNAME
+					 , TRIM( #{rm.birthDate} ) AS BIRTH_DATE
+					 , TRIM( #{rm.gender} ) AS GENDER
+					 , TRIM( #{rm.isMarried} ) AS IS_MARRIED
+					 , TRIM( #{rm.phone} ) AS PHONE
+					 , TRIM( #{rm.addrZipcode} ) AS ADDR_ZIPCODE
+					 , TRIM( #{rm.addrPart1} ) AS ADDR_PART1
+					 , TRIM( #{rm.addrPart2} ) AS ADDR_PART2
+					 , TRIM( #{rm.addrDetail} ) AS ADDR_DETAIL
+					 , TRIM( #{rm.email} ) AS EMAIL
+					 , TRIM( #{rm.isHandicap} ) AS IS_HANDICAP
+					 , TRIM( #{rm.isLession} ) AS IS_LESSION
+				  FROM DUAL
+			</foreach>
+		</if>
+			  ) A 
+			 WHERE A.ANNO_ID IS NOT NULL  
+		) eq
+		  ON ( eq.ANNO_ID	= e.ANNO_ID AND eq.APPL_ID = e.APPL_ID )
+		WHEN MATCHED THEN
+			UPDATE SET e.NAME = eq.NAME 
+					 , e.ENAME = eq.ENAME 
+					 , e.CNAME = eq.CNAME 
+					 , e.BIRTH_DATE = eq.BIRTH_DATE 
+					 , e.GENDER = eq.GENDER 
+					 , e.IS_MARRIED = eq.IS_MARRIED 
+					 , e.PHONE = eq.PHONE 
+					 , e.ADDR_ZIPCODE = eq.ADDR_ZIPCODE 
+					 , e.ADDR_PART1 = eq.ADDR_PART1
+					 , e.ADDR_PART2 = eq.ADDR_PART2
+					 , e.ADDR_DETAIL = eq.ADDR_DETAIL
+					 , e.EMAIL = eq.EMAIL
+					 , e.IS_HANDICAP = eq.IS_HANDICAP
+					 , e.IS_LESSION = eq.IS_LESSION
+		WHEN NOT MATCHED THEN
+			INSERT
+			(
+				  e.ANNO_ID
+				 , e.APPL_ID
+				 , e.NAME
+				 , e.ENAME
+				 , e.CNAME
+				 , e.BIRTH_DATE
+				 , e.GENDER
+				 , e.IS_MARRIED
+				 , e.PHONE
+				 , e.ADDR_ZIPCODE
+				 , e.ADDR_PART1
+				 , e.ADDR_PART2
+				 , e.ADDR_DETAIL
+				 , e.EMAIL
+				 , e.IS_HANDICAP
+				 , e.IS_LESSION 
+			)
+			VALUES
+			(
+				  eq.ANNO_ID
+				 , eq.APPL_ID
+				 , eq.NAME
+				 , eq.ENAME
+				 , eq.CNAME
+				 , eq.BIRTH_DATE
+				 , eq.GENDER
+				 , eq.IS_MARRIED
+				 , eq.PHONE
+				 , eq.ADDR_ZIPCODE
+				 , eq.ADDR_PART1
+				 , eq.ADDR_PART2
+				 , eq.ADDR_DETAIL
+				 , eq.EMAIL
+				 , eq.IS_HANDICAP
+				 , eq.IS_LESSION
+			) 
+	</update>
+	
+	<update id="saveFamilyInfomation" parameterType="hashmap">
+		MERGE INTO TSTF503 e 
+			USING  (
+				SELECT A.APPL_ID
+					 , A.FAM_REL
+					 , A.FAM_NAME
+					 , A.FAM_AGE
+					 , A.FAM_COMPANY
+					 , A.FAM_COMPANY_CLASS
+					 , A.FAM_IS_TOGHTHER
+				  FROM (
+				  	SELECT NULL AS APPL_ID
+						 , NULL AS FAM_REL
+						 , NULL AS FAM_NAME
+						 , NULL AS FAM_AGE
+						 , NULL AS FAM_COMPANY
+						 , NULL AS FAM_COMPANY_CLASS
+						 , NULL AS FAM_IS_TOGHTHER
+				  	  FROM DUAL 
+			 <if test="mergeRows!=null and mergeRows.size()>0">
+			 	<foreach collection="mergeRows" item="rm">	  	 
+					 UNION ALL
+					SELECT TRIM( #{rm.applId} ) AS APPL_ID
+						 , TRIM( #{rm.famRel} ) AS FAM_REL
+						 , TRIM( #{rm.famName} ) AS FAM_NAME
+						 , TRIM( #{rm.famAge} ) AS FAM_AGE
+						 , TRIM( #{rm.famCompany} ) AS FAM_COMPANY
+						 , TRIM( #{rm.famCompanyClass} ) AS FAM_COMPANY_CLASS
+						 , TRIM( #{rm.famIsTogether} ) AS FAM_IS_TOGHTHER
+					  FROM DUAL
+				</foreach>
+			</if>
+				  ) A 
+				 WHERE A.APPL_ID IS NOT NULL  
+			) eq
+			  ON ( eq.APPL_ID = e.APPL_ID AND e.FAM_REL = eq.FAM_REL AND e.FAM_NAME = eq.FAM_NAME)
+			WHEN MATCHED THEN
+				UPDATE SET e.FAM_AGE = eq.FAM_AGE 
+						 , e.FAM_COMPANY = eq.FAM_COMPANY 
+						 , e.FAM_COMPANY_CLASS = eq.FAM_COMPANY_CLASS 
+						 , e.FAM_IS_TOGHTHER = eq.FAM_IS_TOGHTHER  
+			WHEN NOT MATCHED THEN
+				INSERT
+				(
+					   e.APPL_ID
+					 , e.FAM_REL
+					 , e.FAM_NAME
+					 , e.FAM_AGE
+					 , e.FAM_COMPANY
+					 , e.FAM_COMPANY_CLASS
+					 , e.FAM_IS_TOGHTHER 
+				)
+				VALUES
+				(
+					   eq.APPL_ID
+					 , eq.FAM_REL
+					 , eq.FAM_NAME
+					 , eq.FAM_AGE
+					 , eq.FAM_COMPANY
+					 , eq.FAM_COMPANY_CLASS
+					 , eq.FAM_IS_TOGHTHER 
+				) 
+	</update>
+	
+	<update id="saveSchoolInfomation" parameterType="hashmap">
+		MERGE INTO TSTF504 e 
+			USING  (
+				SELECT A.APPL_ID
+					 , A.SCH_GUBUN
+					 , A.SCH_NAME
+					 , A.SCH_MAJOR
+					 , A.SCH_STARTDATE
+					 , A.SCH_ENDDATE
+					 , A.SCH_GRADE
+					 , A.SCH_CLASS
+					 , A.SCH_DNL
+					 , A.NOTE
+				  FROM (
+				  	SELECT NULL AS APPL_ID
+						 , NULL AS SCH_GUBUN
+						 , NULL AS SCH_NAME
+						 , NULL AS SCH_MAJOR
+						 , NULL AS SCH_STARTDATE
+						 , NULL AS SCH_ENDDATE
+						 , NULL AS SCH_GRADE
+						 , NULL AS SCH_CLASS
+						 , NULL AS SCH_DNL
+						 , NULL AS NOTE
+				  	  FROM DUAL 
+			<if test="mergeRows!=null and mergeRows.size()>0">
+			 	<foreach collection="mergeRows" item="rm">	  	 
+					 UNION ALL
+					SELECT TRIM( #{rm.applId} ) AS APPL_ID
+						 , TRIM( #{rm.schGubun} ) AS SCH_GUBUN
+						 , TRIM( #{rm.schName} ) AS SCH_NAME
+						 , TRIM( #{rm.schMajor} ) AS SCH_MAJOR
+						 , TRIM( #{rm.schStartdate} ) AS SCH_STARTDATE
+						 , TRIM( #{rm.schEnddate} ) AS SCH_ENDDATE
+						 , TRIM( #{rm.schGrade} ) AS SCH_GRADE
+						 , TRIM( #{rm.schClass} ) AS SCH_CLASS
+						 , TRIM( #{rm.schDnl} ) AS SCH_DNL
+						 , TRIM( #{rm.note} ) AS NOTE
+					  FROM DUAL
+				</foreach>
+			</if>
+				  ) A 
+				 WHERE A.APPL_ID IS NOT NULL  
+			) eq
+			  ON ( eq.APPL_ID = e.APPL_ID AND eq.SCH_GUBUN = e.SCH_GUBUN AND eq.SCH_NAME = e.SCH_NAME )
+			WHEN MATCHED THEN
+				UPDATE SET e.SCH_MAJOR = eq.SCH_MAJOR 
+						 , e.SCH_STARTDATE = eq.SCH_STARTDATE 
+						 , e.SCH_ENDDATE = eq.SCH_ENDDATE 
+						 , e.SCH_GRADE = eq.SCH_GRADE  
+						 , e.SCH_DNL = eq.SCH_DNL  
+						 , e.NOTE = eq.NOTE  
+			WHEN NOT MATCHED THEN
+				INSERT
+				(
+					   e.APPL_ID
+					 , e.SCH_GUBUN
+					 , e.SCH_NAME
+					 , e.SCH_MAJOR
+					 , e.SCH_STARTDATE
+					 , e.SCH_ENDDATE
+					 , e.SCH_GRADE 
+					 , e.SCH_DNL 
+					 , e.NOTE 
+				)
+				VALUES
+				(
+					   eq.APPL_ID
+					 , eq.SCH_GUBUN
+					 , eq.SCH_NAME
+					 , eq.SCH_MAJOR
+					 , eq.SCH_STARTDATE
+					 , eq.SCH_ENDDATE
+					 , eq.SCH_GRADE 
+					 , eq.SCH_DNL 
+					 , eq.NOTE 
+				) 
+	</update>
+	
+	<update id="saveCareerInfomation" parameterType="hashmap">
+		MERGE INTO TSTF505 e 
+			USING  (
+				SELECT A.APPL_ID
+					 , A.CAREER_TYPE
+					 , A.CAREER_COMPANY_NAME
+					 , A.CAREER_ORG_NAME
+					 , A.CAREER_JOB
+					 , A.CAREER_REASON
+					 , A.CAREER_SALARY
+					 , A.NOTE
+				  FROM (
+				  	SELECT NULL AS APPL_ID
+						 , NULL AS CAREER_TYPE
+						 , NULL AS CAREER_COMPANY_NAME
+						 , NULL AS CAREER_ORG_NAME
+						 , NULL AS CAREER_JOB
+						 , NULL AS CAREER_REASON
+						 , NULL AS CAREER_SALARY
+						 , NULL AS NOTE
+				  	  FROM DUAL 
+			<if test="mergeRows!=null and mergeRows.size()>0">
+			 	<foreach collection="mergeRows" item="rm">	  	 
+					 UNION ALL
+					SELECT TRIM( #{rm.applId} ) AS APPL_ID
+						 , TRIM( #{rm.careerType} ) AS CAREER_TYPE
+						 , TRIM( #{rm.careerCompanyName} ) AS CAREER_COMPANY_NAME
+						 , TRIM( #{rm.careerOrgName} ) AS CAREER_ORG_NAME
+						 , TRIM( #{rm.careerJob} ) AS CAREER_JOB
+						 , TRIM( #{rm.careerReason} ) AS CAREER_REASON
+						 , TRIM( #{rm.careerSalary} ) AS CAREER_SALARY
+						 , TRIM( #{rm.note} ) AS NOTE
+					  FROM DUAL
+				</foreach>
+			</if>
+				  ) A 
+				 WHERE A.APPL_ID IS NOT NULL  
+			) eq
+			  ON ( eq.APPL_ID = e.APPL_ID	 AND e.CAREER_COMPANY_NAME = eq.CAREER_COMPANY_NAME )
+			WHEN MATCHED THEN
+				UPDATE SET e.CAREER_TYPE = eq.CAREER_TYPE 
+						 , e.CAREER_ORG_NAME = eq.CAREER_ORG_NAME 
+						 , e.CAREER_JOB = eq.CAREER_JOB 
+						 , e.CAREER_REASON = eq.CAREER_REASON 
+						 , e.CAREER_SALARY = eq.CAREER_SALARY   
+						 , e.NOTE = eq.NOTE  
+			WHEN NOT MATCHED THEN
+				INSERT
+				(
+					   e.APPL_ID
+					 , e.CAREER_TYPE
+					 , e.CAREER_COMPANY_NAME
+					 , e.CAREER_ORG_NAME
+					 , e.CAREER_JOB
+					 , e.CAREER_REASON
+					 , e.CAREER_SALARY  
+					 , e.NOTE 
+				)
+				VALUES
+				(
+					   eq.APPL_ID
+					 , eq.CAREER_TYPE
+					 , eq.CAREER_COMPANY_NAME
+					 , eq.CAREER_ORG_NAME
+					 , eq.CAREER_JOB
+					 , eq.CAREER_REASON
+					 , eq.CAREER_SALARY  
+					 , eq.NOTE 
+				) 
+	</update>
+	
+	<update id="saveLanguageInfomation" parameterType="hashmap">
+		MERGE INTO TSTF506 e 
+			USING  (
+				SELECT A.APPL_ID
+					 , A.LANG_NAME
+					 , A.LANG_GRADE
+					 , A.LANG_DATE
+					 , A.NOTE
+				  FROM (
+				  	SELECT NULL AS APPL_ID
+						 , NULL AS LANG_NAME
+						 , NULL AS LANG_GRADE
+						 , NULL AS LANG_DATE
+						 , NULL AS NOTE
+				  	  FROM DUAL 
+			<if test="mergeRows!=null and mergeRows.size()>0">
+			 	<foreach collection="mergeRows" item="rm">	  	 
+					 UNION ALL
+					SELECT TRIM( #{rm.applId} ) AS APPL_ID
+						 , TRIM( #{rm.langName} ) AS LANG_NAME
+						 , TRIM( #{rm.langGrade} ) AS LANG_GRADE
+						 , TRIM( #{rm.langDate} ) AS LANG_DATE
+						 , TRIM( #{rm.note} ) AS NOTE
+					  FROM DUAL
+				</foreach>
+			</if>
+				  ) A 
+				 WHERE A.APPL_ID IS NOT NULL  
+			) eq
+			  ON ( eq.APPL_ID = e.APPL_ID AND e.LANG_NAME = eq.LANG_NAME  )
+			WHEN MATCHED THEN
+				UPDATE SET  e.LANG_GRADE = eq.LANG_GRADE 
+						 , e.LANG_DATE = eq.LANG_DATE  
+						 , e.NOTE = eq.NOTE  
+			WHEN NOT MATCHED THEN
+				INSERT
+				(
+					   e.APPL_ID
+					 , e.LANG_NAME
+					 , e.LANG_GRADE 
+					 , e.LANG_DATE 
+					 , e.NOTE 
+				)
+				VALUES
+				(
+					   eq.APPL_ID
+					 , eq.LANG_NAME
+					 , eq.LANG_GRADE
+					 , eq.LANG_DATE 
+					 , eq.NOTE 
+				) 
+	</update>
+	
+	<update id="saveLicenseInfomation" parameterType="hashmap">
+		MERGE INTO TSTF507 e 
+			USING  (
+				SELECT A.APPL_ID
+					 , A.LICE_NAME
+					 , A.LICE_ORG_NAME
+					 , A.LICE_DATE
+					 , A.NOTE
+				  FROM (
+				  	SELECT NULL AS APPL_ID
+						 , NULL AS LICE_NAME
+						 , NULL AS LICE_ORG_NAME
+						 , NULL AS LICE_DATE
+						 , NULL AS NOTE
+				  	  FROM DUAL 
+			<if test="mergeRows!=null and mergeRows.size()>0">
+			 	<foreach collection="mergeRows" item="rm">	  	 
+					 UNION ALL
+					SELECT TRIM( #{rm.applId} ) AS APPL_ID
+						 , TRIM( #{rm.liceName} ) AS LICE_NAME
+						 , TRIM( #{rm.liceOrgName} ) AS LICE_ORG_NAME
+						 , TRIM( #{rm.liceDate} ) AS LICE_DATE
+						 , TRIM( #{rm.note} ) AS NOTE
+					  FROM DUAL
+				</foreach>
+			</if>
+				  ) A 
+				 WHERE A.APPL_ID IS NOT NULL  
+			) eq
+			  ON ( eq.APPL_ID = e.APPL_ID AND e.LICE_NAME = eq.LICE_NAME)
+			WHEN MATCHED THEN
+				UPDATE SET  e.LICE_ORG_NAME = eq.LICE_ORG_NAME 
+						 , e.LICE_DATE = eq.LICE_DATE  
+						 , e.NOTE = eq.NOTE  
+			WHEN NOT MATCHED THEN
+				INSERT
+				(
+					   e.APPL_ID
+					 , e.LICE_NAME
+					 , e.LICE_ORG_NAME 
+					 , e.LICE_DATE 
+					 , e.NOTE 
+				)
+				VALUES
+				(
+					   eq.APPL_ID
+					 , eq.LICE_NAME
+					 , eq.LICE_ORG_NAME
+					 , eq.LICE_DATE 
+					 , eq.NOTE 
+				) 
+	</update>
+	
+	<update id="saveAnno" parameterType="hashmap">
+		MERGE INTO TSTF830 T
+			USING	(
+						SELECT
+							   TRIM( #{enterCd} ) AS ENTER_CD
+							 , TRIM( #{recSeq} ) AS REC_SEQ
+							 , TRIM( #{recNm} ) AS REC_NM
+							 , SYSDATE AS CHKDATE
+							 , TRIM( #{sabun} ) AS CHKID
+						  FROM DUAL
+					) S
+			ON ( T.ENTER_CD	= S.ENTER_CD AND T.REC_SEQ = S.REC_SEQ)
+			WHEN MATCHED THEN
+				UPDATE SET
+							T.REC_NM  = S.REC_NM
+							, T.CHKDATE = S.CHKDATE
+							, T.CHKID	= S.CHKID
+			WHEN NOT MATCHED THEN
+				INSERT
+				(
+					  T.ENTER_CD
+					, T.REC_SEQ
+					, T.REC_NM
+					, T.CHKDATE
+					, T.CHKID
+				)
+				VALUES
+				(
+					  S.ENTER_CD
+					, S.REC_SEQ
+					, S.REC_NM
+					, S.CHKDATE
+					, S.CHKID
+				)
+	</update>
+	<update id="deleteAnno" parameterType="hashmap">
+		DELETE FROM TSTF830 WHERE ENTER_CD = #{enterCd} AND REC_SEQ = #{recSeq}
+	</update>
+	<update id="saveBasic" parameterType="hashmap">
+		MERGE INTO TSTF510 T
+					USING	(
+								SELECT
+									   TRIM( #{enterCd} ) AS ENTER_CD
+									 , TRIM( #{applId} ) AS APPL_ID
+									 , TRIM( #{recSeq} ) AS REC_SEQ
+									 , TRIM( #{name} ) AS NAME
+									 , TRIM( #{ename} ) AS ENAME
+									 , TRIM( #{birthYmd} ) AS BIRTH_YMD
+									 , TRIM( #{mailAddr} ) AS MAIL_ADDR
+									 , SYSDATE AS CHKDATE
+									 , TRIM( #{sabun} ) AS CHKID
+								  FROM DUAL
+							) S
+					ON ( T.ENTER_CD	= S.ENTER_CD AND T.APPL_ID = S.APPL_ID)
+					WHEN MATCHED THEN
+						UPDATE SET
+									  T.NAME  = S.NAME
+									, T.ENAME  = S.ENAME
+									, T.BIRTH_YMD = S.BIRTH_YMD
+									, T.MAIL_ADDR  = S.MAIL_ADDR
+									, T.CHKDATE = S.CHKDATE
+									, T.CHKID	= S.CHKID
+					WHEN NOT MATCHED THEN
+						INSERT
+						(
+							  T.ENTER_CD
+							, T.APPL_ID
+							, T.REC_SEQ
+							, T.NAME
+							, T.ENAME
+							, T.BIRTH_YMD
+							, T.MAIL_ADDR
+							, T.CHKDATE
+							, T.CHKID
+						)
+						VALUES
+						(
+							  S.ENTER_CD
+							, S.APPL_ID
+							, S.REC_SEQ
+							, S.NAME
+							, S.ENAME
+							, S.BIRTH_YMD
+							, S.MAIL_ADDR
+							, S.CHKDATE
+							, S.CHKID
+						)
+	</update>
+	<update id="deleteBasic" parameterType="hashmap">
+		DELETE
+		  FROM TSTF510 A
+		 WHERE A.ENTER_CD = TRIM(#{enterCd})
+		   AND EXISTS(SELECT APPL_ID
+		   			    FROM TSTF830
+		   			   WHERE ENTER_CD = A.ENTER_CD
+		   			     AND REC_SEQ = TRIM(#{recSeq}))
+	</update>
+	<update id="saveContact" parameterType="hashmap">
+		MERGE INTO TSTF506 T
+					USING	(
+								SELECT A.ENTER_CD, A.APPL_ID, A.CONT_TYPE, A.CONT_ADDRESS, A.CHKDATE, A.CHKID
+								  FROM (
+									SELECT
+										   TRIM( #{enterCd} ) AS ENTER_CD
+										 , TRIM( #{applId} ) AS APPL_ID
+										 , 'HP' AS CONT_TYPE
+										 , TRIM( #{mobileNo} ) AS CONT_ADDRESS
+										 , SYSDATE AS CHKDATE
+										 , TRIM( #{sabun} ) AS CHKID
+									  FROM DUAL
+									UNION ALL
+									SELECT
+										   TRIM( #{enterCd} ) AS ENTER_CD
+										 , TRIM( #{applId} ) AS APPL_ID
+										 , 'HT' AS CONT_TYPE
+										 , TRIM( #{telNo} ) AS CONT_ADDRESS
+										 , SYSDATE AS CHKDATE
+										 , TRIM( #{sabun} ) AS CHKID
+									  FROM DUAL
+								  ) A
+								 WHERE A.CONT_ADDRESS IS NOT NULL
+							) S
+					ON ( T.ENTER_CD	= S.ENTER_CD AND T.APPL_ID = S.APPL_ID AND T.CONT_TYPE = S.CONT_TYPE)
+					WHEN MATCHED THEN
+						UPDATE SET
+									  T.CONT_ADDRESS  = S.CONT_ADDRESS
+									, T.CHKDATE = S.CHKDATE
+									, T.CHKID	= S.CHKID
+					WHEN NOT MATCHED THEN
+						INSERT
+						(
+							  T.ENTER_CD
+							, T.APPL_ID
+							, T.CONT_TYPE
+							, T.CONT_ADDRESS
+							, T.CHKDATE
+							, T.CHKID
+						)
+						VALUES
+						(
+							  S.ENTER_CD
+							, S.APPL_ID
+							, S.CONT_TYPE
+							, S.CONT_ADDRESS
+							, S.CHKDATE
+							, S.CHKID
+						)
+	</update>
+	<update id="deleteContact" parameterType="hashmap">
+		DELETE
+		  FROM TSTF506 A
+		 WHERE A.ENTER_CD = TRIM(#{enterCd})
+		   AND EXISTS(SELECT APPL_ID
+		   			    FROM TSTF830
+		   			   WHERE ENTER_CD = A.ENTER_CD
+		   			     AND REC_SEQ = TRIM(#{recSeq}))
+	</update>
+	<update id="saveHighSchool" parameterType="hashmap">
+		MERGE INTO TSTF501 T
+					USING	(
+								SELECT
+									   TRIM( #{enterCd} ) AS ENTER_CD
+									 , TRIM( #{applId} ) AS APPL_ID
+									 , (SELECT TO_NUMBER(NVL(MAX(SEQ),0))+1 FROM TSTF501 WHERE ENTER_CD = TRIM( #{enterCd} ) AND APPL_ID = TRIM( #{applId} )) AS SEQ
+									 , TRIM( #{acaSYm} ) AS ACA_S_YM
+									 , TRIM( #{acaEYm} ) AS ACA_E_YM
+									 , TRIM( '300' ) AS ACA_CD
+									 , TRIM( #{acaSchNm} ) AS ACA_SCH_NM
+									 , TRIM( #{acaPlaceNm} ) AS ACA_PLACE_NM
+									 , DECODE(TRIM( #{acaType} ), 'true', 'Y', 'N') AS ACA_TYPE
+									 , DECODE(TRIM( #{acaYn} ), '졸업', '10', '수료', '30','중퇴', '20', '') AS ACA_YN
+									 , 'N' AS ENTRY_TYPE
+									 , SYSDATE AS CHKDATE
+									 , TRIM( #{sabun} ) AS CHKID
+								  FROM DUAL
+							) S
+					ON ( T.ENTER_CD	= S.ENTER_CD AND T.APPL_ID = S.APPL_ID AND T.SEQ = S.SEQ)
+					WHEN MATCHED THEN
+						UPDATE SET
+									  T.ACA_S_YM = S.ACA_S_YM
+									, T.ACA_E_YM = S.ACA_E_YM
+									, T.ACA_CD = S.ACA_CD
+									, T.ACA_SCH_NM = S.ACA_SCH_NM
+									, T.ACA_PLACE_NM = S.ACA_PLACE_NM
+									, T.ACA_TYPE = S.ACA_TYPE
+									, T.ACA_YN = S.ACA_YN
+									, T.ENTRY_TYPE = S.ENTRY_TYPE
+									, T.CHKDATE = SYSDATE
+									, T.CHKID = #{sabun}
+					WHEN NOT MATCHED THEN
+						INSERT
+						(
+							  T.ENTER_CD
+							, T.APPL_ID
+							, T.SEQ
+							, T.ACA_S_YM
+							, T.ACA_E_YM
+							, T.ACA_CD
+							, T.ACA_SCH_NM
+							, T.ACA_PLACE_NM
+							, T.ACA_TYPE
+							, T.ACA_YN
+							, T.ENTRY_TYPE
+							, T.CHKDATE
+							, T.CHKID
+						)
+						VALUES
+						(
+							  S.ENTER_CD
+							, S.APPL_ID
+							, S.SEQ
+							, S.ACA_S_YM
+							, S.ACA_E_YM
+							, S.ACA_CD
+							, S.ACA_SCH_NM
+							, S.ACA_PLACE_NM
+							, S.ACA_TYPE
+							, S.ACA_YN
+							, S.ENTRY_TYPE
+							, S.CHKDATE
+							, S.CHKID
+						)
+	</update>
+	<update id="saveUniversitySchool" parameterType="hashmap">
+		MERGE INTO TSTF501 T
+					USING	(
+								SELECT
+									   TRIM( #{enterCd} ) AS ENTER_CD
+									 , TRIM( #{applId} ) AS APPL_ID
+									 , (SELECT TO_NUMBER(NVL(MAX(SEQ),0))+1 FROM TSTF501 WHERE ENTER_CD = TRIM( #{enterCd} ) AND APPL_ID = TRIM( #{applId} )) AS SEQ
+									 , TRIM( #{acaSYm} ) AS ACA_S_YM
+									 , TRIM( #{acaEYm} ) AS ACA_E_YM
+									 , DECODE(TRIM( #{acaDegCd} ), '전문학사' ,'400', '학사', '500', '석사', '600', '박사', '600', '') AS ACA_CD
+									 , DECODE(TRIM( #{acaDegCd} ), '전문학사' ,'100', '학사', '100', '석사', '200', '박사', '300', '') AS ACA_DEG_CD
+									 , TRIM( #{acaSchNm} ) AS ACA_SCH_NM
+									 , TRIM( #{acaPlaceNm} ) AS ACA_PLACE_NM
+									 , DECODE(TRIM( #{acaType} ), 'true', 'Y', 'N') AS ACA_TYPE
+									 , DECODE(TRIM( #{acaYn} ), '졸업', '10', '수료', '30','중퇴', '20', '') AS ACA_YN
+									 , DECODE(TRIM( #{entryType} ), '편입', 'Y', 'N') AS ENTRY_TYPE
+									 , TRIM( #{acamajNm} ) AS ACAMAJ_NM
+									 , TRIM( #{acaPointManjum} ) AS ACA_POINT_MANJUM
+									 , TRIM( #{acaPoint} ) AS ACA_POINT
+									 , DECODE(TRIM( #{eType} ), 'true', 'Y', 'N') AS E_TYPE
+									 , SYSDATE AS CHKDATE
+									 , TRIM( #{sabun} ) AS CHKID
+								  FROM DUAL
+							) S
+					ON ( T.ENTER_CD	= S.ENTER_CD AND T.APPL_ID = S.APPL_ID AND T.SEQ = S.SEQ)
+					WHEN MATCHED THEN
+						UPDATE SET
+									  T.ACA_S_YM = S.ACA_S_YM
+									, T.ACA_E_YM = S.ACA_E_YM
+									, T.ACA_CD = S.ACA_CD
+									, T.ACA_DEG_CD = S.ACA_DEG_CD
+									, T.ACA_SCH_NM = S.ACA_SCH_NM
+									, T.ACA_PLACE_NM = S.ACA_PLACE_NM
+									, T.ACA_TYPE = S.ACA_TYPE
+									, T.ACA_YN = S.ACA_YN
+									, T.ENTRY_TYPE = S.ENTRY_TYPE
+									, T.ACAMAJ_NM = S.ACAMAJ_NM
+									, T.ACA_POINT_MANJUM = S.ACA_POINT_MANJUM
+									, T.ACA_POINT = S.ACA_POINT
+									, T.E_TYPE = S.E_TYPE
+									, T.CHKDATE = SYSDATE
+									, T.CHKID = #{sabun}
+					WHEN NOT MATCHED THEN
+						INSERT
+						(
+							  T.ENTER_CD
+							, T.APPL_ID
+							, T.SEQ
+							, T.ACA_S_YM
+							, T.ACA_E_YM
+							, T.ACA_CD
+							, T.ACA_DEG_CD
+							, T.ACA_SCH_NM
+							, T.ACA_PLACE_NM
+							, T.ACA_TYPE
+							, T.ACA_YN
+							, T.ENTRY_TYPE
+							, T.ACAMAJ_NM
+							, T.ACA_POINT_MANJUM
+							, T.ACA_POINT
+							, T.E_TYPE
+							, T.CHKDATE
+							, T.CHKID
+						)
+						VALUES
+						(
+							  S.ENTER_CD
+							, S.APPL_ID
+							, S.SEQ
+							, S.ACA_S_YM
+							, S.ACA_E_YM
+							, S.ACA_CD
+							, S.ACA_DEG_CD
+							, S.ACA_SCH_NM
+							, S.ACA_PLACE_NM
+							, S.ACA_TYPE
+							, S.ACA_YN
+							, S.ENTRY_TYPE
+							, S.ACAMAJ_NM
+							, S.ACA_POINT_MANJUM
+							, S.ACA_POINT
+							, S.E_TYPE
+							, S.CHKDATE
+							, S.CHKID
+						)
+	</update>
+	<update id="deleteSchool" parameterType="hashmap">
+		DELETE
+		  FROM TSTF501 A
+		 WHERE A.ENTER_CD = TRIM(#{enterCd})
+		   AND EXISTS(SELECT APPL_ID
+		   			    FROM TSTF830
+		   			   WHERE ENTER_CD = A.ENTER_CD
+		   			     AND REC_SEQ = TRIM(#{recSeq}))
+	</update>
+	<update id="saveCareer" parameterType="hashmap">
+		MERGE INTO TSTF503 T
+					USING	(
+								SELECT
+									   TRIM( #{enterCd} ) AS ENTER_CD
+									 , TRIM( #{applId} ) AS APPL_ID
+									 , (SELECT TO_NUMBER(NVL(MAX(SEQ),0))+1 FROM TSTF501 WHERE ENTER_CD = TRIM( #{enterCd} ) AND APPL_ID = TRIM( #{applId} )) AS SEQ
+									 , TRIM( #{cmpNm} ) AS CMP_NM
+									 , TRIM( #{sdate} ) AS SDATE
+									 , TRIM( #{edate} ) AS EDATE
+									 , TRIM( #{jobNm} ) AS JOB_NM
+									 , SYSDATE AS CHKDATE
+									 , TRIM( #{sabun} ) AS CHKID
+								  FROM DUAL
+							) S
+					ON ( T.ENTER_CD	= S.ENTER_CD AND T.APPL_ID = S.APPL_ID AND T.SEQ = S.SEQ)
+					WHEN MATCHED THEN
+						UPDATE SET
+									  T.CMP_NM  = S.CMP_NM
+									, T.SDATE = S.SDATE
+									, T.EDATE  = S.EDATE
+									, T.JOB_NM  = S.JOB_NM
+									, T.CHKDATE = S.CHKDATE
+									, T.CHKID	= S.CHKID
+					WHEN NOT MATCHED THEN
+						INSERT
+						(
+							  T.ENTER_CD
+							, T.APPL_ID
+							, T.SEQ
+							, T.CMP_NM
+							, T.SDATE
+							, T.EDATE
+							, T.JOB_NM
+							, T.CHKDATE
+							, T.CHKID
+						)
+						VALUES
+						(
+							  S.ENTER_CD
+							, S.APPL_ID
+							, S.SEQ
+							, S.CMP_NM
+							, S.SDATE
+							, S.EDATE
+							, S.JOB_NM
+							, S.CHKDATE
+							, S.CHKID
+						)
+	</update>
+	<update id="deleteCareer" parameterType="hashmap">
+		DELETE
+		  FROM TSTF503 A
+		 WHERE A.ENTER_CD = TRIM(#{enterCd})
+		   AND EXISTS(SELECT APPL_ID
+		   			    FROM TSTF830
+		   			   WHERE ENTER_CD = A.ENTER_CD
+		   			     AND REC_SEQ = TRIM(#{recSeq}))
+	</update>
+	
+	<update id="saveMilitary" parameterType="hashmap">
+		MERGE INTO TSTF502 T
+					USING	(
+								SELECT
+									   TRIM( #{enterCd} ) ENTER_CD
+									 , TRIM( #{applId} ) APPL_ID
+									 , DECODE(TRIM( #{transferCd} ), '필' ,'3', '미필', '6', '면제', '2', '') AS TRANSFER_CD
+									 , (SELECT CODE FROM TSYS005 WHERE ENTER_CD = TRIM( #{enterCd} ) AND GRCODE_CD = 'H20220' AND CODE_NM = TRIM(#{armyGradeCd})) AS ARMY_GRADE_CD
+									 , TRIM( #{armyMajor} ) ARMY_MAJOR
+									 , DECODE(TRIM( #{dischargeCd} ), '만기전역' ,'1', '') AS DISCHARGE_CD
+									 , (SELECT CODE FROM TSYS005 WHERE ENTER_CD = TRIM( #{enterCd} ) AND GRCODE_CD = 'H20230' AND CODE_NM = TRIM( #{armyCd} )) AS ARMY_CD
+									 , TRIM( #{armySYmd} ) ARMY_S_YMD
+									 , TRIM( #{armyEYmd} ) ARMY_E_YMD
+									 , SYSDATE AS CHKDATE
+									 , TRIM( #{sabun} ) AS CHKID
+								  FROM DUAL
+							) S
+					ON ( T.ENTER_CD	= S.ENTER_CD AND T.APPL_ID = S.APPL_ID)
+					WHEN MATCHED THEN
+						UPDATE SET
+									  T.TRANSFER_CD  = S.TRANSFER_CD
+									, T.ARMY_GRADE_CD  = S.ARMY_GRADE_CD
+									, T.ARMY_MAJOR  = S.ARMY_MAJOR
+									, T.DISCHARGE_CD  = S.DISCHARGE_CD
+									, T.ARMY_CD  = S.ARMY_CD
+									, T.ARMY_S_YMD  = S.ARMY_S_YMD
+									, T.ARMY_E_YMD  = S.ARMY_E_YMD
+									, T.CHKDATE = S.CHKDATE
+									, T.CHKID	= S.CHKID
+					WHEN NOT MATCHED THEN
+						INSERT
+						(
+							  T.ENTER_CD
+							, T.APPL_ID
+							, T.TRANSFER_CD
+							, T.ARMY_MAJOR
+							, T.DISCHARGE_CD
+							, T.ARMY_CD
+							, T.ARMY_S_YMD
+							, T.ARMY_E_YMD
+							, T.CHKDATE
+							, T.CHKID
+						)
+						VALUES
+						(
+							  S.ENTER_CD
+							, S.APPL_ID
+							, S.TRANSFER_CD
+							, S.ARMY_MAJOR
+							, S.DISCHARGE_CD
+							, S.ARMY_CD
+							, S.ARMY_S_YMD
+							, S.ARMY_E_YMD
+							, S.CHKDATE
+							, S.CHKID
+						)
+	</update>
+	<update id="deleteMilitary" parameterType="hashmap">
+		DELETE
+		  FROM TSTF502 A
+		 WHERE A.ENTER_CD = TRIM(#{enterCd})
+		   AND EXISTS(SELECT APPL_ID
+		   			    FROM TSTF830
+		   			   WHERE ENTER_CD = A.ENTER_CD
+		   			     AND REC_SEQ = TRIM(#{recSeq}))
+	</update> 
+	
+</mapper>

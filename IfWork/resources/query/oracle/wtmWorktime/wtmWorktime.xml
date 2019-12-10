@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmWorktimeMapper">
+	<!--근태 이상자 조회 -->
+  	<select id="getWorktimeCheckList" parameterType="map" resultType="wtmGeneral">
+  		SELECT T.TENANT_ID 
+		     , T.ENTER_CD 
+		     , T.ORG_NM 
+		     , T.SABUN 
+		     , T.EMP_NM 
+		     , T.WORK_TYPE_CD 
+		     , T.FLEXIBLE_NM 
+		     , T.FLEXIBLE_SDATE 
+		     , T.FLEXIBLE_EDATE 
+		     , T.WEEK_SDATE 
+		     , T.WEEK_EDATE 
+		     , FLOOR(T.STD_WORK_MINUTE/60) || ':' || LPAD(MOD(T.STD_WORK_MINUTE,60),2,'0') AS STD_WORK_MINUTE
+		     , FLOOR(T.STD_OT_MINUTE/60) || ':' || LPAD(MOD(T.STD_OT_MINUTE,60),2,'0') AS STD_OT_MINUTE
+		     , FLOOR((T.STD_WORK_MINUTE+T.STD_OT_MINUTE)/60) || ':' || LPAD(MOD((T.STD_WORK_MINUTE+T.STD_OT_MINUTE),60),2,'0') AS STD_MINUTE
+		     , FLOOR(T.APPR_WORK_MINUTE/60) || ':' || LPAD(MOD(T.APPR_WORK_MINUTE,60),2,'0') AS APPR_WORK_MINUTE
+		     , FLOOR(T.APPR_OT_MINUTE/60) || ':' || LPAD(MOD(T.APPR_OT_MINUTE,60),2,'0') AS APPR_OT_MINUTE
+		     , FLOOR((T.APPR_WORK_MINUTE+T.APPR_OT_MINUTE)/60) || ':' || LPAD(MOD((T.APPR_WORK_MINUTE+T.APPR_OT_MINUTE),60),2,'0') AS APPR_MINUTE
+			<choose>
+			    <when test="searchValue=='ALL'">
+	     		, T.APPR_WORK_MINUTE+T.APPR_OT_MINUTE - T.STD_WORK_MINUTE+T.STD_OT_MINUTE AS DIFF_MINUTE
+	     		</when>
+	     		<when test="searchValue=='BASE'">
+	     		, T.APPR_WORK_MINUTE - T.STD_WORK_MINUTE AS DIFF_MINUTE
+	     		</when>
+	     		<when test="searchValue=='OT'">
+	     		, T.APPR_OT_MINUTE - STD_OT_MINUTE AS DIFF_MINUTE
+	     		</when>
+	     	</choose>
+	     	, 0 AS WORKTIME_DETAIL
+	     	, T.NOTE
+  		  FROM (
+	  		SELECT T.TENANT_ID
+			     , T.ENTER_CD
+			     , F_WTM_GET_EMP_ORG_NM(T.TENANT_ID, T.ENTER_CD, T.SABUN, F_WTM_DATE_FORMAT(T.FLEXIBLE_SDATE, 'YMD')) AS ORG_NM
+			     , T.SABUN
+			     , F_WTM_GET_EMP_NM(T.TENANT_ID, T.ENTER_CD, T.SABUN, F_WTM_DATE_FORMAT(T.FLEXIBLE_SDATE, 'YMD')) AS EMP_NM
+			     , T.WORK_TYPE_CD 
+			     , F_WTM_GET_FLEXIBLE_NM(T.TENANT_ID, T.ENTER_CD, T.SABUN, F_WTM_DATE_FORMAT(T.FLEXIBLE_SDATE, 'YMD')) AS FLEXIBLE_NM
+			     , T.FLEXIBLE_SDATE
+			     , T.FLEXIBLE_EDATE
+			     , CASE WHEN #{searchType}='TERM' THEN T.FLEXIBLE_SDATE ELSE T.WEEK_SDATE END AS WEEK_SDATE
+			     , CASE WHEN #{searchType}='TERM' THEN T.FLEXIBLE_EDATE ELSE T.WEEK_EDATE END AS WEEK_EDATE
+			     , CASE WHEN T.WORK_TYPE_CD IN ('SELE_F','SELE_C') THEN E.WORK_MINUTE
+			     			WHEN T.WORK_TYPE_CD = 'ELAS' THEN SUM(T.APPR_WORK_MINUTE)
+				  			ELSE 40 * 60 END AS STD_WORK_MINUTE
+			     , CASE WHEN T.WORK_TYPE_CD IN ('SELE_F','SELE_C') THEN E.OT_MINUTE
+				  			ELSE 12 * 60 END AS STD_OT_MINUTE
+			     , SUM(APPR_WORK_MINUTE) AS APPR_WORK_MINUTE
+			     , SUM(APPR_OT_MINUTE) AS APPR_OT_MINUTE
+			     , T.NOTE
+			  FROM WTM_WORK_TERM_TIME T
+			  JOIN WTM_FLEXIBLE_EMP E
+			    ON T.WORK_TYPE_CD = E.WORK_TYPE_CD
+			   AND T.TENANT_ID = E.TENANT_ID
+			   AND T.ENTER_CD = E.ENTER_CD
+			   AND T.SABUN = E.SABUN
+			   AND T.FLEXIBLE_SDATE = E.SYMD
+			   AND T.FLEXIBLE_EDATE = E.EYMD
+			  JOIN WTM_EMP_HIS H
+			    ON E.TENANT_ID = H.TENANT_ID
+			   AND E.ENTER_CD = H.ENTER_CD
+			   AND E.SABUN = H.SABUN
+			   AND E.SYMD BETWEEN H.SYMD AND H.EYMD
+			 WHERE T.TENANT_ID = #{tenantId}
+			   AND T.ENTER_CD = #{enterCd}
+			   AND (#{searchType}='TERM' AND T.WORK_TYPE_CD IN ('SELE_F','SELE_C') AND #{sYmd} BETWEEN T.FLEXIBLE_SDATE AND T.FLEXIBLE_EDATE
+					    OR #{searchType}='WEEK' AND T.WORK_TYPE_CD NOT IN ('SELE_F','SELE_C') AND #{sYmd} BETWEEN T.FLEXIBLE_SDATE AND T.FLEXIBLE_EDATE 
+						 AND #{sYmd} BETWEEN T.WEEK_SDATE AND T.WEEK_EDATE )
+			   <if test="orgList!=null">
+			   AND H.ORG_CD IN (NULL, 
+		       <foreach collection="orgList" item="org" separator=", ">
+				   #{org}
+			   </foreach>
+			   )
+			   </if>
+			GROUP BY T.TENANT_ID, T.ENTER_CD, T.SABUN, T.WORK_TYPE_CD, T.FLEXIBLE_SDATE, T.FLEXIBLE_EDATE, T.WEEK_SDATE, T.WEEK_EDATE, E.WORK_MINUTE, E.OT_MINUTE, T.NOTE
+		) T
+		WHERE 1=1
+		  AND (#{searchKeyword, jdbcType=VARCHAR}='' OR #{searchKeyword, jdbcType=VARCHAR} IS NULL OR #{searchKeyword, jdbcType=VARCHAR}=T.SABUN OR T.EMP_NM LIKE CONCAT(#{searchKeyword, jdbcType=VARCHAR}, '%'))
+		<if test="searchValue!='' and searchMinute!='' and searchCondition!=''">
+			<choose>
+			    <when test="searchValue=='ALL'">
+			   		<if test="searchCondition=='more'">
+			   			and APPR_WORK_MINUTE+APPR_OT_MINUTE &gt;= F_WTM_TO_NUMBER(#{searchMinute},'Y')* 60
+			   		</if>
+			   		<if test="searchCondition=='under'">
+			   			and APPR_WORK_MINUTE+APPR_OT_MINUTE &lt; F_WTM_TO_NUMBER(#{searchMinute},'Y')* 60
+			   		</if>
+			   	</when>
+			   	<when test="searchValue=='BASE'">
+			   		<if test="searchCondition=='more'">
+			   			and APPR_WORK_MINUTE &gt;= F_WTM_TO_NUMBER(#{searchMinute},'Y')* 60
+			   		</if>
+			   		<if test="searchCondition=='under'">
+			   			and APPR_WORK_MINUTE &lt; F_WTM_TO_NUMBER(#{searchMinute},'Y')* 60
+			   		</if>
+			   	</when>
+			   	<when test="searchValue=='OT'">
+			   		<if test="searchCondition=='more'">
+			   			and APPR_OT_MINUTE &gt;= F_WTM_TO_NUMBER(#{searchMinute},'Y')* 60
+			   		</if>
+			   		<if test="searchCondition=='under'">
+			   			and APPR_OT_MINUTE &lt; F_WTM_TO_NUMBER(#{searchMinute},'Y')* 60
+			   		</if>
+			   	</when>
+			</choose>
+		</if>
+		order by FLEXIBLE_SDATE desc
+  	</select>
+  	
+  	<select id="getWorktimeDetail" parameterType="map" resultType="wtmGeneral">
+  		SELECT C.YMD 
+		     , F_WTM_GET_FLEXIBLE_NM(C.TENANT_ID, C.ENTER_CD, C.SABUN, C.YMD) AS FLEXIBLE_NM
+		     , F_WTM_DATE_FORMAT(C.ENTRY_SDATE, 'YMDHI') AS ENTRY_SDATE
+			  , F_WTM_DATE_FORMAT(C.ENTRY_EDATE, 'YMDHI') AS ENTRY_EDATE 
+			  , R.TIME_TYPE_CD
+			  , R.TAA_CD
+			  , F_WTM_DATE_FORMAT(R.PLAN_SDATE, 'YMDHI') AS PLAN_SDATE
+			  , F_WTM_DATE_FORMAT(R.PLAN_EDATE, 'YMDHI') AS PLAN_EDATE
+			  , FLOOR(R.PLAN_MINUTE/60) || ':' || LPAD(MOD(R.PLAN_MINUTE,60),2,'0') AS PLAN_MINUTE
+			  , F_WTM_DATE_FORMAT(R.APPR_SDATE, 'YMDHI') AS APPR_SDATE
+			  , F_WTM_DATE_FORMAT(R.APPR_EDATE, 'YMDHI') AS APPR_EDATE
+			  , FLOOR(R.APPR_MINUTE/60) || ':' || LPAD(MOD(R.APPR_MINUTE,60),2,'0') AS APPR_MINUTE
+			FROM WTM_WORK_CALENDAR C
+			LEFT OUTER JOIN WTM_WORK_DAY_RESULT R
+			  ON C.TENANT_ID = R.TENANT_ID
+			 AND C.ENTER_CD = R.ENTER_CD 
+			 AND C.SABUN = R.SABUN 
+			 AND C.YMD = R.YMD
+			WHERE C.YMD BETWEEN #{sYmd} AND #{eYmd}
+			  AND C.YMD = R.YMD
+			  AND C.TENANT_ID = #{tenantId}
+			  AND C.ENTER_CD = #{enterCd}
+			  AND C.SABUN = #{sabun}
+		ORDER BY C.YMD desc, APPR_SDATE, PLAN_SDATE
+  	</select>
+  	
+  	<select id="getEntryCheckList" parameterType="map" resultType="wtmGeneral">
+  		SELECT C.TENANT_ID 
+			 , C.ENTER_CD 
+			 , C.SABUN 
+			 , F_WTM_GET_EMP_ORG_NM(C.TENANT_ID, C.ENTER_CD, C.SABUN, C.YMD) AS ORG_NM
+			 , F_WTM_GET_EMP_NM(C.TENANT_ID, C.ENTER_CD, C.SABUN, C.YMD) AS EMP_NM
+			 , C.YMD 
+			 , F_WTM_GET_FLEXIBLE_NM(C.TENANT_ID, C.ENTER_CD, C.SABUN, C.YMD) AS FLEXIBLE_NM
+			 , C.TIME_CD_MGR_ID 
+			 , F_WTM_DATE_FORMAT(C.ENTRY_SDATE, 'YMDHI') as ENTRY_SDATE
+			 , C.ENTRY_STYPE_CD 
+			 , F_WTM_DATE_FORMAT(C.ENTRY_EDATE, 'YMDHI') as ENTRY_EDATE
+			 , C.ENTRY_ETYPE_CD 
+			 , C.WORK_CLOSE_YN 
+			 , C.HOLIDAY_YN 
+			 , C.NOTE
+		FROM WTM_WORK_CALENDAR C
+		JOIN WTM_EMP_HIS H
+		  ON C.TENANT_ID = H.TENANT_ID
+		 AND C.ENTER_CD = H.ENTER_CD
+		 AND C.SABUN = H.SABUN
+		 AND C.YMD BETWEEN H.SYMD AND H.EYMD
+		JOIN ( SELECT TENANT_ID
+					     , ENTER_CD
+					     , SABUN
+					     , YMD
+					     , MIN(PLAN_SDATE) AS PLAN_SDATE
+					     , MAX(PLAN_EDATE) AS PLAN_EDATE
+					  FROM WTM_WORK_DAY_RESULT
+					 WHERE TENANT_ID = #{tenantId}
+					   AND ENTER_CD = #{enterCd}
+					   AND TIME_TYPE_CD IN ('BASE', 'OT')
+					   AND YMD BETWEEN #{sYmd} AND #{eYmd}
+					   AND (APPR_SDATE IS NULL OR APPR_EDATE IS NULL)
+					GROUP BY TENANT_ID, ENTER_CD, SABUN, YMD) R
+		  ON C.TENANT_ID = R.TENANT_ID
+		 AND C.ENTER_CD = R.ENTER_CD 
+		 AND C.SABUN = R.SABUN 
+		 AND C.YMD = R.YMD
+		WHERE C.YMD BETWEEN #{sYmd} AND #{eYmd}
+		  AND C.TENANT_ID = #{tenantId}
+		  AND C.ENTER_CD = #{enterCd}
+		  AND ((R.PLAN_SDATE IS NOT NULL AND C.ENTRY_SDATE IS NULL) OR (R.PLAN_EDATE IS NOT NULL AND C.ENTRY_EDATE IS NULL))
+		  <if test="orgList!=null">
+		   AND H.ORG_CD IN (NULL, 
+	       <foreach collection="orgList" item="org" separator=", ">
+			   #{org}
+		   </foreach>
+		   )
+		   </if>
+	ORDER BY ENTRY_SDATE desc
+  	</select>
+  	
+  	<select id="getEntryDiffList" parameterType="map" resultType="wtmGeneral">
+  		SELECT TENANT_ID
+		     , ENTER_CD
+		     , SABUN
+		     , ORG_NM
+		     , EMP_NM
+		     , YMD
+		     , FLEXIBLE_NM
+		     , TIME_CD_MGR_ID
+		     , F_WTM_DATE_FORMAT(PLAN_SDATE, 'YMDHI') AS PLAN_SDATE
+		     , F_WTM_DATE_FORMAT(ENTRY_SDATE, 'YMDHI') AS ENTRY_SDATE
+		     , DIFF_SMINUTE
+		     , F_WTM_DATE_FORMAT(PLAN_EDATE, 'YMDHI') AS PLAN_EDATE
+		     , F_WTM_DATE_FORMAT(ENTRY_EDATE, 'YMDHI') AS ENTRY_EDATE
+		     , DIFF_EMINUTE
+		     , NOTE
+		  FROM ( SELECT C.TENANT_ID 
+							 , C.ENTER_CD
+							 , C.SABUN
+							 , F_WTM_GET_EMP_ORG_NM(C.TENANT_ID, C.ENTER_CD, C.SABUN, C.YMD) AS ORG_NM
+							 , F_WTM_GET_EMP_NM(C.TENANT_ID, C.ENTER_CD, C.SABUN, C.YMD) AS EMP_NM
+							 , C.YMD 
+							 , F_WTM_GET_FLEXIBLE_NM(C.TENANT_ID, C.ENTER_CD, C.SABUN, C.YMD) AS FLEXIBLE_NM
+							 , C.TIME_CD_MGR_ID 
+							 , MIN(R.PLAN_SDATE) as PLAN_SDATE
+							 , C.ENTRY_SDATE 
+							 , F_WTM_TIMESTAMPDIFF('MINUTE', MIN(R.PLAN_SDATE), C.ENTRY_SDATE) AS DIFF_SMINUTE
+							 , F_WTM_TIMESTAMPDIFF('SECOND', MIN(R.PLAN_SDATE), C.ENTRY_SDATE) AS DIFF_SSECOND
+							 , MAX(R.PLAN_EDATE) as PLAN_EDATE
+							 , C.ENTRY_EDATE
+							 , F_WTM_TIMESTAMPDIFF('MINUTE', MAX(R.PLAN_EDATE), C.ENTRY_EDATE) AS DIFF_EMINUTE
+							 , F_WTM_TIMESTAMPDIFF('SECOND', MAX(R.PLAN_EDATE), C.ENTRY_EDATE) AS DIFF_ESECOND
+							 , C.NOTE
+						FROM WTM_WORK_CALENDAR C
+						JOIN WTM_EMP_HIS H
+						  ON C.TENANT_ID = H.TENANT_ID
+						 AND C.ENTER_CD = H.ENTER_CD
+						 AND C.SABUN = H.SABUN
+						 AND C.YMD BETWEEN H.SYMD AND H.EYMD
+						JOIN WTM_WORK_DAY_RESULT R
+						  ON C.TENANT_ID = R.TENANT_ID
+						 AND C.ENTER_CD = R.ENTER_CD 
+						 AND C.SABUN = R.SABUN 
+						 AND C.YMD = R.YMD
+						WHERE C.YMD BETWEEN #{sYmd} AND #{eYmd}
+						  AND C.TENANT_ID = #{tenantId}
+						  AND C.ENTER_CD = #{enterCd}
+						  AND R.TIME_TYPE_CD IN ('BASE', 'OT')
+						  <if test="orgList!=null">
+						   AND H.ORG_CD IN (NULL, 
+					       <foreach collection="orgList" item="org" separator=", ">
+							   #{org}
+						   </foreach>
+						   )
+						   </if>
+					GROUP BY C.TENANT_ID, C.ENTER_CD, C.SABUN, C.YMD, C.TIME_CD_MGR_ID, C.ENTRY_SDATE, C.ENTRY_EDATE, C.NOTE
+		  ) T
+		 WHERE 1=1
+		<if test="searchValue!='' and searchMinute!='' and searchCondition!=''">
+			<choose>
+			    <when test="searchValue=='ALL'">
+			   		<if test="searchCondition=='more'">
+			   		    and (PLAN_SDATE IS NOT NULL and ENTRY_SDATE IS NOT NULL or PLAN_EDATE IS NOT NULL and ENTRY_EDATE IS NOT NULL)
+			   			and (DIFF_SMINUTE &gt;= F_WTM_TO_NUMBER(#{searchMinute},'Y') OR  DIFF_EMINUTE &gt;= F_WTM_TO_NUMBER(#{searchMinute},'Y'))
+			   		</if>
+			   		<if test="searchCondition=='under'">
+			   			and (PLAN_SDATE IS NULL or ENTRY_SDATE IS NULL or PLAN_EDATE IS NULL or ENTRY_EDATE IS NULL
+			   			or DIFF_SMINUTE &lt; F_WTM_TO_NUMBER(#{searchMinute},'Y') OR DIFF_EMINUTE &lt; F_WTM_TO_NUMBER(#{searchMinute},'Y'))
+			   		</if>
+			   	</when>
+			   	<when test="searchValue=='IN'">
+			   		<if test="searchCondition=='more'">
+			   		    and PLAN_SDATE IS NOT NULL and ENTRY_SDATE IS NOT NULL
+			   			and DIFF_SMINUTE &gt;= F_WTM_TO_NUMBER(#{searchMinute},'Y')
+			   		</if>
+			   		<if test="searchCondition=='under'">
+			   			and (PLAN_SDATE IS NULL or ENTRY_SDATE IS NULL or DIFF_SMINUTE &lt; F_WTM_TO_NUMBER(#{searchMinute},'Y'))
+			   		</if>
+			   	</when>
+			   	<when test="searchValue=='OUT'">
+			   		<if test="searchCondition=='more'">
+			   			and PLAN_EDATE IS NOT NULL and ENTRY_EDATE IS NOT NULL
+			   			and DIFF_EMINUTE &gt;= F_WTM_TO_NUMBER(#{searchMinute},'Y')
+			   		</if>
+			   		<if test="searchCondition=='under'">
+			   			and (PLAN_EDATE IS NULL or ENTRY_EDATE IS NULL or DIFF_EMINUTE &lt; F_WTM_TO_NUMBER(#{searchMinute},'Y'))
+			   		</if>
+			   	</when>
+			</choose>
+		</if>
+		ORDER BY YMD desc, SABUN, PLAN_SDATE
+  	</select>
+</mapper>

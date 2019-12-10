@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmOtCanApplMapper"> 
+	 <select id="otCanApplfindByApplId" parameterType="Long" resultType="wtmGeneral">
+        <![CDATA[
+			SELECT O.OT_CAN_APPL_ID 
+			     , O.APPL_ID 
+			     , O.OT_APPL_ID 
+			     , O.WORK_DAY_RESULT_ID 
+			     , O.YMD 
+			     , O.TIME_TYPE_CD 
+			     , O.PLAN_SDATE 
+			     , O.PLAN_EDATE 
+			     , O.PLAN_MINUTE
+			     , O.APPR_SDATE 
+			     , O.APPR_EDATE 
+			     , O.APPR_MINUTE
+			     , O.REASON 
+			     , A.APPL_STATUS_CD
+			  FROM WTM_APPL A
+			  JOIN WTM_OT_CAN_APPL O
+			    ON A.APPL_ID = O.APPL_ID
+			 WHERE O.APPL_ID = #{applId}    
+	        ]]>
+    </select>
+     
+    <select id="otApplAndOtCanApplfindByApplId" parameterType="Long" resultType="wtmGeneral">
+        <![CDATA[
+			SELECT A.APPL_ID 
+			     , A.APPL_CD 
+			     , A.APPL_STATUS_CD 
+			     , O.YMD 
+			     , O.HOLIDAY_YN 
+			     , O.OT_SDATE 
+			     , O.OT_EDATE 
+			     , O.OT_MINUTE 
+			     , O.REASON_CD 
+			     , F_WTM_GET_CODE_NM(A.TENANT_ID, A.ENTER_CD, 'REASON_CD', O.REASON_CD, A.APPL_YMD) AS REASON_NM
+			     , O.REASON 
+			     , O.SUB_YN
+			     , O.OT_APPL_ID 
+			     , O.OLD_OT_APPL_ID 
+			     , O.CANCEL_YN 
+			     , C.REASON 
+			  FROM WTM_OT_CAN_APPL C
+			  JOIN WTM_APPL A
+			    ON C.APPL_ID = A.APPL_ID
+			  JOIN WTM_OT_APPL O
+			    ON C.OT_APPL_ID = O.OT_APPL_ID
+			 WHERE C.APPL_ID = #{applId}    
+	        ]]>
+    </select> 
+</mapper>

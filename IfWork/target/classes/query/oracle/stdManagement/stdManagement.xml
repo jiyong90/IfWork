@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.StdManagementMapper">
+
+	<!-- 시스템기준관리 값 체크 -->
+    <select id="getKeyCheckResult" parameterType="hashmap" resultType="stdmanagement">
+        <![CDATA[
+			SELECT (SELECT (CASE WHEN STD_CD_VALUE = #{apiKey} THEN 'SUCCESS' ELSE 'FAIL' END) FROM TSYS955 WHERE ENTER_Cd = #{loginEnterCd} AND STD_CD = 'RECRUIT_APIKEY') APIKEY_RESULT
+				  ,(SELECT (CASE WHEN STD_CD_VALUE = CRYPTIT.CRYPT( #{secret} , #{loginEnterCd}) THEN 'SUCCESS' ELSE 'FAIL' END) FROM TSYS955 WHERE ENTER_CD = #{loginEnterCd} AND STD_CD = 'RECRUIT_SECRET') SECRET_RESULT
+			FROM DUAL
+        ]]>
+    </select>
+
+</mapper>

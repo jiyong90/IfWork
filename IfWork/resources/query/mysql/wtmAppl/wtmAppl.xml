@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmApplMapper">
+	<select id="getWtmApplLine" parameterType="map" resultType="wtmApplLine">
+        <![CDATA[
+			SELECT X.APPR_SEQ, E.SABUN, E.EMP_NM
+			  FROM WTM_EMP_HIS E
+			  JOIN (
+						SELECT @r AS ORG_CD
+						     , (SELECT @r := PRIOR_ORG_CD 
+							       FROM ( SELECT D.*
+												  FROM WTM_ORG_CHART C
+												  JOIN WTM_ORG_CHART_DET D
+												    ON C.ORG_CHART_ID = D.ORG_CHART_ID
+												 WHERE C.TENANT_ID = #{tenantId}
+												   AND C.ENTER_CD = #{enterCd}
+												   AND #{d} BETWEEN C.SYMD AND C.EYMD
+											) S
+									WHERE ORG_CD = @r limit 1) AS _PARENT_ID
+						     , (@L := @L + 1) AS APPR_SEQ
+						  FROM ( SELECT @r := (SELECT ORG_CD FROM WTM_EMP_HIS H WHERE H.TENANT_ID=#{tenantId} AND H.ENTER_CD=#{enterCd} AND H.SABUN=#{sabun} AND #{d} BETWEEN H.SYMD AND H.EYMD)
+						              , @L := 0) AS vars,
+						       ( SELECT D.*
+									  FROM WTM_ORG_CHART C
+									  JOIN WTM_ORG_CHART_DET D
+									    ON C.ORG_CHART_ID = D.ORG_CHART_ID
+									 WHERE C.TENANT_ID = #{tenantId}
+									   AND C.ENTER_CD = #{enterCd}
+									   AND #{d} BETWEEN C.SYMD AND C.EYMD
+								 ) org
+						 WHERE @r IS NOT NULL 
+					 ) X
+			    ON E.ORG_CD = X.ORG_CD
+			 WHERE E.ENTER_CD = #{enterCd}
+			   AND E.TENANT_ID = #{tenantId}
+			   AND E.LEADER_YN = 'Y'
+			   AND #{d} BETWEEN E.SYMD AND E.EYMD
+        ]]>
+    </select>
+    
+    <select id="getWtmApplLineByApplId" parameterType="Long" resultType="wtmApplLine">
+        <![CDATA[
+			SELECT 1 AS APPR_TYPE_CD
+			     , 0 AS APPR_SEQ
+			     , F_WTM_GET_CODE_NM(A.TENANT_ID, A.ENTER_CD, 'APPR_TYPE_CD', 1, A.APPL_YMD) AS APPR_TYPE_NM
+			     , A.APPL_SABUN AS SABUN
+			     , F_WTM_GET_EMP_NM(A.TENANT_ID, A.ENTER_CD, A.APPL_SABUN, A.APPL_YMD) AS EMP_NM
+			     , F_WTM_DATE_FORMAT(A.APPL_YMD, 'YMD') AS APPR_DATE
+			     , NULL AS APPR_STATUS_CD
+			     , NULL AS APPR_STATUS_NM
+			     , NULL AS APPR_OPINION
+			  FROM WTM_APPL A
+			 WHERE A.APPL_ID = #{applId}
+			UNION ALL
+			SELECT L.APPR_TYPE_CD
+			     , L.APPR_SEQ
+			     , F_WTM_GET_CODE_NM(A.TENANT_ID, A.ENTER_CD, 'APPR_TYPE_CD', L.APPR_TYPE_CD, A.APPL_YMD) AS APPR_TYPE_NM
+			     , L.APPR_SABUN AS SABUN
+			     , F_WTM_GET_EMP_NM(A.TENANT_ID, A.ENTER_CD, L.APPR_SABUN, A.APPL_YMD) AS EMP_NM
+			     , F_WTM_DATE_FORMAT(L.APPR_DATE, 'YMD') AS APPR_DATE
+			     , L.APPR_STATUS_CD
+			     , F_WTM_GET_CODE_NM(A.TENANT_ID, A.ENTER_CD, 'APPR_STATUS_CD', L.APPR_STATUS_CD, A.APPL_YMD) AS APPR_STATUS_NM
+			     , L.APPR_OPINION
+			  FROM WTM_APPL_LINE L
+			  JOIN WTM_APPL A
+			    ON L.APPL_ID = A.APPL_ID
+			 WHERE L.APPL_ID = #{applId}
+			ORDER BY APPR_SEQ
+        ]]>
+    </select>
+    
+    <select id="calcWorkDay" parameterType="map" resultType="map">
+        <![CDATA[
+			SELECT SUM(CASE WHEN CASE X.HOL_EXCEPT_YN WHEN 'Y' THEN X.SUN_YN ELSE X.HOLIDAY_YN END = 'Y' THEN 0 ELSE 1 END) AS workCnt
+			FROM (
+				SELECT D.HOLIDAY_YN, CASE WHEN H.SUN_YN IS NULL THEN 'N' ELSE H.SUN_YN END AS SUN_YN, M.HOL_EXCEPT_YN
+				FROM WTM_FLEXIBLE_STD_MGR M
+				JOIN WTM_DAY_MGR D
+				ON D.SUN_YMD BETWEEN M.USE_SYMD AND M.USE_EYMD
+				LEFT OUTER JOIN WTM_HOLIDAY_MGR H
+				ON D.SUN_YMD = H.HOLIDAY_YMD
+				AND H.TENANT_ID = #{tenantId}
+				AND H.ENTER_CD = #{enterCd}
+				WHERE M.FLEXIBLE_STD_MGR_ID = #{flexibleStdMgrId}
+				  AND D.SUN_YMD BETWEEN #{sYmd} AND #{eYmd} 
+				ORDER BY D.SUN_YMD
+			) X
+        ]]>
+    </select>
+    
+    <select id="getApprList01" parameterType="map" resultType="hashmap">
+        <![CDATA[
+        	SELECT A.APPL_ID AS applId
+			     , A.APPL_CD AS applCd
+			     , C.APPL_NM AS applNm
+			     , A.APPL_SABUN AS applSabun
+			     , F_WTM_GET_EMP_NM(A.TENANT_ID, A.ENTER_CD, A.APPL_SABUN, A.APPL_YMD ) AS empNm
+			     , A.APPL_YMD AS applYmd
+			     , A.APPL_IN_SABUN AS applInSabun
+			     , A.APPL_STATUS_CD AS applStatusCd
+			     , F_WTM_GET_CODE_NM(A.TENANT_ID, A.ENTER_CD, 'APPL_STATUS_CD', A.APPL_STATUS_CD, A.APPL_YMD) AS applStatusNm
+			     , L.APPR_SEQ AS apprSeq
+			     , L.APPR_SABUN AS apprSabun
+			     , L.APPR_DATE AS apprDate
+			     , L.APPR_STATUS_CD AS apprStatusCd
+			     , L.APPR_TYPE_CD AS apprTypeCd
+			     , L.APPR_OPINION AS apprOpinion
+			  FROM WTM_APPL A
+			  JOIN WTM_APPL_CODE C
+			    ON A.TENANT_ID = C.TENANT_ID
+			   AND A.ENTER_CD = C.ENTER_CD
+			   AND A.APPL_CD = C.APPL_CD
+			  LEFT OUTER JOIN WTM_APPL_LINE L
+			    ON L.APPL_ID = A.APPL_ID
+			   AND A.APPL_SABUN = L.APPR_SABUN
+			 WHERE A.TENANT_ID = #{tenantId}
+			   AND A.ENTER_CD = #{enterCd} 
+			   AND A.APPL_SABUN = #{empNo}
+			ORDER BY A.APPL_YMD DESC
+		]]>
+    </select>
+    
+    <select id="getApprList02" parameterType="map" resultType="hashmap">
+        <![CDATA[
+        	SELECT A.APPL_ID AS applId
+			     , A.APPL_CD AS applCd
+			     , C.APPL_NM AS applNm
+			     , A.APPL_SABUN AS applSabun
+			     , F_WTM_GET_EMP_NM(A.TENANT_ID, A.ENTER_CD, A.APPL_SABUN, A.APPL_YMD ) AS empNm
+			     , A.APPL_YMD AS applYmd
+			     , A.APPL_IN_SABUN AS applInSabun
+			     , A.APPL_STATUS_CD AS applStatusCd
+			     , F_WTM_GET_CODE_NM(A.TENANT_ID, A.ENTER_CD, 'APPL_STATUS_CD', A.APPL_STATUS_CD, A.APPL_YMD) AS applStatusNm
+			     , L.APPR_SEQ AS apprSeq
+			     , L.APPR_SABUN AS apprSabun
+			     , L.APPR_DATE AS apprDate
+			     , L.APPR_STATUS_CD AS apprStatusCd
+			     , L.APPR_TYPE_CD AS apprTypeCd
+			     , L.APPR_OPINION AS apprOpinion
+			  FROM WTM_APPL A
+			  JOIN WTM_APPL_CODE C
+			    ON A.TENANT_ID = C.TENANT_ID
+			   AND A.ENTER_CD = C.ENTER_CD
+			   AND A.APPL_CD = C.APPL_CD
+			  JOIN WTM_APPL_LINE L
+			    ON L.APPL_ID = A.APPL_ID
+			 WHERE A.TENANT_ID = #{tenantId}
+			   AND A.ENTER_CD = #{enterCd} 
+			   AND APPR_SABUN = #{empNo}
+			   AND L.APPR_STATUS_CD = '10'
+			   AND A.APPL_STATUS_CD IN ('21','31')
+			ORDER BY A.APPL_YMD DESC
+		]]>
+    </select>
+    
+    <select id="getApprList03" parameterType="map" resultType="hashmap">
+        <![CDATA[
+        	SELECT A.APPL_ID AS applId
+			     , A.APPL_CD AS applCd
+			     , C.APPL_NM AS applNm
+			     , A.APPL_SABUN AS applSabun
+			     , F_WTM_GET_EMP_NM(A.TENANT_ID, A.ENTER_CD, A.APPL_SABUN, A.APPL_YMD ) AS empNm
+			     , A.APPL_YMD AS applYmd
+			     , A.APPL_IN_SABUN AS applInSabun
+			     , A.APPL_STATUS_CD AS applStatusCd
+			     , F_WTM_GET_CODE_NM(A.TENANT_ID, A.ENTER_CD, 'APPL_STATUS_CD', A.APPL_STATUS_CD, A.APPL_YMD) AS applStatusNm
+			     , L.APPR_SEQ AS apprSeq
+			     , L.APPR_SABUN AS apprSabun
+			     , L.APPR_DATE AS apprDate
+			     , L.APPR_STATUS_CD AS apprStatusCd
+			     , L.APPR_TYPE_CD AS apprTypeCd
+			     , L.APPR_OPINION AS apprOpinion
+			  FROM WTM_APPL A
+			  JOIN WTM_APPL_CODE C
+			    ON A.TENANT_ID = C.TENANT_ID
+			   AND A.ENTER_CD = C.ENTER_CD
+			   AND A.APPL_CD = C.APPL_CD
+			  JOIN WTM_APPL_LINE L
+			    ON L.APPL_ID = A.APPL_ID
+			 WHERE A.TENANT_ID = #{tenantId}
+			   AND A.ENTER_CD = #{enterCd} 
+			   AND APPR_SABUN = #{empNo}
+			   AND L.APPR_DATE IS NOT NULL
+			   AND L.APPR_STATUS_CD IS NOT NULL
+			ORDER BY A.APPL_YMD DESC
+		]]>
+    </select>
+    
+    <select id="countByApprList02" parameterType="map" resultType="int">
+        <![CDATA[
+        	SELECT count(*)
+			  FROM WTM_APPL A
+			  JOIN WTM_APPL_CODE C
+			    ON A.TENANT_ID = C.TENANT_ID
+			   AND A.ENTER_CD = C.ENTER_CD
+			   AND A.APPL_CD = C.APPL_CD
+			  JOIN WTM_APPL_LINE L
+			    ON L.APPL_ID = A.APPL_ID
+			 WHERE A.TENANT_ID = #{tenantId}
+			   AND A.ENTER_CD = #{enterCd} 
+			   AND APPR_SABUN = #{sabun}
+			   AND L.APPR_STATUS_CD = '10'
+			   AND A.APPL_STATUS_CD IN ('21','31')
+			ORDER BY A.APPL_YMD DESC
+		]]>
+    </select>
+</mapper>

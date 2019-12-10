@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmWorktimeCloseMapper">
+	
+	<select id="getDayList" parameterType="map" resultType="hashmap">
+        <![CDATA[
+        	SELECT F_WTM_GET_EMP_ORG_NM(A.TENANT_ID, A.ENTER_CD, A.SABUN, YMD) AS orgNm
+        		  , A.YMD AS ymd
+				  , A.SABUN AS sabun
+				  , B.EMP_NM AS empNm
+				  , WORK_TYPE_CD AS workTypeCd
+				  , TIME_CD_MGR_ID AS timeCdMgrId
+				  , WORK_MINUTE AS workMinute
+				  , OT_MINUTE AS otMinute
+				  , OTN_MINUTE AS otnMinute
+				  , NONPAY_MINUTE AS nonpayMinute
+				  , PAY_MINUTE AS payMinute
+				  , LATE_MINUTE AS lateMinute
+				  , LEAVE_MINUTE AS leaveMinute
+				  , ABSENCE_MINUTE AS absenceMinute
+				  , HOLIDAY_YN AS holidayYn
+				  , SUB_YN AS subYn
+			  FROM WTM_WORKTIME_DAY_CLOSE A
+			 INNER JOIN WTM_EMP_HIS B
+			    ON A.TENANT_ID = B.TENANT_ID
+			   AND A.ENTER_CD = B.ENTER_CD
+			   AND A.SABUN = B.SABUN
+			   AND A.YMD BETWEEN B.SYMD AND B.EYMD
+			 WHERE A.TENANT_ID = #{tenantId}
+			   AND A.ENTER_CD = #{enterCd} 
+				AND A.YMD BETWEEN REPLACE(#{sYmd}, '-', '') AND REPLACE(#{eYmd}, '-', '')
+				AND IF(#{searchKeyword}='',1=1,(B.SABUN = #{searchKeyword} OR B.EMP_NM LIKE CONCAT(#{searchKeyword}, '%')))
+			 ORDER BY A.SABUN, YMD
+        ]]>
+    </select>
+    
+    <select id="getMonList" parameterType="map" resultType="hashmap">
+        <![CDATA[
+        	SELECT F_WTM_GET_EMP_ORG_NM(A.TENANT_ID, A.ENTER_CD, A.SABUN, A.EYMD) AS orgNm
+				  , A.SABUN AS sabun
+				  , B.EMP_NM AS empNm
+				  , YM AS ym
+				  , WORK_TYPE_CD AS workTypeCd
+				  , A.SYMD AS symd
+				  , A.EYMD AS eymd
+				  , TRUNCATE(BASE_MINUTE/60,2) AS baseMinute
+				  , TRUNCATE(BASE_OT_MINUTE/60,2) AS baseOtMinute
+				  , TRUNCATE(WORK_MINUTE/60,2) AS workMinute
+				  , TRUNCATE(OT_MINUTE/60,2) AS otMinute
+				  , TRUNCATE(OTN_MINUTE/60,2) AS otnMinute
+				  , TRUNCATE(HOL_MINUTE/60,2) AS holMinute
+				  , TRUNCATE(HOL_OT_MINUTE/60,2) AS holOtMinute
+				  , TRUNCATE(A_WORK_MINUTE/60,2) AS aWorkMinute
+				  , TRUNCATE(A_OT_MINUTE/60,2) AS aOtMinute
+				  , TRUNCATE(A_OTN_MINUTE/60,2) AS aOtnMinute
+				  , TRUNCATE(A_HOL_MINUTE/60,2) AS aHolMinute
+				  , TRUNCATE(A_HOL_OT_MINUTE/60,2) AS aHolOtMinute
+				  , TRUNCATE(A_NONPAY_MINUTE/60,2) AS aNonpayMinute
+				  , TRUNCATE(A_PAY_MINUTE/60,2) AS aPayMinute
+				  , TRUNCATE(LATE_MINUTE/60,2) AS lateMinute
+				  , TRUNCATE(LEAVE_MINUTE/60,2) AS leaveMinute
+				  , TRUNCATE(ABSENCE_MINUTE/60,2) AS absenceMinute
+			  FROM WTM_WORKTIME_MON_CLOSE A
+			 INNER JOIN WTM_EMP_HIS B
+			    ON A.TENANT_ID = B.TENANT_ID
+			   AND A.ENTER_CD = B.ENTER_CD
+			   AND A.SABUN = B.SABUN
+			   AND A.EYMD BETWEEN B.SYMD AND B.EYMD
+			 WHERE A.TENANT_ID = #{tenantId}
+			   AND A.ENTER_CD = #{enterCd} 
+				AND A.YM = REPLACE(#{searchYm}, '-', '')
+				AND IF(#{searchKeyword}='',1=1,(B.SABUN = #{searchKeyword} OR B.EMP_NM LIKE CONCAT(#{searchKeyword}, '%')))
+			 ORDER BY A.SABUN, A.SYMD
+        ]]>
+    </select>
+</mapper>

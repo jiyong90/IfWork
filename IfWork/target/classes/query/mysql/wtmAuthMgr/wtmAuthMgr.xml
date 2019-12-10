@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmAuthMgrMapper">
+	
+	<select id="getAuthUserList" parameterType="map" resultType="hashmap">
+        <![CDATA[
+			SELECT A.USER_AUTH_ID AS userAuthId
+				 , A.AUTH_ID AS authId
+				 , H.TENANT_ID AS tenantId
+				 , H.ENTER_CD AS enterCd
+				 , F_WTM_GET_EMP_ORG_NM(H.TENANT_ID, H.ENTER_CD, H.SABUN, H.SYMD)  AS orgNm
+				 , H.SABUN AS sabun
+				 , F_WTM_GET_EMP_NM(H.TENANT_ID, H.ENTER_CD, H.SABUN, H.SYMD) AS empNm
+			  FROM WTM_EMP_HIS H
+			  JOIN WTM_USER_AUTH A
+			    ON H.EMP_ID = A.USER_KEY
+			 WHERE H.TENANT_ID = ${tenantId}
+			   AND H.ENTER_CD = #{enterCd}
+			   AND A.AUTH_ID = ${authId}
+			   AND #{ymd} BETWEEN H.SYMD AND H.EYMD
+        ]]>
+    </select>
+    
+    <update id="saveAuthUser" parameterType="map">
+		<if test="mergeRows!=null and mergeRows.size()>0">
+		<foreach collection="mergeRows" item="item" separator=";">
+			INSERT INTO WTM_USER_AUTH(USER_KEY, AUTH_ID)
+			VALUES (F_WTM_AES_ENCRYPT(CONCAT(${tenantId}, #{enterCd}, #{item.sabun}), #{encKey}), #{item.authId}) 
+ 		</foreach>
+		</if>
+	</update>
+	
+	<select id="findAuthByTenantIdAndEnterCdAndSabun" parameterType="map" resultType="hashmap">
+        <![CDATA[
+			SELECT U.AUTH_ID AS authId
+				 , R.rule_text AS ruleText
+			  FROM WTM_USER_AUTH U
+			  JOIN comm_auth_rule R
+			    ON U.AUTH_ID = R.auth_id
+			 WHERE USER_KEY = F_WTM_AES_ENCRYPT(CONCAT(${tenantId}, #{enterCd}, #{sabun}), #{encKey})
+        ]]>
+   </select>
+    
+</mapper>

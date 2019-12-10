@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmOtApplMapper">
+	 <update id="calcOtMinute" parameterType="map">
+	 	UPDATE WTM_OT_APPL O
+		   SET OT_MINUTE = (
+			SELECT F_WTM_CALC_MINUTE(F_WTM_DATE_FORMAT(O.OT_SDATE, 'HI') ,F_WTM_DATE_FORMAT(O.OT_EDATE, 'HI'),  '','','') -  SUM(F_WTM_CALC_MINUTE(B.SHM, B.EHM,F_WTM_DATE_FORMAT(O.OT_SDATE, 'HI') ,F_WTM_DATE_FORMAT(O.OT_EDATE, 'HI'),  '')) 
+			  FROM WTM_FLEXIBLE_EMP E
+			  JOIN WTM_WORK_CALENDAR C
+			    ON E.TENANT_ID = C.TENANT_ID
+			   AND E.ENTER_CD = C.ENTER_CD
+			   AND E.SABUN = C.SABUN
+			   AND C.YMD BETWEEN E.SYMD AND E.EYMD
+			  JOIN WTM_TIME_CD_MGR T
+			    ON C.TIME_CD_MGR_ID = T.TIME_CD_MGR_ID 
+			  JOIN WTM_TIME_BREAK_MGR B
+			    ON T.TIME_CD_MGR_ID = B.TIME_CD_MGR_ID 
+			 WHERE C.YMD BETWEEN E.SYMD AND E.EYMD
+			   AND E.TENANT_ID = #{tenantId}
+			   AND E.ENTER_CD = #{enterCd}
+			   AND E.SABUN = #{sabun}
+			   AND C.YMD = #{ymd}
+		)
+		 WHERE O.APPL_ID = #{applId}
+	 </update>
+	 
+	 <select id="otApplfindByApplId" parameterType="Long" resultType="wtmGeneral">
+        <![CDATA[
+			SELECT O.OT_APPL_ID
+			     , O.APPL_ID
+			     , O.YMD 
+			     , O.HOLIDAY_YN 
+			     , O.OT_SDATE 
+			     , O.OT_EDATE 
+			     , O.OT_MINUTE 
+			     , O.RET_OT_MINUTE 
+			     , O.REASON_CD 
+			     , F_WTM_GET_CODE_NM(A.TENANT_ID, A.ENTER_CD, 'REASON_CD', O.REASON_CD, A.APPL_YMD) AS REASON_NM
+			     , O.REASON 
+			     , O.SUB_YN 
+			     , O.OLD_OT_APPL_ID 
+			     , O.CANCEL_YN 
+			     , A.APPL_SABUN AS SABUN
+			     , A.APPL_CD 
+			     , A.APPL_STATUS_CD
+			     , F_WTM_GET_CODE_NM(A.TENANT_ID, A.ENTER_CD, 'APPL_STATUS_CD', A.APPL_STATUS_CD, A.APPL_YMD) AS APPL_STATUS_NM
+			     , R.WORK_DAY_RESULT_ID 
+			     , C.OT_CAN_APPL_ID AS OT_CAN_ID
+			     , C.APPL_ID AS OT_CAN_APPL_ID
+			     , C.REASON AS CANCEL_REASON
+			  FROM WTM_APPL A
+			  JOIN WTM_OT_APPL O
+			    ON A.APPL_ID = O.APPL_ID
+			  LEFT OUTER JOIN WTM_WORK_DAY_RESULT R
+			    ON A.TENANT_ID = R.TENANT_ID
+			   AND A.ENTER_CD = R.ENTER_CD
+			   AND A.APPL_SABUN = R.SABUN
+				AND A.APPL_ID = R.APPL_ID
+				AND O.YMD = R.YMD
+			  LEFT OUTER JOIN WTM_OT_CAN_APPL C
+			    ON R.WORK_DAY_RESULT_ID = C.WORK_DAY_RESULT_ID
+			 WHERE O.APPL_ID = #{applId}   
+			   AND (R.TIME_TYPE_CD IS NULL OR R.TIME_TYPE_CD = 'OT')
+			 ORDER BY O.OT_SDATE
+	        ]]>
+    </select>
+    
+    <select id="otSubsApplfindByOtApplId" parameterType="Long" resultType="wtmGeneral">
+        <![CDATA[
+			SELECT S.OT_SUBS_APPL_ID 
+			     , S.OT_APPL_ID 
+			     , S.APPL_ID
+			     , S.HOLIDAY_TYPE 
+			     , S.SUB_YMD
+			     , S.SUBS_SDATE 
+			     , S.SUBS_EDATE 
+			     , S.SUBS_MINUTE 
+			     , S.OLD_SUBS_APPL_ID 
+			     , T.WORK_S_DATE
+			     , T.WORK_E_DATE
+			  FROM WTM_OT_SUBS_APPL S
+			  LEFT OUTER JOIN ( SELECT S.OT_SUBS_APPL_ID
+			                       , S.SUB_YMD
+			                       , MIN(R.PLAN_SDATE) AS WORK_S_DATE
+			                       , MAX(R.PLAN_EDATE) AS WORK_E_DATE
+			                    FROM WTM_OT_SUBS_APPL S
+			                    JOIN WTM_APPL A
+			                      ON S.APPL_ID = A.APPL_ID
+			                    JOIN WTM_WORK_DAY_RESULT R
+			                      ON A.TENANT_ID = R.TENANT_ID
+			                     AND A.ENTER_CD = R.ENTER_CD
+			                     AND A.APPL_SABUN = R.SABUN
+			                     AND S.SUB_YMD = R.YMD
+			                     AND ( S.SUBS_SDATE BETWEEN R.PLAN_SDATE AND R.PLAN_EDATE OR S.SUBS_EDATE BETWEEN R.PLAN_SDATE AND R.PLAN_EDATE )
+			                   WHERE S.OT_APPL_ID = #{otApplId} 
+			                  GROUP BY S.OT_SUBS_APPL_ID, S.SUB_YMD ) T
+			    ON S.OT_SUBS_APPL_ID = T.OT_SUBS_APPL_ID
+			 WHERE S.OT_APPL_ID = #{otApplId}
+			   AND (S.CANCEL_YN IS NULL OR S.CANCEL_YN = 'N')
+			ORDER BY S.SUB_YMD, S.SUBS_SDATE
+	        ]]>
+    </select>
+    
+    <select id="getPrevOtSubsApplList" parameterType="map" resultType="wtmGeneral">
+        <![CDATA[
+			SELECT O.YMD 
+			     , O.OT_SDATE AS S_DATE
+			     , O.OT_EDATE AS E_DATE
+			     , O.OT_MINUTE AS OT_MINUTE
+			     , CASE F_WTM_WEEKDAY(F_WTM_DATE_FORMAT(O.OT_SDATE, 'YMD')) 
+			  			WHEN 1 THEN '일' 
+						WHEN 2 THEN '월'
+						WHEN 3 THEN '화' 
+						WHEN 4 THEN '수' 
+						WHEN 5 THEN '목' 
+						WHEN 6 THEN '금' 
+						WHEN 7 THEN '토' END AS S_DAY
+				  , CASE F_WTM_WEEKDAY(F_WTM_DATE_FORMAT(O.OT_EDATE, 'YMD')) 
+			  			WHEN 1 THEN '일' 
+						WHEN 2 THEN '월'
+						WHEN 3 THEN '화' 
+						WHEN 4 THEN '수' 
+						WHEN 5 THEN '목' 
+						WHEN 6 THEN '금' 
+						WHEN 7 THEN '토' END AS E_DAY
+			  FROM WTM_OT_APPL O
+			  JOIN WTM_APPL A
+			    ON O.APPL_ID = A.APPL_ID
+			 WHERE A.TENANT_ID = #{tenantId}
+			   AND A.ENTER_CD = #{enterCd}
+			   AND A.APPL_SABUN = #{sabun}
+			   AND O.HOLIDAY_YN = 'Y'
+	        ]]>
+    </select>
+    
+    <select id="getTotOtMinuteBySymdAndEymd" parameterType="map" resultType="wtmGeneral">
+    <![CDATA[
+    	SELECT F_WTM_TO_NUMBER(SUM(X.OT_MINUTE),'N') AS TOT_OT_MINUTE
+		  FROM (
+			SELECT F_WTM_NVL(SUM(F_WTM_NVL(O.OT_MINUTE,0)) - SUM(F_WTM_NVL(S.SUBS_MINUTE,0)),0) AS OT_MINUTE
+			  FROM WTM_APPL A
+			  JOIN WTM_OT_APPL O
+			    ON A.APPL_ID = O.APPL_ID
+			  LEFT OUTER JOIN WTM_OT_SUBS_APPL S
+			    ON A.APPL_ID = S.APPL_ID
+			   AND S.SUB_YMD BETWEEN #{symd} AND #{eymd}
+			 WHERE A.APPL_STATUS_CD IN ('21','31')
+			   AND O.YMD BETWEEN #{symd} AND #{eymd}
+			   AND A.APPL_IN_SABUN = #{sabun}
+			   AND (A.APPL_ID <> #{applId, jdbcType=BIGINT} OR #{applId, jdbcType=BIGINT} IS NULL OR #{applId, jdbcType=BIGINT} = '') 
+			 UNION ALL
+			SELECT F_WTM_NVL(CASE WHEN R.APPR_MINUTE IS NULL THEN R.PLAN_MINUTE ELSE R.APPR_MINUTE END,0) AS OT_MINUTE
+			  FROM WTM_WORK_DAY_RESULT R
+			 WHERE R.TENANT_ID = #{tenantId}
+			   AND R.ENTER_CD = #{enterCd}
+			   AND R.YMD BETWEEN #{symd} AND #{eymd}
+			   AND R.TIME_TYPE_CD = 'OT'
+			   AND R.SABUN = #{sabun}
+		) X
+	]]>
+    </select>
+   
+</mapper>

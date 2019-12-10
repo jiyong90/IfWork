@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmInOutChangeMapper">
+	<select id="getInOutChangeList" parameterType="map" resultType="wtmGeneral">
+        <![CDATA[
+		        SELECT A.SABUN as sabun , 
+					B.EMP_NM as empNm, 
+					A.YMD as ymd, 
+					F_WTM_GET_ORG_NM(A.TENANT_ID, A.ENTER_CD, A.SABUN, A.YMD) AS orgNm,
+					F_WTM_GET_FLEXIBLE_NM(A.TENANT_ID, A.ENTER_CD, A.SABUN, A.YMD) AS flexibleNm,
+					F_WTM_GET_TIME_NM(A.TENANT_ID, A.ENTER_CD, A.SABUN, A.YMD) AS timeNm,
+					A.ENTRY_SDATE as entrySdate,
+					A.ENTRY_STYPE_CD as entryStypeCd,
+					A.ENTRY_EDATE as entryEdate,
+					A.ENTRY_ETYPE_CD as entryEtypeCd,
+					A.CHG_SDATE as chgSdate,
+					A.CHG_EDATE as chgEdate,
+					A.REASON as reason,
+					A.UPDATE_ID as updateId,
+					A.UPDATE_DATE as updateDate
+				FROM WTM_INOUT_CHG_HIS A
+				 INNER JOIN WTM_EMP_HIS B
+				    ON A.TENANT_ID = B.TENANT_ID
+				    AND A.ENTER_CD = B.ENTER_CD
+				    AND A.SABUN = B.SABUN
+				    AND A.YMD BETWEEN B.SYMD AND B.EYMD
+				WHERE A.TENANT_ID=#{tenantId} 
+					AND A.ENTER_CD=#{enterCd}
+					AND A.YMD BETWEEN  REPLACE(#{sYmd}, '-', '') AND REPLACE(#{eYmd}, '-', '') 
+				]]>
+				<if test="searchKeyword!=null and !searchKeyword.equals('')">
+					AND (A.SABUN LIKE CONCAT(#{searchKeyword}, '%') OR B.EMP_NM LIKE CONCAT('%', #{searchKeyword}, '%'))
+				</if>
+	</select>
+    
+    <update id="setInOutChangeList" parameterType="map">
+		        INSERT INTO WTM_INOUT_CHG_HIS 
+					(TENANT_ID,
+					ENTER_CD, 
+					SABUN, 
+					YMD, 
+					ENTRY_SDATE, 
+					ENTRY_STYPE_CD, 
+					ENTRY_EDATE, 
+					ENTRY_ETYPE_CD, 
+					CHG_SDATE, 
+					CHG_EDATE, 
+					REASON, 
+					UPDATE_DATE, 
+					UPDATE_ID)
+				VALUES 
+			<if test="insertRows!=null and insertRows.size()>0">
+			<foreach collection="insertRows" item="item" separator=", ">
+					(#{tenantId}, 
+					#{enterCd}, 
+					#{item.sabun}, 
+					#{item.ymd}, 
+					IF(#{item.entrySdate}= '', NULL, F_WTM_TO_DATE(#{item.entrySdate}, 'YMDHIS')),
+					#{item.entryStypeCd}, 
+					IF(#{item.entryEdate}= '', NULL, F_WTM_TO_DATE(#{item.entryEdate}, 'YMDHIS')),
+					#{item.entryEtypeCd}, 
+					IF(#{item.chgSdate}= '', NULL, F_WTM_TO_DATE(#{item.chgSdate}, 'YMDHIS')), 
+					IF(#{item.chgEdate}='', NULL, F_WTM_TO_DATE(#{item.chgEdate}, 'YMDHIS')),
+					#{item.reason}, 
+					now(), 
+					#{userId})	
+			</foreach>
+			</if>
+    </update>
+</mapper>

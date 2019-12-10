@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.isu.ifw.mapper.WtmCalendarMapper">
+	<select id="getCalendar" parameterType="map" resultType="wtmGeneral">
+        <![CDATA[
+			SELECT F_WTM_DATE_FORMAT(d.SUN_YMD,'Y-M-D') AS SUN_YMD
+			     , d.DAY_NM 
+			     , d.NOTE
+			     , F_WTM_DATE_FORMAT(d.MOON_YMD,'Y-M-D') AS MOON_YMD
+			     , F_WTM_DATE_FORMAT(h.HOLIDAY_YMD,'Y-M-D') AS HOLIDAY_YMD
+			     , h.HOLIDAY_NM
+			  FROM WTM_DAY_MGR d
+			  JOIN WTM_HOLIDAY_MGR h
+			    ON 'Y' = ( CASE WHEN h.SUN_YN = 'Y' AND d.SUN_YMD = h.HOLIDAY_YMD THEN 'Y'
+			                    WHEN h.SUN_YN = 'N' AND d.MOON_YMD = h.HOLIDAY_YMD THEN 'Y'
+			                    ELSE 'N' END ) 
+			 WHERE (h.TENANT_ID IS NULL OR h.TENANT_ID = #{tenantId})
+			   AND (#{enterCd, jdbcType=VARCHAR} IS NULL OR h.ENTER_CD IS NULL OR h.ENTER_CD = #{enterCd, jdbcType=VARCHAR})
+			   AND (#{bisinessPlaceCd, jdbcType=VARCHAR} IS NULL OR h.BISINESS_PLACE_CD IS NULL OR h.BISINESS_PLACE_CD = #{bisinessPlaceCd, jdbcType=VARCHAR})
+			   AND SUBSTR(SUN_YMD,1,6) = #{ym} 
+			ORDER BY d.SUN_YMD
+        ]]>
+    </select>
+    
+    <select id="getWorkCalendar" parameterType="map" resultType="wtmGeneral">
+        <![CDATA[
+			select 1
+			  from dual
+        ]]>
+    </select>
+
+    <select id="getWorkTimeCalendar" parameterType="map" resultType="wtmGeneral">
+        <![CDATA[
+			select info_key
+			     , info_name
+			     , info_data
+			  from comm_management_infomation
+			 where tenant_id = #{tenantId}
+        ]]>
+    </select>
+    
+    <select id="getEmpWorkCalendar" parameterType="map" resultType="wtmGeneral">
+        <![CDATA[
+	        SELECT A.WORK_CALENDAR_ID , 
+				A.TENANT_ID, 
+				A.ENTER_CD, 
+				A.SABUN , 
+				F_WTM_GET_EMP_ORG_NM(#{tenantId}, #{enterCd}, A.SABUN, F_WTM_DATE_FORMAT(SYSDATE,'YMD')) AS ORG_NM,
+				F_WTM_GET_EMP_NM(#{tenantId}, #{enterCd}, A.SABUN, F_WTM_DATE_FORMAT(SYSDATE,'YMD')) AS EMP_NM,
+				A.YMD, 
+				A.TIME_CD_MGR_ID ,
+				F_WTM_DATE_FORMAT(A.ENTRY_SDATE, 'HI') as ENTRY_SDATE,
+				A.ENTRY_STYPE_CD,
+				F_WTM_DATE_FORMAT(A.ENTRY_EDATE, 'HI') as ENTRY_EDATE,
+				A.ENTRY_ETYPE_CD,
+				A.WORK_CLOSE_YN,
+				A.HOLIDAY_YN,
+				A.NOTE,
+				B.FLEXIBLE_STD_MGR_ID,
+				D.EMP_NM,
+				CASE WHEN A.YMD > F_WTM_DATE_FORMAT(SYSDATE,'YMD') THEN SUM(PLAN_MINUTE)
+					 WHEN A.YMD < F_WTM_DATE_FORMAT(SYSDATE,'YMD') THEN SUM(APPR_MINUTE)
+					 WHEN (A.YMD = F_WTM_DATE_FORMAT(SYSDATE,'YMD') AND A.ENTRY_EDATE IS NOT NULL) THEN SUM(APPR_MINUTE)
+					 ELSE SUM(PLAN_MINUTE) END AS TOT_TIME,
+				E.CORE_SHM,
+				E.CORE_EHM
+			FROM WTM_WORK_CALENDAR A
+			JOIN WTM_FLEXIBLE_EMP B
+				ON B.TENANT_ID=A.TENANT_ID AND A.ENTER_CD=B.ENTER_CD AND A.SABUN=B.SABUN AND A.YMD BETWEEN B.SYMD AND B.EYMD
+			LEFT JOIN WTM_WORK_DAY_RESULT C
+				ON C.TENANT_ID=A.TENANT_ID AND A.ENTER_CD=C.ENTER_CD AND A.SABUN=C.SABUN AND C.YMD = A.YMD 
+			JOIN WTM_EMP_HIS D
+				ON D.TENANT_ID=A.TENANT_ID AND A.ENTER_CD=D.ENTER_CD AND A.SABUN=D.SABUN AND F_WTM_DATE_FORMAT(SYSDATE,'YMD') BETWEEN D.SYMD AND D.EYMD 
+			JOIN WTM_FLEXIBLE_STD_MGR E
+				ON E.FLEXIBLE_STD_MGR_ID = B.FLEXIBLE_STD_MGR_ID
+			WHERE A.YMD BETWEEN REPLACE(#{sYmd}, '-', '') AND REPLACE(#{eYmd}, '-', '') 
+				AND #{tenantId} = A.TENANT_ID AND A.ENTER_CD = #{enterCd}
+		]]>
+		<if test="orgList!=null">
+			   AND D.ORG_CD IN (NULL, 
+		       <foreach collection="orgList" item="org" separator=", ">
+				   #{org}
+			   </foreach>
+			   )
+			   </if>
+		<if test="searchKeyword!=null and !searchKeyword.equals('')"> 
+			AND (A.SABUN LIKE #{searchKeyword, jdbcType=VARCHAR} || '%' OR D.EMP_NM LIKE '%' || #{searchKeyword, jdbcType=VARCHAR} || '%')
+		</if>
+		<![CDATA[
+			GROUP BY A.WORK_CALENDAR_ID , A.TENANT_ID, A.ENTER_CD, A.SABUN, A.YMD, A.TIME_CD_MGR_ID ,	A.ENTRY_SDATE, A.ENTRY_STYPE_CD,	A.ENTRY_EDATE,	A.ENTRY_ETYPE_CD, A.WORK_CLOSE_YN, A.HOLIDAY_YN, A.NOTE, B.FLEXIBLE_STD_MGR_ID, D.EMP_NM,E.CORE_SHM,				E.CORE_EHM
+			ORDER BY YMD DESC, SABUN
+        ]]>
+    </select>
+    
+    <select id="getOrgEmpWorkCalendar" parameterType="map" resultType="wtmGeneral">
+        <![CDATA[
+        	SELECT *
+        	  FROM (
+			        SELECT C.WORK_CALENDAR_ID, 
+							C.TENANT_ID, 
+							C.ENTER_CD, 
+							C.SABUN, 
+							F_WTM_GET_EMP_ORG_NM(C.TENANT_ID, C.ENTER_CD, C.SABUN, C.YMD) AS ORG_NM,
+							F_WTM_GET_EMP_NM(C.TENANT_ID, C.ENTER_CD, C.SABUN, C.YMD) AS EMP_NM,
+							C.YMD, 
+							C.TIME_CD_MGR_ID,
+							F_WTM_DATE_FORMAT(C.ENTRY_SDATE, 'HI') as ENTRY_SDATE,
+							C.ENTRY_STYPE_CD,
+							F_WTM_DATE_FORMAT(C.ENTRY_EDATE, 'HI') as ENTRY_SDATE,
+							C.ENTRY_ETYPE_CD,
+							C.WORK_CLOSE_YN,
+							C.HOLIDAY_YNn,
+							C.NOTE,
+							E.FLEXIBLE_STD_MGR_ID,
+							CASE WHEN C.YMD > F_WTM_DATE_FORMAT(SYSDATE,'YMD') THEN SUM(PLAN_MINUTE)
+								 WHEN C.YMD < F_WTM_DATE_FORMAT(SYSDATE,'YMD') THEN SUM(APPR_MINUTE)
+								 WHEN (C.YMD = F_WTM_DATE_FORMAT(SYSDATE,'YMD') && C.ENTRY_EDATE IS NOT NULL) THEN SUM(APPR_MINUTE)
+								 ELSE SUM(PLAN_MINUTE) END AS TOT_TIME
+					  FROM WTM_WORK_CALENDAR C
+					  JOIN WTM_FLEXIBLE_EMP E
+					    ON E.TENANT_ID = C.TENANT_ID
+					   AND E.ENTER_CD = C.ENTER_CD
+					   AND E.SABUN = C.SABUN
+					   AND C.YMD BETWEEN E.SYMD AND E.EYMD
+					  LEFT JOIN WTM_WORK_DAY_RESULT R
+						 ON C.TENANT_ID = R.TENANT_ID 
+						AND C.ENTER_CD = R.ENTER_CD 
+						AND C.SABUN=R.SABUN 
+						AND C.YMD = R.YMD 
+					  JOIN WTM_EMP_HIS H
+						 ON C.TENANT_ID = H.TENANT_ID 
+						AND C.ENTER_CD = H.ENTER_CD 
+						AND C.SABUN = H.SABUN
+					   AND C.YMD BETWEEN H.SYMD AND H.EYMD
+					 WHERE C.TENANT_ID = #{tenantId}
+					   AND C.ENTER_CD = #{enterCd}
+					   AND C.YMD BETWEEN #{sYmd} AND #{eYmd}
+					   AND H.ORG_CD IN (NULL, 
+		]]>
+					   <foreach collection="orgList" item="org" separator=", ">
+					   #{org}
+					   </foreach>
+					   )
+					GROUP BY C.TENANT_ID, C.ENTER_CD, C.SABUN, C.YMD
+			) T
+			<if test="searchKeyword!=null and !searchKeyword.equals('')">
+				WHERE (T.SABUN LIKE  #{searchKeyword} || '%' OR T.EMP_NM LIKE '%' || #{searchKeyword} || '%')
+			</if>
+			ORDER BY YMD DESC, SABUN
+    </select>
+    
+        <select id="getEmpWorkCalendarDayInfo" parameterType="map" resultType="wtmGeneral">
+        <![CDATA[
+		      SELECT A.YMD, 
+		      	F_WTM_DATE_FORMAT(A.ENTRY_SDATE, 'YMDHI') as ENTRY_SDATE, 
+		      	A.ENTRY_STYPE_CD, 
+		      	F_WTM_DATE_FORMAT(A.ENTRY_EDATE, 'YMDHI') as ENTRY_EDATE, 
+		      	A.ENTRY_ETYPE_CD, 
+		      	F_WTM_DATE_FORMAT(MIN(B.PLAN_SDATE), 'YMDHI') as PLAN_SDATE, 
+		      	F_WTM_DATE_FORMAT(MAX(B.PLAN_EDATE), 'YMDHI') as PLAN_EDATE,
+		      	F_WTM_GET_FLEXIBLE_NM(A.TENANT_ID, A.ENTER_CD, A.SABUN, A.YMD) as FLEXIBLE_NM,
+		      	F_WTM_GET_TIME_NM(A.TENANT_ID, A.ENTER_CD, A.SABUN, A.YMD) as TIME_NM
+			FROM WTM_WORK_CALENDAR A 
+			INNER JOIN WTM_WORK_DAY_RESULT B
+				ON A.YMD = B.YMD 
+					AND A.TENANT_ID = B.TENANT_ID 
+					AND A.ENTER_CD = B.ENTER_CD 
+					AND A.SABUN = B.SABUN
+			WHERE A.YMD = #{ymd} 
+				AND A.SABUN = #{sabun} 
+				AND A.TENANT_ID = #{tenantId}
+				AND A.ENTER_CD = #{enterCd}
+			GROUP BY A.TENANT_ID, A.ENTER_CD, A.SABUN, A.YMD, A.ENTRY_SDATE, A.ENTRY_STYPE_CD, A.ENTRY_EDATE, A.ENTRY_ETYPE_CD
+        ]]>
+    </select>
+    
+   	<select id="updateEntryDate" statementType="CALLABLE" parameterType="java.util.HashMap">
+        { call P_WTM_UPDATE_TIMECARD( 
+        	#{tenantId, jdbcType=BIGINT, javaType=java.lang.Long, mode=IN}, 
+        	#{enterCd, jdbcType=VARCHAR, javaType=java.lang.String, mode=IN},  
+        	#{sabun, jdbcType=VARCHAR, javaType=java.lang.String, mode=IN},  
+        	#{ymd, jdbcType=VARCHAR, javaType=java.lang.String, mode=IN},  
+        	#{inoutType, jdbcType=VARCHAR, javaType=java.lang.String, mode=IN},  
+        	#{entryType, jdbcType=VARCHAR, javaType=java.lang.String, mode=IN},  
+        	#{rtnYmd, jdbcType=VARCHAR, javaType=java.lang.String, mode=OUT},
+        	#{sqlErrm, jdbcType=VARCHAR, javaType=java.lang.String, mode=OUT} 
+        ) }
+    </select>
+    
+    <update id="updateEntryDateByAdm" parameterType="map">
+		<if test="insertRows!=null and insertRows.size()>0">
+		<foreach collection="insertRows" item="item" separator=";">
+			UPDATE WTM_WORK_CALENDAR
+			SET 
+				<if test="item.chgSdate!=null and !item.chgSdate.equals('')">
+				ENTRY_SDATE=F_WTM_TO_DATE(#{item.chgSdate}, 'YMDHIS'), 
+				ENTRY_STYPE_CD = #{typeCd},
+				</if>
+				<if test="item.chgEdate!=null and !item.chgEdate.equals('')">
+				ENTRY_EDATE=F_WTM_TO_DATE(#{item.chgEdate}, 'YMDHIS'), 
+				ENTRY_ETYPE_CD = #{typeCd},
+				</if>
+				UPDATE_DATE = SYSDATE,
+				UPDATE_ID = #{userId}  
+			WHERE TENANT_ID = #{tenantId} 
+				AND ENTER_CD = #{enterCd}
+				AND SABUN = #{item.sabun}
+				AND YMD = #{item.ymd}
+ 		</foreach>
+		</if>
+   	 </update>
+   	 
+</mapper>
