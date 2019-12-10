@@ -313,7 +313,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			//사전 체크에서 유연근무끼리의 중복은 이미 막힌다.
 			//중복은 기본근무와의 중복이 있다.
 			//유연근무제 기간과 중복되는 데이터를 찾아 시작일과 종료일을 갱신해주자 
-			List<WtmFlexibleEmp> empList = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymd(tenantId, enterCd, appl.getApplSabun(), flexibleAppl.getSymd(), flexibleAppl.getEymd());
+			List<WtmFlexibleEmp> empList = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCd(tenantId, enterCd, appl.getApplSabun(), flexibleAppl.getSymd(), flexibleAppl.getEymd(), "BASE");
 			if(empList != null) {
 				for(WtmFlexibleEmp e : empList) {
 					//신청기간내에 시작 종료가 포함되어있을 경우

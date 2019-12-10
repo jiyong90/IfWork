@@ -30,6 +30,9 @@ public interface WtmFlexibleEmpRepository extends JpaRepository<WtmFlexibleEmp, 
 	@Query("SELECT E FROM WtmFlexibleEmp E WHERE E.tenantId = ?1 AND E.enterCd = ?2 AND E.sabun = ?3 AND (?4 BETWEEN E.symd AND E.eymd OR  ?5 BETWEEN E.symd AND E.eymd)")
 	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymd(Long tenantId, String enterCd, String sabun, String symd, String eymd);
 
+	@Query("SELECT E FROM WtmFlexibleEmp E WHERE E.tenantId = ?1 AND E.enterCd = ?2 AND E.sabun = ?3 AND (?4 BETWEEN E.symd AND E.eymd OR  ?5 BETWEEN E.symd AND E.eymd) AND E.workTypeCd = ?6 ")
+	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCd(Long tenantId, String enterCd, String sabun, String symd, String eymd, String workTypeCd);
+	
 	@Query("SELECT E FROM WtmFlexibleEmp E WHERE E.tenantId = ?1 AND E.enterCd = ?2 AND ?3 BETWEEN E.symd AND E.eymd")
 	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndYmdBetween(Long tenantId, String enterCd, String d);
 	
