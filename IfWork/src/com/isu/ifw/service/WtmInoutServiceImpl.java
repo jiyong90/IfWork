@@ -23,7 +23,7 @@ import com.isu.ifw.mapper.WtmCalendarMapper;
 import com.isu.ifw.mapper.WtmInoutHisMapper;
 import com.isu.ifw.repository.WtmCodeGrpRepository;
 import com.isu.ifw.repository.WtmCodeRepository;
-import com.isu.option.vo.ReturnParam;
+import com.isu.ifw.vo.ReturnParam;
 
 @Service("inoutService")
 public class WtmInoutServiceImpl implements WtmInoutService{

@@ -21,7 +21,7 @@ import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmInboxMapper;
 import com.isu.ifw.repository.WtmInboxRepository;
 import com.isu.ifw.util.WtmUtil;
-import com.isu.option.vo.ReturnParam;
+import com.isu.ifw.vo.ReturnParam;
 
 @Transactional
 @Service

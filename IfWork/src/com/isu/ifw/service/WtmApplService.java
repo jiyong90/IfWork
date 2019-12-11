@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.Async;
 
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.vo.WtmApplLineVO;
-import com.isu.option.vo.ReturnParam;
+import com.isu.ifw.vo.ReturnParam;
 
 /**
  * 

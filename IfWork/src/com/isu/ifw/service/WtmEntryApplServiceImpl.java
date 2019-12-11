@@ -25,7 +25,7 @@ import com.isu.ifw.repository.WtmEntryApplRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.WtmApplLineVO;
-import com.isu.option.vo.ReturnParam;
+import com.isu.ifw.vo.ReturnParam;
 
 @Service("wtmEntryApplService")
 public class WtmEntryApplServiceImpl implements WtmApplService {

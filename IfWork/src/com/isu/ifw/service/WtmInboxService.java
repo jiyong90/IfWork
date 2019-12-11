@@ -2,7 +2,7 @@ package com.isu.ifw.service;
 
 import org.springframework.stereotype.Service;
 
-import com.isu.option.vo.ReturnParam;
+import com.isu.ifw.vo.ReturnParam;
 
 /**
  * 로그인 서비스

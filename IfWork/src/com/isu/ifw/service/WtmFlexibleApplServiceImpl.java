@@ -47,7 +47,7 @@ import com.isu.ifw.repository.WtmWorkPattDetRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.WtmApplLineVO;
 import com.isu.ifw.vo.WtmFlexibleApplDetVO;
-import com.isu.option.vo.ReturnParam;
+import com.isu.ifw.vo.ReturnParam;
 
 @Service("wtmFlexibleApplService")
 public class WtmFlexibleApplServiceImpl implements WtmApplService {
