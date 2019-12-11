@@ -15,7 +15,7 @@ import com.isu.ifw.mapper.WtmValidatorMapper;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmTaaCodeRepository;
-import com.isu.option.vo.ReturnParam;
+import com.isu.ifw.vo.ReturnParam;
 
 @Service
 public class WtmValidatorServiceImpl implements WtmValidatorService  {

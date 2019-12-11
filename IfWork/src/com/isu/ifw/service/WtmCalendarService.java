@@ -3,7 +3,7 @@ package com.isu.ifw.service;
 import java.util.List;
 import java.util.Map;
 
-import com.isu.option.vo.ReturnParam;
+import com.isu.ifw.vo.ReturnParam;
 
 public interface WtmCalendarService {
 
