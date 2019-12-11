@@ -9,11 +9,14 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.isu.ifw.entity.WtmEmpHis;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.mapper.WtmCalendarMapper;
 import com.isu.ifw.mapper.WtmOrgChartMapper;
 import com.isu.ifw.repository.WtmEmpHisRepository;
+import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
 
 /**
  * 근태 달력 관리 service
@@ -34,6 +37,9 @@ public class WtmCalendarServiceImpl implements WtmCalendarService{
 	
 	@Autowired
 	WtmFlexibleEmpService empService;
+	
+	@Autowired
+	WtmWorkCalendarRepository workCalendarRepo;
 	
 	/**
 	 * 달력 조회
@@ -132,5 +138,71 @@ public class WtmCalendarServiceImpl implements WtmCalendarService{
 	 */
 	public Map<String, Object> getEmpWorkCalendarDayInfo(Map<String, Object> paramMap) throws Exception {
 		return wtmCalendarMapper.getEmpWorkCalendarDayInfo(paramMap);
+	}
+	
+	@Override
+	public ReturnParam getEmpsCalendar(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("");
+		
+		ObjectMapper mapper = new ObjectMapper();
+		List<String> sabuns = new ArrayList<String>();
+		Map<String, Object> applSabuns = null;
+		
+		try {
+			if(paramMap.get("applSabuns")!=null && !"".equals(paramMap.get("applSabuns"))) {
+				applSabuns = mapper.readValue(paramMap.get("applSabuns").toString(), new HashMap<String, Object>().getClass());
+				
+				if(applSabuns!=null) {
+					for(String k : applSabuns.keySet()) {
+						sabuns.add(k);
+					}
+				}
+				
+			} else {
+				sabuns.add(sabun);
+			}
+			
+			String ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
+			if(paramMap.get("ymd")!=null && !"".equals(paramMap.get("ymd")))
+				ymd = paramMap.get("ymd").toString();
+			
+			List<WtmWorkCalendar> calendars =  workCalendarRepo.findByTenantIdAndEnterCdAndYmdInSabun(tenantId, enterCd, ymd, sabuns);
+			
+			if(calendars!=null && calendars.size()>0) {
+				String holidayYn = null;
+				int i = 0;
+				List<String> diffTargets = null;
+				for(WtmWorkCalendar c : calendars) {
+					if(i == 0) {
+						holidayYn = c.getHolidayYn();
+						rp.put("holidayYn", holidayYn);
+					}
+					
+					if(!holidayYn.equals(c.getHolidayYn())) {
+						if(diffTargets == null)
+							diffTargets = new ArrayList<String>();
+						
+						if(applSabuns.get(c.getSabun())!=null ) {
+							Map<String, Object> applSabunInfo = (Map<String, Object>)applSabuns.get(c.getSabun());
+							diffTargets.add(applSabunInfo.get("empNm").toString());
+						}
+					}
+				
+					i++;
+				}
+				
+				if(diffTargets!=null && diffTargets.size()>0) {
+					rp.setFail("근무일이 다른 대상자가 있습니다. "+diffTargets.toString()+" 대상자를 확인해 주세요.");
+					return rp;
+				}
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+			rp.setFail("휴일 조회 시 오류가 발생했습니다.");
+			return rp;
+		}
+		
+		return rp;
 	}
 }

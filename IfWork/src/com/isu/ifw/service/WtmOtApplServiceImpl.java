@@ -49,7 +49,9 @@ import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.WtmApplLineVO;
-import com.isu.option.vo.ReturnParam;
+import com.isu.ifw.vo.ReturnParam;
+
+import ch.qos.logback.core.net.SyslogOutputStream;
 
 @Service("wtmOtApplService")
 public class WtmOtApplServiceImpl implements WtmApplService {
@@ -921,165 +923,170 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			Map<String, Object> paramMap) {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
+		rp.put("subsYn", false);
+		rp.put("payTargetYn", false);
+		
 		String ymd = paramMap.get("ymd").toString();
 		
 		WtmFlexibleEmp emp = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, ymd);
 
-		//1. 연장근무 신청 시 소정근로 선 소진 여부를 체크한다.
-		WtmFlexibleStdMgr flexibleStdMgr = wtmFlexibleStdMgrRepo.findById(emp.getFlexibleStdMgrId()).get();
-		//선 소진 여부
-		String exhaustionYn = flexibleStdMgr.getExhaustionYn();
-		
-
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		
-		//0. 신청 가능한 대상자 인지 확인
-		WtmApplCode applCode = wtmApplCodeRepo.findByTenantIdAndEnterCdAndApplCd(tenantId, enterCd, workTypeCd);
-		
-		List<Long> ruleIds = new ArrayList<Long>();
-		Map<String, Object> ruleMap = null;
-		
-		Long targetRuleId = applCode.getTargetRuleId();
-		if(targetRuleId != null) 
-			ruleIds.add(targetRuleId);
-		
-		// 대체휴가 사용여부 체크
-		// 대체휴가 사용 시 수당지급 대상자 인지 확인
-		Long subsRuleId = null;
-		rp.put("payTargetYn", true);
-		if(applCode.getSubsYn()!=null && "Y".equals(applCode.getSubsYn())) {
-			rp.put("subsYn", applCode.getSubsYn());
-			subsRuleId = applCode.getSubsRuleId();
-			if(subsRuleId != null) 
-				ruleIds.add(subsRuleId);
-		}	
-		
-		if(ruleIds.size()>0) {
-			//WtmRule rule = wtmRuleRepo.findByRuleId(targetRuleId);
-			List<WtmRule> rules = wtmRuleRepo.findByRuleIdsIn(ruleIds);
-			
-			if(rules!=null && rules.size()>0) {
-				for(WtmRule rule : rules) {
-					String ruleValue  = rule.getRuleValue();
-					if(ruleValue != null && !ruleValue.equals("")) {
-						ObjectMapper mapper = new ObjectMapper();
-						try {
-							ruleMap = mapper.readValue(ruleValue, new HashMap().getClass());
-							
-							if(ruleMap != null){ 
-								boolean isTarget = isRuleTarget(tenantId, enterCd, sabun, ruleMap);
-								
-								if(targetRuleId==rule.getRuleId() && !isTarget) { 
-									rp.setFail("연장(휴일)근무 신청 대상자가 아닙니다.");
-									return rp;
-								} else if(subsRuleId==rule.getRuleId()) {
-									rp.put("payTargetYn", isTarget);
-								}
-							}
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				}
-			}
-		}
-		
-		if(exhaustionYn!=null && exhaustionYn.equals("Y")) {
-			//선소진시
-			//코어타임을 제외한 잔여 소정근로시간을 알려준다
-			//근무제 기간 내의 총 소정근로 시간
-			int workMinute = emp.getWorkMinute();
+		if(emp!=null) {
+			//1. 연장근무 신청 시 소정근로 선 소진 여부를 체크한다.
+			//선 소진 여부
+			String exhaustionYn = null;
+			WtmFlexibleStdMgr flexibleStdMgr = wtmFlexibleStdMgrRepo.findById(emp.getFlexibleStdMgrId()).get();
+			if(flexibleStdMgr!=null)
+				exhaustionYn = flexibleStdMgr.getExhaustionYn();
+	
 			paramMap.put("tenantId", tenantId);
 			paramMap.put("enterCd", enterCd);
 			paramMap.put("sabun", sabun);
 			
+			//0. 신청 가능한 대상자 인지 확인
+			WtmApplCode applCode = wtmApplCodeRepo.findByTenantIdAndEnterCdAndApplCd(tenantId, enterCd, workTypeCd);
 			
-			Map<String, Object> resultMap = wtmFlexibleEmpMapper.getTotalApprMinute(paramMap); //totalApprMinute
-			Map<String, Object> resultCoreMap = wtmFlexibleEmpMapper.getTotalCoretime(paramMap); //coreHm
-			int apprMinute = Integer.parseInt(resultMap.get("totalApprMinute").toString());
-			int coreMinute = 0;
-			if(resultCoreMap != null) {
-				coreMinute = Integer.parseInt(resultCoreMap.get("coreHm").toString());
+			List<Long> ruleIds = new ArrayList<Long>();
+			Map<String, Object> ruleMap = null;
+			
+			Long targetRuleId = applCode.getTargetRuleId();
+			if(targetRuleId != null) 
+				ruleIds.add(targetRuleId);
+			
+			// 대체휴가 사용여부 체크
+			// 대체휴가 사용 시 수당지급 대상자 인지 확인
+			Long subsRuleId = null;
+			if(applCode.getSubsYn()!=null && "Y".equals(applCode.getSubsYn())) {
+				rp.put("subsYn", applCode.getSubsYn());
+				subsRuleId = applCode.getSubsRuleId();
+				if(subsRuleId != null) 
+					ruleIds.add(subsRuleId);
+			}	
+			
+			if(ruleIds.size()>0) {
+				//WtmRule rule = wtmRuleRepo.findByRuleId(targetRuleId);
+				List<WtmRule> rules = wtmRuleRepo.findByRuleIdsIn(ruleIds);
+				
+				if(rules!=null && rules.size()>0) {
+					for(WtmRule rule : rules) {
+						String ruleValue  = rule.getRuleValue();
+						if(ruleValue != null && !ruleValue.equals("")) {
+							ObjectMapper mapper = new ObjectMapper();
+							try {
+								ruleMap = mapper.readValue(ruleValue, new HashMap().getClass());
+								
+								if(ruleMap != null){ 
+									boolean isTarget = isRuleTarget(tenantId, enterCd, sabun, ruleMap);
+									System.out.println("isTarget:" + isTarget);
+									
+									if(targetRuleId==rule.getRuleId() && !isTarget) { 
+										rp.setFail("연장(휴일)근무 신청 대상자가 아닙니다.");
+										return rp;
+									} 
+									rp.put("payTargetYn", isTarget);
+								}
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						}
+					}
+				}
 			}
 			
-			//근무제 기간 내 총 소정근로 시간 > 연장근무신청일 포함 이전일의 인정소정근로시간(인정소정근로시간이 없을 경우 계획소정근로 시간) + 연장근무신청일 이후의 코어타임 시간			
-			if(workMinute > apprMinute + coreMinute) {
-				int baseWorkMinute = workMinute - apprMinute - coreMinute;
-				rp.setFail("필수 근무시간을 제외한 " + baseWorkMinute + "분의 소정근로시간을 선 소진 후 연장근무를 신청할 수 있습니다.");
-				return rp;
+			if(exhaustionYn!=null && exhaustionYn.equals("Y")) {
+				//선소진시
+				//코어타임을 제외한 잔여 소정근로시간을 알려준다
+				//근무제 기간 내의 총 소정근로 시간
+				int workMinute = emp.getWorkMinute();
+				paramMap.put("tenantId", tenantId);
+				paramMap.put("enterCd", enterCd);
+				paramMap.put("sabun", sabun);
+				
+				
+				Map<String, Object> resultMap = wtmFlexibleEmpMapper.getTotalApprMinute(paramMap); //totalApprMinute
+				Map<String, Object> resultCoreMap = wtmFlexibleEmpMapper.getTotalCoretime(paramMap); //coreHm
+				int apprMinute = Integer.parseInt(resultMap.get("totalApprMinute").toString());
+				int coreMinute = 0;
+				if(resultCoreMap != null) {
+					coreMinute = Integer.parseInt(resultCoreMap.get("coreHm").toString());
+				}
+				
+				//근무제 기간 내 총 소정근로 시간 > 연장근무신청일 포함 이전일의 인정소정근로시간(인정소정근로시간이 없을 경우 계획소정근로 시간) + 연장근무신청일 이후의 코어타임 시간			
+				if(workMinute > apprMinute + coreMinute) {
+					int baseWorkMinute = workMinute - apprMinute - coreMinute;
+					rp.setFail("필수 근무시간을 제외한 " + baseWorkMinute + "분의 소정근로시간을 선 소진 후 연장근무를 신청할 수 있습니다.");
+					return rp;
+				}
 			}
-		}
-		
-		//2.연장근무 가능시간 초과 체크
-		
-		//회사의 주 시작요일을 가지고 온다.
-		ObjectMapper mapper = new ObjectMapper();
-		paramMap.put("d", ymd);
-		
-		//7일전 ~ 7일 후 범위 지정
-		Date date = WtmUtil.toDate(ymd, "yyyyMMdd");
-        
-        Calendar sYmd = Calendar.getInstance();
-        sYmd.setTime(date);
-        sYmd.add(Calendar.DATE, -7);
-       
-        Calendar eYmd = Calendar.getInstance();
-        eYmd.setTime(date);
-        eYmd.add(Calendar.DATE, 7);
-
-		paramMap.put("sYmd", WtmUtil.parseDateStr(sYmd.getTime(), "yyyyMMdd"));
-		paramMap.put("eYmd", WtmUtil.parseDateStr(eYmd.getTime(), "yyyyMMdd"));
-		
-		Map<String, Object> rMap = wtmFlexibleStdMapper.getRangeWeekDay(paramMap);
-		
-		String symd = rMap.get("symd").toString();
-		String eymd = rMap.get("eymd").toString();
-		
-		boolean weekOtCheck = true;
-		
-		//연장근무 가능 시간을 가지고 오자
-		//선근제 이면
-		if(emp.getWorkTypeCd().startsWith("SELE")) {
-			//1주의 범위가 선근제 기간내에 있는지 체크
-			if(Integer.parseInt(symd) >= Integer.parseInt(emp.getSymd() ) && Integer.parseInt(eymd) <= Integer.parseInt(emp.getEymd())) {
-				//선근제는 주단위 연장근무 시간을 체크하지 않는다.
-				weekOtCheck = false;
-			}
-		}
-		
-		if(weekOtCheck) {
-			paramMap.putAll(rMap);
 			
-			rMap = wtmOtApplMapper.getTotOtMinuteBySymdAndEymd(paramMap);
-			int totOtMinute = 0;
-			if(rMap != null && rMap.get("totOtMinute") != null && !rMap.get("totOtMinute").equals("")) {
-				totOtMinute = Integer.parseInt(rMap.get("totOtMinute")+"");
+			//2.연장근무 가능시간 초과 체크
+			
+			//회사의 주 시작요일을 가지고 온다.
+			ObjectMapper mapper = new ObjectMapper();
+			paramMap.put("d", ymd);
+			
+			//7일전 ~ 7일 후 범위 지정
+			Date date = WtmUtil.toDate(ymd, "yyyyMMdd");
+	        
+	        Calendar sYmd = Calendar.getInstance();
+	        sYmd.setTime(date);
+	        sYmd.add(Calendar.DATE, -7);
+	       
+	        Calendar eYmd = Calendar.getInstance();
+	        eYmd.setTime(date);
+	        eYmd.add(Calendar.DATE, 7);
+	
+			paramMap.put("sYmd", WtmUtil.parseDateStr(sYmd.getTime(), "yyyyMMdd"));
+			paramMap.put("eYmd", WtmUtil.parseDateStr(eYmd.getTime(), "yyyyMMdd"));
+			
+			Map<String, Object> rMap = wtmFlexibleStdMapper.getRangeWeekDay(paramMap);
+			
+			String symd = rMap.get("symd").toString();
+			String eymd = rMap.get("eymd").toString();
+			
+			boolean weekOtCheck = true;
+			
+			//연장근무 가능 시간을 가지고 오자
+			//선근제 이면
+			if(emp.getWorkTypeCd().startsWith("SELE")) {
+				//1주의 범위가 선근제 기간내에 있는지 체크
+				if(Integer.parseInt(symd) >= Integer.parseInt(emp.getSymd() ) && Integer.parseInt(eymd) <= Integer.parseInt(emp.getEymd())) {
+					//선근제는 주단위 연장근무 시간을 체크하지 않는다.
+					weekOtCheck = false;
+				}
 			}
-			Float f = (float) (totOtMinute / 60);
-			if(f > 12) {
-				Float ff = (f - f.intValue()) * 60;
-				rp.setFail("연장근무 신청 가능 시간은 " + f.intValue() + "시간 " + ff.intValue() + "분 입니다.");
-				return rp;
+			
+			if(weekOtCheck) {
+				paramMap.putAll(rMap);
+				
+				rMap = wtmOtApplMapper.getTotOtMinuteBySymdAndEymd(paramMap);
+				int totOtMinute = 0;
+				if(rMap != null && rMap.get("totOtMinute") != null && !rMap.get("totOtMinute").equals("")) {
+					totOtMinute = Integer.parseInt(rMap.get("totOtMinute")+"");
+				}
+				Float f = (float) (totOtMinute / 60);
+				if(f > 12) {
+					Float ff = (f - f.intValue()) * 60;
+					rp.setFail("연장근무 신청 가능 시간은 " + f.intValue() + "시간 " + ff.intValue() + "분 입니다.");
+					return rp;
+				}
 			}
-		}
-		
-		Integer otMinute = emp.getOtMinute();
-		if(otMinute == null) {
-			otMinute = 0;
-		}
-		
-		//우선 오티 시간이 없으면 체크하지 말자
-		if(otMinute > 0) {
-			rMap = wtmFlexibleEmpMapper.getSumOtMinute(paramMap);
-			Integer sumOtMinute = Integer.parseInt(rMap.get("otMinute").toString());
-			if(otMinute <= sumOtMinute) {
-				rp.setFail("금주 사용가능한 연장근무 시간이 없습니다. 담당자에게 문의하세요.");
-				return rp;
+			
+			Integer otMinute = emp.getOtMinute();
+			if(otMinute == null) {
+				otMinute = 0;
 			}
-		}
+			
+			//우선 오티 시간이 없으면 체크하지 말자
+			if(otMinute > 0) {
+				rMap = wtmFlexibleEmpMapper.getSumOtMinute(paramMap);
+				Integer sumOtMinute = Integer.parseInt(rMap.get("otMinute").toString());
+				if(otMinute <= sumOtMinute) {
+					rp.setFail("금주 사용가능한 연장근무 시간이 없습니다. 담당자에게 문의하세요.");
+					return rp;
+				}
+			}
 		
+		}
 		
 		return rp;
 	}
@@ -1104,14 +1111,18 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			if(ruleMap.containsKey("INCLUDE")) {
 				//여기에등록되어 있으면 포함이 되었더도 안됨 이놈이 우선 
 				isTarget = true;
-				Map<String, Object> exMap = (Map<String, Object>) ruleMap.get("EXCLUDE");
-				if(exMap.containsKey("EMP")) {
-					List<Map<String, Object>> empList = (List<Map<String, Object>>) exMap.get("EMP");
-					if(empList != null && empList.size() > 0) {
-						for(Map<String, Object> empMap : empList) {
-							if(sabun.equals(empMap.get("k"))) {
-								isTarget = false;
-								return isTarget;
+				
+				Map<String, Object> exMap = null;
+				if(ruleMap.get("EXCLUDE")!=null && !"".equals(ruleMap.get("EXCLUDE"))) {
+					exMap = (Map<String, Object>) ruleMap.get("EXCLUDE");
+					if(exMap!=null && exMap.containsKey("EMP")) {
+						List<Map<String, Object>> empList = (List<Map<String, Object>>) exMap.get("EMP");
+						if(empList != null && empList.size() > 0) {
+							for(Map<String, Object> empMap : empList) {
+								if(sabun.equals(empMap.get("k"))) {
+									isTarget = false;
+									return isTarget;
+								}
 							}
 						}
 					}
@@ -1120,65 +1131,67 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				System.out.println(">>>>>>>>>exclude end!!!");
 				
 				Map<String, Object> inMap = (Map<String, Object>) ruleMap.get("INCLUDE");
-				if(inMap.containsKey("EMP")) {
-					List<Map<String, Object>> empList = (List<Map<String, Object>>) exMap.get("EMP");
-					if(empList != null && empList.size() > 0) {
-						for(Map<String, Object> empMap : empList) {
-							if(sabun.equals(empMap.get("k"))) {
-								isTarget = true;
+				if(inMap!=null) {
+					if(inMap.containsKey("EMP")) {
+						List<Map<String, Object>> empList = (List<Map<String, Object>>) inMap.get("EMP");
+						if(empList != null && empList.size() > 0) {
+							for(Map<String, Object> empMap : empList) {
+								if(sabun.equals(empMap.get("k"))) {
+									isTarget = true;
+								}
 							}
 						}
 					}
-				}
-				if(inMap.containsKey("ORG")) { 
-					List<Map<String, Object>> orgList = (List<Map<String, Object>>) exMap.get("ORG");
-					if(orgList != null && orgList.size() > 0) {
-						for(Map<String, Object> orgMap : orgList) {
-							if(e.getOrgCd().equals(orgMap.get("k"))) {
-								isTarget = true;
-								break;
+					if(inMap.containsKey("ORG")) { 
+						List<Map<String, Object>> orgList = (List<Map<String, Object>>) inMap.get("ORG");
+						if(orgList != null && orgList.size() > 0) {
+							for(Map<String, Object> orgMap : orgList) {
+								if(e.getOrgCd().equals(orgMap.get("k"))) {
+									isTarget = true;
+									break;
+								}
 							}
 						}
+						
 					}
-					
-				}
-				/*
-				if(inMap.containsKey("JIKWEE")) {
-					List<Map<String, Object>> jikweeList = (List<Map<String, Object>>) exMap.get("JIKWEE");
-					if(jikweeList != null && jikweeList.size() > 0) {
-						for(Map<String, Object> jikweeMap : jikweeList) {
-							if(e.get().equals(jikweeMap.get("k"))) {
-								isTarget = true;
-								break;
+					/*
+					if(inMap.containsKey("JIKWEE")) {
+						List<Map<String, Object>> jikweeList = (List<Map<String, Object>>) exMap.get("JIKWEE");
+						if(jikweeList != null && jikweeList.size() > 0) {
+							for(Map<String, Object> jikweeMap : jikweeList) {
+								if(e.get().equals(jikweeMap.get("k"))) {
+									isTarget = true;
+									break;
+								}
 							}
 						}
+						
 					}
-					
-				}
-				if(inMap.containsKey("JIKGUB")) {
-					
-				}
-				*/
-				if(inMap.containsKey("JIKCHAK")) {
+					if(inMap.containsKey("JIKGUB")) {
+						
+					}
+					*/
+					if(inMap.containsKey("JIKCHAK")) {
 
-					List<Map<String, Object>> jikchakList = (List<Map<String, Object>>) exMap.get("JIKCHAK");
-					if(jikchakList != null && jikchakList.size() > 0) {
-						for(Map<String, Object> jikchakMap : jikchakList) {
-							if(e.getDutyCd().equals(jikchakMap.get("k"))) {
-								isTarget = true;
-								break;
+						List<Map<String, Object>> jikchakList = (List<Map<String, Object>>) inMap.get("JIKCHAK");
+						if(jikchakList != null && jikchakList.size() > 0) {
+							for(Map<String, Object> jikchakMap : jikchakList) {
+								if(e.getDutyCd().equals(jikchakMap.get("k"))) {
+									isTarget = true;
+									break;
+								}
 							}
 						}
 					}
-				}
-				if(inMap.containsKey("JOB")) {
+					if(inMap.containsKey("JOB")) {
 
-					List<Map<String, Object>> jobList = (List<Map<String, Object>>) exMap.get("JIKCHAK");
-					if(jobList != null && jobList.size() > 0) {
-						for(Map<String, Object> jobMap : jobList) {
-							if(e.getJobCd().equals(jobMap.get("k"))) {
-								isTarget = true;
-								break;
+						List<Map<String, Object>> jobList = (List<Map<String, Object>>) inMap.get("JIKCHAK");
+						if(jobList != null && jobList.size() > 0) {
+							for(Map<String, Object> jobMap : jobList) {
+								if(e.getJobCd().equals(jobMap.get("k"))) {
+									isTarget = true;
+									break;
+								}
 							}
 						}
 					}

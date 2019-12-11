@@ -24,7 +24,7 @@ import com.isu.ifw.mapper.WtmFlexibleApplyMgrMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.repository.WtmFlexibleApplyMgrRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
-import com.isu.option.vo.ReturnParam;
+import com.isu.ifw.vo.ReturnParam;
 
 @Service("flexibleApplyMgrService")
 public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrService{

@@ -12,8 +12,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.vo.StringUtil;
 
 public class WtmUtil {
@@ -145,4 +147,79 @@ public class WtmUtil {
 		}
 		return data;
 	}
+	
+	public static Map<String, Object> parseJwtToken(HttpServletRequest req, String token) {
+		try {
+			Map<String, Object> data = new HashMap();
+			
+			String[] parts = token.split("\\."); 
+	
+	        java.util.Base64.Decoder decoder = java.util.Base64.getUrlDecoder();
+	        String headerJson = new String(decoder.decode(parts[0]));
+	        String payloadJson = new String(decoder.decode(parts[1]));
+	        String signatureJson = new String(decoder.decode(parts[2]));
+		        
+	        ObjectMapper mapper = new ObjectMapper();
+
+//	        data.put("tsId", "isu");
+//	        data.put("tenantId", "1");
+//	        data.put("enterCd", "ISU");
+//	        data.put("loginId", "10011");
+//	        data.put("userId", "10011");
+//	        data.put("empNo", "10011");
+
+	        data = mapper.readValue(payloadJson, Map.class);
+	        System.out.println("===============data " + data.toString());
+	        if(!data.containsKey("user_name")) {
+	        	data.put("tsId", data.get("client_id"));
+	        	if(req.getParameter("enterCd") != null && !req.getParameter("enterCd").equals("")) {
+		 	        data.put("enterCd", req.getParameter("enterCd"));
+		 	        data.put("loginId", req.getParameter("sabun"));
+		 	        data.put("userId", req.getParameter("sabun"));
+		 	        data.put("empNo", req.getParameter("sabun"));
+	        	} else {
+	        		 String enterCd = "";
+	        		 String sabun = "";
+	        		 
+	        		 Cookie[] cookies = req.getCookies();
+	    			 if (cookies != null) {
+	    			      for (Cookie cookie : cookies) {
+	    			    	  if(cookie.getName().equals("enterCd")) {
+	    			    		  enterCd = cookie.getValue();
+	    			    		  break;
+	    			    	  }
+	    			    	  if(cookie.getName().equals("sabun")) {
+	    			    		  sabun = cookie.getValue();
+	    			    		  break;
+	    			    	  }
+	    			      }
+	    			 }
+	    			 
+	    			 if(enterCd != "" && sabun != "") {
+	    				 data.put("enterCd", enterCd);
+	 		 	         data.put("loginId", sabun);
+	 		 	         data.put("userId", sabun);
+	 		 	         data.put("empNo", sabun);
+	    			 } else {
+	    				 return null;
+	    			 }
+	        	}
+	        } else {
+		        String userName = data.get("user_name").toString();
+		    	
+		        data.put("tsId", userName.split("@")[0]);
+		        data.put("enterCd", userName.split("@")[1]);
+		        data.put("loginId", userName.split("@")[2]);
+		        data.put("userId", userName.split("@")[2]);
+		        data.put("empNo", userName.split("@")[2]);
+		        data.put("userName", userName);
+	        }
+	
+	        return data;
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 }

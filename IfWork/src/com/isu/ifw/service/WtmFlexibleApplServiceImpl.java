@@ -47,7 +47,7 @@ import com.isu.ifw.repository.WtmWorkPattDetRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.WtmApplLineVO;
 import com.isu.ifw.vo.WtmFlexibleApplDetVO;
-import com.isu.option.vo.ReturnParam;
+import com.isu.ifw.vo.ReturnParam;
 
 @Service("wtmFlexibleApplService")
 public class WtmFlexibleApplServiceImpl implements WtmApplService {
@@ -313,12 +313,30 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			//사전 체크에서 유연근무끼리의 중복은 이미 막힌다.
 			//중복은 기본근무와의 중복이 있다.
 			//유연근무제 기간과 중복되는 데이터를 찾아 시작일과 종료일을 갱신해주자 
-			List<WtmFlexibleEmp> empList = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymd(tenantId, enterCd, appl.getApplSabun(), flexibleAppl.getSymd(), flexibleAppl.getEymd());
+			List<WtmFlexibleEmp> empList = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCd(tenantId, enterCd, appl.getApplSabun(), flexibleAppl.getSymd(), flexibleAppl.getEymd(), "BASE");
 			if(empList != null) {
 				for(WtmFlexibleEmp e : empList) {
 					//신청기간내에 시작 종료가 포함되어있을 경우
 					if(Integer.parseInt(flexibleAppl.getSymd()) <= Integer.parseInt(e.getSymd()) && Integer.parseInt(flexibleAppl.getEymd()) >= Integer.parseInt(e.getEymd())) {
 						wtmFlexibleEmpRepo.delete(e);
+					//신청 시작일과 종료일이 기존 근무정보 내에 있을 경우 
+					}else if(Integer.parseInt(flexibleAppl.getSymd()) > Integer.parseInt(e.getSymd()) && Integer.parseInt(flexibleAppl.getEymd()) < Integer.parseInt(e.getEymd())) {
+						String eymd = e.getEymd();
+						
+						e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(flexibleAppl.getSymd(), ""), -1),null));
+						wtmFlexibleEmpRepo.save(e);
+						WtmFlexibleEmp newEmp = new WtmFlexibleEmp();
+						newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
+						newEmp.setTenantId(e.getTenantId());
+						newEmp.setEnterCd(e.getEnterCd());
+						newEmp.setSabun(e.getSabun());
+						newEmp.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(flexibleAppl.getEymd(), ""), 1),null));
+						newEmp.setEymd(eymd);
+						newEmp.setUpdateId(userId);
+						newEmp.setWorkTypeCd(e.getWorkTypeCd());
+						newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
+						wtmFlexibleEmpRepo.save(newEmp);
+
 					//시작일만 포함되어있을 경우 
 					}else if(Integer.parseInt(flexibleAppl.getSymd()) >= Integer.parseInt(e.getSymd()) && Integer.parseInt(flexibleAppl.getEymd()) < Integer.parseInt(e.getEymd())) {
 						//시작일을 신청종료일 다음날로 업데이트 해주자
@@ -330,20 +348,6 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 						e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(flexibleAppl.getSymd(), ""), -1),null));
 						wtmFlexibleEmpRepo.save(e);
 						
-					//신청 시작일과 종료일이 기존 근무정보 내에 있을 경우 
-					}else if(Integer.parseInt(flexibleAppl.getSymd()) > Integer.parseInt(e.getSymd()) && Integer.parseInt(flexibleAppl.getEymd()) < Integer.parseInt(e.getEymd())) {
-						String eymd = e.getEymd();
-						
-						e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(flexibleAppl.getSymd(), ""), -1),null));
-						wtmFlexibleEmpRepo.save(e);
-						WtmFlexibleEmp newEmp = new WtmFlexibleEmp();
-						newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
-						newEmp.setTenantId(e.getTenantId());
-						newEmp.setEnterCd(e.getEnterCd());
-						newEmp.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(flexibleAppl.getEymd(), ""), 1),null));
-						newEmp.setEymd(eymd);
-						newEmp.setUpdateId(userId);
-						wtmFlexibleEmpRepo.save(newEmp);
 					}
 						
 				}
