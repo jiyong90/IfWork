@@ -87,8 +87,8 @@ public class WtmApplCodeServiceImpl implements WtmApplCodeService{
 						code.setInEhm(l.get("inEhm").toString());
 						code.setSubsYn(l.get("subsYn").toString());
 						code.setSubsRuleId(l.get("subsRuleId").toString().equals("") ? null : Long.parseLong(l.get("subsRuleId").toString()));
-						code.setSubsSday(Integer.parseInt(l.get("subsSday").toString()));
-						code.setSubsEday(Integer.parseInt(l.get("subsEday").toString()));
+						code.setSubsSday(l.get("subsSday").toString().equals("") ? null : Integer.parseInt(l.get("subsSday").toString()));
+						code.setSubsEday(l.get("subsEday").toString().equals("") ? null : Integer.parseInt(l.get("subsEday").toString()));
 						code.setHolInShm(l.get("holInShm").toString());
 						code.setHolInEhm(l.get("holInEhm").toString());
 						code.setHolApplTypeCd(l.get("holApplTypeCd").toString());

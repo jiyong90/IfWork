@@ -19,7 +19,7 @@ import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmWorkteamEmpMapper;
 import com.isu.ifw.repository.WtmWorkteamEmpRepository;
 import com.isu.ifw.util.WtmUtil;
-import com.isu.option.vo.ReturnParam;
+import com.isu.ifw.vo.ReturnParam;
 
 @Service
 public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{

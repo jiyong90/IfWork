@@ -16,7 +16,7 @@ import com.isu.ifw.mapper.WtmOrgChartMapper;
 import com.isu.ifw.repository.WtmEmpHisRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.util.WtmUtil;
-import com.isu.option.vo.ReturnParam;
+import com.isu.ifw.vo.ReturnParam;
 
 /**
  * 근태 달력 관리 service

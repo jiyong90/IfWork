@@ -48,7 +48,7 @@ import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.WtmDayPlanVO;
 import com.isu.ifw.vo.WtmDayWorkVO;
 import com.isu.option.service.TenantConfigManagerService;
-import com.isu.option.vo.ReturnParam;
+import com.isu.ifw.vo.ReturnParam;
 
 @Service("flexibleEmpService")
 public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
