@@ -117,6 +117,14 @@ public interface WtmInterfaceService {
 	public void setTaaApplIf(HashMap reqMap) throws Exception;
 	
 	/**
+	 * 근태정보 5분간격 이관
+	 * @param reqMap - 파라메터 맵
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void setTaaApplBatchIf(Long tenantId) throws Exception;
+	
+	/**
 	 * 근태마감
 	 * @param reqMap - 파라메터 맵
 	 * @return 
