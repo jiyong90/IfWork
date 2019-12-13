@@ -111,6 +111,7 @@
             <artifactId>commons-io</artifactId>
             <version>2.4</version>
         </dependency>
+        <!-- 
 	 	<dependency>
             <groupId>com.isu.commons</groupId>
             <artifactId>isu-commons-auth</artifactId>
@@ -122,6 +123,7 @@
 			<artifactId>isu-commons-option</artifactId>
 			<version>3.0.3</version>
 		</dependency>	
+		-->
 		<!-- https://mvnrepository.com/artifact/com.zaxxer/HikariCP -->
 		<dependency>
 		    <groupId>com.zaxxer</groupId>

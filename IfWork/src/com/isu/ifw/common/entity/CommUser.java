@@ -1,4 +1,4 @@
-package com.isu.ifw.entity;
+package com.isu.ifw.common.entity;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -25,7 +25,6 @@ import org.springframework.format.annotation.DateTimeFormat;
  */
 @Entity
 @Table(name="comm_user")
-@NamedQuery(name="CommUser.findAll", query="SELECT c FROM CommUser c")
 public class CommUser implements Serializable {
 	private static final long serialVersionUID = 1L;
 

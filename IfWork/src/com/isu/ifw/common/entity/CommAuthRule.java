@@ -1,4 +1,4 @@
-package com.isu.ifw.entity;
+package com.isu.ifw.common.entity;
 
 import java.util.Date;
 

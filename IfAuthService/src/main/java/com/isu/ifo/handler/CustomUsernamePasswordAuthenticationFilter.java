@@ -38,6 +38,7 @@ import com.isu.ifo.entity.UserDetailsImpl;
 import com.isu.ifo.entity.UserRole;
 import com.isu.ifo.service.security.ClientDetailsServiceImpl;
 import com.isu.ifo.service.security.UserDetailServiceImpl;
+import com.isu.ifo.util.AjaxUtils;
 
 /**
  * Form 로그인 인증을 담당하는 Filter이다.
@@ -112,7 +113,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
         boolean isValid =  true;
         String errorMsg = "";
         if(loginMethod.equalsIgnoreCase("GET")) {
-        	loginUrl = buildUrl(loginUrl, queryMap);
+        	loginUrl = AjaxUtils.buildUrl(loginUrl, queryMap);
         	
         	resultMap = restTemplate.getForEntity(loginUrl, new HashMap<String, Object>().getClass()).getBody();
         }else {
@@ -265,47 +266,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
 		}
 		return null;
     }
-    /**
-	 * requestMap을 이용해서 URL을 만들어 반환한다.
-	 * @param url
-	 * @param requestMap
-	 * @return
-	 */
-	private String buildUrl(String url, Map<String, Object> requestMap) {
-
-		if(requestMap == null)
-			return url;
-		
-		Set<String>keys = requestMap.keySet();
-		Iterator<String>itor = keys.iterator();
-		String params = "";
-		
-		while(itor.hasNext()){
-			if(params.equals("") && url.indexOf("?") == -1) {
-				params = "?";
-			} else { 
-				params = params +"&";
-			}
-			
-			String key = itor.next();
-			String value = ""+(requestMap.get(key) == null ? "" :  requestMap.get(key));
-			
-			// URL로 전달될 파라미터들을 URL 인코딩한다.
-			/*if(value != null){
-				try {
-					value = URLEncoder.encode(value, "UTF-8");
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
-				}
-			}*/
-			params = params+key+"="+value;
-		}
-		if(params != null)
-			return url+params;
-		else
-			return url;
-		
-	}
+    
 
 
 
