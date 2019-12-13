@@ -16,4 +16,7 @@ public interface WtmWorktimeMapper {
 	
 	//근무 이상자 조회 : 출퇴근 차이자
 	public List<Map<String, Object>> getEntryDiffList(Map<String, Object> paramMap);
+	
+	//모바일 부서원 근태현황  : 달별 기간 목록 조회
+	public List<Map<String, Object>> getTermList(Map<String, Object> paramMap);
 }
