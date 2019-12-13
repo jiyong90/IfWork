@@ -19,7 +19,7 @@ import org.springframework.format.annotation.DateTimeFormat;
  * The persistent class for the comm_auth_rule database table.
  * 
  */
-@Entity
+@Entity(name="WtmAuthRule")
 @Table(name="comm_auth_rule")
 public class CommAuthRule{
 	@Id

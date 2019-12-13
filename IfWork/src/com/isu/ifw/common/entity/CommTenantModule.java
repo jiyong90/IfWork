@@ -24,9 +24,9 @@ import org.springframework.format.annotation.DateTimeFormat;
  * The persistent class for the comm_tenant_module database table.
  * 
  */
-@Entity
+@Entity(name="WtmTenantModule")
 @Table(name="comm_tenant_module")
-@NamedQuery(name="CommTenantModule.findAll", query="SELECT c FROM CommTenantModule c")
+@NamedQuery(name="CommTenantModule.findAll", query="SELECT c FROM WtmTenantModule c")
 public class CommTenantModule implements Serializable {
 	private static final long serialVersionUID = 1L;
 

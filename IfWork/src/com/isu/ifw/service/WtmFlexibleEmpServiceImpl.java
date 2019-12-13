@@ -54,6 +54,7 @@ import com.isu.ifw.vo.WtmDayWorkVO;
 public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
 	@Autowired
+	@Qualifier("WtmTenantConfigManagerService")
 	private TenantConfigManagerService tcms;
 	
 	@Autowired

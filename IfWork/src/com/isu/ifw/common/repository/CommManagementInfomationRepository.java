@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import com.isu.ifw.common.entity.CommManagementInfomation;
 
-@Repository
+@Repository("WtmManagementInfomationRepository")
 public interface CommManagementInfomationRepository extends JpaRepository<CommManagementInfomation, Long>{
 	
 	/**
@@ -37,7 +37,7 @@ public interface CommManagementInfomationRepository extends JpaRepository<CommMa
 	public List<CommManagementInfomation> findByTenantIdAndInfoKeyLike(Long tenantId, String infoKey);
 	
 	@Query("SELECT t "
-		 + "  FROM CommManagementInfomation t "
+		 + "  FROM WtmManagementInfomation t "
 		 + " WHERE t.tenantId = :tenantId "
 		 + "   AND ((:infoKey='' AND :infoName='' AND :infoData='' AND :clobData='')  "
 		 + "    OR ( :infoKey<>'' AND t.infoKey LIKE CONCAT('%',:infoKey,'%') "

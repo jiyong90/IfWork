@@ -11,6 +11,8 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,16 +23,18 @@ import com.isu.ifw.common.repository.CommManagementInfomationDao;
 import com.isu.ifw.common.repository.CommManagementInfomationRepository;
 import com.isu.ifw.vo.ReturnParam;
 
-@Service
+@Service("WtmTenantConfigManagerService")
 public class TenantConfigManagerServiceImpl implements TenantConfigManagerService {
 
 	
 	Map<String,String> configValues = null;
 	
-	@Resource
+	@Autowired
+	@Qualifier("WtmManagementInfomationRepository")
 	private CommManagementInfomationRepository managementRepository;
 	
-	@Resource
+	@Autowired
+	@Qualifier("WtmManagementInfomationDao")
 	private CommManagementInfomationDao managementDao;
 	
 	@Override

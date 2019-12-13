@@ -1,4 +1,4 @@
-package com.isu.ifw.service;
+package com.isu.ifw.common.service;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,15 +10,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.common.entity.CommAuth;
 import com.isu.ifw.common.entity.CommAuthRule;
-import com.isu.ifw.common.service.TenantConfigManagerService;
+import com.isu.ifw.common.repository.WtmCommAuthRepository;
+import com.isu.ifw.common.repository.WtmCommAuthRuleRepository;
 import com.isu.ifw.mapper.WtmAuthMgrMapper;
-import com.isu.ifw.repository.WtmCommAuthRepository;
-import com.isu.ifw.repository.WtmCommAuthRuleRepository;
 import com.isu.ifw.repository.WtmUserAuthRepository;
 import com.isu.ifw.util.WtmUtil;
 
@@ -40,6 +40,7 @@ public class WtmAuthMgrServiceImpl implements WtmAuthMgrService{
 	WtmUserAuthRepository userAuthRepo;
 	
 	@Autowired
+	@Qualifier("WtmTenantConfigManagerService")
 	private TenantConfigManagerService tcms;
 	
 	

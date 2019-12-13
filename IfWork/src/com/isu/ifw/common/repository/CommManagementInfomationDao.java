@@ -20,7 +20,7 @@ import com.isu.ifw.common.PagingQueryWrapper;
 import com.isu.ifw.common.entity.CommManagementInfomation;
  
 
-@Repository
+@Repository("WtmManagementInfomationDao")
 public class CommManagementInfomationDao {
 
       @PersistenceContext
@@ -139,7 +139,7 @@ public class CommManagementInfomationDao {
       }
       
       public void deleteInfo(Long managementInfomationId) {
-         String sql = "DELETE FROM CommManagementInfomation r WHERE r.managementInfomationId = :managementInfomationId";
+         String sql = "DELETE FROM WtmManagementInfomation r WHERE r.managementInfomationId = :managementInfomationId";
          Query q = em.createQuery(sql);
          q.setParameter("managementInfomationId", managementInfomationId);
 

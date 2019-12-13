@@ -7,7 +7,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-@Entity
+@Entity(name = "WtmAuth")
 @Table(name="comm_auth")
 public class CommAuth {
 	@Id

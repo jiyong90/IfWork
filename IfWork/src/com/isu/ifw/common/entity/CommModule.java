@@ -19,9 +19,9 @@ import javax.persistence.Table;
  * The persistent class for the comm_module database table.
  * 
  */
-@Entity
+@Entity(name="WtmModule")
 @Table(name="comm_module")
-@NamedQuery(name="CommModule.findAll", query="SELECT c FROM CommModule c")
+@NamedQuery(name="CommModule.findAll", query="SELECT c FROM WtmModule c")
 public class CommModule implements Serializable {
 	private static final long serialVersionUID = 1L;
 

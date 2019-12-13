@@ -1,4 +1,4 @@
-package com.isu.ifw.repository;
+package com.isu.ifw.common.repository;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public interface WtmCommAuthRepository extends JpaRepository<CommAuth, Long> {
 	
 	@Modifying
 	@Transactional
-	@Query("DELETE FROM CommAuth r WHERE r.authId IN :authIds ")
+	@Query("DELETE FROM WtmAuth r WHERE r.authId IN :authIds ")
 	public void deleteByAuthIdsIn(@Param("authIds") List<Long> authIds);
  
 }

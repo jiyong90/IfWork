@@ -9,9 +9,9 @@ import javax.persistence.*;
  * The persistent class for the beio_management_infomation database table.
  * 
  */
-@Entity
+@Entity(name="WtmManagementInfomation")
 @Table(name="comm_management_infomation")
-@NamedQuery(name="CommManagementInfomation.findAll", query="SELECT c FROM CommManagementInfomation c")
+@NamedQuery(name="CommManagementInfomation.findAll", query="SELECT c FROM WtmManagementInfomation c")
 public class CommManagementInfomation implements Serializable {
 	private static final long serialVersionUID = 1L;
 

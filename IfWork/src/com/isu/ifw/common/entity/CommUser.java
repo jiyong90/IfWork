@@ -23,7 +23,7 @@ import org.springframework.format.annotation.DateTimeFormat;
  * The persistent class for the comm_user database table.
  * 
  */
-@Entity
+@Entity(name="WtmUser")
 @Table(name="comm_user")
 public class CommUser implements Serializable {
 	private static final long serialVersionUID = 1L;

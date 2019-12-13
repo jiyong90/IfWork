@@ -1,4 +1,4 @@
-package com.isu.ifw.service;
+package com.isu.ifw.common.service;
 
 import java.util.List;
 import java.util.Map;
