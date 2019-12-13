@@ -35,16 +35,18 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 	@Autowired
 	WtmWorktimeMapper timeMapper;
 	
-	
+	//기간 리스트 조회
 	@Override
-	public List<Map<String, Object>> getTermList(Long tenantId, String enterCd, String sabun, String month) {
+	public List<Map<String, Object>> getTermList(Map<String, Object> paramMap) {
 
-		Map <String,Object> paramMap = new HashMap<String, Object>();
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		paramMap.put("month", month);
-		
 		return timeMapper.getTermList(paramMap);	
 	}
+
+	//기간 내에 포함된 부서원 조회
+	@Override
+	public List<Map<String, Object>> getTeamList(Map<String, Object> paramMap) {
+
+		return timeMapper.getTeamList(paramMap);	
+	}
+
 }
