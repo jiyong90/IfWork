@@ -13,6 +13,7 @@ import com.isu.ifw.vo.ReturnParam;
 public interface WtmInoutService {
 	
 	public Map<String, Object> getMenuContext(Long tenantId, String enterCd, String sabun);
+	public Map<String, Object> getMenuContext2(Long tenantId, String enterCd, String sabun);
 	public ReturnParam updateTimecard(Long tenantId, String enterCd, String sabun, String ymd, String inoutType, String entryType) throws Exception;
 //	public int checkGoback(Long tenantId, String enterCd, String sabun) throws Exception;
 	public Map<String, Object> updateTimeStamp(Map<String, Object> paramMap);

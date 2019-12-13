@@ -1,2 +1,8 @@
+<<<<<<< HEAD
 /target/
 /.settings/
+=======
+/target/
+/.settings/
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
+/.gitignore
