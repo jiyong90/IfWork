@@ -1,9 +1,9 @@
 spring.application.name: api-auth
 
-#server:
-#  port: 8380
-#  servlet:
-#    context-path: /ifo
+server:
+  port: 8380
+  servlet:
+    context-path: /ifa
  
 
 spring:

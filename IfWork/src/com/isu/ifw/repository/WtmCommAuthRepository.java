@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.isu.ifw.entity.CommAuth;
+import com.isu.ifw.common.entity.CommAuth;
 
 @Repository
 public interface WtmCommAuthRepository extends JpaRepository<CommAuth, Long> {

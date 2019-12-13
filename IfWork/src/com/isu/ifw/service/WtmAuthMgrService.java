@@ -5,8 +5,6 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
-import com.isu.ifw.entity.CommAuth;
-
 /**
  * 권한 관리
  *

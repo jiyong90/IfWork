@@ -13,14 +13,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.entity.CommAuth;
-import com.isu.ifw.entity.CommAuthRule;
+import com.isu.ifw.common.entity.CommAuth;
+import com.isu.ifw.common.entity.CommAuthRule;
+import com.isu.ifw.common.service.TenantConfigManagerService;
 import com.isu.ifw.mapper.WtmAuthMgrMapper;
 import com.isu.ifw.repository.WtmCommAuthRepository;
 import com.isu.ifw.repository.WtmCommAuthRuleRepository;
 import com.isu.ifw.repository.WtmUserAuthRepository;
 import com.isu.ifw.util.WtmUtil;
-import com.isu.option.service.TenantConfigManagerService;
 
 @Service
 public class WtmAuthMgrServiceImpl implements WtmAuthMgrService{
