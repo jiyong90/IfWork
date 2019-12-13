@@ -11,6 +11,9 @@ import com.isu.ifw.vo.ReturnParam;
  *
  */
 public interface WtmMobileService {
-	
-	public List<Map<String, Object>> getTermList(Long tenantId, String enterCd, String sabun, String Ymd);
+
+	//부서원 work term 기간 리스트
+	public List<Map<String, Object>> getTermList(Map<String, Object> paramMap);
+	//특정 기간 부서원 리스트
+	public List<Map<String, Object>> getTeamList(Map<String, Object> paramMap);
 }

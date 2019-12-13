@@ -26,7 +26,7 @@ import org.springframework.format.annotation.DateTimeFormat;
  */
 @Entity(name="WtmTenantModule")
 @Table(name="comm_tenant_module")
-@NamedQuery(name="CommTenantModule.findAll", query="SELECT c FROM WtmTenantModule c")
+@NamedQuery(name="WtmTenantModule.findAll", query="SELECT c FROM WtmTenantModule c")
 public class CommTenantModule implements Serializable {
 	private static final long serialVersionUID = 1L;
 

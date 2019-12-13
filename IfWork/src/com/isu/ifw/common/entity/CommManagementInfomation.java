@@ -11,7 +11,7 @@ import javax.persistence.*;
  */
 @Entity(name="WtmManagementInfomation")
 @Table(name="comm_management_infomation")
-@NamedQuery(name="CommManagementInfomation.findAll", query="SELECT c FROM WtmManagementInfomation c")
+@NamedQuery(name="WtmManagementInfomation.findAll", query="SELECT c FROM WtmManagementInfomation c")
 public class CommManagementInfomation implements Serializable {
 	private static final long serialVersionUID = 1L;
 

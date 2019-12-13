@@ -21,7 +21,7 @@ import javax.persistence.Table;
  */
 @Entity(name="WtmModule")
 @Table(name="comm_module")
-@NamedQuery(name="CommModule.findAll", query="SELECT c FROM WtmModule c")
+@NamedQuery(name="WtmModule.findAll", query="SELECT c FROM WtmModule c")
 public class CommModule implements Serializable {
 	private static final long serialVersionUID = 1L;
 
