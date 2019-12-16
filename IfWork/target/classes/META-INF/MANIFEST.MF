@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Built-By: claire
+Built-By: ISU-USER
 Build-Jdk: 9.0.4
 Implementation-Title: IfWork
 Implementation-Version: 0.0.1-SNAPSHOT
