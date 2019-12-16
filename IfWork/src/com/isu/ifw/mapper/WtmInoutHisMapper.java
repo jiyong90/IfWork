@@ -1,4 +1,4 @@
-package com.isu.ifw.mapper;
+\package com.isu.ifw.mapper;
 
 import java.util.List;
 import java.util.Map;
