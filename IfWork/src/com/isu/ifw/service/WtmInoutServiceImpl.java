@@ -179,27 +179,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	}
 	
 	@Override
-	public ReturnParam updateTimecard(Long tenantId, String enterCd, String sabun, String ymd, String inoutType, String entryType) throws Exception {
-		
-		SimpleDateFormat format1 = new SimpleDateFormat ( "yyyy-MM-dd HH:mm:ss");
-		Date now = new Date();
-		String today = format1.format(now);
-		int cnt = 0;
-
-		Map<String, Object> paramMap = new HashMap();
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		paramMap.put("inoutType", inoutType);
-		paramMap.put("ymd", ymd);
-		paramMap.put("now", today);
-		paramMap.put("entryType", "MO");
-		
-//		cnt = inoutHisMapper.saveWtmInoutHis(paramMap);
-//		if(cnt <= 0) {
-//			return cnt;
-//		}
-//	
+	public ReturnParam updateTimecard(Map<String, Object> paramMap) throws Exception {
 		Map<String, Object> rt = updateTimeStamp(paramMap);
 		logger.debug("updateTimeStamp rt " + rt.toString());
 
@@ -209,7 +189,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		else 
 			rp.setSuccess("타각에 성공하였습니다.");
 		
-		logger.debug("타각 : " + tenantId + "," + enterCd + "," + sabun + "," + rt.toString() + ", " + paramMap.get("rtnYmd").toString());
+		logger.debug("타각 : " + paramMap.toString() + "," + rt.toString() + ", " + paramMap.get("rtnYmd").toString());
 		//퇴근일때만 인정시간 계산
 		if(paramMap.containsKey("rtnYmd") && paramMap.get("rtnYmd") != null && paramMap.get("inoutType").equals("OUT"))
 			empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 

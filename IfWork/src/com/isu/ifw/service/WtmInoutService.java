@@ -14,7 +14,7 @@ public interface WtmInoutService {
 	
 	public Map<String, Object> getMenuContext(Long tenantId, String enterCd, String sabun);
 	public Map<String, Object> getMenuContext2(Long tenantId, String enterCd, String sabun);
-	public ReturnParam updateTimecard(Long tenantId, String enterCd, String sabun, String ymd, String inoutType, String entryType) throws Exception;
+	public ReturnParam updateTimecard(Map<String, Object> paramMap) throws Exception;
 //	public int checkGoback(Long tenantId, String enterCd, String sabun) throws Exception;
 	public Map<String, Object> updateTimeStamp(Map<String, Object> paramMap);
 	public List<Map<String, Object>> getMyInoutList(Map<String, Object> paramMap) throws Exception;
