@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
@@ -1403,6 +1404,214 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			e.printStackTrace();
 		}
         System.out.println("WtmInterfaceServiceImpl setTaaApplIf end");
+		return;
+	}
+	
+	@Override
+	@Transactional
+	public void setTaaApplBatchIf(Long tenantId) throws Exception {
+		// TODO Auto-generated method stub
+		System.out.println("WtmInterfaceServiceImpl setTaaApplBatchIf");
+		// 인터페이스 결과 저장용
+    	String retMsg = null;
+    	int resultCnt = 0;
+    	String ifType = "TAA_APPL_PP";
+    	Map<String, Object> ifHisMap = new HashMap<>();
+    	ifHisMap.put("tenantId", tenantId);
+    	ifHisMap.put("ifItem", ifType);
+    	
+    	// 인터페이스용 변수
+    	String lastDataTime = null;
+    	String nowDataTime = null;
+    	HashMap<String, Object> getDateMap = null;
+    	HashMap<String, Object> getIfMap = null;
+    	List<Map<String, Object>> getIfList = null;
+    	
+    	// 최종 자료 if 시간 조회
+    	try {
+    		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
+    		lastDataTime = getDateMap.get("lastDate").toString();
+    		nowDataTime = getDateMap.get("nowDate").toString();
+    		
+    		try {
+        		String param = "?lastDataTime="+lastDataTime;
+	        	String ifUrl = setIfUrl(tenantId, "/taaAppl", param); 
+	        	getIfMap = getIfRt(ifUrl);
+		   		
+		   		if (getIfMap != null && getIfMap.size() > 0) {
+		   			String ifMsg = getIfMap.get("message").toString();
+		   			getIfList = (List<Map<String, Object>>) getIfMap.get("ifData");
+		   		} else {
+		   			retMsg = "TAA_RESULT get : If 데이터 없음";
+		   			ifHisMap.put("ifStatus", "ERR");
+		   		}
+        	} catch(Exception e) {
+        		retMsg = "TAA_RESULT get : If 서버통신 오류";
+        		ifHisMap.put("ifStatus", "ERR");
+        	}
+        	
+    	} catch(Exception e) {
+    		retMsg = "TAA_RESULT get : 최종갱신일 조회오류";
+    		ifHisMap.put("ifStatus", "ERR");
+    	}
+    	
+    	// 조회된 자료가 있으면...
+    	if(retMsg == null && getIfList != null && getIfList.size() > 0) {
+    		for(int l=0; l<getIfList.size(); l++) {
+    			Map<String, Object> reqMap = new HashMap<>();
+    			reqMap.put("tenantId", tenantId);
+    			reqMap.put("enterCd", getIfList.get(l).get("ENTER_CD").toString());
+    			reqMap.put("sabun", getIfList.get(l).get("SABUN").toString());
+    			reqMap.put("taaCd", getIfList.get(l).get("GNT_CD").toString());
+    			reqMap.put("sYmd", getIfList.get(l).get("S_YMD").toString());
+    			reqMap.put("eYmd", getIfList.get(l).get("E_YMD").toString());
+    			if(getIfList.get(l).get("REQ_S_HM") != null) {
+    				reqMap.put("sHm", getIfList.get(l).get("REQ_S_HM").toString());
+    			} else {
+    				reqMap.put("sHm", "");
+    			}
+    			if(getIfList.get(l).get("REQ_E_HM") != null) {
+    				reqMap.put("eHm", getIfList.get(l).get("REQ_E_HM").toString());
+    			} else {
+    				reqMap.put("eHm", "");
+    			}
+    			reqMap.put("ifApplNo", Long.parseLong(getIfList.get(l).get("APPL_SEQ").toString()));
+    			reqMap.put("status", getIfList.get(l).get("APPL_STATUS_CD").toString());
+    			
+    			
+				// 2. 인터페이스 data 처리
+				try {
+					// 호출이되면 근태신청 데이터를 저장하거나 결재상태를 갱신한다
+					reqMap.put("retCode", "");
+					reqMap.put("retMsg", "");
+					reqMap.put("taaApplId", "");
+					reqMap.put("applId", "");
+					reqMap.put("oldStatus", "");
+					wtmInterfaceMapper.setTaaApplIf(reqMap);
+					
+					String retCode = reqMap.get("retCode").toString();
+					System.out.println("CALL setTaaApplIf retCode : " + retCode);
+					String oldStatusCd = "";
+					if(reqMap.get("oldStatus") != null) { oldStatusCd = reqMap.get("oldStatus").toString();}
+					
+					if("OK".equals(retCode)) {
+						//기간 루프
+						String sYmd = reqMap.get("sYmd").toString();
+						String eYmd = reqMap.get("eYmd").toString();
+						
+						SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
+						
+						SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+				        Date sDate = formatter.parse(sYmd);
+				        Date eDate = formatter.parse(eYmd);
+				         
+				        // 시간차이를 시간,분,초를 곱한 값으로 나누면 하루 단위가 나옴
+				        long diff = eDate.getTime() - sDate.getTime();
+				        long diffDays = (diff / (24 * 60 * 60 * 1000)) +1;
+						for(int i=0; i<diffDays; i++) {
+							Calendar cal = Calendar.getInstance();
+							cal.setTime(sDate);
+							cal.add(Calendar.DATE, i);
+							String ymd = formatter.format(cal.getTime());
+							System.out.println("loop ymd : " + ymd);
+							Map<String, Object> reqDayMap = reqMap;
+							reqDayMap.put("ymd", ymd);
+							reqDayMap.put("oldStatus", oldStatusCd);
+							reqDayMap.put("retCode", "");
+							reqDayMap.put("retMsg", "");
+							reqDayMap.put("timeTypeCd", "");
+							reqDayMap.put("taaSetYn", "");
+							reqDayMap.put("taaSdate", "");
+							reqDayMap.put("taaEdate", "");
+							System.out.println("oldStatusCd : " + oldStatusCd);
+							for ( String key : reqDayMap.keySet() ) {
+			        		    System.out.println("key : " + key +" / value : " + reqDayMap.get(key));
+			        		}
+							//System.out.println("statusCd : " + reqDayMap.get("status"));
+							wtmInterfaceMapper.setTaaApplDayIf(reqDayMap);
+							
+							String retDayCode = reqDayMap.get("retCode").toString();
+							System.out.println("retMsg : " +  reqDayMap.get("retMsg").toString());
+							if("FAIL".equals(retCode)) {
+								// 오류다 ㅠㅠ
+								ifHisMap.put("ifStatus", "ERR");
+								retMsg = "근태정보 이관중 오류. 오류로그 확인";
+								break;
+							} else {
+								// 오류가 아니면.. 근태시간을 생성체크하자
+								String taaSetYn = reqDayMap.get("taaSetYn").toString();
+								if("I".equals(taaSetYn)) {
+									// 근태생성
+									WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
+											  Long.parseLong(reqDayMap.get("tenantId").toString())
+											, reqDayMap.get("enterCd").toString()
+											, ymd
+											, reqDayMap.get("sabun").toString()
+											, reqDayMap.get("timeTypeCd").toString()
+											, reqDayMap.get("taaCd").toString()
+											, dt.parse(reqDayMap.get("taaSdate").toString())
+											, dt.parse(reqDayMap.get("taaEdate").toString())
+											, Long.parseLong(reqDayMap.get("applId").toString())
+											, "0");
+								} else if ("D".equals(taaSetYn)) {
+									// 근태삭제
+									WtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
+											  Long.parseLong(reqDayMap.get("tenantId").toString())
+											, reqDayMap.get("enterCd").toString()
+											, ymd
+											, reqDayMap.get("sabun").toString()
+											, reqDayMap.get("timeTypeCd").toString()
+											, reqDayMap.get("taaCd").toString()
+											, dt.parse(reqDayMap.get("taaSdate").toString())
+											, dt.parse(reqDayMap.get("taaEdate").toString())
+											, Long.parseLong(reqDayMap.get("applId").toString())
+											, "0");
+								}
+								
+								// 오늘 이전이면 근무마감을 다시 돌려야함.
+								String chkYmd = nowDataTime.substring(0, 8);
+								if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd)) {
+									String enterCd = reqDayMap.get("enterCd").toString();
+					        		String sabun = reqDayMap.get("sabun").toString();
+					        		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
+					        		
+					        		HashMap<String, Object> setTermMap = new HashMap();
+					        		setTermMap.put("tenantId", tenantId);
+					        		setTermMap.put("enterCd", enterCd);
+					        		setTermMap.put("sabun", sabun);
+					        		setTermMap.put("symd", ymd);
+					        		setTermMap.put("eymd", ymd);
+					        		setTermMap.put("pId", "TAAIF");
+					        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
+								}
+							}
+						}
+						
+						ifHisMap.put("ifStatus", "OK");
+						retMsg = "근태신청서 처리완료";
+					} else {
+						ifHisMap.put("ifStatus", "ERR");
+						retMsg = "근태정보 이관중 오류. 오류로그 확인";
+					}
+				} catch(Exception e){
+					ifHisMap.put("ifStatus", "ERR");
+					retMsg = "TAA_RESULT set : 근태 이관오류";
+		            e.printStackTrace();
+		        }
+    		} // end for
+    	}
+		
+    	// 3. 처리결과 저장
+		try {
+			// WTM_IF_HIS 테이블에 결과저장
+			ifHisMap.put("updateDate", nowDataTime);
+   			ifHisMap.put("ifEndDate", lastDataTime);
+			ifHisMap.put("ifMsg", retMsg);
+			wtmInterfaceMapper.insertIfHis(ifHisMap);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+        System.out.println("WtmInterfaceServiceImpl setTaaApplBatchIf end");
 		return;
 	}
 	
