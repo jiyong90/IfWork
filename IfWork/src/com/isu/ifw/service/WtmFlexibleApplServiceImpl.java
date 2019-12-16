@@ -1,6 +1,5 @@
 package com.isu.ifw.service;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,7 +16,6 @@ import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
 import com.isu.ifw.entity.WtmFlexibleAppl;
 import com.isu.ifw.entity.WtmFlexibleApplDet;
-import com.isu.ifw.entity.WtmFlexibleDayPlan;
 import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmPropertie;
@@ -45,9 +43,9 @@ import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.repository.WtmWorkPattDetRepository;
 import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
 import com.isu.ifw.vo.WtmApplLineVO;
 import com.isu.ifw.vo.WtmFlexibleApplDetVO;
-import com.isu.ifw.vo.ReturnParam;
 
 @Service("wtmFlexibleApplService")
 public class WtmFlexibleApplServiceImpl implements WtmApplService {
@@ -125,7 +123,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 	WtmFlexibleEmpService flexibleEmpService;
 	
 	@Override
-	public Map<String, Object> getAppl(Long applId) {
+	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
 		Map<String, Object> appl = flexApplMapper.findByApplId(applId);
 		appl.put("applLine", applMapper.getWtmApplLineByApplId(applId));
 		return appl;

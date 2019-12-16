@@ -34,6 +34,11 @@ public class WtmOtCanAppl {
 //	@Column(name="TAA_CD")
 //	private String taaCd; 
 	
+	@Column(name="SABUN")
+	private String sabun;
+	@Column(name="YMD")
+	private String ymd;
+	
 	@Column(name="PLAN_SDATE", columnDefinition="DATETIME") 
 	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	private Date planSdate;
@@ -92,6 +97,22 @@ public class WtmOtCanAppl {
 
 	public void setWorkDayResultId(Long workDayResultId) {
 		this.workDayResultId = workDayResultId;
+	}
+
+	public String getSabun() {
+		return sabun;
+	}
+
+	public void setSabun(String sabun) {
+		this.sabun = sabun;
+	}
+
+	public String getYmd() {
+		return ymd;
+	}
+
+	public void setYmd(String ymd) {
+		this.ymd = ymd;
 	}
 
 	public String getTimeTypeCd() {

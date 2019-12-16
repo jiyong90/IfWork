@@ -62,8 +62,8 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 	
 	
 	@Override
-	public Map<String, Object> getAppl(Long applId) {
-		return null;
+	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
+		return entryApplMapper.findByApplId(applId);
 	}
 
 	@Override

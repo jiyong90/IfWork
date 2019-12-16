@@ -74,7 +74,7 @@ public interface WtmApplService {
 	final static String BREAK_TYPE_TIMEFIX = "TIMEFIX";
 	
 	
-	public Map<String, Object> getAppl(Long applId);
+	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId);
 	
 	public List<WtmApplLineVO> getApplLine(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId);
 	

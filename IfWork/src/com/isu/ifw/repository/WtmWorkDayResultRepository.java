@@ -30,6 +30,8 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 
 	public WtmWorkDayResult findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndPlanSdateAndPlanEdate(Long tenantId, String enterCd, String sabun, String timeTypeCd, Date sdate, Date edate);
 	
+	public WtmWorkDayResult findByTenantIdAndEnterCdAndSabunAndApplId(Long tenantId, String enterCd, String sabun, Long applId);
+	
 	public WtmWorkDayResult findByWorkDayResultId(Long workDayResultId);
 	 
 	@Modifying

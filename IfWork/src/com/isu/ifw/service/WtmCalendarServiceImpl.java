@@ -141,27 +141,26 @@ public class WtmCalendarServiceImpl implements WtmCalendarService{
 	}
 	
 	@Override
-	public ReturnParam getEmpsCalendar(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
+	public ReturnParam getHolidayYn(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
 		
 		ObjectMapper mapper = new ObjectMapper();
 		List<String> sabuns = new ArrayList<String>();
-		Map<String, Object> applSabuns = null;
+		sabuns.add(sabun);
 		
+		Map<String, Object> applSabuns = null;
 		try {
 			if(paramMap.get("applSabuns")!=null && !"".equals(paramMap.get("applSabuns"))) {
 				applSabuns = mapper.readValue(paramMap.get("applSabuns").toString(), new HashMap<String, Object>().getClass());
 				
-				if(applSabuns!=null) {
+				if(applSabuns!=null && applSabuns.keySet().size()>0) {
+					sabuns = new ArrayList<String>();
 					for(String k : applSabuns.keySet()) {
 						sabuns.add(k);
 					}
 				}
-				
-			} else {
-				sabuns.add(sabun);
-			}
+			} 
 			
 			String ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 			if(paramMap.get("ymd")!=null && !"".equals(paramMap.get("ymd")))
@@ -172,7 +171,7 @@ public class WtmCalendarServiceImpl implements WtmCalendarService{
 			if(calendars!=null && calendars.size()>0) {
 				String holidayYn = null;
 				int i = 0;
-				List<String> diffTargets = null;
+				List<String> checkTargets = null;
 				for(WtmWorkCalendar c : calendars) {
 					if(i == 0) {
 						holidayYn = c.getHolidayYn();
@@ -180,20 +179,21 @@ public class WtmCalendarServiceImpl implements WtmCalendarService{
 					}
 					
 					if(!holidayYn.equals(c.getHolidayYn())) {
-						if(diffTargets == null)
-							diffTargets = new ArrayList<String>();
+						if(checkTargets == null)
+							checkTargets = new ArrayList<String>();
 						
 						if(applSabuns.get(c.getSabun())!=null ) {
 							Map<String, Object> applSabunInfo = (Map<String, Object>)applSabuns.get(c.getSabun());
-							diffTargets.add(applSabunInfo.get("empNm").toString());
+							checkTargets.add(applSabunInfo.get("empNm").toString());
 						}
 					}
 				
 					i++;
 				}
 				
-				if(diffTargets!=null && diffTargets.size()>0) {
-					rp.setFail("근무일이 다른 대상자가 있습니다. "+diffTargets.toString()+" 대상자를 확인해 주세요.");
+				if(checkTargets!=null && checkTargets.size()>0) {
+					rp.put("checkTarget", checkTargets);
+					rp.setFail("근무일이 다른 대상자가 있습니다. 대상자를 확인해 주세요.");
 					return rp;
 				}
 			}

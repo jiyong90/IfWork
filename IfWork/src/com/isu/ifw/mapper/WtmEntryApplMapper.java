@@ -11,4 +11,6 @@ public interface WtmEntryApplMapper {
 	 */
 	public Map<String, Object> checkDuplicateEntryAppl(Map<String, Object> paramMap);
 	
+	public Map<String, Object> findByApplId(Long applId);
+	
 }

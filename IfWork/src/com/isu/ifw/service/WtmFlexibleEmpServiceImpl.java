@@ -22,7 +22,6 @@ import com.isu.ifw.entity.WtmFlexibleAppl;
 import com.isu.ifw.entity.WtmFlexibleApplDet;
 import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
-import com.isu.ifw.entity.WtmOtCanAppl;
 import com.isu.ifw.entity.WtmTaaCode;
 import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
@@ -38,7 +37,7 @@ import com.isu.ifw.repository.WtmFlexibleApplDetRepository;
 import com.isu.ifw.repository.WtmFlexibleApplRepository;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
-import com.isu.ifw.repository.WtmOtCanApplRepository;
+import com.isu.ifw.repository.WtmOtApplRepository;
 import com.isu.ifw.repository.WtmTaaCodeRepository;
 import com.isu.ifw.repository.WtmTimeCdMgrRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
@@ -76,7 +75,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	WtmWorkDayResultRepository workDayResultRepo;
 	
 	@Autowired
-	WtmOtCanApplRepository otCanApplRepo;
+	WtmOtApplRepository otApplRepo;
 	
 	@Autowired
 	WtmFlexibleApplRepository flexApplRepo;
@@ -209,17 +208,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		List<Map<String, Object>> workDayResult = flexEmpMapper.getWorkDayResult(paramMap);
 		
-		//취소 신청서 있는지 조회
-		if(workDayResult!=null && workDayResult.size()>0) {
-			for(Map<String, Object> r : workDayResult) {
-				if(r.get("applId")!=null && !"".equals(r.get("applId"))) {
-					WtmOtCanAppl otCanAppl = otCanApplRepo.findByOtApplId(Long.valueOf(r.get("applId").toString()));
-					if(otCanAppl!=null && otCanAppl.getOtCanApplId()!=null) {
-						r.put("otCanApplId", otCanAppl.getOtCanApplId());
-					}
-				}
-			}
-		}
 		/*Map<String, Object> dayResults = new HashMap<String, Object>();
 		if(result!=null && result.size()>0) {
 			for(Map<String, Object> r : workDayResult) {
@@ -338,6 +326,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						min = Float.valueOf(r.get("planMinute").toString());
 					}
 				}
+				
+				if(sDate==null || eDate==null)
+					continue;
 				
 				Date sd = WtmUtil.toDate(sDate, "yyyyMMddHHmm");
 				Date ed = WtmUtil.toDate(eDate, "yyyyMMddHHmm");
@@ -1496,7 +1487,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							if(workDayResults.size() == (cnt+1) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) ) {
 								//뒤에 데이터가 없으면
 								res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
-								res.setApplId(applId);
+								//res.setApplId(applId);
 								workDayResultRepo.save(res);
 								break;
 							}else { 
@@ -1529,7 +1520,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 									// SUBS or TAA
 									// SUBS(지우려는 데이터) -> BASE 로 변
 									res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
-									res.setApplId(applId);
+									//res.setApplId(applId);
 
 									workDayResultRepo.save(res);
 									break;
@@ -1550,7 +1541,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 										// SUBS(지우려는 데이터) -> BASE 로 변
 										//SUBS or TAA
 										res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
-										res.setApplId(applId); 
+										//res.setApplId(applId); 
 										workDayResultRepo.save(res);
 										break;
 									}

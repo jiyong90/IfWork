@@ -1,5 +1,7 @@
 package com.isu.ifw.repository;
 
+import java.util.List;
+
 import javax.transaction.Transactional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,10 +13,9 @@ import com.isu.ifw.entity.WtmOtCanAppl;
 
 @Repository
 public interface WtmOtCanApplRepository extends JpaRepository<WtmOtCanAppl, Long> {
-	public WtmOtCanAppl findByApplId(Long applId);
+	public List<WtmOtCanAppl> findByApplId(Long applId);
 	
-	@Query("SELECT r FROM WtmOtCanAppl r WHERE r.otApplId = (SELECT o.otApplId FROM WtmOtAppl o WHERE o.applId = ?1)")
-	public WtmOtCanAppl findByOtApplId(Long applId);
+	public WtmOtCanAppl findByApplIdAndOtApplId(Long applId, Long otApplId);
 	
 	@Modifying
 	@Transactional
