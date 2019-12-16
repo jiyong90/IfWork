@@ -1,28 +1,18 @@
 package com.isu.ifw.service;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.Resource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.isu.ifw.entity.WtmCode;
-import com.isu.ifw.entity.WtmCodeGrp;
-import com.isu.ifw.entity.WtmTimeBreakMgr;
-import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmCalendarMapper;
 import com.isu.ifw.mapper.WtmInoutHisMapper;
-import com.isu.ifw.repository.WtmCodeGrpRepository;
-import com.isu.ifw.repository.WtmCodeRepository;
 import com.isu.ifw.vo.ReturnParam;
 
 @Service("inoutService")
@@ -244,44 +234,18 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	}
 
 	@Override
-	public Map<String, Object> getMyInoutDetail(Long tenantId, String enterCd, String sabun, String inoutTypeCd, String inoutDate) throws Exception {
-		Map<String, Object> convertMap = new HashMap();
-		convertMap.put("tenantId", tenantId);
-		convertMap.put("enterCd", enterCd);
-		convertMap.put("sabun", sabun);
-		convertMap.put("inoutTypeCd", inoutTypeCd);
-		convertMap.put("inoutDate", inoutDate);
-		
-		return inoutHisMapper.getMyInoutDetail(convertMap);
+	public Map<String, Object> getMyInoutDetail(Map<String, Object> paramMap) throws Exception {
+		return inoutHisMapper.getMyInoutDetail(paramMap);
 	}
 	
 	@Override
-	public List<Map<String, Object>> getMyInoutList(Long tenantId, String enterCd, String sabun, String month) throws Exception {
-		
-		Map<String, Object> paramMap = new HashMap();
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		paramMap.put("month", month);
-		
+	public List<Map<String, Object>> getMyInoutList(Map<String, Object> paramMap) throws Exception {
 		return inoutHisMapper.getMyInoutList(paramMap);
 	}
 	
 	@Override
-	public List<Map<String, Object>> getMyInoutHistory(Long tenantId, String enterCd, String sabun, String ymd) throws Exception {
-	
-		Map<String, Object> paramMap = new HashMap();
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		paramMap.put("ymd", ymd);
-		
-		List<Map<String, Object>> rs = inoutHisMapper.getMyInoutHistory(paramMap);
-		for(Map<String,Object> temp : rs) {
-			temp.put("key", temp.get("key2"));
-		}
-		
-		return rs;
+	public List<Map<String, Object>> getMyInoutHistory(Map<String, Object> paramMap) throws Exception {
+		return inoutHisMapper.getMyInoutHistory(paramMap);
 	}
 	
 	@Override

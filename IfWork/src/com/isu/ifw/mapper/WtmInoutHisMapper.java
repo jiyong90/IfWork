@@ -48,4 +48,11 @@ public interface WtmInoutHisMapper {
 	 * @return
 	 */
 	public Map<String, Object> getMyInoutDetail(Map<String, Object> paramMap) throws Exception;
+	
+	/**
+	 * 출퇴근 기간별 상세 조회
+	 * @param paramMap
+	 * @return
+	 */
+	public List<Map<String, Object>> getInoutListTerm(Map<String, Object> paramMap) throws Exception;
 }
