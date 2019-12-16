@@ -15,16 +15,20 @@ spring:
 #    context-path: /
   
 zuul:
-  sensitiveHeaders: Cookie,Set-Cookie
+  sensitiveHeaders: #Cookie,Set-Cookie
   routes: 
-    spring-security-oauth-resource:
+    auth:
       path: /ifa/**
       url: http://192.168.111.13:8180/ifa
-      sensitiveHeaders: Cookie,Set-Cookie,Authorization
-    oauth:
+      sensitiveHeaders: #Cookie,Set-Cookie,Authorization
+    worktime:
       path: /ifw/**
       url: http://192.168.111.15/ifw
-      sensitiveHeaders: Cookie,Set-Cookie,Authorization
+      sensitiveHeaders: #Cookie,Set-Cookie,Authorization
+    worktime-api:
+      path: /worktime-api/**
+      url: http://192.168.111.15/ifw
+      sensitiveHeaders: #Cookie,Set-Cookie,Authorization
     #static:
     #  path: /static/**
     #  service-id: static
