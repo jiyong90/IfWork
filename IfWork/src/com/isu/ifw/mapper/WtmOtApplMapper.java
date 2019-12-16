@@ -17,7 +17,7 @@ public interface WtmOtApplMapper {
 	 * @param applId
 	 * @return
 	 */
-	public Map<String, Object> otApplfindByApplId(Long applId);
+	public List<Map<String, Object>> otApplfindByApplId(Map<String, Object> paramMap);
 	
 	/**
 	 * 휴일연장근무 신청서 조회

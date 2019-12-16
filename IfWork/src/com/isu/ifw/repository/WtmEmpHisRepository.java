@@ -1,5 +1,7 @@
 package com.isu.ifw.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,4 +17,7 @@ public interface WtmEmpHisRepository extends JpaRepository<WtmEmpHis, Long> {
 	public WtmEmpHis findByTenantIdAndEnterCdAndSabunAndYmd(@Param(value="tenantId")Long tenantId, @Param(value="enterCd")String enterCd, @Param(value="sabun")String sabun, @Param(value="ymd")String ymd);
 
 	public WtmEmpHis findByEmpHisId(Long empHisId);
+	
+	@Query(value="SELECT H FROM WtmEmpHis H WHERE H.tenantId = ?1 AND H.enterCd = ?2 AND ?3 BETWEEN H.symd AND H.eymd AND H.sabun IN ?4 ")
+	public List<WtmEmpHis> findByTenantIdAndEnterCdAndYmdAndSabuns(Long tenantId, String enterCd, String ymd, List<String> sabuns);
 }

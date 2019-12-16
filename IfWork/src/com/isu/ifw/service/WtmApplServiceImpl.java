@@ -5,13 +5,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplLine;
-import com.isu.ifw.entity.WtmEntryAppl;
-import com.isu.ifw.entity.WtmFlexibleAppl;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmOtApplMapper;
 import com.isu.ifw.mapper.WtmOtCanApplMapper;
@@ -21,8 +22,8 @@ import com.isu.ifw.repository.WtmEntryApplRepository;
 import com.isu.ifw.repository.WtmFlexibleApplRepository;
 import com.isu.ifw.repository.WtmOtSubsApplRepository;
 import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.WtmApplLineVO;
 import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.vo.WtmApplLineVO;
 
 @Service("wtmApplService")
 public class WtmApplServiceImpl implements WtmApplService {
@@ -54,6 +55,23 @@ public class WtmApplServiceImpl implements WtmApplService {
 	@Autowired
 	WtmEntryApplRepository entryApplRepo;
 	
+	@Autowired
+	@Qualifier("wtmFlexibleApplService")
+	WtmApplService wtmFlexibleApplService;
+	
+	@Autowired
+	@Qualifier("wtmOtApplService")
+	WtmApplService wtmOtApplService;
+	
+	@Autowired
+	@Qualifier("wtmOtCanApplService")
+	WtmApplService wtmOtCanApplService;
+	
+	@Autowired
+	@Qualifier("wtmEntryApplService")
+	WtmApplService entryApplService;
+	
+	
 	@Override
 	public List<Map<String, Object>> getApprList(Long tenantId, String enterCd, String empNo, Map<String, Object> paramMap, String userId) {
 		// TODO Auto-generated method stub
@@ -63,7 +81,7 @@ public class WtmApplServiceImpl implements WtmApplService {
 		
 		String applType = paramMap.get("applType").toString();
 		
-		System.out.println("applType::::: " + applType);
+		//System.out.println("applType::::: " + applType);
 		
 		List<Map<String, Object>> apprList = null;
 		if(applType.equals(APPL_TYPE_REQUEST))
@@ -73,35 +91,48 @@ public class WtmApplServiceImpl implements WtmApplService {
 		else if(applType.equals(APPL_TYPE_COMPLETE))
 			apprList = applMapper.getApprList03(paramMap);
 		
+		/*ObjectMapper mapper = new ObjectMapper();
+		try {
+			System.out.println("apprList : " + mapper.writeValueAsString(apprList));
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
+		
 		if(apprList!=null && apprList.size()>0) {
 			for(Map<String, Object> appr : apprList) {
 				
 				if(appr.get("applId")!=null && !"".equals(appr.get("applId")) && appr.get("applCd")!=null && !"".equals(appr.get("applCd"))) {
 					Long applId = Long.valueOf(appr.get("applId").toString());
 					String applCd = appr.get("applCd").toString();
+					String applSabun = appr.get("applSabun").toString();
+					Map<String, Object> appl = null;
 					
-					if("OT".equals(applCd) || "OT_CAN".equals(applCd)) { //연장, 휴일연장, 연장취소, 휴일연장 취소
-						Map<String, Object> otAppl = null;
-						
-						if("OT".equals(applCd))
-							otAppl = otApplMapper.otApplfindByApplId(applId);
-						else if("OT_CAN".equals(applCd))
-							otAppl = otCanMapper.otApplAndOtCanApplfindByApplId(applId);
-						
-						if(otAppl!=null && otAppl.containsKey("subYn") && otAppl.get("subYn")!=null && "Y".equals(otAppl.get("subYn"))) {
-							otAppl.put("subs", otApplMapper.otSubsApplfindByOtApplId(Long.valueOf(otAppl.get("otApplId").toString())));
-						}
-						appr.put("appl", otAppl);
+					if("OT".equals(applCd) ) { //연장
+						appl = wtmOtApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
+					} else if("OT_CAN".equals(applCd)) { //연장 취소
+						appl = wtmOtCanApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
 					} else if("SUBS_CHG".equals(applCd)) { //대체휴가 취소
 						
 					} else if("ENTRY_CHG".equals(applCd)) { //근태사유서
-						WtmEntryAppl entryAppl = entryApplRepo.findByApplId(applId);
-						appr.put("appl", entryAppl);
+						appl = entryApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
 					} else {
 						//유연근무제
-						WtmFlexibleAppl flexibleAppl = wtmFlexibleApplRepo.findByApplId(applId);
-						appr.put("appl", flexibleAppl);
+						appl = wtmFlexibleApplService.getAppl(tenantId, enterCd, applSabun, applId, userId); 
 					}
+					
+					ObjectMapper mapper = new ObjectMapper();
+					System.out.println("applCd : " + applCd);
+					System.out.println("sabun : " + empNo);
+					try {
+						System.out.println("appl : " + mapper.writeValueAsString(appl));
+					} catch (JsonProcessingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					appl.put("sabun", empNo);
+					appr.put("appl", appl);
 					
 				}
 			}
@@ -111,7 +142,7 @@ public class WtmApplServiceImpl implements WtmApplService {
 	}
 
 	@Override
-	public Map<String, Object> getAppl(Long applId) {
+	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
 		// TODO Auto-generated method stub
 		return null;
 	}

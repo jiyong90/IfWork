@@ -19,7 +19,4 @@ public interface WtmWorktimeMapper {
 	
 	//모바일 부서원 근태현황  : 달별 기간 목록 조회
 	public List<Map<String, Object>> getTermList(Map<String, Object> paramMap);
-
-	//모바일 부서원 근태현황  : 기간 별 부서원 목록 조회
-	public List<Map<String, Object>> getTeamList(Map<String, Object> paramMap);
 }

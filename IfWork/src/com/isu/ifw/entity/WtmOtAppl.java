@@ -27,7 +27,8 @@ public class WtmOtAppl {
 	private Long applId;
 	@Column(name="OLD_OT_APPL_ID")
 	private Long oldOtApplId;
-	
+	@Column(name="SABUN")
+	private String sabun;
 	@Column(name="YMD")
 	private String ymd;
 	@Column(name="HOLIDAY_YN")
@@ -51,6 +52,8 @@ public class WtmOtAppl {
 	private String reason;
 	@Column(name="SUB_YN")
 	private String subYn;
+	@Column(name="CANCEL_YN")
+	private String cancelYn;
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name="UPDATE_DATE", columnDefinition="DATETIME") 
 	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -75,6 +78,12 @@ public class WtmOtAppl {
 	}
 	public void setOldOtApplId(Long oldOtApplId) {
 		this.oldOtApplId = oldOtApplId;
+	}
+	public String getSabun() {
+		return sabun;
+	}
+	public void setSabun(String sabun) {
+		this.sabun = sabun;
 	}
 	public String getYmd() {
 		return ymd;
@@ -132,6 +141,13 @@ public class WtmOtAppl {
 	}
 	public void setSubYn(String subYn) {
 		this.subYn = subYn;
+	}
+	
+	public String getCancelYn() {
+		return cancelYn;
+	}
+	public void setCancelYn(String cancelYn) {
+		this.cancelYn = cancelYn;
 	}
 	public Date getUpdateDate() {
 		return updateDate;

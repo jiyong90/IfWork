@@ -1,5 +1,6 @@
 package com.isu.ifw.mapper;
 
+import java.util.List;
 import java.util.Map;
 
 public interface WtmOtCanApplMapper {
@@ -10,7 +11,7 @@ public interface WtmOtCanApplMapper {
 	 * @param applId
 	 * @return
 	 */
-	public Map<String, Object> otCanApplfindByApplId(Long applId);
+	public List<Map<String, Object>> otCanApplfindByApplId(Map<String, Object> paramMap);
 	
 	/**
 	 * 연장근무 신청서 조회

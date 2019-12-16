@@ -10,19 +10,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
+import com.isu.ifw.entity.WtmEmpHis;
 import com.isu.ifw.entity.WtmOtAppl;
 import com.isu.ifw.entity.WtmOtCanAppl;
 import com.isu.ifw.entity.WtmOtSubsAppl;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmOtApplMapper;
 import com.isu.ifw.mapper.WtmOtCanApplMapper;
 import com.isu.ifw.repository.WtmApplCodeRepository;
 import com.isu.ifw.repository.WtmApplLineRepository;
 import com.isu.ifw.repository.WtmApplRepository;
+import com.isu.ifw.repository.WtmEmpHisRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmOtApplRepository;
 import com.isu.ifw.repository.WtmOtCanApplRepository;
@@ -31,8 +35,8 @@ import com.isu.ifw.repository.WtmPropertieRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.WtmApplLineVO;
 import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.vo.WtmApplLineVO;
 
 @Service("wtmOtCanApplService")
 public class WtmOtCanApplServiceImpl implements WtmApplService {
@@ -82,20 +86,65 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 	
 	@Autowired
 	WtmInboxService inbox;
+	
+	@Autowired
+	WtmEmpHisRepository wtmEmpHisRepo; 
+	
+	@Autowired
+	WtmOtApplMapper wtmOtApplMapper;
 
 	@Override
-	public Map<String, Object> getAppl(Long applId) {
-		try {
-			Map<String, Object> otAppl = wtmOtCanApplMapper.otCanApplfindByApplId(applId);
-			 
-			otAppl.put("applLine", applMapper.getWtmApplLineByApplId(applId));
+	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
+		
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("applId", applId);
+		paramMap.put("sabun", sabun);
+		List<Map<String, Object>> otCanApplList = wtmOtCanApplMapper.otCanApplfindByApplId(paramMap);
+		
+		Map<String, Object> otCanAppl = null;
+		if(otCanApplList!=null && otCanApplList.size()>0) {
+			// otACanApplList가 1건 이상이면(연장근무신청 관리자 화면에서 신청한 경우) 대상자 리스트를 보여줌
+			List<String> sabuns = new ArrayList<String>();
 			
-			return otAppl;
+			String ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
+			for(Map<String, Object> o : otCanApplList) {
+				//연장근무신청 관리자 화면에서 신청 시 작성한 내용은 똑같으므로 첫번째 사람의 연장근무 신청서만 가져옴
+				if(otCanApplList.size()==1 || sabun.equals(o.get("sabun").toString())) {
+					otCanAppl = o;
+					ymd = o.get("ymd").toString();
+				}
+				sabuns.add(o.get("sabun").toString());
+			}
 			
-		}catch(Exception e) {
-			e.printStackTrace();
-			return null;
+			//대상자
+			if(sabuns.size()>0) {
+				List<WtmEmpHis> targetList = wtmEmpHisRepo.findByTenantIdAndEnterCdAndYmdAndSabuns(tenantId, enterCd, ymd, sabuns);
+				otCanAppl.put("targetList", targetList);
+			}
+			
+			//대체휴일
+			if(otCanAppl.get("holidayYn")!=null && "Y".equals(otCanAppl.get("holidayYn")) && otCanAppl.get("subYn")!=null && "Y".equals(otCanAppl.get("subYn"))) {
+				List<Map<String, Object>> otSubsAppls = wtmOtApplMapper.otSubsApplfindByOtApplId(Long.valueOf(otCanAppl.get("otApplId").toString()));
+				if(otSubsAppls!=null && otSubsAppls.size()>0)
+					otCanAppl.put("subs", otSubsAppls);
+			}
+			
+			boolean isRecovery = false;
+			List<WtmApplLineVO> applLine = applMapper.getWtmApplLineByApplId(applId);
+			
+			//결재요청중일 때 회수 버튼 보여주기
+			if(applLine!=null && applLine.size()>0) {
+				for(WtmApplLineVO l : applLine) {
+					if(l.getApprSeq()==1 && "10".equals(l.getApprStatusCd()) && sabuns.indexOf(sabun)!=-1 )
+						isRecovery = true;
+				}
+			}
+			
+			otCanAppl.put("recoveryYn", isRecovery);
+			otCanAppl.put("applLine", applLine);
 		}
+		
+		return otCanAppl;
 	}
 
 	@Override
@@ -163,13 +212,27 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 		ReturnParam rp = new ReturnParam();
 		paramMap.put("applId", applId);
 		
-		String applSabun = paramMap.get("applSabun").toString();
+		ObjectMapper mapper = new ObjectMapper();
 		
-		rp = this.validate(tenantId, enterCd, applSabun, "", paramMap);
-		//rp = validate(applId);
-		if(rp.getStatus().equals("FAIL")) {
-			throw new Exception(rp.get("message").toString());
+		//신청 대상자
+		List<String> applSabuns = null;
+		if(paramMap.get("applSabuns")!=null && !"".equals(paramMap.get("applSabuns"))) {
+			applSabuns = mapper.readValue(paramMap.get("applSabuns").toString(), new ArrayList<String>().getClass());
+		} else {
+			//개인 신청
+			applSabuns = new ArrayList<String>();
+			applSabuns.add(sabun);
 		}
+		
+		if(applSabuns!=null && applSabuns.size()>0) {
+			for(String applSabun : applSabuns) {
+				rp = this.validate(tenantId, enterCd, applSabun, "", paramMap);
+				//rp = validate(applId);
+				if(rp.getStatus().equals("FAIL")) {
+					throw new Exception(rp.get("message").toString());
+				}
+			}
+		} 
 		
 		//결재라인 상태값 업데이트
 		//WtmApplLine line = wtmApplLineRepo.findByApplIdAndApprSeq(applId, apprSeq);
@@ -213,41 +276,46 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 		
 		if(lastAppr) {
 			//취소하는 근무시간 정보를 지운다.
-			WtmOtCanAppl otCanAppl = wtmOtCanApplRepo.findByApplId(applId);
-			 
-			Long deletedApplId = null;
+			List<WtmOtCanAppl> otCanApplList = wtmOtCanApplRepo.findByApplId(applId);
 			
-			WtmWorkDayResult dayResult = wtmWorkDayResultRepo.findById(otCanAppl.getWorkDayResultId()).get();
-			//지우려는 정보의 신청정보가 있다면 관련된 정보도 같이 지워준다 대체휴일과 같은 정보..
-			if(dayResult.getApplId() != null) {
-				deletedApplId = dayResult.getApplId(); 
-			}
-			
-			wtmWorkDayResultRepo.delete(dayResult);
-			 
-			rp.put("sabun", dayResult.getSabun());
-			rp.put("symd", dayResult.getYmd());
-			rp.put("eymd", dayResult.getYmd());
-			
-			
-			if(deletedApplId != null) {
-				//대체 휴일 정보를 찾자
-				List<WtmOtSubsAppl> otSubsAppls = wtmOtSubsApplRepo.findByApplId(deletedApplId);
-				if(otSubsAppls != null && otSubsAppls.size() > 0) {
-					String currYmd = null;
-					paramMap.put("tenantId", tenantId);
-					paramMap.put("enterCd", enterCd);
-					Map<String, Map<String, Date>> resetBaseTime = new HashMap<String, Map<String, Date>>();
-					for(WtmOtSubsAppl otSubsAppl : otSubsAppls) {
-						wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(tenantId, enterCd, otSubsAppl.getSubYmd(), applSabun, WtmApplService.TIME_TYPE_SUBS, "", otSubsAppl.getSubsSdate(), otSubsAppl.getSubsEdate(), deletedApplId, userId);
+			if(otCanApplList!=null && otCanApplList.size()>0) {
+				for(WtmOtCanAppl otCanAppl : otCanApplList) {
+					Long deletedApplId = null;
+					
+					WtmWorkDayResult dayResult = wtmWorkDayResultRepo.findById(otCanAppl.getWorkDayResultId()).get();
+					//지우려는 정보의 신청정보가 있다면 관련된 정보도 같이 지워준다 대체휴일과 같은 정보..
+					if(dayResult.getApplId() != null) {
+						deletedApplId = dayResult.getApplId(); 
 					}
-				
+					
+					wtmWorkDayResultRepo.delete(dayResult);
+					 
+					rp.put("sabun", dayResult.getSabun());
+					rp.put("symd", dayResult.getYmd());
+					rp.put("eymd", dayResult.getYmd());
+					
+					
+					if(deletedApplId != null) {
+						//대체 휴일 정보를 찾자
+						List<WtmOtSubsAppl> otSubsAppls = wtmOtSubsApplRepo.findByApplId(deletedApplId);
+						if(otSubsAppls != null && otSubsAppls.size() > 0) {
+							String currYmd = null;
+							paramMap.put("tenantId", tenantId);
+							paramMap.put("enterCd", enterCd);
+							Map<String, Map<String, Date>> resetBaseTime = new HashMap<String, Map<String, Date>>();
+							for(WtmOtSubsAppl otSubsAppl : otSubsAppls) {
+								wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(tenantId, enterCd, otSubsAppl.getSubYmd(), otCanAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, "", otSubsAppl.getSubsSdate(), otSubsAppl.getSubsEdate(), deletedApplId, userId);
+							}
+						
+						}
+					}
 				}
 			}
+			 
 		}
 		
 		if(lastAppr) {
-			inbox.setInbox(tenantId, enterCd, applSabun, applId, "APPLY", "결재완료", "연장근무취소 신청서가  승인되었습니다.", "N");
+			inbox.setInbox(tenantId, enterCd, sabun, applId, "APPLY", "결재완료", "연장근무취소 신청서가  승인되었습니다.", "N");
 		} else {
 			inbox.setInbox(tenantId, enterCd, apprSabun, applId, "APPR", "결재요청 : 연장근무취소신청", "", "N");
 		}
@@ -292,6 +360,7 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 	}
 
 	@Override
+	@Transactional
 	public ReturnParam imsi(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap,
 			String status, String sabun, String userId) throws Exception {
 
@@ -305,12 +374,24 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 		
 		applId = appl.getApplId();
 		 
-		String workDayResultId = paramMap.get("workDayResultId").toString();
+		Long workDayResultId = Long.parseLong(paramMap.get("workDayResultId").toString());
 		String reason = paramMap.get("reason").toString();
 		
-		WtmWorkDayResult result = wtmWorkDayResultRepo.findById(Long.parseLong(workDayResultId)).get();
+		WtmWorkDayResult result = wtmWorkDayResultRepo.findByWorkDayResultId(workDayResultId);
 		
-		WtmOtAppl otAppl = wtmOtApplRepo.findByApplId(result.getApplId());
+		List<WtmOtAppl> otApplList = wtmOtApplRepo.findByApplId(result.getApplId());
+		if(otApplList!=null && otApplList.size()>0) {
+			for(WtmOtAppl otAppl: otApplList) {
+				otAppl.setCancelYn("Y");
+				wtmOtApplRepo.save(otAppl);
+				
+				WtmWorkDayResult r = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndApplId(tenantId, enterCd, otAppl.getSabun(), otAppl.getApplId());
+				
+				//근무제 신청서 테이블 조회
+				WtmOtCanAppl otCanAppl = saveWtmOtCanAppl(tenantId, enterCd, applId, otAppl.getOtApplId(), r.getWorkDayResultId(), r.getYmd(), r.getTimeTypeCd(), r.getPlanSdate(), r.getPlanEdate(), r.getPlanMinute(), r.getApprSdate(), r.getApprEdate(), r.getApprMinute(), reason, r.getSabun(), userId);
+			}
+		}
+		
 		
 //		
 //		WtmWorkCalendar calendar = wtmWorkCalendarRepository.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
@@ -319,8 +400,6 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 //		if(paramMap.containsKey("subYn")) {
 //			subYn = paramMap.get("subYn")+"";
 //		}
-		//근무제 신청서 테이블 조회
-		WtmOtCanAppl otCanAppl = saveWtmOtCanAppl(tenantId, enterCd, applId, otAppl.getOtApplId(), result.getWorkDayResultId(), result.getYmd(), result.getTimeTypeCd(), result.getPlanSdate(), result.getPlanEdate(), result.getPlanMinute(), result.getApprSdate(), result.getApprEdate(), result.getApprMinute(), reason, sabun, userId);
 				
 		saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, sabun, userId);
 		paramMap.put("applId", appl.getApplId());
@@ -332,12 +411,14 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 
 	protected WtmOtCanAppl saveWtmOtCanAppl(Long tenantId, String enterCd, Long applId, Long otApplId, Long workDayResultId, String ymd, String timeTypeCd, Date planSdate, Date planEdate, Integer planMinute, Date apprSdate, Date apprEdate, Integer apprMinute,  String reason, String sabun, String userId) {
 		 
-		WtmOtCanAppl otAppl = wtmOtCanApplRepo.findByApplId(applId);
+		WtmOtCanAppl otAppl = wtmOtCanApplRepo.findByApplIdAndOtApplId(applId, otApplId);
 		if(otAppl == null) {
 			otAppl = new WtmOtCanAppl();
 		}
 		otAppl.setApplId(applId);
 		otAppl.setOtApplId(otApplId);
+		otAppl.setYmd(ymd);
+		otAppl.setSabun(sabun);
 		otAppl.setTimeTypeCd(timeTypeCd);
 		otAppl.setWorkDayResultId(workDayResultId);
 		otAppl.setPlanSdate(planSdate);
@@ -456,12 +537,27 @@ protected void saveWtmApplLine(Long tenantId, String enterCd, int apprLvl, Long 
 	}
 
 	@Override
+	@Transactional
 	public void delete(Long applId) {
-		wtmOtSubsCanApplRepo.deleteByApplId(applId);
-		wtmOtCanApplRepo.deleteByApplId(applId);
+		
+		List<WtmOtCanAppl> wtmOtCanAppls = wtmOtCanApplRepo.findByApplId(applId);
+		
+		if(wtmOtCanAppls!=null && wtmOtCanAppls.size()>0) {
+			//ot신청서의 cancel_yn 다시 돌리기.
+			List<WtmOtAppl> otAppls = new ArrayList<WtmOtAppl>();
+			for(WtmOtCanAppl otCanAppl : wtmOtCanAppls) {
+				WtmOtAppl otAppl = wtmOtApplRepo.findById(otCanAppl.getOtApplId()).get();
+				otAppl.setCancelYn(null);
+				otAppls.add(otAppl);
+			}
+			wtmOtApplRepo.saveAll(otAppls);
+			
+			wtmOtCanApplRepo.deleteAll(wtmOtCanAppls);
+		}
+		
 		wtmApplLineRepo.deleteByApplId(applId);
 		wtmApplRepo.deleteById(applId);
 	}
-	
+
 
 }

@@ -1,24 +1,34 @@
 package com.isu.ifw.service;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Resource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.isu.ifw.entity.WtmCode;
+import com.isu.ifw.entity.WtmCodeGrp;
+import com.isu.ifw.entity.WtmTimeBreakMgr;
+import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmCalendarMapper;
 import com.isu.ifw.mapper.WtmInoutHisMapper;
+import com.isu.ifw.repository.WtmCodeGrpRepository;
+import com.isu.ifw.repository.WtmCodeRepository;
 import com.isu.ifw.vo.ReturnParam;
 
 @Service("inoutService")
 public class WtmInoutServiceImpl implements WtmInoutService{
 	
-	private final Logger logger = LoggerFactory.getLogger("ifwFileLog");
+	private final Logger logger = LoggerFactory.getLogger("ifwDBLog");
 	
 	@Autowired
 	WtmInoutHisMapper inoutHisMapper;
@@ -123,6 +133,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	}
 
 	@Override
+<<<<<<< HEAD
 	public Map<String, Object> getMenuContext2(Long tenantId, String enterCd, String sabun) {
 
 		Map <String,Object> paramMap = new HashMap<String, Object>();
@@ -180,8 +191,32 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	
 	@Override
 	public ReturnParam updateTimecard(Map<String, Object> paramMap) throws Exception {
+=======
+	public ReturnParam updateTimecard(Long tenantId, String enterCd, String sabun, String ymd, String inoutType, String entryType) throws Exception {
+		
+		SimpleDateFormat format1 = new SimpleDateFormat ( "yyyy-MM-dd HH:mm:ss");
+		Date now = new Date();
+		String today = format1.format(now);
+		int cnt = 0;
+
+		Map<String, Object> paramMap = new HashMap();
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("sabun", sabun);
+		paramMap.put("inoutType", inoutType);
+		paramMap.put("ymd", ymd);
+		paramMap.put("now", today);
+		paramMap.put("entryType", "MO");
+		
+//		cnt = inoutHisMapper.saveWtmInoutHis(paramMap);
+//		if(cnt <= 0) {
+//			return cnt;
+//		}
+//	
+		System.out.println("1111111111111111111111111 " + paramMap.toString());
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 		Map<String, Object> rt = updateTimeStamp(paramMap);
-		logger.debug("updateTimeStamp rt " + rt.toString());
+		System.out.println("1111111111111111111111111 " + rt.toString());
 
 		ReturnParam rp = new ReturnParam();
 		if(rt == null || !rt.get("sqlErrm").equals("OK"))
@@ -189,7 +224,13 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		else 
 			rp.setSuccess("타각에 성공하였습니다.");
 		
+<<<<<<< HEAD
 		logger.debug("타각 : " + paramMap.toString() + "," + rt.toString() + ", " + paramMap.get("rtnYmd").toString());
+=======
+		logger.debug("타각 : " + tenantId + "," + enterCd + "," + sabun + "," + rt.toString());
+		
+		System.out.println("111111111111111111111111111111111111111111111 " + paramMap.get("rtnYmd").toString());
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 		//퇴근일때만 인정시간 계산
 		if(paramMap.containsKey("rtnYmd") && paramMap.get("rtnYmd") != null && paramMap.get("inoutType").equals("OUT"))
 			empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
@@ -214,18 +255,44 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	}
 
 	@Override
-	public Map<String, Object> getMyInoutDetail(Map<String, Object> paramMap) throws Exception {
-		return inoutHisMapper.getMyInoutDetail(paramMap);
+	public Map<String, Object> getMyInoutDetail(Long tenantId, String enterCd, String sabun, String inoutTypeCd, String inoutDate) throws Exception {
+		Map<String, Object> convertMap = new HashMap();
+		convertMap.put("tenantId", tenantId);
+		convertMap.put("enterCd", enterCd);
+		convertMap.put("sabun", sabun);
+		convertMap.put("inoutTypeCd", inoutTypeCd);
+		convertMap.put("inoutDate", inoutDate);
+		
+		return inoutHisMapper.getMyInoutDetail(convertMap);
 	}
 	
 	@Override
-	public List<Map<String, Object>> getMyInoutList(Map<String, Object> paramMap) throws Exception {
+	public List<Map<String, Object>> getMyInoutList(Long tenantId, String enterCd, String sabun, String month) throws Exception {
+		
+		Map<String, Object> paramMap = new HashMap();
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("sabun", sabun);
+		paramMap.put("month", month);
+		
 		return inoutHisMapper.getMyInoutList(paramMap);
 	}
 	
 	@Override
-	public List<Map<String, Object>> getMyInoutHistory(Map<String, Object> paramMap) throws Exception {
-		return inoutHisMapper.getMyInoutHistory(paramMap);
+	public List<Map<String, Object>> getMyInoutHistory(Long tenantId, String enterCd, String sabun, String ymd) throws Exception {
+	
+		Map<String, Object> paramMap = new HashMap();
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("sabun", sabun);
+		paramMap.put("ymd", ymd);
+		
+		List<Map<String, Object>> rs = inoutHisMapper.getMyInoutHistory(paramMap);
+		for(Map<String,Object> temp : rs) {
+			temp.put("key", temp.get("key2"));
+		}
+		
+		return rs;
 	}
 	
 	@Override
