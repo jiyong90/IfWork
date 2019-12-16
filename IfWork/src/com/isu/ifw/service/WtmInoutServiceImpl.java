@@ -133,7 +133,6 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	}
 
 	@Override
-<<<<<<< HEAD
 	public Map<String, Object> getMenuContext2(Long tenantId, String enterCd, String sabun) {
 
 		Map <String,Object> paramMap = new HashMap<String, Object>();
@@ -191,30 +190,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	
 	@Override
 	public ReturnParam updateTimecard(Map<String, Object> paramMap) throws Exception {
-=======
-	public ReturnParam updateTimecard(Long tenantId, String enterCd, String sabun, String ymd, String inoutType, String entryType) throws Exception {
-		
-		SimpleDateFormat format1 = new SimpleDateFormat ( "yyyy-MM-dd HH:mm:ss");
-		Date now = new Date();
-		String today = format1.format(now);
-		int cnt = 0;
 
-		Map<String, Object> paramMap = new HashMap();
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		paramMap.put("inoutType", inoutType);
-		paramMap.put("ymd", ymd);
-		paramMap.put("now", today);
-		paramMap.put("entryType", "MO");
-		
-//		cnt = inoutHisMapper.saveWtmInoutHis(paramMap);
-//		if(cnt <= 0) {
-//			return cnt;
-//		}
-//	
-		System.out.println("1111111111111111111111111 " + paramMap.toString());
->>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 		Map<String, Object> rt = updateTimeStamp(paramMap);
 		System.out.println("1111111111111111111111111 " + rt.toString());
 
@@ -224,13 +200,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		else 
 			rp.setSuccess("타각에 성공하였습니다.");
 		
-<<<<<<< HEAD
 		logger.debug("타각 : " + paramMap.toString() + "," + rt.toString() + ", " + paramMap.get("rtnYmd").toString());
-=======
-		logger.debug("타각 : " + tenantId + "," + enterCd + "," + sabun + "," + rt.toString());
-		
-		System.out.println("111111111111111111111111111111111111111111111 " + paramMap.get("rtnYmd").toString());
->>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 		//퇴근일때만 인정시간 계산
 		if(paramMap.containsKey("rtnYmd") && paramMap.get("rtnYmd") != null && paramMap.get("inoutType").equals("OUT"))
 			empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 

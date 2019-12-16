@@ -13,12 +13,8 @@ import com.isu.ifw.vo.ReturnParam;
 public interface WtmInoutService {
 	
 	public Map<String, Object> getMenuContext(Long tenantId, String enterCd, String sabun);
-<<<<<<< HEAD
 	public Map<String, Object> getMenuContext2(Long tenantId, String enterCd, String sabun);
 	public ReturnParam updateTimecard(Map<String, Object> paramMap) throws Exception;
-=======
-	public ReturnParam updateTimecard(Long tenantId, String enterCd, String sabun, String ymd, String inoutType, String entryType) throws Exception;
->>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 //	public int checkGoback(Long tenantId, String enterCd, String sabun) throws Exception;
 	public Map<String, Object> updateTimeStamp(Map<String, Object> paramMap);
 	public List<Map<String, Object>> getMyInoutList(Long tenantId, String enterCd, String sabun, String month) throws Exception;

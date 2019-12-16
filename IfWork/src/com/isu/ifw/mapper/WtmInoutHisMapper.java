@@ -1,4 +1,4 @@
-\package com.isu.ifw.mapper;
+package com.isu.ifw.mapper;
 
 import java.util.List;
 import java.util.Map;
@@ -48,4 +48,12 @@ public interface WtmInoutHisMapper {
 	 * @return
 	 */
 	public Map<String, Object> getMyInoutDetail(Map<String, Object> paramMap) throws Exception;
+	
+	/**
+	 * 특정 기간 출퇴근 상세 조회
+	 * @param paramMap
+	 * @return
+	 */
+	public List<Map<String, Object>> getInoutListTerm(Map<String, Object> paramMap) throws Exception;
+	
 }
