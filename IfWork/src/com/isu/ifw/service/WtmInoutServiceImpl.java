@@ -225,44 +225,21 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	}
 
 	@Override
-	public Map<String, Object> getMyInoutDetail(Long tenantId, String enterCd, String sabun, String inoutTypeCd, String inoutDate) throws Exception {
-		Map<String, Object> convertMap = new HashMap();
-		convertMap.put("tenantId", tenantId);
-		convertMap.put("enterCd", enterCd);
-		convertMap.put("sabun", sabun);
-		convertMap.put("inoutTypeCd", inoutTypeCd);
-		convertMap.put("inoutDate", inoutDate);
+	public Map<String, Object> getMyInoutDetail(Map<String, Object> paramMap) throws Exception {
 		
-		return inoutHisMapper.getMyInoutDetail(convertMap);
+		return inoutHisMapper.getMyInoutDetail(paramMap);
 	}
 	
 	@Override
-	public List<Map<String, Object>> getMyInoutList(Long tenantId, String enterCd, String sabun, String month) throws Exception {
-		
-		Map<String, Object> paramMap = new HashMap();
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		paramMap.put("month", month);
-		
+	public List<Map<String, Object>> getMyInoutList(Map<String, Object> paramMap) throws Exception {
+	
 		return inoutHisMapper.getMyInoutList(paramMap);
 	}
 	
 	@Override
-	public List<Map<String, Object>> getMyInoutHistory(Long tenantId, String enterCd, String sabun, String ymd) throws Exception {
+	public List<Map<String, Object>> getMyInoutHistory(Map<String, Object> paramMap) throws Exception {
 	
-		Map<String, Object> paramMap = new HashMap();
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		paramMap.put("ymd", ymd);
-		
-		List<Map<String, Object>> rs = inoutHisMapper.getMyInoutHistory(paramMap);
-		for(Map<String,Object> temp : rs) {
-			temp.put("key", temp.get("key2"));
-		}
-		
-		return rs;
+		return inoutHisMapper.getMyInoutHistory(paramMap);
 	}
 	
 	@Override
