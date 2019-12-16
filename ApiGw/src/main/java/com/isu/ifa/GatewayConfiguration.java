@@ -15,7 +15,7 @@ public class GatewayConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(final HttpSecurity http) throws Exception {
     http.authorizeRequests()
-          .antMatchers("/if*/**", "/static/**")
+          .antMatchers("/if*/**", "/static/**", "/*-api/**")
           .permitAll()
           .antMatchers("/**")
           .authenticated().and().csrf().disable();
