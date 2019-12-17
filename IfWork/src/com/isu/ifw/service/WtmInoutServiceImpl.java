@@ -192,7 +192,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	public ReturnParam updateTimecard(Map<String, Object> paramMap) throws Exception {
 
 		Map<String, Object> rt = updateTimeStamp(paramMap);
-		System.out.println("1111111111111111111111111 " + rt.toString());
+		logger.debug("updateTimecard " + rt.toString());
 
 		ReturnParam rp = new ReturnParam();
 		if(rt == null || !rt.get("sqlErrm").equals("OK"))
@@ -214,7 +214,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	public Map<String, Object> updateTimeStamp(Map<String, Object> paramMap) {
 		//근무캘린더에 시간만 업데이트
 		try {
-			wtmCalendarMapper.updateEntryDate(paramMap);
+			wtmCalendarMapper.updateTimeCard(paramMap);
 			
 		} catch(Exception e) {
 			e.printStackTrace();

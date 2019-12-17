@@ -18,4 +18,8 @@ public interface WtmMobileService {
 	public List<Map<String, Object>> getTeamList(Map<String, Object> paramMap) throws Exception ;
 	//특정 기간 타각 이력
 	public List<Map<String, Object>> getTeamDetail(Map<String, Object> paramMap) throws Exception ;
+
+
+	//결재라인 
+	public List<Map<String, Object>> getApprLines(Map<String, Object> paramMap) throws Exception ;
 }

@@ -57,6 +57,14 @@ public interface WtmCalendarMapper {
 	public Map<String, Object> updateEntryDate(Map<String, Object> paramMap) throws Exception;
 
 	/**
+	 * 타각프로시저 호출
+	 * @param paramMap
+	 * @return
+	 * @throws Exception
+	 */
+	public Map<String, Object> updateTimeCard(Map<String, Object> paramMap) throws Exception;
+
+	/**
 	 * 관리자가 강제로 타각정보 업데이트
 	 * @param paramMap
 	 * @return
