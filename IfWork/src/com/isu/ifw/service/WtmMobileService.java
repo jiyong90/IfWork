@@ -20,6 +20,6 @@ public interface WtmMobileService {
 	public List<Map<String, Object>> getTeamDetail(Map<String, Object> paramMap) throws Exception ;
 
 
-	//결재라인 
-	public List<Map<String, Object>> getApprLines(Map<String, Object> paramMap) throws Exception ;
+	//모바일에서 보여줄 코드 목록 
+	public Map<String,Object> getCodeList(Long tenantId, String enterCd, String key) throws Exception ;
 }

@@ -19,4 +19,8 @@ public interface WtmWorkCalendarRepository extends JpaRepository<WtmWorkCalendar
 	
 	@Query("SELECT C FROM WtmWorkCalendar C WHERE C.tenantId=?1 AND C.enterCd=?2 AND C.ymd=?3 AND C.sabun IN ?4 ")
 	public List<WtmWorkCalendar> findByTenantIdAndEnterCdAndYmdInSabun(Long tenantId, String enterCd, String ymd, List<String> sabuns);
+
+	@Query("SELECT C FROM WtmWorkCalendar C WHERE C.tenantId=?1 AND C.enterCd=?2 AND C.ymd=?3 AND C.sabun IN ?4 ")
+	public WtmWorkCalendar findByTenantIdAndEnterCdAndYmdAndSabun(Long tenantId, String enterCd, String ymd, String sabun);
+
 }
