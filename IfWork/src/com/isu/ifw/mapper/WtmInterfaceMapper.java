@@ -161,7 +161,16 @@ public interface WtmInterfaceMapper {
 	 */
 	public List<Map<String, Object>> getEmpBaseList(Map<String, Object> paramMap);
 	
+	/*
+	 * 사원 기본근무 생성
+	 */
+	public Map<String, Object> getOrgConcChk(Map<String, Object> paramMap);
+	
 	public void setTaaApplIf(Map<String, Object> paramMap);
+	
+	public void insertOrgConc(Map<String, Object> paramMap);
+	
+	public void updateOrgConcEnd(Map<String, Object> paramMap);
 	
 	/**
 	 * 사원메일정보 저장
