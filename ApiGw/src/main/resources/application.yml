@@ -8,36 +8,65 @@ spring:
     add-mappings: true
   webflux:
     static-path-pattern: /static/**
+  servlet:
+    multipart:
+      max-file-size: 128MB    #한개 파일의 전송크기
+      max-request-size: 128MB  #하나의 요청에 포함되는 전체 파일 크기
     
-#server:
-#  port: 8180
-#  servlet:
-#    context-path: /
+server:
+  port: 8180
+  servlet:
+    context-path: /
+  use-forward-headers: true
   
 zuul:
   sensitiveHeaders: #Cookie,Set-Cookie
   routes: 
     auth:
       path: /ifa/**
+      #url: http://10.30.30.188:8380/ifa
       url: http://192.168.111.13:8180/ifa
       sensitiveHeaders: #Cookie,Set-Cookie,Authorization
+      
     worktime:
       path: /ifw/**
-      url: http://192.168.111.15/ifw
+      #url: http://10.30.30.188
+      url: http://192.168.111.15
       sensitiveHeaders: #Cookie,Set-Cookie,Authorization
-    worktime-api:
+      strip-prefix: false
+      
+    wtms-api:
       path: /worktime-api/**
+      #url: http://10.30.30.188/ifw
       url: http://192.168.111.15/ifw
       sensitiveHeaders: #Cookie,Set-Cookie,Authorization
     #static:
     #  path: /static/**
     #  service-id: static
+  #ignored-services: '*'
+  #ignored-headers: Pragma,Cache-Control,X-Frame-Options,X-Content-Type-Options,X-XSS-Protection,Expires
+  #ignore-security-headers: false
+  #add-proxy-headers: false
+  add-host-header: true
 
+  
+  
+#eureka:
+#  client:
+#    serviceUrl:
+#      defaultZone: #http://192.168.1.19:8761/eureka/
+#    enabled: false
 
+#ribbon:
+#  ConnectTimeout: 5000    # Client에서 서버로 요청시 서버와의 Connection 맺기 까지의 delay time
+#  ReadTimeout: 2000       # Connection 맺은 후 response 받기까지delay time
+  #SocketTimeout : 500    # Response 데이터의 packet 들을 받을 때 서로 다른 패킷을 받기 따지의 delay time (참고: http://tomining.tistory.com/164)
+        
 #static:
 #  ribbon:
 #    listOfServers: http://localhost:8080/static    
     
+          
 logging:
   level:
     root: warn

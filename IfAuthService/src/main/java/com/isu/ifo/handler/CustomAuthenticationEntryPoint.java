@@ -69,11 +69,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
      * @return the URL (cannot be null or empty; defaults to {@link #getLoginFormUrl()})
      */
     protected String determineUrlToUseForThisRequest(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) { // NOSONAR : used
-    	if(request.getParameter("client_id") != null) {
-        	String clientId = request.getParameter("client_id");
-        	ClientDetailsImpl details= clientService.findByClientId(clientId);
-        	this.loginFormUrl = details.getLoginPageUrl();
-        }
         return getLoginFormUrl();
     }
 
@@ -104,20 +99,22 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
             }
         } else {
             // redirect to login page. Use https if forceHttps true
+        	System.out.println("else buildRedirectUrlToLoginPage");
             redirectUrl = buildRedirectUrlToLoginPage(request, response, authException);
+        	System.out.println("else buildRedirectUrlToLoginPage redirectUrl : " + redirectUrl);
         }
 
         Enumeration<String> p = request.getParameterNames();
-    	System.out.println("buildHttpsRedirectUrlForRequest param start");
+    	System.out.println("1. buildHttpsRedirectUrlForRequest param start");
     	Map<String, Object> queryMap = new HashMap<>();
         while(p.hasMoreElements()) {
         	String key = p.nextElement();
         	System.out.println(key + " : " + request.getParameter(key));
         	queryMap.put(key, request.getParameter(key));
         }
-        System.out.println("buildHttpsRedirectUrlForRequest param end");
+        System.out.println("2. buildHttpsRedirectUrlForRequest param end");
         redirectUrl = AjaxUtils.buildUrl(redirectUrl, queryMap);
-        System.out.println("redirectUrl ::::: " + redirectUrl);
+        System.out.println("3. redirectUrl ::::: " + redirectUrl);
         if(AjaxUtils.isAjax(request) || AjaxUtils.isApi(request)) {
 			Map<String, Object> map = new HashMap<>();
 			map.put("success", false);
@@ -131,6 +128,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 	        
         }else {
 	        //log.info("Send Redirect");
+            System.out.println("4. redirectUrl ::::: " + redirectUrl);
 	        redirectStrategy.sendRedirect(request, response, redirectUrl);
         }
     }
@@ -153,8 +151,10 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         	String clientId = request.getParameter("client_id");
         	//this.loginFormUrl = "http://10.30.30.56/ifw/login/isu";
         	//ClientDetails details = clientService.loadClientByClientId(clientId);
+        	System.out.println("clientId: " + clientId);
         	ClientDetailsImpl details= clientService.findByClientId(clientId);
         	this.loginFormUrl = details.getLoginPageUrl();
+        	System.out.println("this.loginFormUrl: " + this.loginFormUrl);
 //        	Set<String> redirectUri = details.getRegisteredRedirectUri();
 //        	Iterator<String> it = redirectUri.iterator();
 //        	while(it.hasNext()) {
@@ -172,10 +172,12 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         }
         
         
-
-        String loginForm = determineUrlToUseForThisRequest(request, response, authException);
         
+        
+        String loginForm = determineUrlToUseForThisRequest(request, response, authException);
+        System.out.println("loginForm : " + loginForm);
         if (UrlUtils.isAbsoluteUrl(loginForm)) {
+        	System.out.println("isAbsoluteUrl loginForm : " + loginForm);
             return loginForm;
         }
 

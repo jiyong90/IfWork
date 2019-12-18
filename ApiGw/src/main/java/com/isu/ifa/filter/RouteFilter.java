@@ -22,8 +22,15 @@ public class RouteFilter extends ZuulFilter {
     }  
   
     @Override  
-    public boolean shouldFilter() {  
-        return true;  
+    public boolean shouldFilter() {
+    	return true;
+    	/*
+        RequestContext ctx = RequestContext.getCurrentContext();
+        if ( ctx.getRequest().getRequestURI() == null || 
+                ! ctx.getRequest().getRequestURI().startsWith("/ifw/certificate"))
+        	return false;
+        return ctx.getRouteHost() != null && ctx.sendZuulResponse();
+        */
     }  
   
     @Override  

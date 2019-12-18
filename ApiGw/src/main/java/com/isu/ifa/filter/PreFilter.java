@@ -1,11 +1,16 @@
 package com.isu.ifa.filter;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.Enumeration;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.expression.ParseException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
@@ -43,7 +48,18 @@ public class PreFilter extends ZuulFilter {
             String paramName = params.nextElement();  
             System.out.println("Parameter Name: " + paramName + ", Value - "+request.getParameter(paramName));  
         }  
+        //ctx.addZuulRequestHeader("Connection", "keep-alive");
         
-        return null;
+        /*
+         * 	나중에참고 로그아웃
+         	HttpSession excistingSession = context.getRequest().getSession(false);
+		    if(excistingSession != null){
+		        excistingSession.invalidate();  
+		        context.setSendZuulResponse(false);
+		        context.addZuulResponseHeader("Location", "/abc/def/logout.do");
+		        context.setResponseStatusCode(HttpServletResponse.SC_MOVED_TEMPORARILY);
+		    }
+         */
+		return null;
     }
 }

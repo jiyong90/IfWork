@@ -16,10 +16,10 @@ import com.isu.ifa.filter.PreFilter;
 import com.isu.ifa.filter.RouteFilter;
 
 @EnableZuulProxy
-@EnableDiscoveryClient
+//@EnableDiscoveryClient
 //@EnableFeignClients
 @SpringBootApplication
-@EnableCircuitBreaker
+//@EnableCircuitBreaker
 public class ApiGwApplication extends SpringBootServletInitializer{
 
 	
