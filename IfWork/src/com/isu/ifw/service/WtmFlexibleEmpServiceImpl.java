@@ -22,6 +22,7 @@ import com.isu.ifw.entity.WtmFlexibleAppl;
 import com.isu.ifw.entity.WtmFlexibleApplDet;
 import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
+import com.isu.ifw.entity.WtmOrgConc;
 import com.isu.ifw.entity.WtmTaaCode;
 import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
@@ -37,6 +38,7 @@ import com.isu.ifw.repository.WtmFlexibleApplDetRepository;
 import com.isu.ifw.repository.WtmFlexibleApplRepository;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
+import com.isu.ifw.repository.WtmOrgConcRepository;
 import com.isu.ifw.repository.WtmOtApplRepository;
 import com.isu.ifw.repository.WtmTaaCodeRepository;
 import com.isu.ifw.repository.WtmTimeCdMgrRepository;
@@ -110,6 +112,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	
 	@Autowired
 	WtmFlexibleEmpService empService;
+	
+	@Autowired
+	WtmOrgConcRepository orgConcRepo;
 	
 	@Override
 	public List<Map<String, Object>> getFlexibleEmpList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
@@ -1882,14 +1887,27 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			WtmEmpHis emp = empHisRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
 			if(emp!=null && emp.getOrgCd()!=null && !"".equals(emp.getOrgCd()))
 				paramMap.put("orgCd", emp.getOrgCd());
+			
+			List<String> orgList = null;
+			
 			//하위 조직 조회
 			List<Map<String, Object>> lowLevelOrgList = wtmOrgChartMapper.getLowLevelOrg(paramMap); 
-			List<String> orgList = null;
 			
 			if(lowLevelOrgList!=null && lowLevelOrgList.size()>0) {
 				orgList = new ArrayList<String>();
 				for(Map<String, Object> orgMap : lowLevelOrgList) {
 					orgList.add(orgMap.get("orgCd").toString());
+				}
+			}
+			
+			//겸직 조회
+			List<WtmOrgConc> orgConcList = orgConcRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymd(tenantId, enterCd, sabun, ymd);
+			if(orgConcList!=null && orgConcList.size()>0) {
+				if(orgList == null)
+					orgList = new ArrayList<String>();
+				
+				for(WtmOrgConc orgConc : orgConcList) {
+					orgList.add(orgConc.getOrgCd());
 				}
 			}
 			

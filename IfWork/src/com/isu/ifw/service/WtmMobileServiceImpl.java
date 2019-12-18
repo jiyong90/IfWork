@@ -1,5 +1,7 @@
 package com.isu.ifw.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,10 +32,18 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 	@Autowired
 	WtmApplCodeRepository wtmApplCodeRepo;
 
+	@Autowired
+	WtmFlexibleEmpService empService;
+	
+	@Autowired
+	WtmCodeService codeService;
+	
 	//기간 리스트 조회
 	@Override
 	public List<Map<String, Object>> getTermList(Map<String, Object> paramMap) throws Exception  {
-
+		//겸직 하위 조직 조회
+		paramMap.put("orgList", empService.getLowLevelOrgList(Long.parseLong(paramMap.get("tenantId").toString()), paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("month").toString() + "01"));
+		
 		return timeMapper.getTermList(paramMap);	
 	}
 
@@ -51,10 +61,24 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		return inoutMapper.getInoutListTerm(paramMap);
 	}
 	
-	//결재라인조회
-	public List<Map<String, Object>> getApprLines(Map<String, Object> paramMap) throws Exception {
-		return null;
+	public Map<String,Object> getCodeList(Long tenantId, String enterCd, String key) throws Exception {
+//		Map<String,Map<String,Object>> itemPropertiesMap = new HashMap();
 		
+		List<Map<String,Object>> itemCollection = new ArrayList();
+		List<Map<String,Object>>codeList = codeService.getCodeList(tenantId, enterCd, key);
+	
+		for(Map<String,Object> row : codeList) {
+			String value = (String)row.get("codeCd");
+			String text = (String)row.get("codeNm");
+			Map<String,Object> item = new HashMap<String,Object>();
+			item.put("text", text);
+			item.put("value", value);
+			itemCollection.add(item);
+		}
+		Map<String,Object> item = new HashMap();
+		item.put("collection", itemCollection);
+//		itemPropertiesMap.put("gubun",item);
+		return item;
 	}
 
 }

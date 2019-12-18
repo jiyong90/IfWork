@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -1107,6 +1108,119 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	}
 	
 	@Override
+	public void getOrgConcIfResult(Long tenantId) throws Exception {
+		// TODO Auto-generated method stub
+		// 인터페이스 결과 저장용
+    	String retMsg = null;
+    	int resultCnt = 0;
+    	String ifType = "V_IF_WTM_ORG_CONC";
+    	Map<String, Object> ifHisMap = new HashMap<>();
+    	ifHisMap.put("tenantId", tenantId);
+    	ifHisMap.put("ifItem", ifType);
+    	
+    	// 인터페이스용 변수
+    	String lastDataTime = null;
+    	String nowDataTime = null;
+    	HashMap<String, Object> getDateMap = null;
+    	HashMap<String, Object> getIfMap = null;
+    	List<Map<String, Object>> getIfList = null;
+    	
+    	// 최종 자료 if 시간 조회
+    	try {
+    		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
+    		lastDataTime = getDateMap.get("lastDate").toString();
+    		nowDataTime = getDateMap.get("nowDate").toString();
+        	try {
+        		String param = "?lastDataTime="+lastDataTime;
+	        	String ifUrl = setIfUrl(tenantId, "/orgConc", param); 
+	        	getIfMap = getIfRt(ifUrl);
+		   		
+		   		if (getIfMap != null && getIfMap.size() > 0) {
+		   			String ifMsg = getIfMap.get("message").toString();
+		   			getIfList = (List<Map<String, Object>>) getIfMap.get("ifData");
+		   		} else {
+		   			retMsg = "orgConcurrent : If 데이터 없음";
+		   			ifHisMap.put("ifStatus", "OK");
+		   		}
+        	} catch(Exception e) {
+        		retMsg = "orgConcurrent get : If 서버통신 오류";
+        		ifHisMap.put("ifStatus", "ERR");
+        	}
+    	} catch(Exception e) {
+    		retMsg = "orgConcurrent get : 최종갱신일 조회오류";
+    		ifHisMap.put("ifStatus", "ERR");
+    	}
+    	// 조회된 자료가 있으면...
+    	if(retMsg == null && getIfList != null && getIfList.size() > 0) {
+	        try {
+   	        	List<Map<String, Object>> ifUpdateList = new ArrayList();
+   	        	for(int i=0; i<getIfList.size(); i++) {
+   	        		System.out.println("************* i : " + i);
+	        		// 사원이력을 임시테이블로 이관 후 프로시저에서 이력을 정리한다.
+	        		Map<String, Object> ifMap = new HashMap<>();
+	        		ifMap.put("tenantId", tenantId);
+	        		ifMap.put("enterCd", getIfList.get(i).get("ENTER_CD"));
+	        		ifMap.put("orgCd", getIfList.get(i).get("ORG_CD"));
+	        		ifMap.put("sabun", getIfList.get(i).get("SABUN"));
+	        		ifMap.put("symd", getIfList.get(i).get("SDATE"));
+	        		ifMap.put("eymd", getIfList.get(i).get("EDATE"));
+	        		
+	    			for ( String key : ifMap.keySet() ) {
+		    		    System.out.println("key : " + key +" / value : " + ifMap.get(key));
+		    		}
+	    			Map<String, Object> ifRetMap = new HashMap<>();
+	    			
+	    			// 조직장은 WTM_EMP_HIS LEADER_YN값임으로 일단 스킵한다.
+	        		// 원소속 조직장확인 및 겸직정보 확인
+	    			ifRetMap = wtmInterfaceMapper.getOrgConcChk(ifMap);
+	    			
+	    			Integer leaderCnt = Integer.parseInt(ifRetMap.get("leaderCnt").toString());
+	    			Integer concCnt = Integer.parseInt(ifRetMap.get("concCnt").toString());
+	    			Integer concEndCnt = Integer.parseInt(ifRetMap.get("concEndCnt").toString());
+	    			// 원소속 조직장이 아니고, 조직장이 등록안되어 있고, 조직장 종료가 아니면
+	    			if(leaderCnt == 0 && concCnt == 0 && concEndCnt == 0) {
+	    				// 겸직을 등록한다.
+	    				wtmInterfaceMapper.insertOrgConc(ifMap);
+	    			}
+	    			// 원소속 조직장이 아니고, 조직장이 등록안되어 있고, 조직장 종료면
+	    			if(leaderCnt == 0 && concCnt == 0 && concEndCnt == 1) {
+	    				// 겸직 종료일을 수정한다
+	    				wtmInterfaceMapper.updateOrgConcEnd(ifMap);
+	    			}
+	        	}
+	        }catch(Exception e){
+	            e.printStackTrace();
+	        }
+    	} else {
+			ifHisMap.put("ifStatus", "OK");
+			retMsg = "갱신자료없음";
+		}
+    	// 3. 처리결과 저장
+		try {
+			// 최종갱신된 일시조회
+			ifHisMap.put("updateDate", nowDataTime);
+   			ifHisMap.put("ifEndDate", lastDataTime);
+			// WTM_IF_HIS 테이블에 결과저장
+			ifHisMap.put("ifMsg", retMsg);
+			wtmInterfaceMapper.insertIfHis(ifHisMap);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		if("OK".equals(ifHisMap.get("ifStatus"))) {
+			// 조직장 권한 갱신이 필요함
+			try {
+				System.out.println("orgConcurrent add rule");
+				// LEADERYN 이면서 겸직조직기준 권한 DISTINCT 해서 조직장 INSERT
+				// 기준에 없는사람 DELETE
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	    return;
+	}
+	
+	@Override
 	public void getEmpHisEtcIfResult(Long tenantId) throws Exception {
 		// TODO Auto-generated method stub
 		// 인터페이스 결과 저장용
@@ -1680,6 +1794,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	}
 	
 	@Override
+	@Transactional
+	@Async("threadPoolTaskExecutor")
 	public void setCalcDay(Long tenantId) throws Exception {
 		List<Map<String, Object>> dataList = new ArrayList();
 		String userId = "1";
@@ -1700,13 +1816,13 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				wtmInterfaceMapper.insertDayResult(l);
 				
 				// wtmInterfaceMapper.updateDayResult2(l);
-				
+				*/
         		String enterCd = l.get("enterCd").toString();
         		String sabun = l.get("sabun").toString();
         		String closeYmd = l.get("ymd").toString();
         		System.out.println("********** sabun : " + sabun + ", ymd : " + closeYmd);
         		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, closeYmd, closeYmd, sabun);
-        		*/
+        		
         		// 문제가 없으면 근무계획시간 합산
 				
 				l.put("symd", l.get("ymd").toString());
@@ -1794,6 +1910,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	}
 	
 	@Override
+	@Transactional
+	@Async("threadPoolTaskExecutor")
 	public void setCloseDay(Long tenantId) throws Exception {
 		
 		// 인터페이스용 변수

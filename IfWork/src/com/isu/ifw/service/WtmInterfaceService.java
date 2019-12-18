@@ -93,6 +93,14 @@ public interface WtmInterfaceService {
 	public void getEmpHisIfResult(Long tenantId) throws Exception;
 	
 	/**
+	 * 조직장정보 이관
+	 * @param tenantId - 테넌트 아이디
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void getOrgConcIfResult(Long tenantId) throws Exception;
+	
+	/**
 	 * 임직원정보(수동이관) 이관
 	 * @param tenantId - 테넌트 아이디
 	 * @return 

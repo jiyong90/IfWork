@@ -70,6 +70,13 @@ public class WtmApplCode {
 	@Column(name="HOL_MAX_MINUTE")
 	private Integer holMaxMinute;
 	
+	@Column(name="OT_APPL_SDAY")
+	private Integer otApplSday;
+	@Column(name="OT_APPL_EDAY")
+	private Integer otApplEday;
+	@Column(name="ENTRY_LIMIT")
+	private Integer entryLimit;
+	
 	public Long getApplCodeId() {
 		return applCodeId;
 	}
@@ -217,6 +224,24 @@ public class WtmApplCode {
 	}
 	public void setHolMaxMinute(Integer holMaxMinute) {
 		this.holMaxMinute = holMaxMinute;
+	}
+	public Integer getOtApplSday() {
+		return otApplSday;
+	}
+	public void setOtApplSday(Integer otApplSday) {
+		this.otApplSday = otApplSday;
+	}
+	public Integer getOtApplEday() {
+		return otApplEday;
+	}
+	public void setOtApplEday(Integer otApplEday) {
+		this.otApplEday = otApplEday;
+	}
+	public Integer getEntryLimit() {
+		return entryLimit;
+	}
+	public void setEntryLimit(Integer entryLimit) {
+		this.entryLimit = entryLimit;
 	}
     
 }

@@ -5,21 +5,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import com.isu.ifw.entity.WtmApplCode;
-import com.isu.ifw.mapper.WtmApplMapper;
-import com.isu.ifw.repository.WtmApplCodeRepository;
 import com.isu.ifw.vo.WtmApplLineVO;
 
 
 public class MobileUtil {
 
-	public static List parseMobileList(List<Map<String, Object>> list)  { 
+	public static List parseMobileList(List<Map<String, Object>> list) throws Exception { 
 		if(list == null || list.size() <= 0) 
-			return null;
+			throw new Exception("조회 결과가 없습니다.");
 		List<Map<String, Object>> l = list;
 		for(Map<String,Object> temp : list) {
 			if(temp.get("key2") != null) {
@@ -61,5 +55,68 @@ public class MobileUtil {
 		}
 		
 		return data;
+	}
+	
+	public static String parseEmpKey(String empKey, String key) { 
+		String data = "";
+		try {
+			if(empKey != null && empKey.indexOf("@") >=0 ){
+				String separator = "@";
+				String[] arrEmpKey = empKey.split(separator);
+				if(arrEmpKey.length == 2) {
+					if(key.equals("enterCd"))
+						data = arrEmpKey[0];
+					if(key.equals("sabun"))
+						data = arrEmpKey[1];
+				}
+			}	
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		return data;
+	}
+	
+	
+	public static List makeApprLines(List<WtmApplLineVO> applLineVOs, WtmApplCode applCode) {
+		List<Map<String, Object>> apprLines = new ArrayList();
+		
+		List<Map<String, Object>> lines = new ArrayList();
+		List<Map<String, Object>> apprTypes = new ArrayList();
+
+		int lineCnt = 0;
+		
+		Map<String, Object> line = new HashMap();
+		line.put("name", "결재자");
+		line.put("type", "");
+		line.put("useAdd", "false");
+		line.put("useStatusChange", "false");
+		line.put("apprTypes", apprTypes);
+		line.put("line", lines);
+
+		apprLines.add(line);
+		
+		Map<String, Object> type = new HashMap();
+		type.put("applTypeCd", "10");
+		type.put("typeNm", "결재");
+		
+		apprTypes.add(type);
+
+		for(WtmApplLineVO applLineVO : applLineVOs) {
+			if(lineCnt < Integer.parseInt(applCode.getApplLevelCd())) {
+				Map<String, Object> temp = new HashMap();
+				temp.put("type", "emp");
+				temp.put("typeNm", "결재");
+				temp.put("key", applCode.getEnterCd() + "@" + applLineVO.getSabun());
+				temp.put("name", applLineVO.getEmpNm());
+				temp.put("type", "emp");
+				temp.put("type", "emp");
+				temp.put("type", "emp");
+				temp.put("type", "emp");
+				lines.add(temp);
+			}
+			lineCnt++;
+		}
+		return apprLines;
 	}
 }
