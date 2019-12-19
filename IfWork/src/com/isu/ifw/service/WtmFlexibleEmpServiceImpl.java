@@ -1367,8 +1367,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	@Override
 	public void addWtmDayResultInBaseTimeType(Long tenantId, String enterCd, String ymd, String sabun, String addTimeTypeCd, String addTaaCd,
 			Date addSdate, Date addEdate, Long applId, String userId) {
-	 
-		List<WtmWorkDayResult> base = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_BASE, ymd, ymd);
+		List<String> timeType = new ArrayList<String>();
+		timeType.add(WtmApplService.TIME_TYPE_BASE);
+		timeType.add(WtmApplService.TIME_TYPE_OT);
+		timeType.add(WtmApplService.TIME_TYPE_FIXOT);
+		timeType.add(WtmApplService.TIME_TYPE_NIGHT);
+		List<WtmWorkDayResult> base = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeType, ymd, ymd);
 		
 		//List<WtmWorkDayResult> days = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
 
@@ -1420,7 +1424,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				addMap.put("ehm", ehm);
 				Map<String, Object> addPlanMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, addMap, userId);
 				addR.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+""));
-				addR.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
+				addR.setTimeTypeCd(r.getTimeTypeCd());
 				addR.setUpdateId(userId);
 				
 				workDayResultRepo.save(addR);
