@@ -1387,13 +1387,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			if(r.getPlanSdate().compareTo(addSdate) == 0 && r.getPlanEdate().compareTo(addEdate) == 0) {
 				isDelete = true;
 			//시작시간은 같지만 계획 종료 시간 보다 대체휴일종료 시간이 작을 경우
-			}else if(r.getPlanSdate().compareTo(addSdate) == 0 && r.getPlanEdate().compareTo(addEdate) > 0) {
+			}else if((r.getPlanSdate().compareTo(addSdate) > 0  || r.getPlanSdate().compareTo(addSdate) == 0) && r.getPlanEdate().compareTo(addEdate) > 0) {
 				r.setPlanSdate(addEdate); // 계획의 시작일은 휴일대체 종료로 변경한다
 				 
-			//종료시간은 같지만 계획 시작시간 보다 대체휴일시작시간이 클경우
-			}else if(r.getPlanSdate().compareTo(addSdate) < 0 && r.getPlanEdate().compareTo(addEdate) == 0) {
+			//종료시간은 같지만 계획 시작시간 보다 대체휴일시작시간이 클경우 && //시작시간만 중간에 껴있을 경우
+			}else if(r.getPlanSdate().compareTo(addSdate) < 0 && (r.getPlanEdate().compareTo(addEdate) == 0 || r.getPlanEdate().compareTo(addEdate) < 0) ) {
 				r.setPlanEdate(addSdate); // 계획의 종료일을 휴일대체 시작일로 변경한다
-				
+			 
 			//계회의 시종 시간 중간에!! 대체휴일 시종시간이 있을 경우! 거지같넹.. 앞에데이터는 수정하고 뒤에 데이터는 만들어줘야한다.. 
 			}else if(r.getPlanSdate().compareTo(addSdate) < 0 && r.getPlanEdate().compareTo(addEdate) > 0) {
 				Date oriEdate = r.getPlanEdate();
