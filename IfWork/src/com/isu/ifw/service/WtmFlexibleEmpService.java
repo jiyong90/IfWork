@@ -189,6 +189,19 @@ public interface WtmFlexibleEmpService {
 	 */
 	void calcApprDayInfo(Long tenantId, String enterCd, String sYmd, String eYmd, String sabun);
 	
+	/**
+	 * BASE,OT,FIXOT,NIGHT 근무시간에 대해 add 로 들어오는 타임 구간을 잘라서 만들어 준다. 
+	 * @param tenantId
+	 * @param enterCd
+	 * @param ymd
+	 * @param sabun
+	 * @param addTimeTypeCd
+	 * @param addTaaCd
+	 * @param addSdate
+	 * @param addEdate
+	 * @param applId
+	 * @param userId
+	 */
 	void addWtmDayResultInBaseTimeType(Long tenantId, String enterCd, String ymd, String sabun, String addTimeTypeCd, String addTaaCd, Date addSdate, Date addEdate, Long applId, String userId);
 	void removeWtmDayResultInBaseTimeType(Long tenantId, String enterCd, String ymd, String sabun, String removeTimeTypeCd, String removeTaaCd, Date removeSdate, Date removeEdate, Long applId, String userId);
 	
