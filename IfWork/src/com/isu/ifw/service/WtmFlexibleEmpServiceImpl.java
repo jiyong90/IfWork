@@ -1367,6 +1367,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	@Override
 	public void addWtmDayResultInBaseTimeType(Long tenantId, String enterCd, String ymd, String sabun, String addTimeTypeCd, String addTaaCd,
 			Date addSdate, Date addEdate, Long applId, String userId) {
+		addWtmDayResultInBaseTimeType(tenantId, enterCd, ymd, sabun, addTimeTypeCd, addTaaCd, addSdate, addEdate, applId, userId, true);
+	}
+	@Transactional
+	@Override
+	public void addWtmDayResultInBaseTimeType(Long tenantId, String enterCd, String ymd, String sabun, String addTimeTypeCd, String addTaaCd,
+			Date addSdate, Date addEdate, Long applId, String userId, boolean isAdd) {
 		List<String> timeType = new ArrayList<String>();
 		timeType.add(WtmApplService.TIME_TYPE_BASE);
 		timeType.add(WtmApplService.TIME_TYPE_OT);
@@ -1443,29 +1449,32 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			}
 		}
 		
-
-		WtmWorkDayResult addDayResult = new WtmWorkDayResult();
-		addDayResult.setApplId(applId);
-		addDayResult.setTenantId(tenantId);
-		addDayResult.setEnterCd(enterCd);
-		addDayResult.setYmd(ymd);
-		addDayResult.setSabun(sabun);
-		addDayResult.setPlanSdate(addSdate);
-		addDayResult.setPlanEdate(addEdate);
-		Map<String, Object> addMap = new HashMap<>();
-		addMap.putAll(pMap);
+		//신규 타임 블럭 생성 여부에 따라 추가 한다.
+		if(isAdd) {
+			WtmWorkDayResult addDayResult = new WtmWorkDayResult();
+			addDayResult.setApplId(applId);
+			addDayResult.setTenantId(tenantId);
+			addDayResult.setEnterCd(enterCd);
+			addDayResult.setYmd(ymd);
+			addDayResult.setSabun(sabun);
+			addDayResult.setPlanSdate(addSdate);
+			addDayResult.setPlanEdate(addEdate);
+			Map<String, Object> addMap = new HashMap<>();
+			addMap.putAll(pMap);
+			
+			String shm = sdf.format(addSdate);
+			String ehm = sdf.format(addEdate); 
+			addMap.put("shm", shm);
+			addMap.put("ehm", ehm);
+			Map<String, Object> addPlanMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, addMap, userId);
+			addDayResult.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+""));
+			addDayResult.setTimeTypeCd(addTimeTypeCd);
+			addDayResult.setTaaCd(addTaaCd);
+			addDayResult.setUpdateId(userId);
+			
+			workDayResultRepo.save(addDayResult); 
+		}
 		
-		String shm = sdf.format(addSdate);
-		String ehm = sdf.format(addEdate); 
-		addMap.put("shm", shm);
-		addMap.put("ehm", ehm);
-		Map<String, Object> addPlanMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, addMap, userId);
-		addDayResult.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+""));
-		addDayResult.setTimeTypeCd(addTimeTypeCd);
-		addDayResult.setTaaCd(addTaaCd);
-		addDayResult.setUpdateId(userId);
-		
-		workDayResultRepo.save(addDayResult); 
 	}
 
 	@Override
