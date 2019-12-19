@@ -1386,6 +1386,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//시종시간이 동일하면 기본근무 계획시간을 지운다.
 			if(r.getPlanSdate().compareTo(addSdate) == 0 && r.getPlanEdate().compareTo(addEdate) == 0) {
 				isDelete = true;
+			// 타켓 시간 8~11의 시간에서 휴게시간이 13~15시가 왔을 때는 패쓰 || 반대의케이스도 ㅋ
+			}else if(r.getPlanEdate().compareTo(addSdate) <= 0 || r.getPlanSdate().compareTo(addEdate) >= 0) {
+				continue;
 			//시작시간은 같지만 계획 종료 시간 보다 대체휴일종료 시간이 작을 경우
 			}else if((r.getPlanSdate().compareTo(addSdate) > 0  || r.getPlanSdate().compareTo(addSdate) == 0) && r.getPlanEdate().compareTo(addEdate) > 0) {
 				r.setPlanSdate(addEdate); // 계획의 시작일은 휴일대체 종료로 변경한다
