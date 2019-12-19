@@ -37,7 +37,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	WtmCalendarMapper wtmCalendarMapper;
 	
 	@Autowired
-	WtmFlexibleEmpService empService;
+	private WtmFlexibleEmpService empService;
 	
 	@Override
 	public Map<String, Object> getMenuContext(Long tenantId, String enterCd, String sabun) {
@@ -201,6 +201,24 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			rp.setSuccess("타각에 성공하였습니다.");
 		
 		logger.debug("타각 : " + paramMap.toString() + "," + rt.toString() + ", " + paramMap.get("rtnYmd").toString());
+		SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
+		
+		// 복귀일때 근무시간 짜르기가 필요함.
+		if(paramMap.containsKey("rtnYmd") && paramMap.get("rtnYmd") != null && paramMap.get("inoutType").equals("BACK")) {
+			// 외출복귀 시간을 조회한다.
+			Map <String,Object> exceptMap = new HashMap<String, Object>();
+			empService.addWtmDayResultInBaseTimeType(
+			  Long.parseLong(paramMap.get("tenantId").toString())
+			, paramMap.get("enterCd").toString()
+			, paramMap.get("ymd").toString()
+			, paramMap.get("sabun").toString()
+			, "EXCEPT"
+			, ""
+			, dt.parse(paramMap.get("excetSymd").toString())
+			, dt.parse(paramMap.get("excetEymd").toString())
+			, null
+			, "0");
+		}
 		//퇴근일때만 인정시간 계산
 		if(paramMap.containsKey("rtnYmd") && paramMap.get("rtnYmd") != null && paramMap.get("inoutType").equals("OUT"))
 			empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
@@ -214,7 +232,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	public Map<String, Object> updateTimeStamp(Map<String, Object> paramMap) {
 		//근무캘린더에 시간만 업데이트
 		try {
-			wtmCalendarMapper.updateTimeCard(paramMap);
+			wtmCalendarMapper.updateTimeCard3(paramMap);
 			
 		} catch(Exception e) {
 			e.printStackTrace();

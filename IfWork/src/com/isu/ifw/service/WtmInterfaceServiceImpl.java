@@ -1682,22 +1682,24 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 											, "0");
 								}
 								
-								// 오늘 이전이면 근무마감을 다시 돌려야함.
+								
 								String chkYmd = nowDataTime.substring(0, 8);
-								if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd)) {
-									String enterCd = reqDayMap.get("enterCd").toString();
-					        		String sabun = reqDayMap.get("sabun").toString();
+								String enterCd = reqDayMap.get("enterCd").toString();
+				        		String sabun = reqDayMap.get("sabun").toString();
+				        		
+				        		// 오늘 이전이면 근무마감을 다시 돌려야함.
+								if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd) && ("D".equals(taaSetYn) || "I".equals(taaSetYn))) {
 					        		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
-					        		
-					        		HashMap<String, Object> setTermMap = new HashMap();
-					        		setTermMap.put("tenantId", tenantId);
-					        		setTermMap.put("enterCd", enterCd);
-					        		setTermMap.put("sabun", sabun);
-					        		setTermMap.put("symd", ymd);
-					        		setTermMap.put("eymd", ymd);
-					        		setTermMap.put("pId", "TAAIF");
-					        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 								}
+								// 근무시간합산은 재정산한다
+				        		HashMap<String, Object> setTermMap = new HashMap();
+				        		setTermMap.put("tenantId", tenantId);
+				        		setTermMap.put("enterCd", enterCd);
+				        		setTermMap.put("sabun", sabun);
+				        		setTermMap.put("symd", ymd);
+				        		setTermMap.put("eymd", ymd);
+				        		setTermMap.put("pId", "TAAIF");
+				        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 							}
 						}
 						
