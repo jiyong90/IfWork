@@ -1008,14 +1008,14 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				ruleIds.add(targetRuleId);
 			
 			// 대체휴가 사용여부 체크
-			// 대체휴가 사용 시 수당지급 대상자 인지 확인
-			Long subsRuleId = null;
 			if(applCode.getSubsYn()!=null && "Y".equals(applCode.getSubsYn())) {
 				rp.put("subsYn", applCode.getSubsYn());
-				subsRuleId = applCode.getSubsRuleId();
-				if(subsRuleId != null) 
-					ruleIds.add(subsRuleId);
 			}	
+			
+			// 수당지급 대상자 인지 확인
+			Long subsRuleId = applCode.getSubsRuleId();
+			if(subsRuleId != null) 
+				ruleIds.add(subsRuleId);
 			
 			if(ruleIds.size()>0) {
 				//WtmRule rule = wtmRuleRepo.findByRuleId(targetRuleId);
@@ -1163,33 +1163,14 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		
 		if(ruleMap != null){ 
 			WtmEmpHis e = wtmEmpHisRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, WtmUtil.parseDateStr(new Date(), null));
-			if(ruleMap.containsKey("INCLUDE")) {
-				//여기에등록되어 있으면 포함이 되었더도 안됨 이놈이 우선 
-				isTarget = true;
-				
-				Map<String, Object> exMap = null;
-				if(ruleMap.get("EXCLUDE")!=null && !"".equals(ruleMap.get("EXCLUDE"))) {
-					exMap = (Map<String, Object>) ruleMap.get("EXCLUDE");
-					if(exMap!=null && exMap.containsKey("EMP")) {
-						List<Map<String, Object>> empList = (List<Map<String, Object>>) exMap.get("EMP");
-						if(empList != null && empList.size() > 0) {
-							for(Map<String, Object> empMap : empList) {
-								if(sabun.equals(empMap.get("k"))) {
-									isTarget = false;
-									return isTarget;
-								}
-							}
-						}
-					}
-				}
-				
-				System.out.println(">>>>>>>>>exclude end!!!");
-				
+			if(ruleMap.containsKey("INCLUDE") && ruleMap.get("INCLUDE")!=null && !"".equals(ruleMap.get("INCLUDE"))) {
+				boolean isEmpty = true;
 				Map<String, Object> inMap = (Map<String, Object>) ruleMap.get("INCLUDE");
 				if(inMap!=null) {
-					if(inMap.containsKey("EMP")) {
+					if(inMap.containsKey("EMP") && inMap.get("EMP")!=null && !"".equals(inMap.get("EMP"))) {
 						List<Map<String, Object>> empList = (List<Map<String, Object>>) inMap.get("EMP");
 						if(empList != null && empList.size() > 0) {
+							isEmpty = false;
 							for(Map<String, Object> empMap : empList) {
 								if(sabun.equals(empMap.get("k"))) {
 									isTarget = true;
@@ -1197,9 +1178,10 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 							}
 						}
 					}
-					if(inMap.containsKey("ORG")) { 
+					if(inMap.containsKey("ORG") && inMap.get("ORG")!=null && !"".equals(inMap.get("ORG"))) { 
 						List<Map<String, Object>> orgList = (List<Map<String, Object>>) inMap.get("ORG");
 						if(orgList != null && orgList.size() > 0) {
+							isEmpty = false;
 							for(Map<String, Object> orgMap : orgList) {
 								if(e.getOrgCd().equals(orgMap.get("k"))) {
 									isTarget = true;
@@ -1226,10 +1208,10 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 						
 					}
 					*/
-					if(inMap.containsKey("JIKCHAK")) {
-
+					if(inMap.containsKey("JIKCHAK") && inMap.get("JIKCHAK")!=null && !"".equals(inMap.get("JIKCHAK"))) {
 						List<Map<String, Object>> jikchakList = (List<Map<String, Object>>) inMap.get("JIKCHAK");
 						if(jikchakList != null && jikchakList.size() > 0) {
+							isEmpty = false;
 							for(Map<String, Object> jikchakMap : jikchakList) {
 								if(e.getDutyCd().equals(jikchakMap.get("k"))) {
 									isTarget = true;
@@ -1238,10 +1220,11 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 							}
 						}
 					}
-					if(inMap.containsKey("JOB")) {
+					if(inMap.containsKey("JOB") && inMap.get("JOB")!=null && !"".equals(inMap.get("JOB"))) {
 
 						List<Map<String, Object>> jobList = (List<Map<String, Object>>) inMap.get("JIKCHAK");
 						if(jobList != null && jobList.size() > 0) {
+							isEmpty = false;
 							for(Map<String, Object> jobMap : jobList) {
 								if(e.getJobCd().equals(jobMap.get("k"))) {
 									isTarget = true;
@@ -1252,7 +1235,31 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 					}
 				}
 				
+				if(isEmpty) 
+					isTarget = false;
+				
+			} else {
+				//INCLUDE 가 아예 등록되지 않으면 모든 사람이 대상자
+				isTarget = true;
 			}
+			
+			Map<String, Object> exMap = null;
+			if(isTarget && ruleMap.containsKey("EXCLUDE") && ruleMap.get("EXCLUDE")!=null && !"".equals(ruleMap.get("EXCLUDE"))) {
+				//여기에등록되어 있으면 포함이 되었더도 안됨 이놈이 우선 
+				exMap = (Map<String, Object>) ruleMap.get("EXCLUDE");
+				if(exMap!=null && exMap.containsKey("EMP")) {
+					List<Map<String, Object>> empList = (List<Map<String, Object>>) exMap.get("EMP");
+					if(empList != null && empList.size() > 0) {
+						for(Map<String, Object> empMap : empList) {
+							if(sabun.equals(empMap.get("k"))) {
+								isTarget = false;
+								return isTarget;
+							}
+						}
+					}
+				}
+			}
+			
 		}
 		
 		return isTarget;
