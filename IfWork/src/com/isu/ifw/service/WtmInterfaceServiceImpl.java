@@ -1523,6 +1523,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	
 	@Override
 	@Transactional
+	@Async("threadPoolTaskExecutor")
 	public void setTaaApplBatchIf(Long tenantId) throws Exception {
 		// TODO Auto-generated method stub
 		System.out.println("WtmInterfaceServiceImpl setTaaApplBatchIf");
