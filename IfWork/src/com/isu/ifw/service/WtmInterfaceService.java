@@ -75,15 +75,7 @@ public interface WtmInterfaceService {
 	 * @throws Exception 
 	 */
 	public void getOrgChartIfResult(Long tenantId) throws Exception;
-	
-	/**
-	 * 사업장, 근무조 정보 이관
-	 * @param tenantId - 테넌트 아이디
-	 * @return 
-	 * @throws Exception 
-	 */
-	public void getOrgMapCodeIfResult(Long tenantId) throws Exception;
-	
+		
 	/**
 	 * 임직원정보 이관
 	 * @param tenantId - 테넌트 아이디
