@@ -7,15 +7,19 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
 import com.isu.ifo.handler.CustomAuthenticationEntryPoint;
 import com.isu.ifo.handler.CustomAuthenticationFailureHandler;
 import com.isu.ifo.handler.CustomAuthenticationProvider;
 import com.isu.ifo.handler.CustomAuthenticationSuccessHandler;
+import com.isu.ifo.handler.CustomLogoutSuccessHandler;
 import com.isu.ifo.handler.CustomPasswordEncoderFactories;
 import com.isu.ifo.handler.CustomUsernamePasswordAuthenticationFilter;
 
@@ -23,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Configuration
+@EnableRedisHttpSession
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Autowired private CustomAuthenticationProvider authenticationProvider;
@@ -54,7 +59,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity security) throws Exception {
-        security.cors().and()
+        security
+        		.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
+        		.and()
+        		.cors().and()
                 .csrf().disable()
                 .headers().frameOptions().disable()
                 .and()
@@ -64,8 +72,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .addFilter(authenticationFilter())
                 .formLogin().and()
-                .httpBasic();
+                .httpBasic()
+                .and().logout()
+    			.logoutRequestMatcher(new AntPathRequestMatcher("/logout/*"))
+                .clearAuthentication(true).deleteCookies("*").invalidateHttpSession(true)
+                .logoutSuccessHandler(customLogoutSuccessHandler());
     }
+    
+    @Bean
+    public CustomLogoutSuccessHandler customLogoutSuccessHandler() {
+    	return new CustomLogoutSuccessHandler();
+    }
+    
     /*
      * Form Login시 걸리는 Filter bean register
      */
