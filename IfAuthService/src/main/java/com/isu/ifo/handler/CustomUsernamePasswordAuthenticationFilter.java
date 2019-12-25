@@ -230,7 +230,17 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
         setDetails(request, authRequest);
         System.out.println(authRequest.getAuthorities());
         authRequest.setDetails(resultMap);
-        
+        /*
+        String username = loginRequest.getUsername();
+        String password = loginRequest.getPassword();
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password);
+        Authentication authentication = this.authenticationManager.authenticate(token);
+        // vvv THIS vvv
+        SecurityContextHolder
+            .getContext()
+            .setAuthentication(authentication);
+        return new ResponseEntity<>(authentication.getPrincipal(), HttpStatus.OK);
+        */
         return this.getAuthenticationManager().authenticate(authRequest);
     }
     

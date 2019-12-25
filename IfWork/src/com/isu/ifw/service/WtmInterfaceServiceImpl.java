@@ -30,7 +30,6 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	@Autowired
 	private WtmFlexibleEmpService WtmFlexibleEmpService;
 	
-	
 		
 	@Override
 	public Map<String, Object> getIfLastDate(Long tenantId, String ifType) throws Exception {
@@ -105,7 +104,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			try {
 				System.out.println("info_data : " + result.get("infoData").toString());
 				
-				ifUrl = result.get("infoData").toString() + ifaddUrl + param;
+				ifUrl = result.get("infoData").toString() + ifaddUrl + param+"&tenantId="+tenantId;
 				
 				System.out.println("ifUrl : " + ifUrl);
 			} catch(Exception e){
@@ -161,22 +160,19 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
         	}
         	// 조회된 자료가 있으면...
    			if(retMsg == null && getIfList != null && getIfList.size() > 0) {
-   	        	
-   	        	String[] hrGrpCode = {"H20010", "H20020", "H20030", "H10050", "H10110", "T10003", "W20010"};
-   	        	String[] wtmGrpCode = {"CLASS_CD", "DUTY_CD", "POS_CD", "JOB_CD", "PAY_TYPE_CD", "TAA_TYPE_CD", "ORG_TYPE"};
    	        	List<Map<String, Object>> ifList = new ArrayList();
    	        	List<Map<String, Object>> ifUpdateList = new ArrayList();
    	        	for(int i=0; i<getIfList.size(); i++) {
    	        		Map<String, Object> ifMap = new HashMap<>();
-   	        		int j = Arrays.asList(hrGrpCode).indexOf(getIfList.get(i).get("GRCODE_CD"));
    	        		
    	        		ifMap.put("tenantId", tenantId);
    	        		ifMap.put("enterCd", getIfList.get(i).get("ENTER_CD"));
-   	        		ifMap.put("grpCodeCd", wtmGrpCode[j].toString());
+   	        		ifMap.put("grpCodeCd", getIfList.get(i).get("GRCODE_CD"));
    	        		ifMap.put("codeCd", getIfList.get(i).get("CODE"));
    	        		ifMap.put("codeNm", getIfList.get(i).get("CODE_NM"));
    	        		ifMap.put("symd", getIfList.get(i).get("SYMD"));
-   	        		ifMap.put("eymd", "29991231");
+   	        		ifMap.put("eymd", getIfList.get(i).get("EYMD"));
+   	        		ifMap.put("seq", getIfList.get(i).get("SEQ"));
    	        		ifMap.put("note", getIfList.get(i).get("NOTE"));
    	        		try {
    	        			// DATA KEY기준으로 SELECT 
@@ -275,7 +271,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		// 인터페이스 결과 저장용
     	String retMsg = null;
     	int resultCnt = 0;
-    	String ifType = "V_FTM_HOLIDAY";
+    	String ifType = "V_IF_WTM_HOLIDAY";
     	Map<String, Object> ifHisMap = new HashMap<>();
     	ifHisMap.put("tenantId", tenantId);
     	ifHisMap.put("ifItem", ifType);
@@ -421,6 +417,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	        		ifMap.put("holInclYn", getIfList.get(i).get("HOL_INCL_YN"));
 	        		ifMap.put("requestTypeCd", getIfList.get(i).get("REQUEST_USE_TYPE"));
 	        		ifMap.put("workYn", getIfList.get(i).get("WORK_YN"));
+	        		ifMap.put("payYn", getIfList.get(i).get("PAY_YN"));
+	        		ifMap.put("note", getIfList.get(i).get("NOTE"));
         		
 	        		// 2. 건별 data 저장
 	        		try {
@@ -555,10 +553,10 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	        		ifMap.put("enterCd", getIfList.get(i).get("ENTER_CD"));
 	        		ifMap.put("orgCd", getIfList.get(i).get("ORG_CD"));
 	        		ifMap.put("orgNm", getIfList.get(i).get("ORG_NM"));
-	        		ifMap.put("symd", getIfList.get(i).get("SDATE"));
-	        		ifMap.put("eymd", getIfList.get(i).get("EDATE"));
+	        		ifMap.put("symd", getIfList.get(i).get("SYMD"));
+	        		ifMap.put("eymd", getIfList.get(i).get("EYMD"));
 	        		ifMap.put("orgType", getIfList.get(i).get("ORG_TYPE"));
-	        		ifMap.put("note", getIfList.get(i).get("MEMO"));
+	        		ifMap.put("note", getIfList.get(i).get("NOTE"));
 	        		ifList.add(ifMap);
    	        	}
    	        	
@@ -674,9 +672,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	        		ifMap.put("tenantId", tenantId);
 	        		ifMap.put("enterCd", getIfList.get(i).get("ENTER_CD"));
 	        		ifMap.put("orgChartNm", getIfList.get(i).get("ORG_CHART_NM"));
-	        		ifMap.put("symd", getIfList.get(i).get("SDATE"));
-	        		ifMap.put("eymd", getIfList.get(i).get("EDATE"));
-	        		ifMap.put("note", getIfList.get(i).get("MEMO"));
+	        		ifMap.put("symd", getIfList.get(i).get("SYMD"));
+	        		ifMap.put("eymd", getIfList.get(i).get("EYMD"));
+	        		ifMap.put("note", getIfList.get(i).get("NOTE"));
 	        		Long orgChartId = null;
 	        		
 	        		Map<String, Object> result = wtmInterfaceMapper.getWtmOgrChartId(ifMap);
@@ -710,7 +708,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	        			try {
 	        				String param = "?lastDataTime="+lastDataTime
 	   			                 + "&enterCd="+getIfList.get(i).get("ENTER_CD")
-	   			                 + "&symd="+getIfList.get(i).get("SDATE");
+	   			                 + "&symd="+getIfList.get(i).get("SYMD");
 	        	        	String ifUrl = setIfUrl(tenantId, "/orgChartDet", param);
 	        	        	getIfDetMap = getIfRt(ifUrl);
 	        		   		
@@ -784,163 +782,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		}
 		return;
 	}
-	
-	@Override
-	public void getOrgMapCodeIfResult(Long tenantId) throws Exception {
-		// TODO Auto-generated method stub
-		System.out.println("WtmInterfaceServiceImpl getOrgMapCodeIfResult");
-		// 인터페이스 결과 저장용
-    	String retMsg = null;
-    	int resultCnt = 0;
-    	String ifType = "V_IF_ORG_MAP_CODE";
-    	Map<String, Object> ifHisMap = new HashMap<>();
-    	ifHisMap.put("tenantId", tenantId);
-    	ifHisMap.put("ifItem", ifType);
-    	
-    	// 인터페이스용 변수
-    	String lastDataTime = null;
-    	String nowDataTime = null;
-    	HashMap<String, Object> getDateMap = null;
-    	HashMap<String, Object> getIfMap = null;
-    	List<Map<String, Object>> getIfList = null;
-    	
-    	// 최종 자료 if 시간 조회
-    	try {
-    		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
-    		lastDataTime = getDateMap.get("lastDate").toString();
-    		nowDataTime = getDateMap.get("nowDate").toString();
-        	try {
-        		String param = "?lastDataTime="+lastDataTime;
-	        	String ifUrl = setIfUrl(tenantId, "/orgMapCode", param); 
-	        	getIfMap = getIfRt(ifUrl);
-		   		if (getIfMap != null && getIfMap.size() > 0) {
-		   			String ifMsg = getIfMap.get("message").toString();
-		   			getIfList = (List<Map<String, Object>>) getIfMap.get("ifData");
-		   		} else {
-		   			retMsg = "orgMap get : If 데이터 없음";
-		   		}
-        	} catch(Exception e) {
-        		retMsg = "orgMap get : If 서버통신 오류";
-        	}
-    	} catch(Exception e) {
-    		retMsg = "orgMap get : 최종갱신일 조회오류";
-    	}
-    	
-    	// 조회된 자료가 있으면...
-    	if(retMsg == null && getIfList != null && getIfList.size() > 0) {
-	        try {
-	            // 1. 조직코드 데이터 조회
-	        	// if 가져올 인사db 그룹코드
-	        	String[] hrGrpCode = {"100", "500"};
-	        	//                    사업장     근무조
-	        	// if 저장할 wtmdb 그룹코드
-	        	String[] wtmGrpCode = {"BUSINESS_PLACE_CD", "WORKTYPE_CD"};
-	        	
-	        	List<Map<String, Object>> ifList = new ArrayList();
-   	        	List<Map<String, Object>> ifUpdateList = new ArrayList();
-   	        	
-   	        	for(int i=0; i<getIfList.size(); i++) {
-	        		int j = Arrays.asList(hrGrpCode).indexOf(getIfList.get(i).get("MAP_TYPE_CD"));
-	        		Map<String, Object> ifMap = new HashMap<>();
-	        		
-	        		ifMap.put("tenantId", tenantId);
-	        		ifMap.put("enterCd", getIfList.get(i).get("ENTER_CD"));
-	        		ifMap.put("grpCodeCd", wtmGrpCode[j].toString());
-	        		ifMap.put("codeCd", getIfList.get(i).get("MAP_CD"));
-	        		ifMap.put("codeNm", getIfList.get(i).get("MAP_NM"));
-	        		ifMap.put("symd", getIfList.get(i).get("SDATE"));
-	        		ifMap.put("eymd", getIfList.get(i).get("EDATE"));
-	        		ifMap.put("note", getIfList.get(i).get("NOTE"));
-	        		
-	        		// 2. 건별 data 저장용 만들기
-	        		try {
-	        			// DATA KEY기준으로 SELECT 
-	        			Map<String, Object> result = wtmInterfaceMapper.getWtmCodeId(ifMap);
-	        			
-	        			if(result != null) {
-	        				try {
-		            			String codeId = result.get("codeId").toString();
-		            			if(codeId != null && codeId.equals("")) {
-		            				ifMap.put("codeId", codeId);
-		            				ifUpdateList.add(ifMap);
-		            			}
-	        				} catch(Exception e){
-	        					retMsg = "orgMap set : code id 조회오류";
-	        		            e.printStackTrace();
-	        		            // 에러걸리면 그냥 아웃시키기
-	        		            break;
-	        		        }
-	        			} else {
-	        				ifList.add(ifMap);
-	        			}
-	    			} catch (Exception e) {
-	    				retMsg = "orgMap set : codemap 검증 오류";
-			            e.printStackTrace();
-			            // 에러걸리면 그냥 아웃시키기
-			            break;
-	    			}
-	        	}
-   	        	if(retMsg == null || "".equals(retMsg) ) {
-	        		try {
-		        		//수정건이 있으면....
-		        		if (ifUpdateList.size() > 0) {
-		        			//System.out.println("update size : " + ifUpdateList.size());
-		        			resultCnt += wtmInterfaceMapper.updateWtmCode(ifUpdateList);
-		        		}
-		        		// 추가건이 있으면
-		        		if (ifList.size() > 0) {
-		        			//System.out.println("insert size : " + ifList.size());
-		        			resultCnt += wtmInterfaceMapper.insertWtmCode(ifList);
-		        		}
-		        		if(resultCnt > 0) {
-		        			retMsg = resultCnt + "건 반영완료";
-		        		} else {
-		        			retMsg = "갱신자료없음";
-		        		}
-		        		ifHisMap.put("ifStatus", "OK");
-		        		
-		        		// 이력데이터 수정은 건별로
-		        		for(int i=0; i< ifList.size(); i++) {
-		        			Map<String, Object> ifCodeHisMap = new HashMap<>();
-		        			ifCodeHisMap = ifList.get(i);
-		        			try {
-			    				int resultCnt2 = 0 ;
-			    				resultCnt2 = wtmInterfaceMapper.updateWtmCodeHisEymd(ifCodeHisMap);
-			    				resultCnt2 = wtmInterfaceMapper.updateWtmCodeHisSymd(ifCodeHisMap);
-		        			} catch (Exception e) {
-		        				retMsg = "orgMap set : code 이력반영 오류";
-		    		            e.printStackTrace();
-		        			}
-		        		}
-	        		} catch (Exception e) {
-	        			ifHisMap.put("ifStatus", "ERR");
-	        			retMsg = e.getMessage();
-			            e.printStackTrace();
-	    			}
-	        	} else {
-	        		ifHisMap.put("ifStatus", "ERR");
-	        	}
-	        } catch(Exception e){
-	            e.printStackTrace();
-	        }
-    	} else {
-    		retMsg = "갱신자료없음";
-			ifHisMap.put("ifStatus", "OK");
-		}
-    	// 3. 처리결과 저장
-		try {
-			// 최종갱신된 일시조회
-			ifHisMap.put("updateDate", nowDataTime);
-   			ifHisMap.put("ifEndDate", lastDataTime);
-			// WTM_IF_HIS 테이블에 결과저장
-			ifHisMap.put("ifMsg", retMsg);
-			wtmInterfaceMapper.insertIfHis(ifHisMap);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return;
-	}
-	
+		
 	@Override
 	public void getEmpHisIfResult(Long tenantId) throws Exception {
 		// TODO Auto-generated method stub
@@ -998,22 +840,22 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	        		ifMap.put("empNm", getIfList.get(i).get("EMP_NM"));
 	        		ifMap.put("empEngNm", getIfList.get(i).get("EMP_ENG_NM"));
 	        		ifMap.put("symd", getIfList.get(i).get("SYMD"));
-	        		ifMap.put("eymd", "29991231");
+	        		ifMap.put("eymd", getIfList.get(i).get("EYMD"));
 	        		ifMap.put("statusCd", getIfList.get(i).get("STATUS_CD"));
 	        		ifMap.put("orgCd", getIfList.get(i).get("ORG_CD"));
-	        		ifMap.put("businessPlaceCd", getIfList.get(i).get("BUSINESS_PLACE_CD"));
+	        		ifMap.put("businessPlaceCd", getIfList.get(i).get("LOCATION_CD"));
 	        		ifMap.put("dutyCd", getIfList.get(i).get("DUTY_CD"));
 	        		ifMap.put("posCd", getIfList.get(i).get("POS_CD"));
 	        		ifMap.put("classCd", getIfList.get(i).get("CLASS_CD"));
 	        		ifMap.put("jobGroupCd", getIfList.get(i).get("JOB_GROUP_CD"));
 	        		ifMap.put("jobCd", getIfList.get(i).get("JOB_CD"));
 	        		ifMap.put("payTypeCd", getIfList.get(i).get("PAY_TYPE_CD"));
-	        		ifMap.put("orgPath", getIfList.get(i).get("ORG_PATH"));
 	        		ifMap.put("leaderYn", getIfList.get(i).get("LEADER_YN"));
+	        		ifMap.put("note", getIfList.get(i).get("NOTE"));
 	        		
-	    			for ( String key : ifMap.keySet() ) {
-		    		    System.out.println("key : " + key +" / value : " + ifMap.get(key));
-		    		}
+//	    			for ( String key : ifMap.keySet() ) {
+//		    		    System.out.println("key : " + key +" / value : " + ifMap.get(key));
+//		    		}
 	    			
 	        		ifList.add(ifMap);
 	        		// 건별반영
@@ -1162,8 +1004,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	        		ifMap.put("enterCd", getIfList.get(i).get("ENTER_CD"));
 	        		ifMap.put("orgCd", getIfList.get(i).get("ORG_CD"));
 	        		ifMap.put("sabun", getIfList.get(i).get("SABUN"));
-	        		ifMap.put("symd", getIfList.get(i).get("SDATE"));
-	        		ifMap.put("eymd", getIfList.get(i).get("EDATE"));
+	        		ifMap.put("symd", getIfList.get(i).get("SYMD"));
+	        		ifMap.put("eymd", getIfList.get(i).get("EYMD"));
 	        		
 	    			for ( String key : ifMap.keySet() ) {
 		    		    System.out.println("key : " + key +" / value : " + ifMap.get(key));
@@ -1188,7 +1030,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	    				wtmInterfaceMapper.updateOrgConcEnd(ifMap);
 	    			}
 	        	}
+   	        	retMsg = getIfList.size() + "건반영";
+   	        	ifHisMap.put("ifStatus", "OK");
+   	        	
 	        }catch(Exception e){
+	        	ifHisMap.put("ifStatus", "ERR");
 	            e.printStackTrace();
 	        }
     	} else {
@@ -1206,7 +1052,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
+/*
 		if("OK".equals(ifHisMap.get("ifStatus"))) {
 			// 조직장 권한 갱신이 필요함
 			try {
@@ -1217,6 +1063,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				e.printStackTrace();
 			}
 		}
+*/		
 	    return;
 	}
 	
