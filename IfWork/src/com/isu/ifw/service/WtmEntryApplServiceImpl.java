@@ -399,6 +399,13 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 		}
 		//결재라인 저장 끝
 	}
+
+	@Override
+	public ReturnParam requestSync(Long tenantId, String enterCd, Map<String, Object> paramMap, String sabun,
+			String userId) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 	
 }

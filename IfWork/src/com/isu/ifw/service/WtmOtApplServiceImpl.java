@@ -1305,4 +1305,116 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		return rp;
 	}
 	
+	//모바일용 동기처리
+	public ReturnParam requestSync(Long tenantId, String enterCd, Map<String, Object> paramMap,
+			String sabun, String userId) throws Exception { 
+		
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("신청되었습니다.");
+		
+		//신청서 최상위 테이블이다. 
+		WtmAppl appl = saveWtmAppl(tenantId, enterCd, null, paramMap.get("applCd").toString(), this.APPL_STATUS_APPLY_ING, sabun, userId);
+		long applId = appl.getApplId();
+		
+		String ymd = paramMap.get("ymd").toString();
+		String otSdate = paramMap.get("ymd").toString() + paramMap.get("shm").toString();
+		String otEdate = paramMap.get("ymd").toString() + paramMap.get("ehm").toString();
+		String reasonCd = paramMap.get("gubun").toString();
+		String reason = paramMap.get("reason").toString();
+		
+		ObjectMapper mapper = new ObjectMapper();
+		
+		WtmWorkCalendar calendar = wtmWorkCalendarRepository.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
+		String subYn = "";
+		if(paramMap.containsKey("subYn")) {
+			subYn = paramMap.get("subYn")+"";
+		}
+		//근무제 신청서 테이블 조회
+		WtmOtAppl otAppl = saveWtmOtAppl(tenantId, enterCd, applId, applId, otSdate, otEdate, calendar.getHolidayYn(), subYn,  reasonCd, reason, sabun, userId);
+			
+		//휴일근무 신청 여부
+		if(paramMap.containsKey("holidayYn") && paramMap.get("holidayYn").equals("Y")) {
+		//대체휴일이면 subYn = Y
+			if(paramMap.containsKey("subYn") && paramMap.get("subYn").equals("Y") && paramMap.containsKey("subsSymd")) {
+				List<WtmOtSubsAppl> otSubsAppl = wtmOtSubsApplRepo.findByApplId(applId);
+				
+				wtmOtSubsApplRepo.deleteAll(otSubsAppl);
+				
+//				List<Map<String, Object>> subs = (List<Map<String, Object>>) paramMap.get("subsSymd");
+//				if(subs != null && subs.size() > 0) {
+				Map<String, Object> resultMap = new HashMap<>();
+				Map<String, Object> pMap = new HashMap<>();
+				pMap.put("tenantId", tenantId);
+				pMap.put("enterCd", enterCd);
+					
+//					for(Map<String, Object> sub : subs) {
+				String subYmd = paramMap.get("subsSymd").toString();
+				String subsSdate = paramMap.get("subsSymd").toString() + paramMap.get("subsShm").toString();
+				String subsEdate = paramMap.get("subsSymd").toString() + paramMap.get("subsEhm").toString();
+						
+				Date sd = WtmUtil.toDate(subsSdate, "yyyyMMddHHmm");
+				Date ed = WtmUtil.toDate(subsEdate, "yyyyMMddHHmm");
+						
+				WtmOtSubsAppl otSub = new WtmOtSubsAppl();
+				otSub.setApplId(applId);
+				otSub.setOtApplId(otAppl.getOtApplId());
+				otSub.setSubYmd(subYmd);
+				otSub.setSubsSdate(sd);
+				otSub.setSubsEdate(ed);
+						
+				String sHm = WtmUtil.parseDateStr(sd, "HHmm");
+				String eHm = WtmUtil.parseDateStr(ed, "HHmm");
+				pMap.put("ymd", subYmd);
+				pMap.put("shm", sHm);
+				pMap.put("ehm", eHm);
+				pMap.put("sabun", appl.getApplSabun());
+					
+				//현재 신청할 연장근무 시간 계산
+				resultMap.putAll(wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId));
+				
+				otSub.setSubsMinute(resultMap.get("calcMinute").toString());
+				otSub.setUpdateId(userId);
+				wtmOtSubsApplRepo.save(otSub);
+			}
+		}
+		
+		String otShm = WtmUtil.parseDateStr(WtmUtil.toDate(otSdate, "yyyyMMddHHmm"), "HHmm");
+		String otEhm = WtmUtil.parseDateStr(WtmUtil.toDate(otEdate, "yyyyMMddHHmm"), "HHmm");
+		paramMap.put("shm", otShm);
+		paramMap.put("ehm", otEhm);
+		
+		Map<String, Object> calcOtMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, userId);
+		if(calcOtMap!=null && calcOtMap.containsKey("calcMinute") && calcOtMap.get("calcMinute")!=null) {
+			otAppl.setOtMinute(calcOtMap.get("calcMinute").toString());
+			wtmOtApplRepo.save(otAppl);
+		}
+
+		saveWtmApplLine(tenantId, enterCd, Integer.parseInt(paramMap.get("applLevelCd").toString()), applId, sabun, userId);
+		paramMap.put("applId", appl.getApplId());
+		//rp.put("flexibleApplId", flexibleAppl.getFlexibleApplId());
+		
+		rp.put("applId", appl.getApplId());
+			
+		
+//		rp = imsi(tenantId, enterCd, applId, workTypeCd, paramMap, this.APPL_STATUS_APPLY_ING, sabun, userId);
+		
+		String apprSabun = null;
+		if(rp!=null && rp.getStatus()!=null && "OK".equals(rp.getStatus())) {
+			applId = Long.valueOf(rp.get("applId").toString());
+			List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);
+			 
+			if(lines != null && lines.size() > 0) {
+				for(WtmApplLine line : lines) {
+					//첫번째 결재자의 상태만 변경 후 스탑
+					line.setApprStatusCd(APPR_STATUS_REQUEST);
+					line = wtmApplLineRepo.save(line);
+					apprSabun = line.getApprSabun();
+					break;
+					 
+				}
+			}
+		}
+		return rp;
+		//push전송 추가
+	}
 }

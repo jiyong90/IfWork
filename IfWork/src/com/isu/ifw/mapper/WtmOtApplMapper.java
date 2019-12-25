@@ -39,4 +39,12 @@ public interface WtmOtApplMapper {
 	 * @return totOtMinute
 	 */
 	public Map<String, Object> getTotOtMinuteBySymdAndEymd(Map<String, Object> paramMap);
+	
+	/**
+	 * 연장 근무 신청서(휴일대체 포함) 모바일용
+	 * @param paramMap
+	 * @return totOtMinute
+	 */
+	public Map<String, Object> otApplDetailByApplId(Map<String, Object> paramMap);
+	
 }

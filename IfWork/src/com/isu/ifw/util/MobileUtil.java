@@ -119,4 +119,57 @@ public class MobileUtil {
 		}
 		return apprLines;
 	}
+	
+	public static List makeApprLines(List<WtmApplLineVO> applLineVOs) {
+		List<Map<String, Object>> apprLines = new ArrayList();
+		
+//		List<Map<String, Object>> lines1 = new ArrayList();
+//		List<Map<String, Object>> lines2 = new ArrayList();
+//
+//		int lineCnt = 0;
+//
+//		Map<String, Object> line1 = new HashMap();
+//		line1.put("name", "기안");
+//		line1.put("type", "");
+//		line1.put("useAdd", "false");
+//		line1.put("useStatusChange", "false");
+//		line1.put("apprTypes", null);
+//		line1.put("line", lines1);
+//		apprLines.add(line1);
+//
+//		
+//		Map<String, Object> line2 = new HashMap();
+//		line2.put("name", "결재");
+//		line2.put("type", "");
+//		line2.put("useAdd", "false");
+//		line2.put("useStatusChange", "false");
+//		line2.put("apprTypes", null);
+//		line2.put("line", lines2);
+//
+//		apprLines.add(line2);
+//		
+//		for(WtmApplLineVO applLineVO : applLineVOs) {
+//			Map<String, Object> temp = new HashMap();
+//			temp.put("type", "emp");
+//			temp.put("typeNm", applLineVO.getApprTypeNm());
+//			temp.put("name", applLineVO.getEmpNm());
+//			temp.put("statNm", applLineVO.getApprStatusNm());
+//			temp.put("typeNm", applLineVO.getApprTypeNm());
+//			temp.put("apprDate", applLineVO.getApprDate());
+//			if(applLineVO.getApprTypeCd().equals("1"))
+//				lines1.add(temp);
+//			else if(applLineVO.getApprTypeCd().equals("2"))
+//				lines2.add(temp);
+//		}
+		
+		for(WtmApplLineVO applLineVO : applLineVOs) {
+			Map<String, Object> temp = new HashMap();
+			temp.put("apprTypeNm", applLineVO.getApprTypeNm());
+			temp.put("apprEmpNm", applLineVO.getEmpNm());
+			temp.put("apprStatNm", applLineVO.getApprStatusNm());
+			temp.put("apprDate", applLineVO.getApprDate());
+			apprLines.add(temp);
+		}
+		return apprLines;
+	}
 }
