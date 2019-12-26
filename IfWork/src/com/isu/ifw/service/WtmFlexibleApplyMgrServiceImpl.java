@@ -18,12 +18,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmFlexibleApplyMgr;
+import com.isu.ifw.entity.WtmFlexibleStdMgr;
+import com.isu.ifw.entity.WtmWorkPattDet;
 import com.isu.ifw.mapper.WtmFlexibleApplMapper;
 import com.isu.ifw.mapper.WtmFlexibleApplyMgrMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.repository.WtmFlexibleApplyMgrRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
+import com.isu.ifw.repository.WtmWorkPattDetRepository;
 import com.isu.ifw.vo.ReturnParam;
 
 @Service("flexibleApplyMgrService")
@@ -53,6 +58,9 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 	@Autowired
 	@Qualifier("wtmFlexibleApplService")
 	WtmApplService wtmApplService;
+	
+	@Autowired
+	WtmWorkPattDetRepository workPattDetRepo;
 
 	@Override
 	public List<Map<String, Object>> getApplyList(Long tenantId, String enterCd, String sYmd) {
@@ -518,4 +526,45 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		}
 		return searchList;
 	}
+	
+	@Override
+	public List<Map<String, Object>> getElasDetail(Long tenantId, String enterCd, Map<String, Object> paramMap, String userId) {
+		
+		Long flexibleStdMgrId = Long.valueOf(paramMap.get("flexibleStdMgrId").toString());
+				
+		WtmFlexibleStdMgr flexibleStdMgr = flexStdMgrRepo.findById(flexibleStdMgrId).get();
+		
+		// 공휴일 제외 여부
+		String holExceptYn = "N";
+		if(flexibleStdMgr!=null && flexibleStdMgr.getHolExceptYn()!=null && !"".equals(flexibleStdMgr.getHolExceptYn())) 
+			holExceptYn = flexibleStdMgr.getHolExceptYn();
+
+		// 근무제 패턴으로 정해놓은 일 수  
+		int maxPattDet = 0;
+		WtmWorkPattDet workPattDet = workPattDetRepo.findTopByFlexibleStdMgrIdOrderBySeqDesc(flexibleStdMgrId);
+		if(workPattDet!=null && workPattDet.getSeq()!=null) 
+			maxPattDet = workPattDet.getSeq();
+		
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("holExceptYn", holExceptYn);
+		paramMap.put("maxPattDet", maxPattDet);
+		paramMap.put("totalYn", "Y");
+		paramMap.put("ymd", "");
+		
+		List<Map<String, Object>> elasDetails = flexApplMapper.getElasDetail(paramMap);
+		
+		if(elasDetails!=null && elasDetails.size()>0) {
+			paramMap.put("totalYn", "N");
+			for(Map<String, Object> t : elasDetails) {
+				paramMap.put("ymd", t.get("startYmd").toString());
+				List<Map<String, Object>> details = flexApplMapper.getElasDetail(paramMap);
+				t.put("details", details);
+			}
+		}
+		
+		return elasDetails; 
+	}
+	
+	
 }

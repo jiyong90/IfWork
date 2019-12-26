@@ -159,6 +159,7 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 						saveMap.put("dayCloseType", l.get("dayCloseType").toString());
 						saveMap.put("unplannedYn", l.get("unplannedYn").toString());
 						saveMap.put("applYn", l.get("applYn").toString());
+						saveMap.put("todayPlanEditYn", l.get("todayPlanEditYn").toString());
 						saveMap.put("note", l.get("note").toString());
 						saveMap.put("userId", userId);
 						updateList.add(saveMap);

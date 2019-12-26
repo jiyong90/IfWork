@@ -24,4 +24,8 @@ public interface WtmFlexibleApplMapper {
 	public void updateWorkMinuteOfWtmFlexibleEmp(Map<String, Object> paramMap);
 	
 	public List<WtmFlexibleApplDetVO> getWorkPattern(Map<String, Object> paramMap);
+	
+	public List<Map<String, Object>> getElasDetail(Map<String, Object> paramMap);
+	
+	public List<Map<String, Object>> getElasApplDetail(Map<String, Object> paramMap);
 }

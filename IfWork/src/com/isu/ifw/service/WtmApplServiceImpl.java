@@ -121,16 +121,6 @@ public class WtmApplServiceImpl implements WtmApplService {
 						appl = wtmFlexibleApplService.getAppl(tenantId, enterCd, applSabun, applId, userId); 
 					}
 					
-					ObjectMapper mapper = new ObjectMapper();
-					System.out.println("applCd : " + applCd);
-					System.out.println("sabun : " + empNo);
-					try {
-						System.out.println("appl : " + mapper.writeValueAsString(appl));
-					} catch (JsonProcessingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
 					appl.put("sabun", empNo);
 					appr.put("appl", appl);
 					
@@ -247,6 +237,13 @@ public class WtmApplServiceImpl implements WtmApplService {
 	public void sendPush() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public ReturnParam requestSync(Long tenantId, String enterCd, Map<String, Object> paramMap, String sabun,
+			String userId) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

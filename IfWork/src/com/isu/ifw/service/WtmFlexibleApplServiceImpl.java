@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
@@ -126,6 +128,34 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
 		Map<String, Object> appl = flexApplMapper.findByApplId(applId);
 		appl.put("applLine", applMapper.getWtmApplLineByApplId(applId));
+		
+		//탄근제의 경우 주별 근무시간을 보여준다.
+		if(appl!=null && appl.get("applCd")!=null && "ELAS".equals(appl.get("applCd"))) {
+			Map<String, Object> paramMap = new HashMap<String, Object>();
+			paramMap.put("flexibleApplId", appl.get("flexibleApplId"));
+			paramMap.put("totalYn", "Y");
+			List<Map<String, Object>> totals = flexApplMapper.getElasApplDetail(paramMap);
+			
+			if(totals!=null && totals.size()>0) {
+				/*ObjectMapper mapper = new ObjectMapper();
+				try {
+					System.out.println(mapper.writeValueAsString(totals));
+				} catch (JsonProcessingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} */
+				
+				paramMap.put("totalYn", "N");
+				for(Map<String, Object> t : totals) {
+					paramMap.put("symd", t.get("startYmd").toString());
+					List<Map<String, Object>> details = flexApplMapper.getElasApplDetail(paramMap);
+					t.put("details", details);
+				}
+				
+				appl.put("elasDetails", totals);
+			}
+		}
+		
 		return appl;
 	}
 	
@@ -802,6 +832,13 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		wtmFlexibleApplRepo.deleteByApplId(applId);
 		wtmApplLineRepo.deleteByApplId(applId);
 		wtmApplRepo.deleteById(applId);
+	}
+
+	@Override
+	public ReturnParam requestSync(Long tenantId, String enterCd, Map<String, Object> paramMap, String sabun,
+			String userId) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
 	}
  
 

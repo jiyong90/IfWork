@@ -31,4 +31,6 @@ public interface WtmFlexibleApplyMgrService {
 	public int setApplyEmpList(String userId,Long flexibleApplyId, Map<String, Object> convertMap);
 	
 	public List<Map<String, Object>> getApplyEmpPopList(Map<String, Object> paramMap);
+	
+	public List<Map<String, Object>> getElasDetail(Long tenantId, String enterCd, Map<String, Object> paramMap, String userId);
 }
