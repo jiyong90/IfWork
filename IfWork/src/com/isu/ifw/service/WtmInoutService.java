@@ -14,7 +14,15 @@ public interface WtmInoutService {
 	
 	public Map<String, Object> getMenuContext(Long tenantId, String enterCd, String sabun);
 	public Map<String, Object> getMenuContext2(Long tenantId, String enterCd, String sabun);
-	public ReturnParam updateTimecard(Map<String, Object> paramMap) throws Exception;
+	//출퇴근정보 업데이트
+	public void updateTimecardUnplanned(Map<String, Object> paramMap) throws Exception;
+	//출퇴근정보 업데이트
+	public void updateTimecard(Map<String, Object> paramMap) throws Exception;
+	//외출복귀정보 업데이트
+	public ReturnParam updateGoBack(Map<String, Object> paramMap) throws Exception;
+
+	//타각데이터 저장
+	public boolean insertTimeStamp(Map<String, Object> paramMap) throws Exception;
 //	public int checkGoback(Long tenantId, String enterCd, String sabun) throws Exception;
 	public Map<String, Object> updateTimeStamp(Map<String, Object> paramMap);
 	public List<Map<String, Object>> getMyInoutList(Map<String, Object> paramMap) throws Exception;

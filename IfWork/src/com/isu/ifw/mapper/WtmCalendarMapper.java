@@ -82,4 +82,12 @@ public interface WtmCalendarMapper {
 	public int updateEntryDateByAdm(Map<String, Object> paramMap);
 
 	public int updateEntryDateByAdmTest(Map<String, Object> paramMap);
+	
+	/**
+	 * 캘린더 타각정보 업데이트 (모바일)
+	 * @param paramMap
+	 * @return
+	 * @throws Exception
+	 */
+	public int updateEntryDateCalendar(Map<String, Object> paramMap);
 }

@@ -174,8 +174,8 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		List approvalLines = MobileUtil.makeApprLines(applLine);
 		resultMap.put("title", "신청서");
 		resultMap.put("data", data);
-		resultMap.put("useAppBtn", typeCd.equals("02")?"Y":"N");
-		resultMap.put("line", approvalLines);
+		resultMap.put("useAppBtn", typeCd.equals("02")?"true":"false");
+		resultMap.put("apprLines", approvalLines);
 
 		return resultMap;
 	}
