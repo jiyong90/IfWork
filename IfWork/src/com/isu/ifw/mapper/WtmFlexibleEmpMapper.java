@@ -372,4 +372,10 @@ public interface WtmFlexibleEmpMapper {
 	 * 유연근무 완료메시지 반영
 	 */
 	public void setChangeEndMsg(Map<String, Object> paramMap);
+
+
+	/**
+	 * 모바일 dashboard용 쿼리
+	 */
+	public Map<String, Object> getFlexibleRangeInfoMobile(Map<String, Object> paramMap);
 }

@@ -160,14 +160,20 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
         	}
         	// 조회된 자료가 있으면...
    			if(retMsg == null && getIfList != null && getIfList.size() > 0) {
+<<<<<<< HEAD
    	        	
    	        	// String[] hrGrpCode = {"H20010", "H20020", "H20030", "H10050", "H10110", "T10003", "W20010"};
    	        	// String[] wtmGrpCode = {"CLASS_CD", "DUTY_CD", "POS_CD", "JOG_GROUP_CD", "JOB_CD", "PAY_TYPE_CD", "TAA_TYPE_CD", "ORG_TYPE"};
+=======
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
    	        	List<Map<String, Object>> ifList = new ArrayList();
    	        	List<Map<String, Object>> ifUpdateList = new ArrayList();
    	        	for(int i=0; i<getIfList.size(); i++) {
    	        		Map<String, Object> ifMap = new HashMap<>();
+<<<<<<< HEAD
    	        		// int j = Arrays.asList(hrGrpCode).indexOf(getIfList.get(i).get("GRCODE_CD"));
+=======
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
    	        		
    	        		ifMap.put("tenantId", tenantId);
    	        		ifMap.put("enterCd", getIfList.get(i).get("ENTER_CD"));
@@ -788,8 +794,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	}
 		
 	@Override
+<<<<<<< HEAD
 	@Transactional
 	@Async("threadPoolTaskExecutor")
+=======
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 	public void getEmpHisIfResult(Long tenantId) throws Exception {
 		// TODO Auto-generated method stub
 		// 인터페이스 결과 저장용

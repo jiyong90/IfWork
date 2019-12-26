@@ -17,4 +17,7 @@ public interface WtmApplMapper {
 	public List<Map<String, Object>> getApprList03(Map<String, Object> paramMap);
 
 	public int countByApprList02(Map<String, Object> paramMap);
+	
+	//모바일에서 신청서 기본 validation체크 (날짜, 시간, 기간 등)
+	public Map<String, Object> getApplValidation(Map<String, Object> paramMap);
 }

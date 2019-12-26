@@ -559,5 +559,12 @@ protected void saveWtmApplLine(Long tenantId, String enterCd, int apprLvl, Long 
 		wtmApplRepo.deleteById(applId);
 	}
 
+	@Override
+	public ReturnParam requestSync(Long tenantId, String enterCd, Map<String, Object> paramMap, String sabun,
+			String userId) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 
 }
