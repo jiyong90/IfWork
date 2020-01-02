@@ -1726,7 +1726,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				// 유연근무 기간 변경하기
 				flexEmpMapper.updateByflexibleEmpId(paramMap);
 				//근무제 기간의 총 소정근로 시간을 업데이트 한다.
-				flexApplMapper.updateWorkMinuteOfWtmFlexibleEmp(paramMap);
+				//20200102jyp P_WTM_WORK_CALENDAR_RESET procedure에서 한다.
+				//flexApplMapper.updateWorkMinuteOfWtmFlexibleEmp(paramMap);
 			}
 			// 기본근무정산은 유연근무시작일 -1일부터 유연근무종료일 +1일 처리함
 			String symd = paramMap.get("orgSymd").toString();
