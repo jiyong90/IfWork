@@ -145,7 +145,7 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 	
 		if(apprList != null && apprList.size() > 0) {
 			for(Map<String, Object> appr : apprList) {
-				appr.put("rowSeq", startPage++);
+				appr.put("rowSeq", "" + startPage++ );
 				appr.put("applStatNm", appr.get("applStatusNm"));
 				appr.put("applEmpNm", appr.get("empNm"));
 				appr.put("applYmd", appr.get("applYmd").toString().substring(0, 4)+"."+appr.get("applYmd").toString().substring(4, 6)+"."+appr.get("applYmd").toString().substring(6, 8));
