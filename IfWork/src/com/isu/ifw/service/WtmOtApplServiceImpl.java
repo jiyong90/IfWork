@@ -258,6 +258,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 	public ReturnParam apply(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap,
 			String sabun, String userId) throws Exception {
 		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("결재가 완료되었습니다.");
+		
 		paramMap.put("applId", applId);
 		
 		ObjectMapper mapper = new ObjectMapper();
@@ -541,7 +543,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			for(WtmApplLine line : lines) {
 				if(line.getApprSeq() <= apprSeq) {
 					line.setApprStatusCd(APPR_STATUS_REJECT);
-					line.setApprDate("");
+					//반려일때는 date가 안들어가도 되는건지?? 확인해보기
+					line.setApprDate(WtmUtil.parseDateStr(new Date(), null));
 					if(line.getApprSeq() == apprSeq) {
 						line.setApprOpinion(apprOpinion);
 					}
@@ -935,11 +938,12 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			}else {
 				//신규생성
 				int lineCnt = 0; 
+				int cnt = 1;
 				for(WtmApplLineVO applLineVO : applLineVOs) {
 					if(lineCnt < applCnt) {
 						WtmApplLine applLine = new WtmApplLine();
 						applLine.setApplId(applId);
-						applLine.setApprSeq(applLineVO.getApprSeq());
+						applLine.setApprSeq(cnt++);
 						applLine.setApprSabun(applLineVO.getSabun());
 						applLine.setApprTypeCd(APPL_LINE_S);
 						applLine.setUpdateId(userId);
