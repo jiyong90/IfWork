@@ -284,123 +284,125 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		Date nightSdate = WtmUtil.toDate( ymd + "220000" , "yyyyMMddHHmmss");
 		Date nightEdate = WtmUtil.addDate(WtmUtil.toDate( ymd + "060000" , "yyyyMMddHHmmss"), 1);
 		
-		paramMap.put("timeCdMgrId", timeCdMgrId);
-		List<Map<String, Object>> dayResult = flexEmpMapper.getDayResultByYmd(paramMap);
-		if(dayResult!=null && dayResult.size()>0) {
-			Float workMin = 0f;
-			Map<String, Object> taaMap = new HashMap<String, Object>();
-			Float noPayBreakMin = 0f;
-			Float paidBreakMin = 0f;
-			Float otMin = 0f;
-			Float otNightMin = 0f;
-			
-			for(Map<String, Object> r : dayResult) {
-				String timeTypeCd = r.get("timeTypeCd").toString();
-				String taaNm = null;
+		if(timeCdMgrId!=null) {
+			paramMap.put("timeCdMgrId", timeCdMgrId);
+			List<Map<String, Object>> dayResult = flexEmpMapper.getDayResultByYmd(paramMap);
+			if(dayResult!=null && dayResult.size()>0) {
+				Float workMin = 0f;
+				Map<String, Object> taaMap = new HashMap<String, Object>();
+				Float noPayBreakMin = 0f;
+				Float paidBreakMin = 0f;
+				Float otMin = 0f;
+				Float otNightMin = 0f;
 				
-				if(r.get("taaNm")!=null)
-					taaNm = r.get("taaNm").toString().replaceAll("\\p{Z}", "");
-				
-				//System.out.println("timeTypeCd : " + timeTypeCd);
-				//System.out.println("taaNm : " + taaNm);
-				
-				String sDate = null;
-				String eDate = null;
-				Float min = 0f;
-				
-				if(r.get("apprSdate")!=null && !"".equals(r.get("apprSdate"))) {
-					sDate = r.get("apprSdate").toString();
-				} else {
-					if(r.get("planSdate")!=null && !"".equals(r.get("planSdate"))) {
-						sDate = r.get("planSdate").toString();
-					}
-				}
-				
-				if(r.get("apprEdate")!=null && !"".equals(r.get("apprEdate"))) {
-					eDate = r.get("apprEdate").toString();
-				} else {
-					if(r.get("planEdate")!=null && !"".equals(r.get("planEdate"))) {
-						eDate = r.get("planEdate").toString();
-					}
-				}
-				
-				if(r.get("apprMinute")!=null && !"".equals(r.get("apprMinute"))) {
-					min = Float.valueOf(r.get("apprMinute").toString());
-				} else {
-					if(r.get("planMinute")!=null && !"".equals(r.get("planMinute"))) {
-						min = Float.valueOf(r.get("planMinute").toString());
-					}
-				}
-				
-				if(sDate==null || eDate==null)
-					continue;
-				
-				Date sd = WtmUtil.toDate(sDate, "yyyyMMddHHmm");
-				Date ed = WtmUtil.toDate(eDate, "yyyyMMddHHmm");
-				
-				//휴게시간
-				//breakTypeCd가 TIME이나 TIMEFIX 인 경우엔 유급 휴게는 0
-				Float break01 = 0f;
-				Float break02 = 0f;
-				
-				SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
-				paramMap.put("shm", sdf.format(sd));
-				paramMap.put("ehm", sdf.format(ed));
-				Map<String, Object> breakMap = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, sabun);
-				if(breakMap!=null && breakMap.get("breakMinute")!=null) {
-					if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
-						break01 =  Float.valueOf(breakMap.get("breakMinuteNoPay").toString());
-						break02 = Float.valueOf(breakMap.get("breakMinutePaid").toString());
+				for(Map<String, Object> r : dayResult) {
+					String timeTypeCd = r.get("timeTypeCd").toString();
+					String taaNm = null;
+					
+					if(r.get("taaNm")!=null)
+						taaNm = r.get("taaNm").toString().replaceAll("\\p{Z}", "");
+					
+					//System.out.println("timeTypeCd : " + timeTypeCd);
+					//System.out.println("taaNm : " + taaNm);
+					
+					String sDate = null;
+					String eDate = null;
+					Float min = 0f;
+					
+					if(r.get("apprSdate")!=null && !"".equals(r.get("apprSdate"))) {
+						sDate = r.get("apprSdate").toString();
 					} else {
-						break01 = Float.valueOf(breakMap.get("breakMinute").toString());
-					} 
-					
-					noPayBreakMin += break01;
-					paidBreakMin += break02;
-				}
-				//System.out.println("break01: " + break01);
-				//System.out.println("break02: " + break02);
-				
-				if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE)) {
-					workMin += min;
-				} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_FIXOT)) {
-					otMin += min;
-				} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT)) {
-					otNightMin += min;
-				} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_TAA) || timeTypeCd.equals(WtmApplService.TIME_TYPE_SUBS)) {
-					//근태 현황
-					//근태시간 포함여부와 근태일근무여부가 모두 Y이면, 휴게시간 포함한 근무시간
-					Float taa = min;
-					
-					//System.out.println("taa : " + taa);
-					
-					if(timeTypeCd.equals(WtmApplService.TIME_TYPE_SUBS))
-						taaNm = "대체휴가";
-					
-					if(taaMap.get(taaNm)!=null && !"".equals(taaMap.get(taaNm))) {
-						taaMap.put(taaNm, Float.parseFloat(taaMap.get(taaNm).toString()) + taa);
-					} else {
-						taaMap.put(taaNm, taa);
+						if(r.get("planSdate")!=null && !"".equals(r.get("planSdate"))) {
+							sDate = r.get("planSdate").toString();
+						}
 					}
 					
+					if(r.get("apprEdate")!=null && !"".equals(r.get("apprEdate"))) {
+						eDate = r.get("apprEdate").toString();
+					} else {
+						if(r.get("planEdate")!=null && !"".equals(r.get("planEdate"))) {
+							eDate = r.get("planEdate").toString();
+						}
+					}
+					
+					if(r.get("apprMinute")!=null && !"".equals(r.get("apprMinute"))) {
+						min = Float.valueOf(r.get("apprMinute").toString());
+					} else {
+						if(r.get("planMinute")!=null && !"".equals(r.get("planMinute"))) {
+							min = Float.valueOf(r.get("planMinute").toString());
+						}
+					}
+					
+					if(sDate==null || eDate==null)
+						continue;
+					
+					Date sd = WtmUtil.toDate(sDate, "yyyyMMddHHmm");
+					Date ed = WtmUtil.toDate(eDate, "yyyyMMddHHmm");
+					
+					//휴게시간
+					//breakTypeCd가 TIME이나 TIMEFIX 인 경우엔 유급 휴게는 0
+					Float break01 = 0f;
+					Float break02 = 0f;
+					
+					SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+					paramMap.put("shm", sdf.format(sd));
+					paramMap.put("ehm", sdf.format(ed));
+					Map<String, Object> breakMap = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, sabun);
+					if(breakMap!=null && breakMap.get("breakMinute")!=null) {
+						if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
+							break01 =  Float.valueOf(breakMap.get("breakMinuteNoPay").toString());
+							break02 = Float.valueOf(breakMap.get("breakMinutePaid").toString());
+						} else {
+							break01 = Float.valueOf(breakMap.get("breakMinute").toString());
+						} 
+						
+						noPayBreakMin += break01;
+						paidBreakMin += break02;
+					}
+					//System.out.println("break01: " + break01);
+					//System.out.println("break02: " + break02);
+					
+					if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE)) {
+						workMin += min;
+					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_FIXOT)) {
+						otMin += min;
+					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT)) {
+						otNightMin += min;
+					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_TAA) || timeTypeCd.equals(WtmApplService.TIME_TYPE_SUBS)) {
+						//근태 현황
+						//근태시간 포함여부와 근태일근무여부가 모두 Y이면, 휴게시간 포함한 근무시간
+						Float taa = min;
+						
+						//System.out.println("taa : " + taa);
+						
+						if(timeTypeCd.equals(WtmApplService.TIME_TYPE_SUBS))
+							taaNm = "대체휴가";
+						
+						if(taaMap.get(taaNm)!=null && !"".equals(taaMap.get(taaNm))) {
+							taaMap.put(taaNm, Float.parseFloat(taaMap.get(taaNm).toString()) + taa);
+						} else {
+							taaMap.put(taaNm, taa);
+						}
+						
+					}
 				}
-			}
-		
-			dayInfo.put("workHour", minToHHmmStr(workMin+""));
-			dayInfo.put("otHour", minToHHmmStr((otMin+otNightMin)+""));
-			dayInfo.put("otBasicHour", minToHHmmStr(otMin+""));
-			dayInfo.put("otNightHour", minToHHmmStr(otNightMin+""));
 			
-			Map<String, Object> taa = new HashMap<String, Object>();
-			if(taaMap!=null) {
-				for(String k : taaMap.keySet()) {
-					taa.put(k, minToHHmmStr(taaMap.get(k).toString()));
+				dayInfo.put("workHour", minToHHmmStr(workMin+""));
+				dayInfo.put("otHour", minToHHmmStr((otMin+otNightMin)+""));
+				dayInfo.put("otBasicHour", minToHHmmStr(otMin+""));
+				dayInfo.put("otNightHour", minToHHmmStr(otNightMin+""));
+				
+				Map<String, Object> taa = new HashMap<String, Object>();
+				if(taaMap!=null) {
+					for(String k : taaMap.keySet()) {
+						taa.put(k, minToHHmmStr(taaMap.get(k).toString()));
+					}
 				}
+				
+				dayInfo.put("taa", taa);
+				dayInfo.put("breakHour", minToHHmmStr(noPayBreakMin+""));
+				dayInfo.put("paidHour", minToHHmmStr(paidBreakMin+""));
 			}
-			
-			dayInfo.put("taa", taa);
-			dayInfo.put("breakHour", minToHHmmStr(noPayBreakMin+""));
-			dayInfo.put("paidHour", minToHHmmStr(paidBreakMin+""));
 		}
 		
 		return dayInfo;
@@ -545,46 +547,116 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//기본근무 정보는 삭제 하고 다시 만들자 그게 속편하다
 			workDayResultRepo.deleteByTenantIdAndEnterCdAndYmdAndTimeTypeCdAndSabun(tenantId, enterCd, ymd, timeTypeCd, sabun);
 			
-			List<WtmWorkDayResult> dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndYmdAndSabunAndPlanSdateLessThanEqualAndPlanEdateGreaterThanEqualOrderByPlanSdateAsc(tenantId, enterCd, ymd, sabun, planSdate, planEdate);
-
-			Date insSdate = planSdate;
-			Date insEdate = planEdate;
-			boolean isInsert = false;
+			if(planSdate!=null && planEdate!=null) {
 			
-
-			if(dayResults != null && dayResults.size() > 0) {
+				List<WtmWorkDayResult> dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndYmdAndSabunAndPlanSdateLessThanEqualAndPlanEdateGreaterThanEqualOrderByPlanSdateAsc(tenantId, enterCd, ymd, sabun, planSdate, planEdate);
+	
+				Date insSdate = planSdate;
+				Date insEdate = planEdate;
+				boolean isInsert = false;
 				
+	
+				if(dayResults != null && dayResults.size() > 0) {
+					
+					
+					for(WtmWorkDayResult r : dayResults) {
+						//기본근무 사이에 올 수 있는 근무는 시간단위 연차와 반차, 대체휴일, 간주근무, 음? OT빼고 다? ㅡㅡ 연차나 출장 교육의 경우 사전 벨리데이션에서 걸러진다고 보자 여기선 테트리스
+						//dayResults 에는 OT가 있어선 안된다.. 넘어오는 기본데이터는 OT중복되어서 작성할 수 없기때문인다 오케?
+					
+						//데이터가 시종이 똑같을 경우
+						if(r.getPlanSdate().compareTo(insSdate) == 0 && r.getPlanEdate().compareTo(insEdate) == 0) {
+							//는 없어야한다. ㅋ 유효성 검사기 고장
+							
+						//시작만 같은 데이터.  
+						}else if(r.getPlanSdate().compareTo(insSdate) == 0 && r.getPlanEdate().compareTo(insEdate) < 0) {
+							insSdate = r.getPlanEdate(); //시작일시를 바꿔준다.
+							isInsert = true; //다음 데이터가 없을 경우 for문밖에서 인써얼트를 해줄라고 
+							
+						//계획 시작 시간 보다 등록된 일정이 이후 일때
+						}else if(r.getPlanSdate().compareTo(insSdate) > 0 && r.getPlanEdate().compareTo(insEdate) <= 0) {
+							//바로 넣는다 
+							isInsert = false; 
+							
+							WtmWorkDayResult newDayResult = new WtmWorkDayResult();
+							newDayResult.setTenantId(tenantId);
+							newDayResult.setEnterCd(enterCd);
+							newDayResult.setYmd(ymd);
+							newDayResult.setSabun(sabun);
+							newDayResult.setApplId(applId);
+							newDayResult.setTimeTypeCd(timeTypeCd);
+							newDayResult.setTaaCd(taaCd);
+							newDayResult.setPlanSdate(insSdate);
+							newDayResult.setPlanEdate(r.getPlanSdate());  //insEdata 의 종료일 값은 변경하지 않는다.  끝까지 돌아야하기때무넹
+							String shm = sdf.format(insSdate);
+							String ehm = sdf.format(r.getPlanSdate()); 
+							pMap.put("shm", shm);
+							pMap.put("ehm", ehm);
+							Map<String, Object> planMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId);
+							newDayResult.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+"")); 
+							newDayResult.setUpdateId(userId);
+							workDayResultRepo.save(newDayResult);
+							
+							//계획 종료시간에 못 미칠경우 데이터를 생성해주거나 다음데이터도 봐야한다. 종료시간까지.
+							if(r.getPlanEdate().compareTo(insEdate) < 0) {
+								isInsert = true;
+								insSdate = r.getPlanEdate();
+							}
+							
+						}  
+					}
+						
+				}else {
+					//1건의 경우 진입시 삭제했기 때문에 갱신의 개념이다.. 
+					//텅비었다 공략해라
+					isInsert = true;  
+				} 
+	
+				if(isInsert) { 
+					WtmWorkDayResult newDayResult = new WtmWorkDayResult();
+					newDayResult.setTenantId(tenantId);
+					newDayResult.setEnterCd(enterCd);
+					newDayResult.setYmd(ymd);
+					newDayResult.setSabun(sabun);
+					newDayResult.setApplId(applId);
+					newDayResult.setTimeTypeCd(timeTypeCd);
+					newDayResult.setTaaCd(taaCd);
+					newDayResult.setPlanSdate(insSdate);
+					newDayResult.setPlanEdate(insEdate);  
+					String shm = sdf.format(insSdate);
+					String ehm = sdf.format(insEdate); 
+					pMap.put("shm", shm);
+					pMap.put("ehm", ehm);
+					Map<String, Object> planMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId);
+					newDayResult.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+"")); 
+					newDayResult.setUpdateId(userId);
+					workDayResultRepo.save(newDayResult);
+				}
 				
-				for(WtmWorkDayResult r : dayResults) {
-					//기본근무 사이에 올 수 있는 근무는 시간단위 연차와 반차, 대체휴일, 간주근무, 음? OT빼고 다? ㅡㅡ 연차나 출장 교육의 경우 사전 벨리데이션에서 걸러진다고 보자 여기선 테트리스
-					//dayResults 에는 OT가 있어선 안된다.. 넘어오는 기본데이터는 OT중복되어서 작성할 수 없기때문인다 오케?
-				
-					//데이터가 시종이 똑같을 경우
-					if(r.getPlanSdate().compareTo(insSdate) == 0 && r.getPlanEdate().compareTo(insEdate) == 0) {
-						//는 없어야한다. ㅋ 유효성 검사기 고장
-						
-					//시작만 같은 데이터.  
-					}else if(r.getPlanSdate().compareTo(insSdate) == 0 && r.getPlanEdate().compareTo(insEdate) < 0) {
-						insSdate = r.getPlanEdate(); //시작일시를 바꿔준다.
-						isInsert = true; //다음 데이터가 없을 경우 for문밖에서 인써얼트를 해줄라고 
-						
-					//계획 시작 시간 보다 등록된 일정이 이후 일때
-					}else if(r.getPlanSdate().compareTo(insSdate) > 0 && r.getPlanEdate().compareTo(insEdate) <= 0) {
-						//바로 넣는다 
-						isInsert = false; 
-						
+				//고정 OT여부 확인  / 기본 일 근무시간(분) 체크 / 일별소진 옵션만 / 고정 OT시간
+				if(defaultWorkUseYn!=null && defaultWorkUseYn.equals("Y") && fixotUseType!=null && fixotUseType.equalsIgnoreCase("DAY")) {
+					//일별, 일괄 소진 여부 : 일괄 소진은 여기서 할수 없다. 일마감 시 일괄소진 여부에 따라 OT데이터를 생성해주자.
+	
+					pMap.put("yyyyMMddHHmmss", format.format(insEdate));
+					pMap.put("intervalMinute", fixotUseLimit);
+					
+					//고정 OT의 종료시간을 가지고 오자.
+					Date flxotEdate = flexEmpMapper.getIntervalDateTime(pMap);
+					//데이터는 같아야 한다. 설정의 변경으로 인해 데이터가 망가지는건 설정화면에서 변경하지 못하도록 제어한다. 비슷하다는걸로 판단하면 안됨.
+					WtmWorkDayResult otDayResult = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndPlanSdateAndPlanEdate(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_FIXOT, insEdate, flxotEdate);
+					if(otDayResult == null) {
+						//고정 OT 생성
 						WtmWorkDayResult newDayResult = new WtmWorkDayResult();
 						newDayResult.setTenantId(tenantId);
 						newDayResult.setEnterCd(enterCd);
 						newDayResult.setYmd(ymd);
 						newDayResult.setSabun(sabun);
-						newDayResult.setApplId(applId);
-						newDayResult.setTimeTypeCd(timeTypeCd);
-						newDayResult.setTaaCd(taaCd);
-						newDayResult.setPlanSdate(insSdate);
-						newDayResult.setPlanEdate(r.getPlanSdate());  //insEdata 의 종료일 값은 변경하지 않는다.  끝까지 돌아야하기때무넹
-						String shm = sdf.format(insSdate);
-						String ehm = sdf.format(r.getPlanSdate()); 
+						newDayResult.setApplId(null);
+						newDayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_FIXOT);
+						newDayResult.setTaaCd(null);
+						newDayResult.setPlanSdate(insEdate);
+						newDayResult.setPlanEdate(flxotEdate);  
+						String shm = sdf.format(insEdate);
+						String ehm = sdf.format(flxotEdate); 
 						pMap.put("shm", shm);
 						pMap.put("ehm", ehm);
 						Map<String, Object> planMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId);
@@ -592,79 +664,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						newDayResult.setUpdateId(userId);
 						workDayResultRepo.save(newDayResult);
 						
-						//계획 종료시간에 못 미칠경우 데이터를 생성해주거나 다음데이터도 봐야한다. 종료시간까지.
-						if(r.getPlanEdate().compareTo(insEdate) < 0) {
-							isInsert = true;
-							insSdate = r.getPlanEdate();
-						}
-						
-					}  
-				}
-					
-			}else {
-				//1건의 경우 진입시 삭제했기 때문에 갱신의 개념이다.. 
-				//텅비었다 공략해라
-				isInsert = true;  
-			} 
-
-			if(isInsert) { 
-				WtmWorkDayResult newDayResult = new WtmWorkDayResult();
-				newDayResult.setTenantId(tenantId);
-				newDayResult.setEnterCd(enterCd);
-				newDayResult.setYmd(ymd);
-				newDayResult.setSabun(sabun);
-				newDayResult.setApplId(applId);
-				newDayResult.setTimeTypeCd(timeTypeCd);
-				newDayResult.setTaaCd(taaCd);
-				newDayResult.setPlanSdate(insSdate);
-				newDayResult.setPlanEdate(insEdate);  
-				String shm = sdf.format(insSdate);
-				String ehm = sdf.format(insEdate); 
-				pMap.put("shm", shm);
-				pMap.put("ehm", ehm);
-				Map<String, Object> planMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId);
-				newDayResult.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+"")); 
-				newDayResult.setUpdateId(userId);
-				workDayResultRepo.save(newDayResult);
-			}
-			
-			//고정 OT여부 확인  / 기본 일 근무시간(분) 체크 / 일별소진 옵션만 / 고정 OT시간
-			if(defaultWorkUseYn!=null && defaultWorkUseYn.equals("Y") && fixotUseType!=null && fixotUseType.equalsIgnoreCase("DAY")) {
-				//일별, 일괄 소진 여부 : 일괄 소진은 여기서 할수 없다. 일마감 시 일괄소진 여부에 따라 OT데이터를 생성해주자.
-
-				pMap.put("yyyyMMddHHmmss", format.format(insEdate));
-				pMap.put("intervalMinute", fixotUseLimit);
-				
-				//고정 OT의 종료시간을 가지고 오자.
-				Date flxotEdate = flexEmpMapper.getIntervalDateTime(pMap);
-				//데이터는 같아야 한다. 설정의 변경으로 인해 데이터가 망가지는건 설정화면에서 변경하지 못하도록 제어한다. 비슷하다는걸로 판단하면 안됨.
-				WtmWorkDayResult otDayResult = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndPlanSdateAndPlanEdate(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_FIXOT, insEdate, flxotEdate);
-				if(otDayResult == null) {
-					//고정 OT 생성
-					WtmWorkDayResult newDayResult = new WtmWorkDayResult();
-					newDayResult.setTenantId(tenantId);
-					newDayResult.setEnterCd(enterCd);
-					newDayResult.setYmd(ymd);
-					newDayResult.setSabun(sabun);
-					newDayResult.setApplId(null);
-					newDayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_FIXOT);
-					newDayResult.setTaaCd(null);
-					newDayResult.setPlanSdate(insEdate);
-					newDayResult.setPlanEdate(flxotEdate);  
-					String shm = sdf.format(insEdate);
-					String ehm = sdf.format(flxotEdate); 
-					pMap.put("shm", shm);
-					pMap.put("ehm", ehm);
-					Map<String, Object> planMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId);
-					newDayResult.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+"")); 
-					newDayResult.setUpdateId(userId);
-					workDayResultRepo.save(newDayResult);
-					
-				}else {
-					//데이터가 있으면 안되는디.. 
-					System.out.println("고정 OT 데이터 생성 실패... 있다 이미... 왜!!");
+					}else {
+						//데이터가 있으면 안되는디.. 
+						System.out.println("고정 OT 데이터 생성 실패... 있다 이미... 왜!!");
+					} 
 				} 
-			} 
+			}
 		}
 		return rp;
 	}
@@ -714,6 +719,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					}
 					
 					this.mergeWorkDayResult(emp.getTenantId(), emp.getEnterCd(), k, emp.getSabun(), null, WtmApplService.TIME_TYPE_BASE, null, s, e, stdMgr.getDefaultWorkUseYn() , stdMgr.getFixotUseType(), stdMgr.getFixotUseLimit(), userId);
+				} else {
+					this.mergeWorkDayResult(emp.getTenantId(), emp.getEnterCd(), k, emp.getSabun(), null, WtmApplService.TIME_TYPE_BASE, null, null, null, stdMgr.getDefaultWorkUseYn() , stdMgr.getFixotUseType(), stdMgr.getFixotUseLimit(), userId);
 				}
 				
 				/*
@@ -1934,5 +1941,16 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			return null;
 		}
 	}
-
+	
+	@Override
+	public Map<String, Object> createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("sabun", sabun);
+		paramMap.put("pId", userId);
+		flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
+		
+		return flexEmpMapper.getWorkTermMinute(paramMap);
+	}
+	
 }

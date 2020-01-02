@@ -378,4 +378,11 @@ public interface WtmFlexibleEmpMapper {
 	 * 모바일 dashboard용 쿼리
 	 */
 	public Map<String, Object> getFlexibleRangeInfoMobile(Map<String, Object> paramMap);
+	
+	/**
+	 * 근로 시간 조회
+	 * @param paramMap
+	 * @return
+	 */
+	public Map<String, Object> getWorkTermMinute(Map<String, Object> paramMap);
 }

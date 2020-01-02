@@ -290,4 +290,17 @@ public interface WtmFlexibleEmpService {
 	 * @return
 	 */
 	public List<String> getLowLevelOrgList(Long tenantId, String enterCd, String sabun, String ymd);
+	
+	/**
+	 * 근무제 통계 데이터 생성
+	 * @param tenantId
+	 * @param enterCd
+	 * @param sabun
+	 * @param symd
+	 * @param eymd
+	 * @param userId
+	 * @return
+	 */
+	public Map<String, Object> createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId);
+	
 }
