@@ -146,7 +146,6 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		Map <String,Object> returnMap = new HashMap();
 		returnMap.put("D01", menuIn);
 		
-		//tenant 어디서 가져올지
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
 		paramMap.put("sabun", sabun);
@@ -191,6 +190,76 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			menuIn.put("label", label);
 			menuIn.put("description", description);
 			menuIn.put("inoutType", inoutType);
+			
+		}catch(Exception e) {
+			logger.debug(e.getMessage());
+			e.printStackTrace();
+		} 
+		
+		return returnMap;
+	}
+	
+	@Override
+	public Map<String, Object> getMenuContextWeb(Long tenantId, String enterCd, String sabun) {
+
+		Map <String,Object> paramMap = new HashMap<String, Object>();
+		Map <String,Object> returnMap = new HashMap();
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("sabun", sabun);
+
+		String ymd = null;
+		String entrySdate = null;
+		String entryEdate = null;
+		String label = " - ";
+		String inoutType = "NONE";
+		String desc = "출근체크 필요시 인사팀에 문의 바랍니다";
+		
+		try {
+			List<Map<String, Object>> list = inoutHisMapper.getInoutStatus(paramMap);
+			logger.debug("getMenuContextWeb inoutStatus : " + list.toString());
+			
+			SimpleDateFormat format1 = new SimpleDateFormat ("yyyyMMdd");
+			Date now = new Date();
+			String today = format1.format(now);
+			
+			for(Map<String, Object> time : list) {
+				if(!time.containsKey("pSymd") ||  !time.containsKey("pEymd"))
+					continue;
+				if((time.get("pSymd").equals(today) || time.get("pEymd").equals(today)) && time.get("entrySdate") == null) {
+					ymd = time.get("ymds").toString();
+					if(time.get("holydayYn") != null && time.get("holydayYn").toString().equals("Y")) {
+						inoutType = "HOL";
+						label = " - ";
+						desc = "휴일";
+					} else {
+						inoutType = "IN";
+						desc = "근무일";
+						label = "출근하기";
+					}
+					break;
+				} else if((time.get("pSymd").equals(today) || time.get("pEymd").equals(today)) && time.get("entryEdate") == null) {
+					ymd = time.get("ymds").toString();
+					inoutType = "OUT";
+					entrySdate = time.get("entrySdate").toString();
+					desc = "근무중";
+					label = "퇴근하기";
+					break;
+				} else if (time.get("entrySdate") != null && time.get("entryEdate") != null) {
+					inoutType = "END";
+					desc = "근무종료";
+					label = "퇴근취소";
+					entrySdate = time.get("entrySdate").toString();
+					entryEdate = time.get("entryEdate").toString();
+				}
+			}
+			
+			returnMap.put("ymd", ymd);
+			returnMap.put("label", label);
+			returnMap.put("desc", desc);
+			returnMap.put("inoutType", inoutType);
+			returnMap.put("entrySdate", entrySdate);
+			returnMap.put("entryEdate", entryEdate);
 			
 		}catch(Exception e) {
 			logger.debug(e.getMessage());

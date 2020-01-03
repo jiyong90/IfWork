@@ -12,8 +12,12 @@ import com.isu.ifw.vo.ReturnParam;
  */
 public interface WtmInoutService {
 	
+	//근무계획없이 출퇴근 버튼 각각
 	public Map<String, Object> getMenuContext(Long tenantId, String enterCd, String sabun);
+	//근무계획보기
 	public Map<String, Object> getMenuContext2(Long tenantId, String enterCd, String sabun);
+	//웹버전
+	public Map<String, Object> getMenuContextWeb(Long tenantId, String enterCd, String sabun);
 	//출퇴근정보 업데이트
 	public void updateTimecardUnplanned(Map<String, Object> paramMap) throws Exception;
 	//출퇴근정보 업데이트
