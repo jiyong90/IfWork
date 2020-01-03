@@ -270,6 +270,26 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	}
 	
 	@Override
+	public void updateTimecardCancel(Map<String, Object> paramMap) throws Exception {
+		try {
+			if(insertTimeStamp(paramMap)) {
+				logger.debug("insertTimeStampSuccess : " + paramMap.toString());
+			} else {
+				logger.debug("insertTimeStampFail : " + paramMap.toString());
+				throw new Exception("저장에 실패하였습니다.");
+			}
+		} catch(Exception e) {
+			logger.debug("insertTimeStampFail : " +e.getMessage());
+			throw new Exception("저장에 실패하였습니다.");
+		}
+ 
+		int cnt = wtmCalendarMapper.updateEntryDateCalendar(paramMap);
+		if(cnt <= 0) {
+			throw new Exception("캘린더 정보 업데이트에 실패하였습니다.");
+		}
+	}	
+
+	@Override
 	public void updateTimecard(Map<String, Object> paramMap) throws Exception {
 
 		//캘린더에 초가 들어가면 안된...
@@ -551,6 +571,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				throw new Exception("인정시간 계산 중 오류가 발생했습니다.");
 			}
 	}
+	
 	
 	@Override
 	public boolean insertTimeStamp(Map<String, Object> paramMap) throws Exception {
