@@ -16,7 +16,7 @@ import javax.persistence.TemporalType;
 import org.springframework.format.annotation.DateTimeFormat;
 
 @Entity
-@Table(name="WTM_TOKEN")
+@Table(name="WTM_MOBILE_TOKEN")
 public class WtmMobileToken {
 	
 	@Id

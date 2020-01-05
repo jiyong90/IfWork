@@ -1,9 +1,13 @@
 package com.isu.ifw.util;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
 
 import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.vo.WtmApplLineVO;
@@ -35,6 +39,18 @@ public class MobileUtil {
 			if(key.equals("sabun")) {
 				data = emp.split("@")[1];
 			}
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		return data;
+	}
+	
+	public static String encEmpKey(String secret, String empKey) { 
+		String data = "";
+		try {
+			Aes256 aes = new Aes256(secret);
+			data = aes.encrypt(empKey);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
