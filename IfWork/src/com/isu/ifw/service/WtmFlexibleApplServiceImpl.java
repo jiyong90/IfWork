@@ -18,6 +18,7 @@ import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
 import com.isu.ifw.entity.WtmFlexibleAppl;
 import com.isu.ifw.entity.WtmFlexibleApplDet;
+import com.isu.ifw.entity.WtmFlexibleApplyDet;
 import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmPropertie;
@@ -36,6 +37,7 @@ import com.isu.ifw.repository.WtmApplRepository;
 import com.isu.ifw.repository.WtmEntryApplRepository;
 import com.isu.ifw.repository.WtmFlexibleApplDetRepository;
 import com.isu.ifw.repository.WtmFlexibleApplRepository;
+import com.isu.ifw.repository.WtmFlexibleApplyDetRepository;
 import com.isu.ifw.repository.WtmFlexibleDayPlanRepository;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
@@ -124,6 +126,9 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 	@Autowired
 	WtmFlexibleEmpService flexibleEmpService;
 	
+	@Autowired
+	WtmFlexibleApplyDetRepository flexibleApplyDetRepo;
+	
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
 		Map<String, Object> appl = flexApplMapper.findByApplId(applId);
@@ -132,7 +137,9 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		//탄근제의 경우 주별 근무시간을 보여준다.
 		if(appl!=null && appl.get("applCd")!=null && "ELAS".equals(appl.get("applCd"))) {
 			Map<String, Object> paramMap = new HashMap<String, Object>();
-			paramMap.put("flexibleApplId", appl.get("flexibleApplId"));
+			paramMap.put("tableName", "WTM_FLEXIBLE_APPL_DET");
+			paramMap.put("key", "FLEXIBLE_APPL_ID");
+			paramMap.put("value", Long.valueOf(appl.get("flexibleApplId").toString()));
 			paramMap.put("totalYn", "Y");
 			List<Map<String, Object>> totals = flexApplMapper.getElasApplDetail(paramMap);
 			
@@ -437,7 +444,11 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 				
 				//result 만들어주자.
 				List<WtmWorkDayResult> result = new ArrayList<WtmWorkDayResult>();
-				List<Map<String, Object>> dets = wtmFlexibleEmpMapper.getElasWorkDayResult(flexibleAppl.getFlexibleApplId());
+				Map<String, Object> pMap = new HashMap<String, Object>();
+				pMap.put("tableName", "WTM_FLEXIBLE_APPL_DET");
+				pMap.put("key", "FLEXIBLE_APPL_ID");
+				pMap.put("value", flexibleAppl.getFlexibleApplId());
+				List<Map<String, Object>> dets = wtmFlexibleEmpMapper.getElasWorkDayResult(pMap);
 				if(dets!=null && dets.size()>0) {
 					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
 					
@@ -526,44 +537,66 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		if(rp.getStatus().equals("FAIL")) {
 			return rp;
 		}
-		Long flexibleApplId = null;
-		if(paramMap != null && paramMap.containsKey("flexibleApplId") && !paramMap.equals("")) {
-			flexibleApplId = Long.parseLong(paramMap.get("flexibleApplId").toString());
-		}
-		List<WtmFlexibleApplDet> days = wtmFlexibleApplDetRepo.findByFlexibleApplId(flexibleApplId);
+		
 		//근무 상세에 대한 소정근로시간 체크 (탄근제)
 		//근무제로 판단하지 않고 신청 시 신청에 딸린 계획데이터가 있을경우 체크하즈아.
-		if(days != null && days.size() > 0) {
-			WtmPropertie propertie = null;
-			String defultWorktime = "8";
-			String max2weekWithin = "48";
-			String max2weekMorethen = "52";
-			String maxAdd = "0";
-			propertie = wtmPropertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_DEFAULT_WORKTIME");
-			if(propertie != null)
-				defultWorktime = propertie.getInfoValue();
+		WtmPropertie propertie = null;
+		String defultWorktime = "8";
+		String max2weekWithin = "48";
+		String max2weekMorethen = "52";
+		String maxAdd = "0";
+		propertie = wtmPropertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_DEFAULT_WORKTIME");
+		if(propertie != null)
+			defultWorktime = propertie.getInfoValue();
+		
+		propertie = wtmPropertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_MAX_WORKTIME_2WEEK_WITHIN");
+		if(propertie != null)
+			max2weekWithin = propertie.getInfoValue();
+		
+		propertie = wtmPropertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_MAX_WORKTIME_2WEEK_MORETHEN");
+		if(propertie != null)
+			max2weekMorethen = propertie.getInfoValue();
+		
+		propertie = wtmPropertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_MAX_WORKTIME_ADD");
+		if(propertie != null)
+			maxAdd = propertie.getInfoValue();
+		
+		if(workTypeCd.startsWith("SELE")) {
+			//선근제
 			
-			propertie = wtmPropertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_MAX_WORKTIME_2WEEK_WITHIN");
-			if(propertie != null)
-				max2weekWithin = propertie.getInfoValue();
+		}else if(workTypeCd.equals("ELAS")) {
+			//탄근제
+			//근로시간은 평균 40 시간, OT시간은 주 12시간 초과 시 신청할 수 없고
+			//2주 이내 탄근제는 주간 최대 근무시간은 48시간, 2주 이상 탄근제는 주간 최대 근무시간 52시간 
+			Map<String, Object> pMap = new HashMap<String, Object>();
+			int day = 0;
+			if(paramMap != null && paramMap.containsKey("adminYn") && "Y".equals(paramMap.get("adminYn"))) {
+				if(paramMap != null && paramMap.containsKey("flexibleApplyId") && !"".equals(paramMap.get("flexibleApplyId"))) {
+					Long flexibleApplyId = Long.parseLong(paramMap.get("flexibleApplyId").toString());
+					
+					pMap.put("tableName", "WTM_FLEXIBLE_APPLY_DET");
+					pMap.put("key", "FLEXIBLE_APPLY_ID");
+					pMap.put("value", flexibleApplyId);
+					
+					List<WtmFlexibleApplyDet> days = flexibleApplyDetRepo.findByFlexibleApplyId(flexibleApplyId);
+					day = days.size();
+				}
+			} else {
+				if(paramMap != null && paramMap.containsKey("flexibleApplId") && !"".equals(paramMap.get("flexibleApplId"))) {
+					Long flexibleApplId = Long.parseLong(paramMap.get("flexibleApplId").toString());
+					
+					pMap.put("tableName", "WTM_FLEXIBLE_APPL_DET");
+					pMap.put("key", "FLEXIBLE_APPL_ID");
+					pMap.put("value", flexibleApplId);
+					
+					List<WtmFlexibleApplDet> days = wtmFlexibleApplDetRepo.findByFlexibleApplId(flexibleApplId);
+					day = days.size();
+				}
+			}
 			
-			propertie = wtmPropertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_MAX_WORKTIME_2WEEK_MORETHEN");
-			if(propertie != null)
-				max2weekMorethen = propertie.getInfoValue();
-			
-			propertie = wtmPropertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_MAX_WORKTIME_ADD");
-			if(propertie != null)
-				maxAdd = propertie.getInfoValue();
-			
-			if(workTypeCd.startsWith("SELE")) {
-				//선근제
-				
-			}else if(workTypeCd.equals("ELAS")) {
-				//탄근제
-				//근로시간은 평균 40 시간, OT시간은 주 12시간 초과 시 신청할 수 없고
-				//2주 이내 탄근제는 주간 최대 근무시간은 48시간, 2주 이상 탄근제는 주간 최대 근무시간 52시간 
+			if(day!=0) {
 				int sumWorkMinute = 0;
-				List<Map<String, Object>> weekList = wtmFlexibleEmpMapper.getElasWeekHour(flexibleApplId);
+				List<Map<String, Object>> weekList = wtmFlexibleEmpMapper.getElasWeekHour(pMap);
 				
 				if(weekList!=null && weekList.size()>0) {
 					for(Map<String, Object> w : weekList) {
@@ -572,11 +605,11 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 							workMinute = Integer.parseInt(w.get("workMinute").toString());
 							sumWorkMinute += workMinute;
 							
-							if(days.size()>14 && (workMinute/60) > Integer.parseInt(max2weekMorethen)) {
+							if(day>14 && (workMinute/60) > Integer.parseInt(max2weekMorethen)) {
 								rp.setFail("2주 이상 탄근제는 주간 최대 "+max2weekMorethen+"시간을 초과할 수 없습니다.");
 								return rp;
 							}
-							if(days.size()<=14 && (workMinute/60) > Integer.parseInt(max2weekWithin)) {
+							if(day<=14 && (workMinute/60) > Integer.parseInt(max2weekWithin)) {
 								rp.setFail("2주 이내 탄근제는 주간 최대 "+max2weekWithin+"시간을 초과할 수 없습니다.");
 								return rp;
 							}
@@ -592,23 +625,23 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 						}
 					}
 					
-					if(sumWorkMinute>0 && (sumWorkMinute/days.size()*7)/60>40) {
+					if(sumWorkMinute>0 && (sumWorkMinute/day*7)/60>40) {
 						rp.setFail("소정 근무는 평균 40시간을 초과할 수 없습니다.");
 						return rp;
 					} 
 				}
-				
-			}else if(workTypeCd.equals("DIFF")) {
-				//시차
-				
-			}else {
-				rp.setFail("");
 			}
-			//소정근로시간 체크
-			//2주이내 48체크	
-			//2주이상 52시간 체크
 			
+		}else if(workTypeCd.equals("DIFF")) {
+			//시차
+			
+		}else {
+			rp.setFail("");
 		}
+		//소정근로시간 체크
+		//2주이내 48체크	
+		//2주이상 52시간 체크
+			
 		
 		return rp;
 	}
@@ -706,14 +739,14 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 				if(planSdate!=null && planEdate!=null) {
 					paramMap.put("shm", WtmUtil.parseDateStr(planSdate, "HHmm"));
 					paramMap.put("ehm", WtmUtil.parseDateStr(planEdate, "HHmm"));
-					Map<String, Object> planMinuteMap = flexEmpService.calcElasPlanMinuteExceptBreaktime(flexibleApplId, paramMap, userId);
+					Map<String, Object> planMinuteMap = flexEmpService.calcElasPlanMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
 					fd.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
 					
 					paramMap.put("otType", "OTB");
 					paramMap.put("sDate", p.getPlanSdate());
 					paramMap.put("eDate", p.getPlanEdate());
 					paramMap.put("minute", p.getOtbMinute());
-					Map<String, Object> otbMinuteMap = flexEmpService.calcElasOtMinuteExceptBreaktime(flexibleApplId, paramMap, userId);
+					Map<String, Object> otbMinuteMap = flexEmpService.calcElasOtMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
 					
 					if(otbMinuteMap!=null) {
 						Date otbSdate = WtmUtil.toDate(otbMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
@@ -728,7 +761,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 					paramMap.put("sDate", p.getPlanSdate());
 					paramMap.put("eDate", p.getPlanEdate());
 					paramMap.put("minute", p.getOtaMinute());
-					Map<String, Object> otaMinuteMap = flexEmpService.calcElasOtMinuteExceptBreaktime(flexibleApplId, paramMap, userId);
+					Map<String, Object> otaMinuteMap = flexEmpService.calcElasOtMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
 					
 					if(otaMinuteMap!=null) {
 						Date otaSdate = WtmUtil.toDate(otaMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");

@@ -50,7 +50,14 @@ public interface WtmFlexibleEmpMapper {
 	 * @param flexibleApplId
 	 * @param userId
 	 */
-	public void createWorkCalendarOfElas(@Param("flexibleApplId")Long flexibleEmpId, @Param("userId")String userId);
+	public void createWorkCalendarOfElas(@Param("flexibleApplId")Long flexibleApplId, @Param("userId")String userId);
+	
+	/**
+	 * 관리자 탄근제 확정 시 캘린더 생성
+	 * @param flexibleEmpId
+	 * @param userId
+	 */
+	public void createWorkCalendarOfElasApply(@Param("flexibleApplyId")Long flexibleApplyId, @Param("sabun")String sabun, @Param("userId")String userId);
 	
 	public void updateHolidayYnOFWorkCalendar(Map<String, Object> paramMap);
 	
@@ -332,7 +339,7 @@ public interface WtmFlexibleEmpMapper {
 	 * @param flexibleApplId
 	 * @return
 	 */
-	public List<Map<String, Object>> getElasWorkDayResult(@Param("flexibleApplId")Long flexibleApplId);
+	public List<Map<String, Object>> getElasWorkDayResult(Map<String, Object> paramMap);
 	
 	/**
 	 * 탄근제 평균 근무 시간 조회
@@ -346,7 +353,7 @@ public interface WtmFlexibleEmpMapper {
 	 * @param flexibleApplId
 	 * @return
 	 */
-	public List<Map<String, Object>> getElasWeekHour(@Param("flexibleApplId")Long flexibleApplId);
+	public List<Map<String, Object>> getElasWeekHour(Map<String, Object> paramMap);
 	
 
 	/**

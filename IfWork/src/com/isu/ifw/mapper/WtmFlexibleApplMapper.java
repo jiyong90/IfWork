@@ -25,7 +25,15 @@ public interface WtmFlexibleApplMapper {
 	
 	public List<WtmFlexibleApplDetVO> getWorkPattern(Map<String, Object> paramMap);
 	
-	public List<Map<String, Object>> getElasDetail(Map<String, Object> paramMap);
-	
+	/**
+	 * 탄근제 근무 계획 상세 조회
+	 * @param paramMap
+	 * tableName
+	 * key
+	 * value
+	 * totalYn : 아코디언 형태로 보여주기 위함, totalYn이 Y이면 소계행만(주별 합계 데이터) N이면 주별 상세 데이터
+	 * symd : 주의 시작일
+	 * @return
+	 */
 	public List<Map<String, Object>> getElasApplDetail(Map<String, Object> paramMap);
 }

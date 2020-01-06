@@ -261,7 +261,7 @@ public interface WtmFlexibleEmpService {
 	 * @param userId
 	 * @return
 	 */
-	public Map<String, Object> calcElasPlanMinuteExceptBreaktime(Long flexibleApplId, Map<String, Object> paramMap, String userId);
+	public Map<String, Object> calcElasPlanMinuteExceptBreaktime(boolean adminYn,Long flexibleApplId, Map<String, Object> paramMap, String userId);
 
 	/**
 	 * 탄근제 연장 근무시간 계산
@@ -270,7 +270,7 @@ public interface WtmFlexibleEmpService {
 	 * @param userId
 	 * @return
 	 */
-	public Map<String, Object> calcElasOtMinuteExceptBreaktime(Long flexibleApplId, Map<String, Object> paramMap, String userId);
+	public Map<String, Object> calcElasOtMinuteExceptBreaktime(boolean adminYn, Long flexibleApplId, Map<String, Object> paramMap, String userId);
 
 	/**
 	 * 사용자의 권한 조회

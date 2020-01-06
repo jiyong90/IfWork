@@ -20,6 +20,7 @@ import com.isu.ifw.common.service.TenantConfigManagerService;
 import com.isu.ifw.entity.WtmEmpHis;
 import com.isu.ifw.entity.WtmFlexibleAppl;
 import com.isu.ifw.entity.WtmFlexibleApplDet;
+import com.isu.ifw.entity.WtmFlexibleApplyDet;
 import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmOrgConc;
@@ -36,6 +37,7 @@ import com.isu.ifw.repository.WtmApplRepository;
 import com.isu.ifw.repository.WtmEmpHisRepository;
 import com.isu.ifw.repository.WtmFlexibleApplDetRepository;
 import com.isu.ifw.repository.WtmFlexibleApplRepository;
+import com.isu.ifw.repository.WtmFlexibleApplyDetRepository;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmOrgConcRepository;
@@ -115,6 +117,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	
 	@Autowired
 	WtmOrgConcRepository orgConcRepo;
+	
+	@Autowired
+	WtmFlexibleApplyDetRepository flexibleApplyDetRepo;
+	
 	
 	@Override
 	public List<Map<String, Object>> getFlexibleEmpList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
@@ -845,7 +851,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						if(shm!=null && ehm!=null) {
 							paramMap.put("shm", shm);
 							paramMap.put("ehm", ehm);
-							Map<String, Object> planMinuteMap = calcElasPlanMinuteExceptBreaktime(flexibleApplId, paramMap, userId);
+							Map<String, Object> planMinuteMap = calcElasPlanMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
 							applDet.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
 						} else {
 							applDet.setPlanMinute(null);
@@ -856,7 +862,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							paramMap.put("sDate", k+shm );
 							paramMap.put("eDate", k+ehm );
 							paramMap.put("minute", vMap.get("otbMinute"));
-							Map<String, Object> otbMinuteMap = calcElasOtMinuteExceptBreaktime(flexibleApplId, paramMap, userId);
+							Map<String, Object> otbMinuteMap = calcElasOtMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
 							
 							if(otbMinuteMap!=null) {
 								Date otbSdate = WtmUtil.toDate(otbMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
@@ -879,7 +885,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							paramMap.put("eDate", k+ehm );
 							paramMap.put("minute", vMap.get("otaMinute"));
 							
-							Map<String, Object> otaMinuteMap = calcElasOtMinuteExceptBreaktime(flexibleApplId, paramMap, userId);
+							Map<String, Object> otaMinuteMap = calcElasOtMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
 							Date otaSdate = WtmUtil.toDate(otaMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
 							Date otaEdate = WtmUtil.toDate(otaMinuteMap.get("eDate").toString(), "yyyyMMddHHmmss");
 							
@@ -1812,14 +1818,33 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 	
 	@Override
-	public Map<String, Object> calcElasPlanMinuteExceptBreaktime(Long flexibleApplId, Map<String, Object> paramMap, String userId) {
+	public Map<String, Object> calcElasPlanMinuteExceptBreaktime(boolean adminYn, Long flexibleApplId, Map<String, Object> paramMap, String userId) {
 		//break_type_cd
 		String breakTypeCd = "";
-		WtmFlexibleApplDet flexApplDet = flexApplDetRepo.findByFlexibleApplIdAndYmd(flexibleApplId, paramMap.get("ymd").toString());
 		
-		if(flexApplDet!=null && flexApplDet.getTimeCdMgrId()!=null) {
-			Long timeCdMgrId = Long.valueOf(flexApplDet.getTimeCdMgrId());
+		Long timeCdMgrId = null;
+		
+		if(adminYn) {
+			WtmFlexibleApplyDet flexApplyDet = flexibleApplyDetRepo.findByFlexibleApplyIdAndYmd(flexibleApplId, paramMap.get("ymd").toString());
+		
+			if(flexApplyDet!=null && flexApplyDet.getTimeCdMgrId()!=null)
+				timeCdMgrId = Long.valueOf(flexApplyDet.getTimeCdMgrId());
 			
+			paramMap.put("tableName", "WTM_FLEXIBLE_APPLY_DET");
+			paramMap.put("key", "FLEXIBLE_APPLY_ID");
+			paramMap.put("value", flexibleApplId);
+		} else {
+			WtmFlexibleApplDet flexApplDet = flexApplDetRepo.findByFlexibleApplIdAndYmd(flexibleApplId, paramMap.get("ymd").toString());
+			
+			if(flexApplDet!=null && flexApplDet.getTimeCdMgrId()!=null)
+				timeCdMgrId = Long.valueOf(flexApplDet.getTimeCdMgrId());
+			
+			paramMap.put("tableName", "WTM_FLEXIBLE_APPL_DET");
+			paramMap.put("key", "FLEXIBLE_APPL_ID");
+			paramMap.put("value", flexibleApplId);
+		}
+		
+		if(timeCdMgrId!=null) {
 			WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(timeCdMgrId).get();
 			if(timeCdMgr!=null && timeCdMgr.getBreakTypeCd()!=null)
 				breakTypeCd = timeCdMgr.getBreakTypeCd();
@@ -1839,13 +1864,30 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 	
 	@Override
-	public Map<String, Object> calcElasOtMinuteExceptBreaktime(Long flexibleApplId, Map<String, Object> paramMap, String userId) {
+	public Map<String, Object> calcElasOtMinuteExceptBreaktime(boolean adminYn, Long flexibleApplId, Map<String, Object> paramMap, String userId) {
 		String breakTypeCd = "";
-		WtmFlexibleApplDet flexApplDet = flexApplDetRepo.findByFlexibleApplIdAndYmd(flexibleApplId, paramMap.get("ymd").toString());
 		
-		if(flexApplDet!=null && flexApplDet.getTimeCdMgrId()!=null) {
-			Long timeCdMgrId = Long.valueOf(flexApplDet.getTimeCdMgrId());
+		Long timeCdMgrId = null;
+		
+		if(adminYn) {
+			WtmFlexibleApplyDet flexApplyDet = flexibleApplyDetRepo.findByFlexibleApplyIdAndYmd(flexibleApplId, paramMap.get("ymd").toString());
+		
+			if(flexApplyDet!=null && flexApplyDet.getTimeCdMgrId()!=null)
+				timeCdMgrId = Long.valueOf(flexApplyDet.getTimeCdMgrId());
 			
+			paramMap.put("tableName", "WTM_FLEXIBLE_APPLY_DET");
+			paramMap.put("key", "FLEXIBLE_APPLY_ID");
+		} else {
+			WtmFlexibleApplDet flexApplDet = flexApplDetRepo.findByFlexibleApplIdAndYmd(flexibleApplId, paramMap.get("ymd").toString());
+			
+			if(flexApplDet!=null && flexApplDet.getTimeCdMgrId()!=null)
+				timeCdMgrId = Long.valueOf(flexApplDet.getTimeCdMgrId());
+			
+			paramMap.put("tableName", "WTM_FLEXIBLE_APPL_DET");
+			paramMap.put("key", "FLEXIBLE_APPL_ID");
+		}
+		
+		if(timeCdMgrId!=null) {
 			WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(timeCdMgrId).get();
 			if(timeCdMgr!=null && timeCdMgr.getBreakTypeCd()!=null)
 				breakTypeCd = timeCdMgr.getBreakTypeCd();

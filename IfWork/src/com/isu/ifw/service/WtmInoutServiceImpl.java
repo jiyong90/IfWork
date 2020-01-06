@@ -560,7 +560,6 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 						}
 					}
 				}
-
 				
 				empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
 						paramMap.get("enterCd").toString(), paramMap.get("stdYmd").toString(),
