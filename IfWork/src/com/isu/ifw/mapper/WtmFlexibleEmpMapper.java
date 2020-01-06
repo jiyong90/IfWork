@@ -353,7 +353,7 @@ public interface WtmFlexibleEmpMapper {
 	 * @param flexibleApplId
 	 * @return
 	 */
-	public List<Map<String, Object>> getElasWeekHour(@Param("flexibleApplId")Long flexibleApplId);
+	public List<Map<String, Object>> getElasWeekHour(Map<String, Object> paramMap);
 	
 
 	/**

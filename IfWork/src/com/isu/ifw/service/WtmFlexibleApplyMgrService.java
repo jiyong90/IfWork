@@ -3,6 +3,7 @@ package com.isu.ifw.service;
 import java.util.List;
 import java.util.Map;
 
+import com.isu.ifw.entity.WtmFlexibleApplyMgr;
 import com.isu.ifw.vo.ReturnParam;
 
 /**
@@ -33,4 +34,6 @@ public interface WtmFlexibleApplyMgrService {
 	public List<Map<String, Object>> getApplyEmpPopList(Map<String, Object> paramMap);
 	
 	public List<Map<String, Object>> getElasDetail(Long tenantId, String enterCd, Map<String, Object> paramMap, String userId);
+
+	public ReturnParam createElasPlan(Long tenantId, String enterCd, Long flexibleApplyId, String userId);
 }

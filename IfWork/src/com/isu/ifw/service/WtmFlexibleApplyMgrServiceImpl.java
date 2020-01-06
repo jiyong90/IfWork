@@ -19,10 +19,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmFlexibleApplyDet;
 import com.isu.ifw.entity.WtmFlexibleApplyMgr;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
-import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.entity.WtmWorkPattDet;
 import com.isu.ifw.mapper.WtmFlexibleApplMapper;
@@ -131,13 +131,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 						if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {
 							WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.save(code);
 							
-							//탄근제 계획 삭제하고 다시 생성
-							flexibleApplyDetRepo.deleteByFlexibleApplyId(flexibleApply.getFlexibleApplyId());
-							flexibleApplyDetRepo.flush();
-							
-							//계획 생성
-							List<WtmFlexibleApplyDet> applyDets = saveWtmFlexibleApplyDet(tenantId, enterCd, flexibleApply.getFlexibleApplyId(), flexibleApply.getFlexibleStdMgrId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), null, userId);
-							updateWtmFlexibleApplyDet(applyDets, userId);
+							createElasPlan(tenantId, enterCd, flexibleApply.getFlexibleStdMgrId(), flexibleApply.getFlexibleApplyId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), userId);
 							
 							cnt += 1;
 						} else {
@@ -282,157 +276,164 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				repeatForList.add(listMap);
 			}
 			
+			String workTypeCd = paramMap.get("workTypeCd").toString();
+			Long flexibleApplyId = Long.valueOf(paramMap.get("flexibleApplyId").toString());
+			
 			// 확정대상자 조회
 			searchList =  wtmFlexibleApplyMgrMapper.getApplyConfirmList(paramMap);
+			
+			if(searchList==null || searchList.size()==0) {
+				rp.setFail("대상자가 없습니다.");
+				return rp;
+			}
+			
 			// 오류체크가 필요함.
-			if(searchList != null && searchList.size() > 0) {
-				for(int i=0; i < searchList.size(); i++) {
-					Map<String, Object> validateMap = new HashMap<>();
-					validateMap = searchList.get(i);
-					String sabun = validateMap.get("sabun").toString();
-					String workTypeCd = validateMap.get("workTypeCd").toString();
-					
-					for(int j=0; j < repeatForList.size(); j++) {
-						// 반복 구간별 밸리데이션 체크 및 유연근무기간 입력
-						paramMap.put("sYmd", repeatForList.get(j).get("symd"));
-						paramMap.put("eYmd", repeatForList.get(j).get("eymd"));
-						
-						System.out.println("validate sabun : " + sabun);
-						System.out.println("validate workTypeCd : " + workTypeCd);
-						rp = wtmApplService.validate(tenantId, enterCd, sabun, workTypeCd, paramMap);
-						if(rp.getStatus().equals("FAIL")) {
-							break;
-						}
-					}
-				}
-
-				if(rp.getStatus().equals("FAIL")) {
-					return rp;
-				}
+			for(int i=0; i < searchList.size(); i++) {
+				Map<String, Object> validateMap = new HashMap<>();
+				validateMap = searchList.get(i);
+				String sabun = validateMap.get("sabun").toString();
 				
-				// 오류검증이 없으면 저장하고 갱신해야함.
-				// 검증 오류가 없으면 flexible_emp에 저장하고 갱신용로직을 불러야함
-				for(int i=0; i< searchList.size(); i++) {
-					Map<String, Object> saveMap = new HashMap<>();
-					Map<String, Object> calendarMap = new HashMap<>();
-					String workTypeCd = paramMap.get("workTypeCd").toString();
-					saveMap = searchList.get(i);
-					calendarMap = searchList.get(i);
-					saveMap.put("userId", userId);
-					for(int j=0; j < repeatForList.size(); j++) {
-						saveMap.put("symd", repeatForList.get(j).get("symd"));
-						saveMap.put("eymd", repeatForList.get(j).get("eymd"));
-						cnt = wtmFlexibleApplyMgrMapper.insertApplyEmp(saveMap);
-						System.out.println("insert cnt : " + cnt);
-						Map<String, Object> searchMap = new HashMap<>();
-						searchMap = wtmFlexibleApplyMgrMapper.setApplyEmpId(saveMap);
-						saveMap.put("flexibleEmpId", Long.parseLong(searchMap.get("flexibleEmpId").toString()));
+				for(int j=0; j < repeatForList.size(); j++) {
+					// 반복 구간별 밸리데이션 체크 및 유연근무기간 입력
+					paramMap.put("sYmd", repeatForList.get(j).get("symd"));
+					paramMap.put("eYmd", repeatForList.get(j).get("eymd"));
+					
+					//탄근제 validation 체크를 위한 param
+					paramMap.put("adminYn", "Y");
+					paramMap.put("flexibleApplyId", flexibleApplyId);
+					
+					rp = wtmApplService.validate(tenantId, enterCd, sabun, workTypeCd, paramMap);
+					if(rp.getStatus().equals("FAIL")) {
+						break;
+					}
+				}
+			}
+
+			if(rp.getStatus().equals("FAIL")) {
+				return rp;
+			}
+			
+			// 오류검증이 없으면 저장하고 갱신해야함.
+			// 검증 오류가 없으면 flexible_emp에 저장하고 갱신용로직을 불러야함
+			for(int i=0; i< searchList.size(); i++) {
+				Map<String, Object> saveMap = new HashMap<>();
+				Map<String, Object> calendarMap = new HashMap<>();
+				
+				saveMap = searchList.get(i);
+				calendarMap = searchList.get(i);
+				saveMap.put("userId", userId);
+				for(int j=0; j < repeatForList.size(); j++) {
+					saveMap.put("symd", repeatForList.get(j).get("symd"));
+					saveMap.put("eymd", repeatForList.get(j).get("eymd"));
+					cnt = wtmFlexibleApplyMgrMapper.insertApplyEmp(saveMap);
+					System.out.println("insert cnt : " + cnt);
+					Map<String, Object> searchMap = new HashMap<>();
+					searchMap = wtmFlexibleApplyMgrMapper.setApplyEmpId(saveMap);
+					saveMap.put("flexibleEmpId", Long.parseLong(searchMap.get("flexibleEmpId").toString()));
+					
+					//탄근제의 경우 근무 계획까지 작성하여 신청을 하기 때문에
+					//calendar, result 만들어준다.
+					if(workTypeCd.equals("ELAS")) {
+						String sd = repeatForList.get(j).get("symd").toString();
+						String ed = repeatForList.get(j).get("eymd").toString();
+						String sabun = saveMap.get("sabun").toString();
 						
-						//탄근제의 경우 근무 계획까지 작성하여 신청을 하기 때문에
-						//calendar, result 만들어준다.
-						if(workTypeCd.equals("ELAS")) {
-							Long flexibleApplyId = Long.valueOf(paramMap.get("flexibleApplyId").toString());
-							String sd = repeatForList.get(j).get("symd").toString();
-							String ed = repeatForList.get(j).get("eymd").toString();
-							String sabun = saveMap.get("sabun").toString();
+						//calendar 있으면 삭제하고 다시 만들어주자.
+						//initWtmFlexibleEmpOfWtmWorkDayResult 프로시저에서 calendar 만들어주기 때문에 생략
+						/*List<WtmWorkCalendar> calendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, sd, ed);
+						
+						if(calendar!=null && calendar.size()>0) {
+							workCalendarRepo.deleteAll(calendar);
+							workCalendarRepo.flush();
+						}
+						flexEmpMapper.createWorkCalendarOfElasApply(flexibleApplyId, sabun, userId);*/
+						
+						//List<WtmWorkCalendar> calendar2 = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, appl.getApplSabun(), flexibleAppl.getSymd(), flexibleAppl.getEymd());
+						
+						//result 만들어주자.
+						List<WtmWorkDayResult> result = new ArrayList<WtmWorkDayResult>();
+						Map<String, Object> pMap = new HashMap<String, Object>();
+						pMap.put("tableName", "WTM_FLEXIBLE_APPLY_DET");
+						pMap.put("key", "FLEXIBLE_APPLY_ID");
+						pMap.put("value", flexibleApplyId);
+						List<Map<String, Object>> dets = flexEmpMapper.getElasWorkDayResult(pMap);
+						if(dets!=null && dets.size()>0) {
+							SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
 							
-							//calendar 있으면 삭제하고 다시 만들어주자.
-							//initWtmFlexibleEmpOfWtmWorkDayResult 프로시저에서 calendar 만들어주기 때문에 생략
-							/*List<WtmWorkCalendar> calendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, sd, ed);
+							//result 에 base와 ot, fixot 있으면 삭제하고 다시 만들어주자.
+							List<String> timeTypCds = new ArrayList<String>();
+							timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
+							timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
+							timeTypCds.add(WtmApplService.TIME_TYPE_OT);
 							
-							if(calendar!=null && calendar.size()>0) {
-								workCalendarRepo.deleteAll(calendar);
-								workCalendarRepo.flush();
-							}
-							flexEmpMapper.createWorkCalendarOfElasApply(flexibleApplyId, sabun, userId);*/
-							
-							//List<WtmWorkCalendar> calendar2 = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, appl.getApplSabun(), flexibleAppl.getSymd(), flexibleAppl.getEymd());
-							
-							//result 만들어주자.
-							List<WtmWorkDayResult> result = new ArrayList<WtmWorkDayResult>();
-							Map<String, Object> pMap = new HashMap<String, Object>();
-							pMap.put("tableName", "WTM_FLEXIBLE_APPLY_DET");
-							pMap.put("key", "FLEXIBLE_APPLY_ID");
-							pMap.put("value", flexibleApplyId);
-							List<Map<String, Object>> dets = flexEmpMapper.getElasWorkDayResult(pMap);
-							if(dets!=null && dets.size()>0) {
-								SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-								
-								//result 에 base와 ot, fixot 있으면 삭제하고 다시 만들어주자.
-								List<String> timeTypCds = new ArrayList<String>();
-								timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
-								timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
-								timeTypCds.add(WtmApplService.TIME_TYPE_OT);
-								
-								List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypCds, sd, ed);
-								if(results!=null && results.size()>0) {
-									wtmWorkDayResultRepo.deleteAll(results);
-									wtmWorkDayResultRepo.flush();
-								}
-								
-								for(Map<String, Object> det : dets) {
-									Date s = null;
-									Date e = null;
-									
-									WtmWorkDayResult r = new WtmWorkDayResult();
-									r.setTenantId(tenantId);
-									r.setEnterCd(enterCd);
-									r.setYmd(det.get("ymd").toString());
-									r.setSabun(sabun);
-									//r.setApplId(applId);
-									r.setTimeTypeCd(det.get("timeTypeCd").toString());
-									r.setTaaCd(null);
-									
-									if(det.get("planSdate")!=null && !"".equals(det.get("planSdate"))) {
-										s = sdf.parse(det.get("planSdate").toString());
-										r.setPlanSdate(s);
-									}
-									
-									if(det.get("planEdate")!=null && !"".equals(det.get("planEdate"))) {
-										e = sdf.parse(det.get("planEdate").toString());
-										r.setPlanEdate(e);
-									}
-									
-									if(det.get("planMinute")!=null && !"".equals(det.get("planMinute"))) {
-										r.setPlanMinute(Integer.parseInt(det.get("planMinute").toString()));
-									}
-									
-									r.setUpdateDate(new Date());
-									r.setUpdateId(userId);
-									
-									result.add(r);
-								}
-								
-								if(result.size()>0)
-									wtmWorkDayResultRepo.saveAll(result);
+							List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypCds, sd, ed);
+							if(results!=null && results.size()>0) {
+								wtmWorkDayResultRepo.deleteAll(results);
+								wtmWorkDayResultRepo.flush();
 							}
 							
+							for(Map<String, Object> det : dets) {
+								Date s = null;
+								Date e = null;
+								
+								WtmWorkDayResult r = new WtmWorkDayResult();
+								r.setTenantId(tenantId);
+								r.setEnterCd(enterCd);
+								r.setYmd(det.get("ymd").toString());
+								r.setSabun(sabun);
+								//r.setApplId(applId);
+								r.setTimeTypeCd(det.get("timeTypeCd").toString());
+								r.setTaaCd(null);
+								
+								if(det.get("planSdate")!=null && !"".equals(det.get("planSdate"))) {
+									s = sdf.parse(det.get("planSdate").toString());
+									r.setPlanSdate(s);
+								}
+								
+								if(det.get("planEdate")!=null && !"".equals(det.get("planEdate"))) {
+									e = sdf.parse(det.get("planEdate").toString());
+									r.setPlanEdate(e);
+								}
+								
+								if(det.get("planMinute")!=null && !"".equals(det.get("planMinute"))) {
+									r.setPlanMinute(Integer.parseInt(det.get("planMinute").toString()));
+								}
+								
+								r.setUpdateDate(new Date());
+								r.setUpdateId(userId);
+								
+								result.add(r);
+							}
+							
+							if(result.size()>0)
+								wtmWorkDayResultRepo.saveAll(result);
 						}
 						
-						
-						
-	//					Long flexibleStdMgrId = Long.parseLong(saveMap.get("flexibleStdMgrId").toString());
-	//					System.out.println("flexibleStdMgrId : " + flexibleStdMgrId);
-	//					WtmFlexibleStdMgr stdMgr = flexStdMgrRepo.findById(flexibleStdMgrId).get();
-	//					saveMap.putAll(stdMgr.getWorkDaysOpt());
-						//근무제 기간의 총 소정근로 시간을 업데이트 한다.
-						//20200102jyp P_WTM_WORK_CALENDAR_RESET procedure에서 한다.
-						//flexApplMapper.updateWorkMinuteOfWtmFlexibleEmp(saveMap);
-					
 					}
-					System.out.println("updateWorkMinuteOfWtmFlexibleEmp");
 					
-					calendarMap.put("symd", searchList.get(i).get("useSymd"));
-					calendarMap.put("eymd", searchList.get(i).get("useEymd"));
-					calendarMap.put("userId", userId);
-					for ( String key : calendarMap.keySet() ) {
-		    		    System.out.println("key : " + key +" / value : " + calendarMap.get(key));
-		    		}
-						
-					flexEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(calendarMap);
-					flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(calendarMap);
-					System.out.println("initWtmFlexibleEmpOfWtmWorkDayResult");
+					
+					
+//					Long flexibleStdMgrId = Long.parseLong(saveMap.get("flexibleStdMgrId").toString());
+//					System.out.println("flexibleStdMgrId : " + flexibleStdMgrId);
+//					WtmFlexibleStdMgr stdMgr = flexStdMgrRepo.findById(flexibleStdMgrId).get();
+//					saveMap.putAll(stdMgr.getWorkDaysOpt());
+					//근무제 기간의 총 소정근로 시간을 업데이트 한다.
+					//20200102jyp P_WTM_WORK_CALENDAR_RESET procedure에서 한다.
+					//flexApplMapper.updateWorkMinuteOfWtmFlexibleEmp(saveMap);
+				
 				}
+				System.out.println("updateWorkMinuteOfWtmFlexibleEmp");
+				
+				calendarMap.put("symd", searchList.get(i).get("useSymd"));
+				calendarMap.put("eymd", searchList.get(i).get("useEymd"));
+				calendarMap.put("userId", userId);
+				for ( String key : calendarMap.keySet() ) {
+	    		    System.out.println("key : " + key +" / value : " + calendarMap.get(key));
+	    		}
+					
+				flexEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(calendarMap);
+				flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(calendarMap);
+				System.out.println("initWtmFlexibleEmpOfWtmWorkDayResult");
 			}
 			
 			// 여기까지 잘 오면....성공인데
@@ -799,9 +800,39 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 					}
 						
 				}
+				
 			}	
 		}
-	}
 		
+	}
+	
+	protected void createElasPlan(Long tenantId, String enterCd, Long flexibleStdMgrId, Long flexibleApplyId, String sYmd, String eYmd, String userId) {
+		//탄근제 계획 삭제하고 다시 생성
+		flexibleApplyDetRepo.deleteByFlexibleApplyId(flexibleApplyId);
+		flexibleApplyDetRepo.flush();
+		
+		//계획 생성
+		List<WtmFlexibleApplyDet> applyDets = saveWtmFlexibleApplyDet(tenantId, enterCd, flexibleApplyId, flexibleStdMgrId, sYmd, eYmd, null, userId);
+		updateWtmFlexibleApplyDet(applyDets, userId);
+	}
+	
+	@Transactional
+	@Override
+	public ReturnParam createElasPlan(Long tenantId, String enterCd, Long flexibleApplyId, String userId) {
+		
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("");
+		
+		try {
+			WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.findById(flexibleApplyId).get();
+			createElasPlan(tenantId, enterCd, flexibleApply.getFlexibleStdMgrId(), flexibleApply.getFlexibleApplyId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), userId);
+		} catch(Exception e) {
+			e.printStackTrace();
+			rp.setFail("탄력근무제 계획 생성 시 오류가 발생했습니다.");
+		}
+		
+		return rp;
+		
+	}
 	
 }
