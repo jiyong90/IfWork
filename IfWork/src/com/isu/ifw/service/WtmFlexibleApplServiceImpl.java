@@ -132,7 +132,9 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		//탄근제의 경우 주별 근무시간을 보여준다.
 		if(appl!=null && appl.get("applCd")!=null && "ELAS".equals(appl.get("applCd"))) {
 			Map<String, Object> paramMap = new HashMap<String, Object>();
-			paramMap.put("flexibleApplId", appl.get("flexibleApplId"));
+			paramMap.put("tableName", "WTM_FLEXIBLE_APPL_DET");
+			paramMap.put("key", "FLEXIBLE_APPL_ID");
+			paramMap.put("value", Long.valueOf(appl.get("flexibleApplId").toString()));
 			paramMap.put("totalYn", "Y");
 			List<Map<String, Object>> totals = flexApplMapper.getElasApplDetail(paramMap);
 			
@@ -437,7 +439,11 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 				
 				//result 만들어주자.
 				List<WtmWorkDayResult> result = new ArrayList<WtmWorkDayResult>();
-				List<Map<String, Object>> dets = wtmFlexibleEmpMapper.getElasWorkDayResult(flexibleAppl.getFlexibleApplId());
+				Map<String, Object> pMap = new HashMap<String, Object>();
+				pMap.put("tableName", "WTM_FLEXIBLE_APPL_DET");
+				pMap.put("key", "FLEXIBLE_APPL_ID");
+				pMap.put("value", flexibleAppl.getFlexibleApplId());
+				List<Map<String, Object>> dets = wtmFlexibleEmpMapper.getElasWorkDayResult(pMap);
 				if(dets!=null && dets.size()>0) {
 					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
 					
@@ -706,14 +712,14 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 				if(planSdate!=null && planEdate!=null) {
 					paramMap.put("shm", WtmUtil.parseDateStr(planSdate, "HHmm"));
 					paramMap.put("ehm", WtmUtil.parseDateStr(planEdate, "HHmm"));
-					Map<String, Object> planMinuteMap = flexEmpService.calcElasPlanMinuteExceptBreaktime(flexibleApplId, paramMap, userId);
+					Map<String, Object> planMinuteMap = flexEmpService.calcElasPlanMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
 					fd.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
 					
 					paramMap.put("otType", "OTB");
 					paramMap.put("sDate", p.getPlanSdate());
 					paramMap.put("eDate", p.getPlanEdate());
 					paramMap.put("minute", p.getOtbMinute());
-					Map<String, Object> otbMinuteMap = flexEmpService.calcElasOtMinuteExceptBreaktime(flexibleApplId, paramMap, userId);
+					Map<String, Object> otbMinuteMap = flexEmpService.calcElasOtMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
 					
 					if(otbMinuteMap!=null) {
 						Date otbSdate = WtmUtil.toDate(otbMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
@@ -728,7 +734,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 					paramMap.put("sDate", p.getPlanSdate());
 					paramMap.put("eDate", p.getPlanEdate());
 					paramMap.put("minute", p.getOtaMinute());
-					Map<String, Object> otaMinuteMap = flexEmpService.calcElasOtMinuteExceptBreaktime(flexibleApplId, paramMap, userId);
+					Map<String, Object> otaMinuteMap = flexEmpService.calcElasOtMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
 					
 					if(otaMinuteMap!=null) {
 						Date otaSdate = WtmUtil.toDate(otaMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
