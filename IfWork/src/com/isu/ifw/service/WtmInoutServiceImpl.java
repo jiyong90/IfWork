@@ -246,6 +246,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					label = "퇴근하기";
 					break;
 				} else if (time.get("entrySdate") != null && time.get("entryEdate") != null) {
+					ymd = time.get("ymd").toString();
 					inoutType = "END";
 					desc = "근무종료";
 					label = "퇴근취소";
