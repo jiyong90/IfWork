@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,7 +50,8 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 	EncryptionMapper encryptionMapper;
 	
 	@Autowired
-	private TenantConfigManagerService tcms;
+	@Qualifier("WtmTenantConfigManagerService")
+	TenantConfigManagerService tcms;
 	
 	@Override
 	public List<Map<String, Object>> getEmpHisList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
