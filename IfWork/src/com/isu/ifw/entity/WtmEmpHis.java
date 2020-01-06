@@ -247,6 +247,24 @@ public class WtmEmpHis {
 	public void setUpdateId(String updateId) {
 		this.updateId = updateId;
 	}
+	
+	public String getEmpYmd() {
+		return empYmd;
+	}
+
+
+	public void setEmpYmd(String empYmd) {
+		this.empYmd = empYmd;
+	}
+
+	public String getEmpId() {
+		return empId;
+	}
+
+
+	public void setEmpId(String empId) {
+		this.empId = empId;
+	}
 
 
 	@Id
@@ -267,6 +285,8 @@ public class WtmEmpHis {
 	private String symd;
 	@Column(name="EYMD")
 	private String eymd;
+	@Column(name="EMP_YMD")
+	private String empYmd;
 	@Column(name="STATUS_CD")
 	private String statusCd;
 	@Column(name="ORG_CD")
@@ -289,6 +309,8 @@ public class WtmEmpHis {
 	private String orgPath;
 	@Column(name="LEADER_YN")
 	private String leaderYn;
+	@Column(name="EMP_ID")
+	private String empId;
 	//@Column(name="EMP_IMG")
 	//private String empImg;
 	@Column(name="NOTE")

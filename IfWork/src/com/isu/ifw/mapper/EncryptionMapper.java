@@ -10,4 +10,6 @@ public interface EncryptionMapper {
 	 * @throws Exception
 	 */
 	public Map<?,?> getShaEncrypt(Map<String, Object> paramMap) throws Exception;
+	
+	public Map<?,?> getAesEncrypt(Map<String, Object> paramMap) throws Exception;
 }

@@ -16,4 +16,6 @@ public interface WtmEmpMgrService {
 	public Map<String, Object> getEmpHis(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap);
 	//사원변경이력조회
 	public List<Map<String, Object>> getEmpIfMsgList(Long tenantId, String enterCd, Map<String, Object> paramMap);
+	
+	public int saveEmpHis(Long tenantId, String enterCd, Map<String, Object> paramMap, String userId);
 }
