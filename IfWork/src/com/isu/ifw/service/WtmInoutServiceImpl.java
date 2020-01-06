@@ -561,10 +561,6 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					}
 				}
 				
-				empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
-						paramMap.get("enterCd").toString(), paramMap.get("stdYmd").toString(),
-						paramMap.get("stdYmd").toString(), paramMap.get("sabun").toString());
-				
 				//외출에 대해서 다시 호출
 				List<WtmWorkDayResult> excepts = 
 						wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(Long.parseLong(paramMap.get("tenantId").toString()), 
@@ -583,6 +579,11 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 							"0",
 							false);
 				}
+
+				empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
+						paramMap.get("enterCd").toString(), paramMap.get("stdYmd").toString(),
+						paramMap.get("stdYmd").toString(), paramMap.get("sabun").toString());
+
 			} catch(Exception e) {
 				logger.debug(e.getMessage());
 				throw new Exception("인정시간 계산 중 오류가 발생했습니다.");
