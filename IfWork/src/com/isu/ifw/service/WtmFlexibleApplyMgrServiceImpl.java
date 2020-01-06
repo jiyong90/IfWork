@@ -531,34 +531,17 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 	@Override
 	public List<Map<String, Object>> getElasDetail(Long tenantId, String enterCd, Map<String, Object> paramMap, String userId) {
 		
-		Long flexibleStdMgrId = Long.valueOf(paramMap.get("flexibleStdMgrId").toString());
-				
-		WtmFlexibleStdMgr flexibleStdMgr = flexStdMgrRepo.findById(flexibleStdMgrId).get();
-		
-		// 공휴일 제외 여부
-		String holExceptYn = "N";
-		if(flexibleStdMgr!=null && flexibleStdMgr.getHolExceptYn()!=null && !"".equals(flexibleStdMgr.getHolExceptYn())) 
-			holExceptYn = flexibleStdMgr.getHolExceptYn();
-
-		// 근무제 패턴으로 정해놓은 일 수  
-		int maxPattDet = 0;
-		WtmWorkPattDet workPattDet = workPattDetRepo.findTopByFlexibleStdMgrIdOrderBySeqDesc(flexibleStdMgrId);
-		if(workPattDet!=null && workPattDet.getSeq()!=null) 
-			maxPattDet = workPattDet.getSeq();
-		
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("holExceptYn", holExceptYn);
-		paramMap.put("maxPattDet", maxPattDet);
+		paramMap.put("tableName", "WTM_FLEXIBLE_APPLY_DET");
+		paramMap.put("key", "FLEXIBLE_APPLY_ID");
+		paramMap.put("value", Long.valueOf(paramMap.get("flexibleApplyId").toString()));
 		paramMap.put("totalYn", "Y");
-		paramMap.put("ymd", "");
 		
 		List<Map<String, Object>> elasDetails = flexApplMapper.getElasApplDetail(paramMap);
 		
 		if(elasDetails!=null && elasDetails.size()>0) {
 			paramMap.put("totalYn", "N");
 			for(Map<String, Object> t : elasDetails) {
-				paramMap.put("ymd", t.get("startYmd").toString());
+				paramMap.put("symd", t.get("startYmd").toString());
 				List<Map<String, Object>> details = flexApplMapper.getElasApplDetail(paramMap);
 				t.put("details", details);
 			}
