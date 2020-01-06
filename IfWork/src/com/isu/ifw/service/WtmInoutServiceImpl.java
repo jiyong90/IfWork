@@ -547,6 +547,20 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		//퇴근일때만 인정시간 계산
 		if(paramMap.get("inoutType").toString().equals("OUT"))
 			try {
+				//BASE, FIXOT 데이터만 삭제 후 돌리기
+				List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()),
+						paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
+
+				if(results != null && results.size() > 0) {
+					for(WtmWorkDayResult r : results) {
+						if(r.getTimeTypeCd().equals("BASE") || r.getTimeTypeCd().equals("FIXOT")) {
+							logger.debug("퇴근타각, BASE, FIXOT 삭제 " + r.toString());
+							wtmWorkDayResultRepo.deleteById(r.getWorkDayResultId());
+						}
+					}
+				}
+
+				
 				empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
 						paramMap.get("enterCd").toString(), paramMap.get("stdYmd").toString(),
 						paramMap.get("stdYmd").toString(), paramMap.get("sabun").toString());
