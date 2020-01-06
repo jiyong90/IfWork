@@ -2,7 +2,10 @@ package com.isu.ifw.repository;
 
 import java.util.List;
 
+import javax.transaction.Transactional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,4 +23,12 @@ public interface WtmEmpHisRepository extends JpaRepository<WtmEmpHis, Long> {
 	
 	@Query(value="SELECT H FROM WtmEmpHis H WHERE H.tenantId = ?1 AND H.enterCd = ?2 AND ?3 BETWEEN H.symd AND H.eymd AND H.sabun IN ?4 ")
 	public List<WtmEmpHis> findByTenantIdAndEnterCdAndYmdAndSabuns(Long tenantId, String enterCd, String ymd, List<String> sabuns);
+
+	@Query("SELECT E FROM WtmEmpHis E WHERE E.tenantId = ?1 AND E.enterCd = ?2 AND E.sabun = ?3 AND (?4 BETWEEN E.symd AND E.eymd OR  ?5 BETWEEN E.symd AND E.eymd) ")
+	public List<WtmEmpHis> findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymd(Long tenantId, String enterCd, String sabun, String symd, String eymd);
+
+	@Modifying
+	@Transactional
+	@Query("DELETE FROM WtmEmpHis E WHERE E.empHisId IN :empHisIds ")
+	public void deleteByEmpHisIdsIn(@Param("empHisIds")List<Long> empHisIds);
 }
