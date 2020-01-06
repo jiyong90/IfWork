@@ -1,5 +1,6 @@
 package com.isu.ifw.util;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -15,6 +16,8 @@ import java.util.Map;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.vo.StringUtil;
 
@@ -148,74 +151,103 @@ public class WtmUtil {
 		return data;
 	}
 	
+	public static Map<String, Object> parseJwtToken(String token){
+		Map<String, Object> data = new HashMap();
+		
+		String[] parts = token.split("\\."); 
+
+        java.util.Base64.Decoder decoder = java.util.Base64.getUrlDecoder();
+        String headerJson = new String(decoder.decode(parts[0]));
+        String payloadJson = new String(decoder.decode(parts[1]));
+        String signatureJson = new String(decoder.decode(parts[2]));
+	        
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+			data = mapper.readValue(payloadJson, Map.class);
+		} catch (JsonParseException e) {
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+        return data;
+        
+	}
 	public static Map<String, Object> parseJwtToken(HttpServletRequest req, String token) {
 		try {
-			Map<String, Object> data = new HashMap();
 			
-			String[] parts = token.split("\\."); 
+			if(!token.startsWith("Bearer ")) {
+				Map<String, Object> data = new HashMap();
+				
+				String[] parts = token.split("\\."); 
+		
+		        java.util.Base64.Decoder decoder = java.util.Base64.getUrlDecoder();
+		        String headerJson = new String(decoder.decode(parts[0]));
+		        String payloadJson = new String(decoder.decode(parts[1]));
+		        String signatureJson = new String(decoder.decode(parts[2]));
+			        
+		        ObjectMapper mapper = new ObjectMapper();
 	
-	        java.util.Base64.Decoder decoder = java.util.Base64.getUrlDecoder();
-	        String headerJson = new String(decoder.decode(parts[0]));
-	        String payloadJson = new String(decoder.decode(parts[1]));
-	        String signatureJson = new String(decoder.decode(parts[2]));
-		        
-	        ObjectMapper mapper = new ObjectMapper();
-
-//	        data.put("tsId", "isu");
-//	        data.put("tenantId", "1");
-//	        data.put("enterCd", "ISU");
-//	        data.put("loginId", "10011");
-//	        data.put("userId", "10011");
-//	        data.put("empNo", "10011");
-
-	        data = mapper.readValue(payloadJson, Map.class);
-	        System.out.println("===============data " + data.toString());
-	        if(!data.containsKey("user_name")) {
-	        	data.put("tsId", data.get("client_id"));
-	        	if(req.getParameter("enterCd") != null && !req.getParameter("enterCd").equals("")) {
-		 	        data.put("enterCd", req.getParameter("enterCd"));
-		 	        data.put("loginId", req.getParameter("sabun"));
-		 	        data.put("userId", req.getParameter("sabun"));
-		 	        data.put("empNo", req.getParameter("sabun"));
-	        	} else {
-	        		 String enterCd = "";
-	        		 String sabun = "";
-	        		 
-	        		 Cookie[] cookies = req.getCookies();
-	    			 if (cookies != null) {
-	    			      for (Cookie cookie : cookies) {
-	    			    	  if(cookie.getName().equals("enterCd")) {
-	    			    		  enterCd = cookie.getValue();
-	    			    		  break;
-	    			    	  }
-	    			    	  if(cookie.getName().equals("sabun")) {
-	    			    		  sabun = cookie.getValue();
-	    			    		  break;
-	    			    	  }
-	    			      }
-	    			 }
-	    			 
-	    			 if(enterCd != "" && sabun != "") {
-	    				 data.put("enterCd", enterCd);
-	 		 	         data.put("loginId", sabun);
-	 		 	         data.put("userId", sabun);
-	 		 	         data.put("empNo", sabun);
-	    			 } else {
-	    				 return null;
-	    			 }
-	        	}
-	        } else {
-		        String userName = data.get("user_name").toString();
-		    	
-		        data.put("tsId", userName.split("@")[0]);
-		        data.put("enterCd", userName.split("@")[1]);
-		        data.put("loginId", userName.split("@")[2]);
-		        data.put("userId", userName.split("@")[2]);
-		        data.put("empNo", userName.split("@")[2]);
-		        data.put("userName", userName);
-	        }
+	//	        data.put("tsId", "isu");
+	//	        data.put("tenantId", "1");
+	//	        data.put("enterCd", "ISU");
+	//	        data.put("loginId", "10011");
+	//	        data.put("userId", "10011");
+	//	        data.put("empNo", "10011");
 	
-	        return data;
+		        data = mapper.readValue(payloadJson, Map.class);
+		        System.out.println("===============data " + data.toString());
+		        if(!data.containsKey("user_name")) {
+		        	data.put("tsId", data.get("client_id"));
+		        	if(req.getParameter("enterCd") != null && !req.getParameter("enterCd").equals("")) {
+			 	        data.put("enterCd", req.getParameter("enterCd"));
+			 	        data.put("loginId", req.getParameter("sabun"));
+			 	        data.put("userId", req.getParameter("sabun"));
+			 	        data.put("empNo", req.getParameter("sabun"));
+		        	} else {
+		        		 String enterCd = "";
+		        		 String sabun = "";
+		        		 
+		        		 Cookie[] cookies = req.getCookies();
+		    			 if (cookies != null) {
+		    			      for (Cookie cookie : cookies) {
+		    			    	  if(cookie.getName().equals("enterCd")) {
+		    			    		  enterCd = cookie.getValue();
+		    			    		  break;
+		    			    	  }
+		    			    	  if(cookie.getName().equals("sabun")) {
+		    			    		  sabun = cookie.getValue();
+		    			    		  break;
+		    			    	  }
+		    			      }
+		    			 }
+		    			 
+		    			 if(enterCd != "" && sabun != "") {
+		    				 data.put("enterCd", enterCd);
+		 		 	         data.put("loginId", sabun);
+		 		 	         data.put("userId", sabun);
+		 		 	         data.put("empNo", sabun);
+		    			 } else {
+		    				 return null;
+		    			 }
+		        	}
+		        } else {
+			        String userName = data.get("user_name").toString();
+			    	
+			        data.put("tsId", userName.split("@")[0]);
+			        data.put("enterCd", userName.split("@")[1]);
+			        data.put("loginId", userName.split("@")[2]);
+			        data.put("userId", userName.split("@")[2]);
+			        data.put("empNo", userName.split("@")[2]);
+			        data.put("userName", userName);
+		        }
+		
+		        return data;
+			}else {
+				return null;
+			}
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
