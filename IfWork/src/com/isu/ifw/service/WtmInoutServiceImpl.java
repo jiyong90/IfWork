@@ -227,7 +227,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				if(!time.containsKey("pSymd") ||  !time.containsKey("pEymd"))
 					continue;
 				if((time.get("pSymd").equals(today) || time.get("pEymd").equals(today)) && time.get("entrySdate") == null) {
-					ymd = time.get("ymds").toString();
+					ymd = time.get("ymd").toString();
 					if(time.get("holydayYn") != null && time.get("holydayYn").toString().equals("Y")) {
 						inoutType = "HOL";
 						label = " - ";
@@ -239,7 +239,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					}
 					break;
 				} else if((time.get("pSymd").equals(today) || time.get("pEymd").equals(today)) && time.get("entryEdate") == null) {
-					ymd = time.get("ymds").toString();
+					ymd = time.get("ymd").toString();
 					inoutType = "OUT";
 					entrySdate = time.get("entrySdate").toString();
 					desc = "근무중";
