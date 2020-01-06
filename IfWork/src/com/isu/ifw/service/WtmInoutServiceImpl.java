@@ -303,11 +303,14 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		String stdYmd = today;
 		String inoutType = "NONE";
 		for(Map<String, Object> time : list) {
-			if(time.get("holydayYn").toString().equals("Y") && time.get("pSdate") == null && time.get("pEdate") == null) {
-				throw new Exception("휴일 근무계획이 없습니다.");
-			}
 			if(!time.containsKey("pSymd") ||  !time.containsKey("pEymd"))
 				continue;
+			
+			if(time.get("pSymd").toString().equals(today) && 
+					time.get("holydayYn").toString().equals("Y") && time.get("pSdate") == null && time.get("pEdate") == null) {
+				throw new Exception("휴일 근무계획이 없습니다.");
+			}
+			
 			if(time.get("pSymd").equals(today) && time.get("entrySdate") == null) {
 				stdYmd = time.get("ymd").toString();
 				inoutType = "IN";
