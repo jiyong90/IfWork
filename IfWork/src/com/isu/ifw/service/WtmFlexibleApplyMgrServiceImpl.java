@@ -553,13 +553,13 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		paramMap.put("totalYn", "Y");
 		paramMap.put("ymd", "");
 		
-		List<Map<String, Object>> elasDetails = flexApplMapper.getElasDetail(paramMap);
+		List<Map<String, Object>> elasDetails = flexApplMapper.getElasApplDetail(paramMap);
 		
 		if(elasDetails!=null && elasDetails.size()>0) {
 			paramMap.put("totalYn", "N");
 			for(Map<String, Object> t : elasDetails) {
 				paramMap.put("ymd", t.get("startYmd").toString());
-				List<Map<String, Object>> details = flexApplMapper.getElasDetail(paramMap);
+				List<Map<String, Object>> details = flexApplMapper.getElasApplDetail(paramMap);
 				t.put("details", details);
 			}
 		}
