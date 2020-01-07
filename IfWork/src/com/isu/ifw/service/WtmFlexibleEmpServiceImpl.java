@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.common.service.TenantConfigManagerService;
 import com.isu.ifw.entity.WtmEmpHis;
@@ -339,34 +340,39 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}
 					}
 					
-					if(sDate==null || eDate==null)
-						continue;
+					//if(sDate==null || eDate==null)
+					//	continue;
 					
-					Date sd = WtmUtil.toDate(sDate, "yyyyMMddHHmm");
-					Date ed = WtmUtil.toDate(eDate, "yyyyMMddHHmm");
-					
-					//휴게시간
-					//breakTypeCd가 TIME이나 TIMEFIX 인 경우엔 유급 휴게는 0
-					Float break01 = 0f;
-					Float break02 = 0f;
-					
-					SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
-					paramMap.put("shm", sdf.format(sd));
-					paramMap.put("ehm", sdf.format(ed));
-					Map<String, Object> breakMap = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, sabun);
-					if(breakMap!=null && breakMap.get("breakMinute")!=null) {
-						if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
-							break01 =  Float.valueOf(breakMap.get("breakMinuteNoPay").toString());
-							break02 = Float.valueOf(breakMap.get("breakMinutePaid").toString());
-						} else {
-							break01 = Float.valueOf(breakMap.get("breakMinute").toString());
-						} 
+					if(sDate!=null && eDate!=null) {
+						Date sd = WtmUtil.toDate(sDate, "yyyyMMddHHmm");
+						Date ed = WtmUtil.toDate(eDate, "yyyyMMddHHmm");
 						
-						noPayBreakMin += break01;
-						paidBreakMin += break02;
+						//휴게시간
+						//breakTypeCd가 TIME이나 TIMEFIX 인 경우엔 유급 휴게는 0
+						Float break01 = 0f;
+						Float break02 = 0f;
+						
+						SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+						paramMap.put("shm", sdf.format(sd));
+						paramMap.put("ehm", sdf.format(ed));
+						Map<String, Object> breakMap = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, sabun);
+						if(breakMap!=null && breakMap.get("breakMinute")!=null) {
+							if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
+								break01 =  Float.valueOf(breakMap.get("breakMinuteNoPay").toString());
+								break02 = Float.valueOf(breakMap.get("breakMinutePaid").toString());
+							} else {
+								break01 = Float.valueOf(breakMap.get("breakMinute").toString());
+							} 
+							
+							noPayBreakMin += break01;
+							paidBreakMin += break02;
+						}
 					}
+					
 					//System.out.println("break01: " + break01);
 					//System.out.println("break02: " + break02);
+					
+					System.out.println("timeTypeCd : " + timeTypeCd);
 					
 					if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE)) {
 						workMin += min;
