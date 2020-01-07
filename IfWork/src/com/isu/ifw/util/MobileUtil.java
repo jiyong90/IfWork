@@ -27,6 +27,16 @@ public class MobileUtil {
 		return l;
 	}
 	
+	public static Map<String,Object> getStatusMap(String icon, String title, String value, String total, String unit){
+		Map<String,Object>m = new HashMap<String,Object>();
+		m.put("icon", icon);
+		m.put("title", title);
+		m.put("value", value);
+		m.put("total",total);
+		m.put("unit",unit);
+		return m;
+	}
+	
 	public static String parseEmpKey(String secret, String empKey, String key) { 
 		String data = "";
 		try {
