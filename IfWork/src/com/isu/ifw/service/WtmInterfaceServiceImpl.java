@@ -1126,18 +1126,20 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			Long targetRuleId =
 			*/ 
 			List<Map<String, Object>> getEmpBaseList = null;
-			getEmpBaseList = wtmInterfaceMapper.getEmpBaseList(ifHisMap);
+			getEmpBaseList = wtmInterfaceMapper.getEmpBaseEtcList(ifHisMap);
 			if(getEmpBaseList != null && getEmpBaseList.size() > 0) {
 				for(int i=0; i<getEmpBaseList.size(); i++) {
 					Map<String, Object> setEmpMap = new HashMap<>();
 					setEmpMap = getEmpBaseList.get(i);
 					// 파라메터 체크 #{tenantId}, #{enterCd}, #{symd}, #{eymd}, #{sabun} , #{userId}
+					System.out.println("sabun : " + setEmpMap.get("sabun").toString());
 					setEmpMap.put("pId", setEmpMap.get("userId").toString());
 					// 입사자만? 이력정리용 프로시저 호출하기
-			    	wtmFlexibleEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(setEmpMap);
+			    	// wtmFlexibleEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(setEmpMap);
 					wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setEmpMap);
 				}
 			}
+			System.out.println("base flexible END");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1509,6 +1511,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 								// 오류다 ㅠㅠ
 								ifHisMap.put("ifStatus", "ERR");
 								retMsg = "근태정보 이관중 오류. 오류로그 확인";
+								System.err.println("**TaaAppl reqDayErr " + reqDayMap.get("sabun").toString() + "/" + reqDayMap.get("sYmd").toString() + "~" + reqDayMap.get("eYmd").toString() + reqDayMap.get("retCode").toString());
 								break;
 							} else {
 								// 오류가 아니면.. 근태시간을 생성체크하자
@@ -1567,6 +1570,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					} else {
 						ifHisMap.put("ifStatus", "ERR");
 						retMsg = "근태정보 이관중 오류. 오류로그 확인";
+						System.err.println("**TaaAppl reqErr " + reqMap.get("sabun").toString() + "/" + reqMap.get("sYmd").toString() + "~" + reqMap.get("eYmd").toString() + reqMap.get("retCode").toString());
 					}
 				} catch(Exception e){
 					ifHisMap.put("ifStatus", "ERR");
@@ -1675,9 +1679,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				Map<String, Object> planMinuteMap = WtmFlexibleEmpService.calcMinuteExceptBreaktime(Long.parseLong(l.get("timeCdMgrId").toString()), l, userId);
 				l.put("planMinute", (Integer.parseInt(planMinuteMap.get("calcMinute")+"")));
 				wtmInterfaceMapper.insertDayResult(l);
-				
-				// wtmInterfaceMapper.updateDayResult2(l);
 				*/
+				// wtmInterfaceMapper.updateDayResult2(l);
+				
         		String enterCd = l.get("enterCd").toString();
         		String sabun = l.get("sabun").toString();
         		String closeYmd = l.get("ymd").toString();
@@ -1693,7 +1697,24 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	    		    System.out.println("key : " + key +" / value : " + l.get(key));
 	    		}
 				wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(l);
-        		
+				
+				/*
+				// 외근 근무시간 기본근무적용
+				SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
+				WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
+						  Long.parseLong(l.get("tenantId").toString())
+						, l.get("enterCd").toString()
+						, l.get("ymd").toString()
+						, l.get("sabun").toString()
+						, l.get("timeTypeCd").toString()
+						, ""
+						, dt.parse(l.get("taaSdate").toString())
+						, dt.parse(l.get("taaEdate").toString())
+						, null
+						, "0"
+						, true);
+				System.out.println("sabun : " + l.get("sabun").toString());
+        		*/
 			}
 		}
 		return;

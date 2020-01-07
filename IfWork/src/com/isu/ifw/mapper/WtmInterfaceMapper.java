@@ -161,6 +161,11 @@ public interface WtmInterfaceMapper {
 	 */
 	public List<Map<String, Object>> getEmpBaseList(Map<String, Object> paramMap);
 	
+	/*
+	 * 기본근무 수기data 생성
+	 */
+	public List<Map<String, Object>> getEmpBaseEtcList(Map<String, Object> paramMap);
+	
 	
 	/*
 	 * 사원 기본근무 생성
