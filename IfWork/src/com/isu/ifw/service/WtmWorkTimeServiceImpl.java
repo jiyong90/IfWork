@@ -1,6 +1,6 @@
 package com.isu.ifw.service;
 
-import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +11,7 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.mapper.WtmWorktimeMapper;
 import com.isu.ifw.util.WtmUtil;
 
@@ -156,4 +157,29 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 		return entryDiffList;
 	}
 	
+	@Override
+	public List<Map<String, Object>> getWorkTimeChangeTarget(Long tenantId, String enterCd, Map<String, Object> paramMap){
+		List<Map<String, Object>> chgTargetList = null;
+		try {
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+			
+			if(paramMap.containsKey("sabuns") && paramMap.get("sabuns")!=null && !"".equals(paramMap.get("sabuns"))) {
+				ObjectMapper mapper = new ObjectMapper();
+				List<String> empList = mapper.readValue(paramMap.get("sabuns").toString(), new ArrayList<String>().getClass());
+				paramMap.put("empList", empList);
+			}
+			
+			chgTargetList = worktimeMapper.getWorkTimeChangeTarget(paramMap);
+		} catch(Exception e) {
+			e.printStackTrace();
+			logger.debug(e.toString(), e);
+		} finally {
+			MDC.clear();
+			logger.debug("getWorkTimeChangeTarget End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
+
+		}
+		
+		return chgTargetList;
+	}
 }
