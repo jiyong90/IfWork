@@ -10,9 +10,20 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.WtmBaseWorkMgr;
+import com.isu.ifw.entity.WtmTimeChgHis;
+import com.isu.ifw.entity.WtmWorkCalendar;
+import com.isu.ifw.entity.WtmWorkPattDet;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmWorkteamEmpMapper;
 import com.isu.ifw.mapper.WtmWorktimeMapper;
+import com.isu.ifw.repository.WtmBaseWorkMgrRepository;
+import com.isu.ifw.repository.WtmTimeChgHisRepository;
+import com.isu.ifw.repository.WtmWorkCalendarRepository;
+import com.isu.ifw.repository.WtmWorkPattDetRepository;
 import com.isu.ifw.util.WtmUtil;
 
 @Service
@@ -25,6 +36,24 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 	
 	@Autowired
 	WtmFlexibleEmpService empService;
+	
+	@Autowired
+	WtmFlexibleEmpMapper flexibleEmpMapper;
+	
+	@Autowired
+	WtmTimeChgHisRepository timeChgHisRepo;
+	
+	@Autowired
+	WtmWorkCalendarRepository workCalendarRepo;
+	
+	@Autowired
+	WtmWorkPattDetRepository workPattDetRepo;
+	
+	@Autowired
+	WtmWorkteamEmpMapper workteamEmpMapper;
+	
+	@Autowired
+	WtmBaseWorkMgrRepository baseWorkMgrRepo;
 	
 	@Override
 	public List<Map<String, Object>> getWorktimeCheckList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
@@ -181,5 +210,125 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 		}
 		
 		return chgTargetList;
+	}
+	
+	@Transactional
+	@Override
+	public void changeWorktime(Long tenantId, String enterCd, Map<String, Object> paramMap, String userId) {
+		
+		List<String> empList = null;
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+				
+		//result 조회
+		if(paramMap.containsKey("sabuns") && paramMap.get("sabuns")!=null && !"".equals(paramMap.get("sabuns"))) {
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				empList = mapper.readValue(paramMap.get("sabuns").toString(), new ArrayList<String>().getClass());
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			paramMap.put("empList", empList);
+		}
+		
+		List<WtmTimeChgHis> histories = new ArrayList<WtmTimeChgHis>();
+		List<Map<String, Object>> chgTargetList = getWorkTimeChangeTarget(tenantId, enterCd, paramMap);
+		if(chgTargetList!=null && chgTargetList.size()>0) {
+			String ymd = paramMap.get("ymd").toString();
+			Long timeCdMgrId = Long.valueOf(paramMap.get("timeCdMgrId").toString());
+			
+			//base 와 fixot를 다시 생성하기 위한 파라미터
+			paramMap.put("sYmd", ymd);
+			paramMap.put("eYmd", ymd);
+			
+			for(Map<String, Object> t : chgTargetList) {
+				WtmTimeChgHis history = new WtmTimeChgHis();
+				String sabun = t.get("sabun").toString();
+				paramMap.put("sabun", sabun);
+				
+				history.setTenantId(tenantId);
+				history.setEnterCd(enterCd);
+				history.setSabun(t.get("sabun").toString());
+				history.setYmd(ymd);
+				history.setTimeTypeCd(t.get("timeTypeCd").toString());
+				history.setTimeCdMgrId(Long.valueOf(t.get("timeCdMgrId").toString()));
+				
+				if(t.get("planSdate")!=null && !"".equals(t.get("planSdate"))) {
+					history.setPlanSdate(WtmUtil.toDate(t.get("planSdate").toString(), "yyyyMMddHHmmss"));
+				}
+				if(t.get("planEdate")!=null && !"".equals(t.get("planEdate"))) {
+					history.setPlanEdate(WtmUtil.toDate(t.get("planEdate").toString(), "yyyyMMddHHmmss"));
+				}
+				if(t.get("planMinute")!=null && !"".equals(t.get("planMinute"))) {
+					String planMinute = t.get("planMinute").toString();
+					String[] hm = planMinute.split(":");
+					
+					int hour = 0;
+					int min = 0;
+					if(hm[0]!=null && !"".equals(hm[0])) {
+						hour = Integer.valueOf(hm[0]);
+						hour *= 60;
+					}
+					if(hm[1]!=null && !"".equals(hm[1])) {
+						min = Integer.valueOf(hm[1]);
+					}
+					
+					history.setPlanMinute(hour+min);
+				}
+				history.setUpdateId(userId);
+				
+				histories.add(history);
+				
+				//calendar timeCdMgrId 변경
+				WtmWorkCalendar workCalendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
+				workCalendar.setTimeCdMgrId(timeCdMgrId);
+				workCalendarRepo.save(workCalendar);
+				
+				Map<String, Object> flexibleEmp = flexibleEmpMapper.getFlexibleEmp(paramMap);
+				
+				// 공휴일 제외 여부
+				String holExceptYn = "N";
+				if(flexibleEmp.get("holExceptYn")!=null && !"".equals(flexibleEmp.get("holExceptYn"))) 
+					holExceptYn = flexibleEmp.get("holExceptYn").toString();
+
+				// 근무제 패턴으로 정해놓은 일 수  
+				int maxPattDet = 0;
+				WtmWorkPattDet workPattDet = workPattDetRepo.findTopByFlexibleStdMgrIdOrderBySeqDesc(Long.valueOf(flexibleEmp.get("flexibleStdMgrId").toString()));
+				if(workPattDet!=null && workPattDet.getSeq()!=null) 
+					maxPattDet = workPattDet.getSeq();
+				
+				//calendar 기반으로 result reset
+				Long pKey = null;
+				String pType = null;
+				
+				//근무조인지
+				Map<String, Object> workteam = workteamEmpMapper.getWorkteamEmp(paramMap);
+				if(workteam!=null && workteam.containsKey("workteamMgrId") && workteam.get("workteamMgrId")!=null) {
+					pType = "WORKTEAM";
+					pKey = Long.valueOf(workteam.get("workteamMgrId").toString()); 
+				} else {
+					pType = "BASE";
+					WtmBaseWorkMgr baseWorkMgr = baseWorkMgrRepo.findByTenantIdAndEnterCdAndFlexibleStdMgrIdAndYmd(tenantId, enterCd, Long.valueOf(flexibleEmp.get("flexibleStdMgrId").toString()), ymd);
+					if(baseWorkMgr!=null && baseWorkMgr.getBaseWorkMgrId()!=null)
+						pKey = baseWorkMgr.getBaseWorkMgrId();
+				}
+				
+				paramMap.put("pKey", pKey); //workteam이면 workTeamMgrId, base이면 baseMgrId
+				paramMap.put("pType", pType); //workteam or base
+				paramMap.put("holExceptYn", holExceptYn);
+				paramMap.put("maxPattSeq", maxPattDet);
+				paramMap.put("flexibleEmpId", Long.valueOf(flexibleEmp.get("flexibleEmpId").toString()));
+				flexibleEmpMapper.resetWorkDayResult(paramMap);
+				
+				//calc 인정근무시간
+				if(workCalendar.getEntrySdate()!=null || workCalendar.getEntryEdate()!=null) {
+					empService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
+				}
+			}
+			timeChgHisRepo.saveAll(histories);
+		}
+		
+		
 	}
 }

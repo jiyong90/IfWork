@@ -233,6 +233,12 @@ public interface WtmFlexibleEmpMapper {
 	public void resetFixOtWtmWorkDayResultByFlexibleEmpId(Map<String, Object> paramMap);
 	public void resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(Map<String, Object> paramMap);
 	
+	/**
+	 * calendar를 기반으로 result의 다시 생성
+	 * @param paramMap
+	 */
+	public void resetWorkDayResult(Map<String, Object> paramMap);
+	
 	public void createWtmWorkteamOfWtmWorkDayResult(Map<String, Object> paramMap);
 	
 	/**

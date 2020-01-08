@@ -62,4 +62,12 @@ public interface WtmWorktimeService{
 	 */
 	public List<Map<String, Object>> getWorkTimeChangeTarget(Long tenantId, String enterCd, Map<String, Object> paramMap);
 	
+	/**
+	 * 근무 계획(시간코드) 변경
+	 * @param tenantId
+	 * @param enterCd
+	 * @param paramMap
+	 * @param userId
+	 */
+	public void changeWorktime(Long tenantId, String enterCd, Map<String, Object> paramMap, String userId);
 }

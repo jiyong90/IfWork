@@ -431,16 +431,16 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			//calendar, result 만들어준다.
 			if(appl.getApplCd().equals("ELAS")) {
 				//calendar 있으면 삭제하고 다시 만들어주자.
-				List<WtmWorkCalendar> calendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, appl.getApplSabun(), flexibleAppl.getSymd(), flexibleAppl.getEymd());
+				/*List<WtmWorkCalendar> calendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, appl.getApplSabun(), flexibleAppl.getSymd(), flexibleAppl.getEymd());
 				
 				if(calendar!=null && calendar.size()>0) {
 					workCalendarRepo.deleteAll(calendar);
 					workCalendarRepo.flush();
 				}
+				wtmFlexibleEmpMapper.createWorkCalendarOfElas(flexibleAppl.getFlexibleApplId(), userId);*/
 				
 				//List<WtmWorkCalendar> calendar2 = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, appl.getApplSabun(), flexibleAppl.getSymd(), flexibleAppl.getEymd());
 				
-				wtmFlexibleEmpMapper.createWorkCalendarOfElas(flexibleAppl.getFlexibleApplId(), userId);
 				
 				//result 만들어주자.
 				List<WtmWorkDayResult> result = new ArrayList<WtmWorkDayResult>();
@@ -453,7 +453,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
 					
 					//result 에 base와 ot 있으면 삭제하고 다시 만들어주자.
-					List<WtmWorkDayResult> base = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, appl.getApplSabun(), TIME_TYPE_BASE, flexibleAppl.getSymd(), flexibleAppl.getEymd());
+					/*List<WtmWorkDayResult> base = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, appl.getApplSabun(), TIME_TYPE_BASE, flexibleAppl.getSymd(), flexibleAppl.getEymd());
 					if(base!=null && base.size()>0) {
 						wtmWorkDayResultRepo.deleteAll(base);
 						wtmWorkDayResultRepo.flush();
@@ -462,6 +462,18 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 					List<WtmWorkDayResult> ot = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, appl.getApplSabun(), TIME_TYPE_OT, flexibleAppl.getSymd(), flexibleAppl.getEymd());
 					if(ot!=null && ot.size()>0) {
 						wtmWorkDayResultRepo.deleteAll(ot);
+						wtmWorkDayResultRepo.flush();
+					}*/
+					
+					//result 에 base와 ot, fixot 있으면 삭제하고 다시 만들어주자.
+					List<String> timeTypCds = new ArrayList<String>();
+					timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
+					timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
+					timeTypCds.add(WtmApplService.TIME_TYPE_OT);
+					
+					List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, appl.getApplSabun(), timeTypCds, flexibleAppl.getSymd(), flexibleAppl.getEymd());
+					if(results!=null && results.size()>0) {
+						wtmWorkDayResultRepo.deleteAll(results);
 						wtmWorkDayResultRepo.flush();
 					}
 					
