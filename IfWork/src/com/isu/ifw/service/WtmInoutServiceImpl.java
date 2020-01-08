@@ -25,7 +25,7 @@ import com.isu.ifw.vo.ReturnParam;
 @Service("inoutService")
 public class WtmInoutServiceImpl implements WtmInoutService{
 	
-	private final Logger logger = LoggerFactory.getLogger("ifwDBLog");
+	private final Logger logger = LoggerFactory.getLogger("ifwFileLog");
 	
 	@Autowired
 	WtmInoutHisMapper inoutHisMapper;
@@ -209,8 +209,8 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		paramMap.put("sabun", sabun);
 
 		String ymd = null;
-		String entrySdate = null;
-		String entryEdate = null;
+		Date entrySdate = null;
+		Date entryEdate = null;
 		String label = " - ";
 		String inoutType = "NONE";
 		String desc = "출근체크 필요시 인사팀에 문의 바랍니다";
@@ -220,7 +220,8 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			logger.debug("getMenuContextWeb inoutStatus : " + list.toString());
 			
 			SimpleDateFormat format1 = new SimpleDateFormat ("yyyyMMdd");
-			SimpleDateFormat format2 = new SimpleDateFormat ("yyyy-MM-dd HH:mm:ss");
+			SimpleDateFormat format2 = new SimpleDateFormat ("yyyy-MM-dd");
+			SimpleDateFormat format3 = new SimpleDateFormat ("HH:mm");
 
 			Date now = new Date();
 			String today = format1.format(now);
@@ -243,7 +244,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				} else if((time.get("pSymd").equals(today) || time.get("pEymd").equals(today)) && time.get("entryEdate") == null) {
 					ymd = time.get("ymd").toString();
 					inoutType = "OUT";
-					entrySdate = time.get("entrySdate").toString();
+					entrySdate = (Date) time.get("entrySdate");
 					desc = "근무중";
 					label = "퇴근하기";
 					break;
@@ -252,8 +253,8 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					inoutType = "END";
 					desc = "근무종료";
 					label = "퇴근취소";
-					entrySdate = time.get("entrySdate").toString();
-					entryEdate = time.get("entryEdate").toString();
+					entrySdate = (Date) time.get("entrySdate");
+					entryEdate = (Date) time.get("entryEdate");
 				}
 			}
 			
@@ -261,14 +262,16 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			returnMap.put("label", label);
 			returnMap.put("desc", desc);
 			returnMap.put("inoutType", inoutType);
-			returnMap.put("entrySdate", entrySdate==null?"":format2.parse(entrySdate));
-			returnMap.put("entryEdate", entrySdate==null?"":format2.parse(entryEdate));
+			returnMap.put("entrySymd", entrySdate==null?"":format2.format(entrySdate));
+			returnMap.put("entryEymd", entryEdate==null?"":format2.format(entryEdate));
+			returnMap.put("entryStime", entrySdate==null?"":format3.format(entrySdate));
+			returnMap.put("entryEtime", entryEdate==null?"":format3.format(entryEdate));
 			
 		}catch(Exception e) {
 			logger.debug(e.getMessage());
 			e.printStackTrace();
 		} 
-		
+		logger.debug("11111111111111111 " + returnMap.toString());
 		return returnMap;
 	}
 	

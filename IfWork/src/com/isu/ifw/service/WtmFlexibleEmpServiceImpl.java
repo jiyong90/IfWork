@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -56,6 +58,8 @@ import com.isu.ifw.vo.WtmDayWorkVO;
 
 @Service("flexibleEmpService")
 public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
+
+	private static final Logger logger = LoggerFactory.getLogger("ifwFileLog");
 
 	@Autowired
 	@Qualifier("WtmTenantConfigManagerService")
@@ -1063,17 +1067,20 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		//지각 조퇴 무단결근 데이터 삭제
 		if(sabun != null && !sabun.equals("")) {
+			logger.debug("calcApprDayInfo 1");
 			List<WtmWorkDayResult> result = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCd, sYmd, eYmd);
 			if(result != null && result.size() > 0) {
 				workDayResultRepo.deleteAll(result);
 			}
 		}else {
+			logger.debug("calcApprDayInfo 2");
 			List<WtmWorkDayResult> result = workDayResultRepo.findByTenantIdAndEnterCdAndTimeTypeCdInAndYmdBetween(tenantId, enterCd, timeTypeCd, sYmd, eYmd);
 			if(result != null && result.size() > 0) {
 				workDayResultRepo.deleteAll(result);
 			}
 			
 		}
+		logger.debug("calcApprDayInfo 3");
 
 		WtmTaaCode absenceTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_ABSENCE);
 		//코어타임 사용 시 코어타임 필수여부에 따라 근무시간이 코어타임에 미치지 못하면 결근으로 본다.
@@ -1083,7 +1090,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//여기서 결근이 들어갈 경우 아래 출퇴근 타각이 모두 있을 때 조퇴처리가 될수 있다. 결근데이터가 있을 경우를 제외해줘야한다.
 		flexEmpMapper.createDayResultByTimeTypeAndCheckRequireCoreTimeYn(paramMap);
 		
-		
+		logger.debug("calcApprDayInfo 4");
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_REGA);
 		// 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다.
 		flexEmpMapper.updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
@@ -1092,20 +1099,22 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		// 출근시간 자동에 대해 일괄 업데이트 한다.
 		// 어디까지인가? 조출 / 기본근무
 		// 출근 타각데이터가 있는건 갱신하지 않는다.
+		logger.debug("calcApprDayInfo 5");
 		flexEmpMapper.updateEntrySdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
 		
 		// 퇴근 시간 자동 여부 (계획시간으로 )
 		// 어디까지인가? 기본근무 / 연장
 		// 퇴근 타각데이터가 있는건 갱신하지 않는다.
+		logger.debug("calcApprDayInfo 6");
 		flexEmpMapper.updateEntryEdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
-		
-		
 		
 		// 출근 타각이 없을 경우
 		// 출근 또는 출/퇴근 타각이 모두 없을 경우 무단결근
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 		paramMap.put("taaCd", absenceTaaCode.getTaaCd());
 		paramMap.put("userId", "SYSTEM");
+
+		logger.debug("calcApprDayInfo 7");
 		flexEmpMapper.createDayResultByTimeTypeAndEntryDateIsNull(paramMap);
 		
 
@@ -1113,6 +1122,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 		paramMap.put("taaCd", leaveTaaCode.getTaaCd());
 		
+		logger.debug("calcApprDayInfo 8");
 		// 출근 데이터는 있고 퇴근 타각이 없을 경우 조퇴 (시/종 정보 없이 생성)
 		flexEmpMapper.createDayResultByTimeTypeAndEntrtEdateIsNull(paramMap);
 		
@@ -1121,6 +1131,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//소정근로시간의 경우 출퇴근 타각기록으로만 판단 >> 결근 데이터가 있는 날은 빼야한다.
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 		paramMap.put("taaCd", absenceTaaCode.getTaaCd());
+		logger.debug("calcApprDayInfo 9");
 		flexEmpMapper.updateApprDatetimeByYmdAndSabun(paramMap);
 		
 		// 이곳은 출/퇴근 타각데이터가 있는 사람에 한한다.. 
@@ -1129,6 +1140,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		// 조퇴 데이터 생성
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 		paramMap.put("taaCd", leaveTaaCode.getTaaCd());
+		logger.debug("calcApprDayInfo 10");
 		flexEmpMapper.createDayResultByTimeTypeAndApprEdateLessThanPlanEdate(paramMap);
 		
 		// 계획 시작 시간보다 인정시작시간이 늦을 경우 BASE중에 
@@ -1136,6 +1148,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		WtmTaaCode lateTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LATE);
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 		paramMap.put("taaCd", lateTaaCode.getTaaCd());
+		logger.debug("calcApprDayInfo 11");
 		flexEmpMapper.createDayResultByTimeTypeAndPlanSdateLessThanApprSdate(paramMap);
 		
 		
@@ -1145,13 +1158,15 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//고정OT 일괄소진의 경우 계획데이터만 있을 수 없다 마감시 인정 시간을 바로 산정한다. 
 		
 		
-		
+		logger.debug("calcApprDayInfo 12");
 		// BREAK_TYPE_CD가 MGR인것만 계산
 		flexEmpMapper.updateApprMinuteByYmdAndSabun(paramMap);
 		
+		logger.debug("calcApprDayInfo 13");
 		// BREAK_TYPE_CD가 TIME인것만 계산
 		flexEmpMapper.updateTimeTypeApprMinuteByYmdAndSabun(paramMap);
 		
+		logger.debug("calcApprDayInfo 14");
 		// BREAK_TYPE_CD가 TIMEFIX인것만 계산
 		flexEmpMapper.updateTimeFixTypeApprMinuteByYmdAndSabun(paramMap);
 		
@@ -1160,12 +1175,14 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		 * 고정 OT 일괄 소진에 대한 부분
 		 */
 		List<WtmFlexibleEmp> emps = flexEmpRepo.findAllTypeFixotByTenantIdAndEnterCdAndSabunAndSymdAndEymdAnd(tenantId, enterCd, sabun, sYmd, eYmd);
+		logger.debug("calcApprDayInfo 15 " + emps!=null?emps.toString():"emps null");
 		if(emps != null && emps.size() >0) {
 			for( WtmFlexibleEmp emp : emps) {
 				paramMap.put("flexibleEmpId", emp.getFlexibleEmpId());
 				flexEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(paramMap);
 			}
 		}
+		logger.debug("calcApprDayInfo 16 ");
 	}
 
 	@Override
