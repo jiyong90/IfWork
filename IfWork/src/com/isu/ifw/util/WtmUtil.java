@@ -254,4 +254,21 @@ public class WtmUtil {
 		return null;
 	}
 	
+	public static String getClientId(String uri) {
+	      String clientId = "";
+	      if(uri.contains("/console/")) {
+	         clientId = uri.substring(uri.indexOf("console")+8, uri.length());
+	         clientId = clientId.substring(0, clientId.contains("/")?clientId.indexOf("/"):clientId.length());
+	         System.out.println("11111111111111111111111 0 " + clientId);
+	      } else if(uri.contains("/hr/")) {
+	         clientId = uri.substring(uri.indexOf("hr")+3, uri.length());
+	         clientId = clientId.substring(0, clientId.contains("/")?clientId.indexOf("/"):clientId.length());
+	         System.out.println("11111111111111111111111 0 " + clientId);
+	      } else if(uri.contains("/logout/")) {
+	    	  clientId = uri.substring(uri.indexOf("logout")+7, uri.length());
+	    	  clientId = clientId.substring(0, clientId.contains("/")?clientId.indexOf("/"):clientId.length());
+	         System.out.println("11111111111111111111111 0 " + clientId);
+	      }
+	      return clientId;
+	   }
 }
