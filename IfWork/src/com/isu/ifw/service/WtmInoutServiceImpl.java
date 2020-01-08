@@ -220,6 +220,8 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			logger.debug("getMenuContextWeb inoutStatus : " + list.toString());
 			
 			SimpleDateFormat format1 = new SimpleDateFormat ("yyyyMMdd");
+			SimpleDateFormat format2 = new SimpleDateFormat ("yyyy-MM-dd HH:mm:ss");
+
 			Date now = new Date();
 			String today = format1.format(now);
 			
@@ -259,8 +261,8 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			returnMap.put("label", label);
 			returnMap.put("desc", desc);
 			returnMap.put("inoutType", inoutType);
-			returnMap.put("entrySdate", entrySdate);
-			returnMap.put("entryEdate", entryEdate);
+			returnMap.put("entrySdate", entrySdate==null?"":format2.parse(entrySdate));
+			returnMap.put("entryEdate", entrySdate==null?"":format2.parse(entryEdate));
 			
 		}catch(Exception e) {
 			logger.debug(e.getMessage());
@@ -561,6 +563,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					}
 				}
 				
+				
 				//외출에 대해서 다시 호출
 				List<WtmWorkDayResult> excepts = 
 						wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(Long.parseLong(paramMap.get("tenantId").toString()), 
@@ -583,7 +586,6 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
 						paramMap.get("enterCd").toString(), paramMap.get("stdYmd").toString(),
 						paramMap.get("stdYmd").toString(), paramMap.get("sabun").toString());
-
 			} catch(Exception e) {
 				logger.debug(e.getMessage());
 				throw new Exception("인정시간 계산 중 오류가 발생했습니다.");
