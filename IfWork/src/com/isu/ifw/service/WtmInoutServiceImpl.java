@@ -261,8 +261,8 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			returnMap.put("label", label);
 			returnMap.put("desc", desc);
 			returnMap.put("inoutType", inoutType);
-			returnMap.put("entrySdate", format2.parse(entrySdate));
-			returnMap.put("entryEdate", format2.parse(entryEdate));
+			returnMap.put("entrySdate", entrySdate==null?"":format2.parse(entrySdate));
+			returnMap.put("entryEdate", entrySdate==null?"":format2.parse(entryEdate));
 			
 		}catch(Exception e) {
 			logger.debug(e.getMessage());
