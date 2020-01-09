@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.isu.ifw.mapper.WtmApplMapper;
+import com.isu.ifw.mapper.WtmEntryApplMapper;
 import com.isu.ifw.mapper.WtmInoutHisMapper;
 import com.isu.ifw.mapper.WtmOtApplMapper;
 import com.isu.ifw.mapper.WtmWorktimeMapper;
@@ -49,7 +50,10 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 	@Autowired
 	WtmOtApplMapper wtmOtApplMapper;
 
-	//기간 리스트 조회
+	@Autowired
+	WtmEntryApplMapper wtmEntryApplMapper;
+	
+	
 	@Override
 	public List<Map<String, Object>> getTermList(Map<String, Object> paramMap) throws Exception  {
 		//겸직 하위 조직 조회
@@ -157,7 +161,7 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 	public Map<String, Object> getApplDetail(Long tenantId, String enterCd, String sabun, String applKey) throws Exception {
 		Map<String, Object> resultMap = new HashMap();
 		
-		
+		String applCd = applKey.split("@")[1];
 		String applId = applKey.split("@")[2];
 		String typeCd = applKey.split("@")[3];
 		String applSabun = applKey.split("@")[4];
@@ -166,9 +170,14 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		paramMap.put("applId", applId);
 		paramMap.put("sabun", applSabun);
 		
-		Map<String, Object> data = wtmOtApplMapper.otApplDetailByApplId(paramMap);
-		if(!data.get("subsYmd").equals("-")) {
-			data.put("subsYmd", data.get("subsYmd").toString().replace("@", "\n"));
+		Map<String, Object> data = null;
+		if("OT".equals(applCd)) {
+			data = wtmOtApplMapper.otApplDetailByApplId(paramMap);
+			if(!data.get("subsYmd").equals("-")) {
+				data.put("subsYmd", data.get("subsYmd").toString().replace("@", "\n"));
+			}
+		} else if("ENTRY_CHG".equals(applCd)) {
+		    data = wtmEntryApplMapper.findByApplId(Long.parseLong(applId));
 		}
 		List<WtmApplLineVO> applLine = applMapper.getWtmApplLineByApplId(Long.parseLong(applId));
 		List approvalLines = MobileUtil.makeApprLines(applLine);

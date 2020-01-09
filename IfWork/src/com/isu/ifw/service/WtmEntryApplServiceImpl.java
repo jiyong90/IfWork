@@ -117,6 +117,35 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 			}
 		}
 	}
+	
+	//모바일용 동기처리
+	@Override
+	public ReturnParam requestSync(Long tenantId, String enterCd, Map<String, Object> paramMap,
+			String sabun, String userId) throws Exception {
+		
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("신청되었습니다.");
+		
+		Long applId = null;
+		rp = imsi(tenantId, enterCd, null, paramMap.get("applCd").toString(), paramMap, this.APPL_STATUS_APPLY_ING, sabun, userId);
+		
+		if(rp!=null && rp.getStatus()!=null && "OK".equals(rp.getStatus())) {
+			applId = Long.valueOf(rp.get("applId").toString());
+			List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);
+			 
+			if(lines != null && lines.size() > 0) {
+				for(WtmApplLine line : lines) {
+					//첫번째 결재자의 상태만 변경 후 스탑
+					line.setApprStatusCd(APPR_STATUS_REQUEST);
+					line = wtmApplLineRepo.save(line);
+					break;
+					 
+				}
+			}
+		}
+		return rp;
+		//push전송 추가
+	}
 
 	@Transactional
 	@Override
@@ -399,13 +428,4 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 		}
 		//결재라인 저장 끝
 	}
-
-	@Override
-	public ReturnParam requestSync(Long tenantId, String enterCd, Map<String, Object> paramMap, String sabun,
-			String userId) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	
 }
