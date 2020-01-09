@@ -125,7 +125,7 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 	}
 
 	@Override
-	public ReturnParam checkDuplicateWorktime(Long tenantId, String enterCd, String sabun, Date sdate, Date edate, Long applId){
+	public ReturnParam checkDuplicateWorktime(Long tenantId, String enterCd, String sabun, String sdate, String edate, Long applId){
 		Map<String, Object> paramMap = new HashMap<>();
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);

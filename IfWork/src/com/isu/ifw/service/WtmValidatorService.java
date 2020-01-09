@@ -29,7 +29,7 @@ public interface WtmValidatorService {
 	 * @param applId null 또는 빈값이어도 됨.
 	 * @return
 	 */
-	public ReturnParam checkDuplicateWorktime(Long tenantId, String enterCd, String sabun, Date sdate, Date edate, Long applId);
+	public ReturnParam checkDuplicateWorktime(Long tenantId, String enterCd, String sabun, String sdate, String edate, Long applId);
 	
 	public ReturnParam validTaa(Long tenantId, String enterCd, String sabun,
 			String timeTypeCd, String taaCd,

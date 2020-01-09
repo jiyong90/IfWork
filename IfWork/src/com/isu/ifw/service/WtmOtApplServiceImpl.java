@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplCode;
@@ -718,17 +719,23 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		if(paramMap.containsKey("applId") && paramMap.get("applId") != null && !paramMap.get("applId").equals("")) {
 			applId = Long.parseLong(paramMap.get("applId")+"");
 		}
-		Map<String, Object> resultMap = validatorService.checkDuplicateWorktime(tenantId, enterCd, sabun, sd, ed, applId); 
-				//wtmFlexibleEmpMapper.checkDuplicateWorktime(paramMap);
+		Map<String, Object> resultMap = validatorService.checkDuplicateWorktime(tenantId, enterCd, sabun, otSdate, otEdate, applId); 
+		/*
+		//wtmFlexibleEmpMapper.checkDuplicateWorktime(paramMap);
 		//Long timeCdMgrId = Long.parseLong(paramMap.get("timeCdMgrId").toString());
 		
+
 		int workCnt = 0;
-		System.out.println("resultMap.containsKey(workCnt)" + resultMap.containsKey("workCnt"));
-		if(resultMap != null && resultMap.size() > 0 && resultMap.containsKey("workCnt")) {
+		if(resultMap != null && resultMap.get("workCnt")!=null && !"".equals(resultMap.get("workCnt"))) {
 			workCnt = Integer.parseInt(resultMap.get("workCnt").toString());
 		}
 		if(workCnt > 0) {
 			rp.setFail("이미 근무정보(신청중인 근무 포함)가 존재합니다.");
+			return rp;
+		}*/
+		
+		if(resultMap!=null && resultMap.get("status")!=null && "FAIL".equals(resultMap.get("status").toString())) {
+			rp.setFail(resultMap.get("message").toString());
 			return rp;
 		}
 		
