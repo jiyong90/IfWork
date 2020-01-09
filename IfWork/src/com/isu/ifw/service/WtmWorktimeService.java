@@ -50,8 +50,18 @@ public interface WtmWorktimeService{
 	 */
 	public List<Map<String, Object>> getEntryDiffList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap);
 	
+	
 	/**
 	 * 근무 계획(시간코드) 변경 대상자 조회
+	 * @param tenantId
+	 * @param enterCd
+	 * @param paramMap
+	 * @return
+	 */
+	public List<Map<String, Object>> getWorkTimeChangeTarget(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap);
+	
+	/**
+	 * 근무 계획(시간코드) 변경 대상자의 현재 근무 계획 조회
 	 * @param tenantId
 	 * @param enterCd
 	 * @param sabun
@@ -60,7 +70,8 @@ public interface WtmWorktimeService{
 	 * targetSabunList
 	 * @return
 	 */
-	public List<Map<String, Object>> getWorkTimeChangeTarget(Long tenantId, String enterCd, Map<String, Object> paramMap);
+	public List<Map<String, Object>> getWorkPlan(Long tenantId, String enterCd, Map<String, Object> paramMap);
+	
 	
 	/**
 	 * 근무 계획(시간코드) 변경
