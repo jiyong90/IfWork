@@ -165,7 +165,7 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		String applId = applKey.split("@")[2];
 		String typeCd = applKey.split("@")[3];
 		String applSabun = applKey.split("@")[4];
-		
+		//applKey":"SAMHWACROWN@OT@872@01@198104003@WTM"
 		Map<String, Object> paramMap = new HashMap();
 		paramMap.put("applId", applId);
 		paramMap.put("sabun", applSabun);
