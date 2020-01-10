@@ -187,16 +187,24 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 	}
 	
 	@Override
-	public List<Map<String, Object>> getWorkTimeChangeTarget(Long tenantId, String enterCd, Map<String, Object> paramMap){
+	public List<Map<String, Object>> getWorkTimeChangeTarget(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap){
 		List<Map<String, Object>> chgTargetList = null;
 		try {
 			paramMap.put("tenantId", tenantId);
 			paramMap.put("enterCd", enterCd);
 			
-			if(paramMap.containsKey("sabuns") && paramMap.get("sabuns")!=null && !"".equals(paramMap.get("sabuns"))) {
-				ObjectMapper mapper = new ObjectMapper();
-				List<String> empList = mapper.readValue(paramMap.get("sabuns").toString(), new ArrayList<String>().getClass());
-				paramMap.put("empList", empList);
+			String ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
+			if(!paramMap.containsKey("ymd")) {
+				paramMap.put("ymd", "");
+			} else {
+				ymd = paramMap.get("ymd").toString().replaceAll("-", "");
+				paramMap.put("ymd", ymd);
+			}
+			
+			List<String> auths = empService.getAuth(tenantId, enterCd, sabun);
+			if(auths!=null && !auths.contains("FLEX_SETTING") && auths.contains("FLEX_SUB")) {
+				//하위 조직 조회
+				paramMap.put("orgList", empService.getLowLevelOrgList(tenantId, enterCd, sabun, ymd));
 			}
 			
 			chgTargetList = worktimeMapper.getWorkTimeChangeTarget(paramMap);
@@ -210,6 +218,32 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 		}
 		
 		return chgTargetList;
+	}
+	
+	@Override
+	public List<Map<String, Object>> getWorkPlan(Long tenantId, String enterCd, Map<String, Object> paramMap){
+		List<Map<String, Object>> workplan = null;
+		try {
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+			
+			if(paramMap.containsKey("sabuns") && paramMap.get("sabuns")!=null && !"".equals(paramMap.get("sabuns"))) {
+				ObjectMapper mapper = new ObjectMapper();
+				List<String> empList = mapper.readValue(paramMap.get("sabuns").toString(), new ArrayList<String>().getClass());
+				paramMap.put("empList", empList);
+			}
+			
+			workplan = worktimeMapper.getWorkPlan(paramMap);
+		} catch(Exception e) {
+			e.printStackTrace();
+			logger.debug(e.toString(), e);
+		} finally {
+			MDC.clear();
+			logger.debug("getWorkTimeChangeTarget End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
+
+		}
+		
+		return workplan;
 	}
 	
 	@Transactional
@@ -233,7 +267,7 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 		}
 		
 		List<WtmTimeChgHis> histories = new ArrayList<WtmTimeChgHis>();
-		List<Map<String, Object>> chgTargetList = getWorkTimeChangeTarget(tenantId, enterCd, paramMap);
+		List<Map<String, Object>> chgTargetList = getWorkPlan(tenantId, enterCd, paramMap);
 		if(chgTargetList!=null && chgTargetList.size()>0) {
 			String ymd = paramMap.get("ymd").toString();
 			Long timeCdMgrId = Long.valueOf(paramMap.get("timeCdMgrId").toString());
