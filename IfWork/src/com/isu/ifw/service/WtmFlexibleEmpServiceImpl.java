@@ -430,16 +430,16 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 	
 	protected String minToHHmmStr(String min) {
-		if(min==null || "".equals(min) || Float.parseFloat(min)==0)
+		if(min==null || "".equals(min) || Double.parseDouble(min)==0)
 			return "";
 	
-		Float H = 0f;
-		Float i = 0f;
+		Double H = 0d;
+		Double i = 0d;
 		
-		H = Float.parseFloat(min)/60;
+		H = Double.parseDouble(min)/60;
 		i = (H - H.intValue()) * 60;
 		
-		return ((H.intValue()>0)?String.format("%02d", H.intValue()):"00")+":"+((i.intValue()>0)?i.intValue():"00");
+		return ((H.intValue()>0)?String.format("%02d", H.intValue()):"00")+":"+((i.intValue()>0)?String.format("%02d", i.intValue()):"00");
 	}
 	
 	@Override
@@ -965,11 +965,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					ehm = plan.get("ehm").toString();
 				}
 				String m = "";
-				Float H = 0f;
-				Float i = 0f;
+				Double H = 0d;
+				Double i = 0d;
 				if(plan.containsKey("minute") && plan.get("minute") != null) {
 					m = plan.get("minute").toString();
-					H = Float.parseFloat(m)/60;
+					H = Double.parseDouble(m)/60;
 					i = (H - H.intValue()) * 60;
 				}
 
