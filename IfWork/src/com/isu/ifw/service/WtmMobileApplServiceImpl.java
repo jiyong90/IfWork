@@ -258,16 +258,16 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 				throw new Exception("validation check에 실패하였습니다.");
 			}
 	
-			if(val.get("valDate").equals("N")) {
+			if(val.get("valDate").equals("N") && val.containsKey("pDate")) {
 				dataMap.put("ymd", "");
 				throw new Exception("신청 가능한 기간은 " + val.get("pDate").toString() + " 입니다.");
-			} else if(val.get("valTime").equals("N")) {
+			} else if(val.get("valTime").equals("N") && val.containsKey("pTime")) {
 				throw new Exception("신청 가능한 시간은 " + val.get("pTime").toString() + " 입니다.");
-			} else if(val.get("valUnit").equals("N")) {
+			} else if(val.get("valUnit").equals("N") && val.containsKey("pUnit")) {
 				throw new Exception("신청 가능한 시간단위는 " + val.get("pUnit").toString() + "분 입니다.");
-			} else if(val.get("valHunit").equals("N")) {
+			} else if(val.get("valHunit").equals("N") && val.containsKey("pHunit")) {
 				throw new Exception("신청 가능한 최대 시간은 " + val.get("pHunit").toString() + "분 입니다.");
-			} else if(val.get("valSdate").equals("N")) {
+			} else if(val.get("valSdate").equals("N") && val.containsKey("pSdate")) {
 				throw new Exception("대체 휴일 신청 가능 기간은 " + val.get("pSdate").toString() + " 입니다.");
 			}
 			
