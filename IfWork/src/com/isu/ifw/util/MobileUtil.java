@@ -1,5 +1,6 @@
 package com.isu.ifw.util;
 
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -40,9 +41,34 @@ public class MobileUtil {
 	public static String parseEmpKey(String secret, String empKey, String key) { 
 		String data = "";
 		try {
+			
 			Aes256 aes = new Aes256(secret);
 			String emp = aes.decrypt(empKey);
 			
+			if(key.equals("enterCd")) {
+				data = emp.split("@")[0];
+			}
+			if(key.equals("sabun")) {
+				data = emp.split("@")[1];
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		return data;
+	}
+	
+	public static String parseDEmpKey(String secret, String empKey, String key) { 
+		String data = "";
+		try {
+			System.out.println("00000000000000000 0 " + empKey);
+			empKey = URLDecoder.decode(empKey);
+			System.out.println("00000000000000000 1 " + empKey);
+			empKey = empKey.replace(" ", "+");
+			System.out.println("00000000000000000 2 " + empKey);
+			Aes256 aes = new Aes256(secret);
+			String emp = aes.decrypt(empKey);
+			System.out.println("00000000000000000 3 " + emp);
 			if(key.equals("enterCd")) {
 				data = emp.split("@")[0];
 			}
