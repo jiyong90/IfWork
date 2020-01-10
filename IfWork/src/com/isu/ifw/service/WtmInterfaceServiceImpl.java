@@ -1570,7 +1570,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					} else {
 						ifHisMap.put("ifStatus", "ERR");
 						retMsg = "근태정보 이관중 오류. 오류로그 확인";
-						System.err.println("**TaaAppl reqErr " + reqMap.get("sabun").toString() + "/" + reqMap.get("sYmd").toString() + "~" + reqMap.get("eYmd").toString() + reqMap.get("retCode").toString());
+						System.err.println("**TaaAppl reqErr " + reqMap.get("sabun").toString() + "/" + reqMap.get("sYmd").toString() + "~" + reqMap.get("eYmd").toString() + reqMap.get("retCode").toString() + "/"+ reqMap.get("retMsg").toString());
 					}
 				} catch(Exception e){
 					ifHisMap.put("ifStatus", "ERR");

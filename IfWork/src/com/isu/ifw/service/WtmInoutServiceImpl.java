@@ -436,16 +436,35 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		//1. 근무일과 타각상태 가져오기
 		List<Map<String, Object>> list = inoutHisMapper.getInoutStatus(paramMap);
 		logger.debug("inoutStatus : " + list.toString());
-		
+//		[{ymd=20200109, 
+//				entryEdate=2020-01-09 18:21:00.0, 
+//				entrySdate=2020-01-09 18:21:00.0, 
+//				unplanedYn=Y, holydayYn=N}, 
+//		 {pEymd=20200110, 
+//		 		ymd=20200110, 
+//		 		entryEdate=2020-01-10 10:19:00.0, 
+//		 		entrySdate=2020-01-10 10:20:00.0, 
+//		 		unplanedYn=Y, 
+//		 		holydayYn=N, 
+//		 		pEdate=2020-01-10 10:19:00.0, 
+//		 		pSymd=20200110, 
+//		 		pSdate=2020-01-10 10:19:00.0}, 
+//		 {ymd=20200111, unplanedYn=Y, holydayYn=Y}]
 		String today = paramMap.get("inoutDate").toString().substring(0, 8);
 		String stdYmd = today;
 		String inoutType = "NONE";
+		String entrySdate = null;
+		String entryEdate = null;
+		
 		for(Map<String, Object> time : list) {
 			if(today.equals(time.get("ymd").toString())) {
 				if(time.get("holydayYn").toString().equals("Y") 
 						&& time.get("pSdate") == null && time.get("pEdate") == null) {
 					throw new Exception("휴일 근무계획이 없습니다.");
 				}
+				entrySdate = time.get("entrySdate")!=null?time.get("entrySdate").toString():null;
+				entryEdate = time.get("entryEdate")!=null?time.get("entryEdate").toString():null;
+				
 				if(time.get("entrySdate") == null) {
 					stdYmd = time.get("ymd").toString();
 					inoutType = "IN";
@@ -501,7 +520,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		}
 		
 		//3.출근타각이 있으면 반영안됨 (브로제)
-		if("IN".equals(paramMap.get("inoutType").toString()) && inoutType.equals("OUT")) {
+		if("IN".equals(paramMap.get("inoutType").toString()) && entrySdate !=null) {
 			throw new Exception("출근 타각시간이 존재하므로 반영하지 않습니다.");
 		}
 		//4. 퇴근취소는 기준일 정보 받은걸 셋팅

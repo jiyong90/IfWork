@@ -384,7 +384,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						otMin += min;
 					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT)) {
 						otNightMin += min;
-					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_TAA) || timeTypeCd.equals(WtmApplService.TIME_TYPE_SUBS)) {
+					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_TAA) || timeTypeCd.equals(WtmApplService.TIME_TYPE_SUBS) || timeTypeCd.equals(WtmApplService.TIME_TYPE_LLA)) {
 						//근태 현황
 						//근태시간 포함여부와 근태일근무여부가 모두 Y이면, 휴게시간 포함한 근무시간
 						Float taa = min;
@@ -394,11 +394,16 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						if(timeTypeCd.equals(WtmApplService.TIME_TYPE_SUBS))
 							taaNm = "대체휴가";
 						
-						if(taaMap.get(taaNm)!=null && !"".equals(taaMap.get(taaNm))) {
-							taaMap.put(taaNm, Float.parseFloat(taaMap.get(taaNm).toString()) + taa);
+						if(timeTypeCd.equals(WtmApplService.TIME_TYPE_LLA)) { //결근,지각,조퇴
+							taaMap.put(taaNm, "");
 						} else {
-							taaMap.put(taaNm, taa);
+							if(taaMap.get(taaNm)!=null && !"".equals(taaMap.get(taaNm))) {
+								taaMap.put(taaNm, Float.parseFloat(taaMap.get(taaNm).toString()) + taa);
+							} else {
+								taaMap.put(taaNm, taa);
+							}
 						}
+						
 						
 					}
 				}

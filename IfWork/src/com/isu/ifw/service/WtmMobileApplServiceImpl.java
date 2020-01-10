@@ -105,9 +105,15 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 	public ReturnParam validateEntryChgAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
+<<<<<<< HEAD
 		
 		Map<String, Object> resultMap = new HashMap();
 		
+=======
+
+		Map<String, Object> resultMap = new HashMap();
+
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 		setOtData(dataMap);
 		
 		dataMap.put("tenantId", tenantId);
@@ -125,7 +131,10 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		dataMap.put("ymd", dataMap.get("ymd").toString().substring(0, 4)+"."+dataMap.get("ymd").toString().substring(4, 6) +"."+dataMap.get("ymd").toString().substring(6, 8));
 	
 		resultMap.put("data", dataMap);
+<<<<<<< HEAD
 		
+=======
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 		rp.put("result", resultMap);
 		return rp;
 	}
@@ -134,7 +143,11 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 	public ReturnParam validateOtAppl(String eventSource, Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
+<<<<<<< HEAD
 		
+=======
+
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 		Map<String, Object> resultMap = new HashMap();
 		Map<String,Object> itemPropertiesMap = new HashMap();
 		Map<String,Object> propertiesMap = new HashMap<String,Object>();
@@ -146,7 +159,46 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		dataMap.put("enterCd", enterCd);
 		dataMap.put("applSabun", sabun);
 		dataMap.put("sabun", sabun);
+		
+		try {
+			if(eventSource.equals("ymd")) {
+				//신청 가능한지 확인
+				ReturnParam temp = otApplService.preCheck(tenantId, enterCd, sabun, dataMap.get("applCd").toString(), dataMap);
+				logger.debug("otApplService.preCheck " + temp.toString());
+				if(temp.getStatus().equals("FAIL")) {
+					dataMap.put("ymd", "");
+					throw new Exception(temp.get("message").toString());
+				}
+				//휴일인지 확인
+				WtmWorkCalendar calendars =  workCalendarRepo.findByTenantIdAndEnterCdAndYmdAndSabun(tenantId, enterCd, dataMap.get("ymd").toString(), sabun);
+				dataMap.put("holidayYn", calendars.getHolidayYn());
+				dataMap.put("timeCdMgrId", calendars.getTimeCdMgrId());
+				
+				Map<String, Object> workHourMap = flexibleEmpService.calcMinuteExceptBreaktime(calendars.getTimeCdMgrId(), dataMap, sabun);
+				if(workHourMap == null) {
+					throw new Exception();
+				}
+				logger.debug("workHourMap " + workHourMap.toString());
+				
+				//신청 가능한 날인지 먼저 체크하고 아니면 리턴
+				
+				//대체 휴가 사용여부
+				dataMap.put("subsYn", temp.get("subsYn"));
+				//수당지급대상자인지
+				dataMap.put("payTargetYn", temp.get("payTargetYn"));
+				
+				if(dataMap.get("subsYn").equals("Y") && (dataMap.get("holidayYn").equals("Y") || dataMap.get("payTargetYn").equals("Y"))) {
+					propertiesMap.put("disabled", "false");
+					propertiesMap.put("mandatory", "true");
+					
+					List<Map<String,Object>> itemCollection = new ArrayList<Map<String,Object>>();
+					Map<String,Object> item = new HashMap<String,Object>();
+					item = new HashMap<String,Object>();
+					item.put("text", "위로금/시급지급");
+					item.put("value", "N");
+					itemCollection.add(item);
 	
+<<<<<<< HEAD
 		try {
 			if(eventSource.equals("ymd")) {
 				//신청 가능한지 확인
@@ -260,8 +312,86 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 			}
 	
 			if(val.get("valDate").equals("N") && val.containsKey("pDate")) {
+=======
+					item = new HashMap<String,Object>();
+					item.put("text", "휴일대체");
+					item.put("value", "Y");
+					itemCollection.add(item);
+					propertiesMap.put("collection", itemCollection);
+	
+					itemPropertiesMap.put("subYn", propertiesMap);
+				} else {
+					propertiesMap.put("disabled", "true");
+					propertiesMap.put("mandatory", "false");
+					
+					itemPropertiesMap.put("subYn", propertiesMap);
+					itemPropertiesMap.put("subsSymd", propertiesMap);
+					itemPropertiesMap.put("subsShm", propertiesMap);
+					itemPropertiesMap.put("subsEhm", propertiesMap);
+					
+					dataMap.put("subYn", "");
+					dataMap.put("subsSymd", "");
+					dataMap.put("subsShm", "");
+					dataMap.put("subsEhm", "");
+				}
+			} else if(eventSource.equals("subYn")) {
+				if(dataMap.get("subYn").equals("Y")) {
+					propertiesMap.put("disabled", "false");
+					propertiesMap.put("mandatory", "true");
+					
+					itemPropertiesMap.put("subsSymd", propertiesMap);
+					itemPropertiesMap.put("subsShm", propertiesMap);
+					itemPropertiesMap.put("subsEhm", propertiesMap);
+					
+				} else {
+					propertiesMap.put("disabled", "true");
+					propertiesMap.put("mandatory", "false");
+					
+					itemPropertiesMap.put("subsSymd", propertiesMap);
+					itemPropertiesMap.put("subsShm", propertiesMap);
+					itemPropertiesMap.put("subsEhm", propertiesMap);
+	
+					dataMap.put("subsSymd", "");
+					dataMap.put("subsShm", "");
+					dataMap.put("subsEhm", "");
+				}
+			} else if(eventSource.equals("subsSymd")) {
+				//휴일인지 확인
+				WtmWorkCalendar calendars =  workCalendarRepo.findByTenantIdAndEnterCdAndYmdAndSabun(tenantId, enterCd, dataMap.get("subsSymd").toString(), sabun);
+				if(calendars != null && calendars.getHolidayYn().equals("Y")) {
+					dataMap.put("subsSymd", "");
+	//				rp.setFail("해당일은 휴일입니다.");
+	//				return rp;
+					throw new Exception("해당일은 휴일입니다.");
+				}
+			}
+			
+			
+			Map<String, Object> otWorkTime = null;
+			if(!dataMap.get("shm").equals("") && !dataMap.get("ehm").equals("")) {
+				otWorkTime = flexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, dataMap, sabun);
+				
+				System.out.println("otWorkTime" + otWorkTime.toString()); //{breakMinuteNoPay=30, calcMinute=-30, breakMinutePaid=0, breakMinute=30}
+				
+				if(otWorkTime != null) {
+					dataMap.put("desc", "근로시간 : "+otWorkTime.get("calcMinute").toString() + "분 휴게시간 : " + (!otWorkTime.containsKey("breakMinute")?"0":otWorkTime.get("breakMinute").toString()) + "분");
+				}
+			}
+	
+			dataMap.put("calcMinute", otWorkTime != null ? otWorkTime.get("calcMinute").toString(): "0");
+			
+			Map<String, Object> val = applMapper.getApplValidation(dataMap);
+			logger.debug("applValidationCheck : " + dataMap.toString() + " , " + val.toString());
+			System.out.println("applValidationCheck : " + dataMap.toString() + " , " + val.toString());
+			if(val == null) {
+				throw new Exception("validation check에 실패하였습니다.");
+			}
+	
+			if(val.get("valDate").equals("N")) {
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 				dataMap.put("ymd", "");
 				throw new Exception("신청 가능한 기간은 " + val.get("pDate").toString() + " 입니다.");
+<<<<<<< HEAD
 			} else if(val.get("valTime").equals("N") && val.containsKey("pTime")) {
 				throw new Exception("신청 가능한 시간은 " + val.get("pTime").toString() + " 입니다.");
 			} else if(val.get("valUnit").equals("N") && val.containsKey("pUnit")) {
@@ -269,6 +399,15 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 			} else if(val.get("valHunit").equals("N") && val.containsKey("pHunit")) {
 				throw new Exception("신청 가능한 최대 시간은 " + val.get("pHunit").toString() + "분 입니다.");
 			} else if(val.get("valSdate").equals("N") && val.containsKey("pSdate")) {
+=======
+			} else if(val.get("valTime").equals("N")) {
+				throw new Exception("신청 가능한 시간은 " + val.get("pTime").toString() + " 입니다.");
+			} else if(val.get("valUnit").equals("N")) {
+				throw new Exception("신청 가능한 시간단위는 " + val.get("pUnit").toString() + "분 입니다.");
+			} else if(val.get("valHunit").equals("N")) {
+				throw new Exception("신청 가능한 최대 시간은 " + val.get("pHunit").toString() + "분 입니다.");
+			} else if(val.get("valSdate").equals("N")) {
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 				throw new Exception("대체 휴일 신청 가능 기간은 " + val.get("pSdate").toString() + " 입니다.");
 			}
 			
