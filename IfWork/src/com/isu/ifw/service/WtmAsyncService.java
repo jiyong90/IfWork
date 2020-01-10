@@ -9,6 +9,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,6 +44,7 @@ public class WtmAsyncService {
 		}
 		
 		@Async("threadPoolTaskExecutor")
+		@Transactional
 		public void initWtmFlexibleEmpOfWtmWorkDayResult(Long tenantId, String enterCd, String sabun, String symd, String eymd, String userId) {
 			Map<String, Object> paramMap = new HashMap<>();
 			paramMap.put("tenantId", tenantId);

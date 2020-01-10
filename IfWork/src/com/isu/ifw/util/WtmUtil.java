@@ -199,8 +199,9 @@ public class WtmUtil {
 	
 		        data = mapper.readValue(payloadJson, Map.class);
 		        System.out.println("===============data " + data.toString());
+		        /*
 		        if(!data.containsKey("user_name")) {
-		        	data.put("tsId", data.get("client_id"));
+					data.put("tsId", data.get("client_id"));
 		        	if(req.getParameter("enterCd") != null && !req.getParameter("enterCd").equals("")) {
 			 	        data.put("enterCd", req.getParameter("enterCd"));
 			 	        data.put("loginId", req.getParameter("sabun"));
@@ -234,6 +235,7 @@ public class WtmUtil {
 		    			 }
 		        	}
 		        } else {
+		        */
 			        String userName = data.get("user_name").toString();
 			    	
 			        data.put("tsId", userName.split("@")[0]);
@@ -242,7 +244,7 @@ public class WtmUtil {
 			        data.put("userId", userName.split("@")[2]);
 			        data.put("empNo", userName.split("@")[2]);
 			        data.put("userName", userName);
-		        }
+		        //}
 		
 		        return data;
 			}else {
