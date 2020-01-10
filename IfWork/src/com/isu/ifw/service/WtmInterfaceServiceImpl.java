@@ -1282,6 +1282,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			wtmInterfaceMapper.setTaaApplIf(reqMap);
 			
 			String retCode = reqMap.get("retCode").toString();
+			System.out.println("retCode : " + retCode);
+			System.out.println("retMsg : " + reqMap.get("retMsg").toString());
 			String oldStatusCd = "";
 			if(reqMap.get("oldStatus") != null) { oldStatusCd = reqMap.get("oldStatus").toString();}
 			
@@ -1418,7 +1420,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		   			getIfList = (List<Map<String, Object>>) getIfMap.get("ifData");
 		   		} else {
 		   			retMsg = "TAA_RESULT get : If 데이터 없음";
-		   			ifHisMap.put("ifStatus", "ERR");
+		   			ifHisMap.put("ifStatus", "OK");
 		   		}
         	} catch(Exception e) {
         		retMsg = "TAA_RESULT get : If 서버통신 오류";
@@ -1568,9 +1570,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						ifHisMap.put("ifStatus", "OK");
 						retMsg = "근태신청서 처리완료";
 					} else {
-						ifHisMap.put("ifStatus", "ERR");
-						retMsg = "근태정보 이관중 오류. 오류로그 확인";
+						//ifHisMap.put("ifStatus", "ERR");
+						//retMsg = "프로시저 생성누락은 사유가 있어서 그래 무시해야함";
 						System.err.println("**TaaAppl reqErr " + reqMap.get("sabun").toString() + "/" + reqMap.get("sYmd").toString() + "~" + reqMap.get("eYmd").toString() + reqMap.get("retCode").toString() + "/"+ reqMap.get("retMsg").toString());
+						ifHisMap.put("ifStatus", "OK");
+						
 					}
 				} catch(Exception e){
 					ifHisMap.put("ifStatus", "ERR");
@@ -1578,6 +1582,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		            e.printStackTrace();
 		        }
     		} // end for
+    	} else {
+    		ifHisMap.put("ifStatus", "OK");
+    		retMsg = "갱신자료없음";
     	}
 		
     	// 3. 처리결과 저장
