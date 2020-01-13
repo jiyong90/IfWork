@@ -2,7 +2,6 @@ package com.isu.ifw.service;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -15,8 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import com.isu.ifw.entity.WtmCodeIntf;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmInterfaceMapper;
+import com.isu.ifw.repository.WtmCodeIntfRepository;
 
 @Service
 public class WtmInterfaceServiceImpl implements WtmInterfaceService {
@@ -30,6 +31,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	@Autowired
 	private WtmFlexibleEmpService WtmFlexibleEmpService;
 	
+	@Autowired
+	private WtmCodeIntfRepository wtmCodeIntfRepo;
 		
 	@Override
 	public Map<String, Object> getIfLastDate(Long tenantId, String ifType) throws Exception {
@@ -270,6 +273,34 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
         }
 	}
 	
+	@Override
+	public void saveCodeIntf(Long tenantId, List<Map<String, Object>> dataList) {
+		if(dataList != null && dataList.size() > 0 ) {
+			List<WtmCodeIntf> codes = new ArrayList<WtmCodeIntf>();
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+			sdf.format(new Date());
+			String yyyymmddhhmiss= sdf.format(new Date());
+			
+			for(Map<String, Object> m : dataList) {
+				WtmCodeIntf code = new WtmCodeIntf();
+				code.setYyyymmddhhmiss(yyyymmddhhmiss);
+				code.setTenantId(tenantId);
+				code.setEnterCd(m.get("ENTER_CD")+"");
+				code.setGrpCodeCd(m.get("GRCODE_CD")+"");
+				code.setCodeCd(m.get("CODE")+"");
+				code.setCodeNm(m.get("CODE_NM")+"");
+				code.setSeq((m.get("SEQ")!="")?Integer.parseInt(m.get("SEQ")+""):null);
+				code.setSymd(m.get("SYMD")+"");
+				code.setEymd(m.get("EYMD")+"");
+				code.setNote(m.get("NOTE")+"");
+				codes.add(code);
+			} 
+
+			wtmCodeIntfRepo.saveAll(codes); 
+				
+	   		
+		}
+	}
 	
 	@Override
 	public void getHolidayIfResult(Long tenantId) throws Exception {
@@ -1282,6 +1313,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			wtmInterfaceMapper.setTaaApplIf(reqMap);
 			
 			String retCode = reqMap.get("retCode").toString();
+			System.out.println("retCode : " + retCode);
+			System.out.println("retMsg : " + reqMap.get("retMsg").toString());
 			String oldStatusCd = "";
 			if(reqMap.get("oldStatus") != null) { oldStatusCd = reqMap.get("oldStatus").toString();}
 			
@@ -1418,7 +1451,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		   			getIfList = (List<Map<String, Object>>) getIfMap.get("ifData");
 		   		} else {
 		   			retMsg = "TAA_RESULT get : If 데이터 없음";
-		   			ifHisMap.put("ifStatus", "ERR");
+		   			ifHisMap.put("ifStatus", "OK");
 		   		}
         	} catch(Exception e) {
         		retMsg = "TAA_RESULT get : If 서버통신 오류";
@@ -1568,9 +1601,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						ifHisMap.put("ifStatus", "OK");
 						retMsg = "근태신청서 처리완료";
 					} else {
-						ifHisMap.put("ifStatus", "ERR");
-						retMsg = "근태정보 이관중 오류. 오류로그 확인";
+						//ifHisMap.put("ifStatus", "ERR");
+						//retMsg = "프로시저 생성누락은 사유가 있어서 그래 무시해야함";
 						System.err.println("**TaaAppl reqErr " + reqMap.get("sabun").toString() + "/" + reqMap.get("sYmd").toString() + "~" + reqMap.get("eYmd").toString() + reqMap.get("retCode").toString() + "/"+ reqMap.get("retMsg").toString());
+						ifHisMap.put("ifStatus", "OK");
+						
 					}
 				} catch(Exception e){
 					ifHisMap.put("ifStatus", "ERR");
@@ -1578,6 +1613,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		            e.printStackTrace();
 		        }
     		} // end for
+    	} else {
+    		ifHisMap.put("ifStatus", "OK");
+    		retMsg = "갱신자료없음";
     	}
 		
     	// 3. 처리결과 저장
