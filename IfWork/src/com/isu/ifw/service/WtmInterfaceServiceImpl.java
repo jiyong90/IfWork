@@ -1565,7 +1565,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 								ifHisMap.put("ifStatus", "ERR");
 								retMsg = "근태정보 이관중 오류. 오류로그 확인";
 								System.err.println("**TaaAppl reqDayErr " + reqDayMap.get("sabun").toString() + "/" + reqDayMap.get("sYmd").toString() + "~" + reqDayMap.get("eYmd").toString() + reqDayMap.get("retCode").toString());
-								// break;
+								break;
 							} else {
 								// 오류가 아니면.. 근태시간을 생성체크하자
 								String taaSetYn = reqDayMap.get("taaSetYn").toString();
