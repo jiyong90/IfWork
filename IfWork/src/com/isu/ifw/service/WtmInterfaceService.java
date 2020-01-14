@@ -1,6 +1,7 @@
 package com.isu.ifw.service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,6 +44,7 @@ public interface WtmInterfaceService {
 	 */
 	public void getCodeIfResult(Long tenantId) throws Exception;
 	
+	public void saveCodeIntf(Long tenantId, List<Map<String, Object>> dataList);
 	
 	/**
 	 * 공휴일정보 이관
