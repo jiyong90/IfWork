@@ -2,12 +2,18 @@ package com.isu.ifw.entity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
 @Table(name="WTM_CODE_INTF")
 public class WtmCodeIntf {
-	
+	@Id
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@Column(name="CODE_ID")
+	private Long codeId;
 	@Column(name="YYYYMMDDHHMISS")
 	private String yyyymmddhhmiss;
 	@Column(name="TENANT_ID")
