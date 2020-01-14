@@ -17,5 +17,7 @@ public interface WtmCalendarService {
 	
 	public Map<String, Object> getEmpWorkCalendarDayInfo(Map<String, Object> paramMap) throws Exception;
 	
+	public Map<String, Object> getEmpWorkCalendarDayInfoEntry(Map<String, Object> paramMap) throws Exception;
+	
 	public ReturnParam getHolidayYn(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap);
 }

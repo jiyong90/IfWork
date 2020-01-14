@@ -49,6 +49,23 @@ public interface WtmCalendarMapper {
 	public Map<String, Object> getEmpWorkCalendarDayInfo(Map<String, Object> paramMap) throws Exception;
 	
 	/**
+	 * 관리자용_근무제도 확인
+	 * @param paramMap
+	 * @return
+	 * @throws Exception
+	 */
+	public Map<String, Object> getStdMgrInfo(Map<String, Object> paramMap) throws Exception;
+	
+	/**
+	 * 관리자요_근태 달력 하루 조회(선근제 근무계획없음용)
+	 * @param paramMap
+	 * @return
+	 * @throws Exception
+	 */
+	public Map<String, Object> getEmpWorkCalendarDayInfoSele(Map<String, Object> paramMap) throws Exception;
+	
+	
+	/**
 	 * 달력에서 출퇴근 시간만 업데이트
 	 * @param paramMap
 	 * @return
