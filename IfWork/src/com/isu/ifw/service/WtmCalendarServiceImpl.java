@@ -140,6 +140,34 @@ public class WtmCalendarServiceImpl implements WtmCalendarService{
 		return wtmCalendarMapper.getEmpWorkCalendarDayInfo(paramMap);
 	}
 	
+	/**
+	 * 근태 달력 조회(특정일) - 타각갱신용
+	 * @param paramMap
+	 * @return
+	 * @throws Exception
+	 */
+	public Map<String, Object> getEmpWorkCalendarDayInfoEntry(Map<String, Object> paramMap) throws Exception {
+		Map<String, Object> result = new HashMap<String, Object>();
+		Map<String, Object> stdMap = new HashMap<String, Object>();
+		String unplannedYn = "N";
+		// 근무제도의 계획없음여부를 확인해야함.
+		try {
+			stdMap = wtmCalendarMapper.getStdMgrInfo(paramMap);
+			if(stdMap != null && stdMap.size() > 0) {
+				unplannedYn = stdMap.get("unplannedYn").toString();
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		if("Y".equals(unplannedYn)) {
+			// 계획이 없어도 괜찮을경우 result를 outer걸어서 조회함.
+			result = wtmCalendarMapper.getEmpWorkCalendarDayInfoSele(paramMap);
+		} else {
+			result = wtmCalendarMapper.getEmpWorkCalendarDayInfo(paramMap);
+		}
+		return result;
+	}
+	
 	@Override
 	public ReturnParam getHolidayYn(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
 		ReturnParam rp = new ReturnParam();

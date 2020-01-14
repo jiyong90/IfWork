@@ -1284,6 +1284,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     	ifHisMap.put("tenantId", reqMap.get("tenantId"));
     	ifHisMap.put("ifItem", ifType);
     	
+    	
+    	
     	// 인터페이스용 변수
     	String lastDataTime = null;
     	String nowDataTime = null;
@@ -1386,6 +1388,24 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 									, Long.parseLong(reqDayMap.get("applId").toString())
 									, "0");
 						}
+						
+						String chkYmd = nowDataTime.substring(0, 8);
+						String enterCd = reqDayMap.get("enterCd").toString();
+		        		String sabun = reqDayMap.get("sabun").toString();
+		        		
+		        		// 오늘 이전이면 근무마감을 다시 돌려야함.
+						if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd) && ("D".equals(taaSetYn) || "I".equals(taaSetYn))) {
+			        		WtmFlexibleEmpService.calcApprDayInfo(Long.parseLong(reqMap.get("tenantId").toString()), enterCd, ymd, ymd, sabun);
+						}
+						// 근무시간합산은 재정산한다
+		        		HashMap<String, Object> setTermMap = new HashMap();
+		        		setTermMap.put("tenantId", reqMap.get("tenantId"));
+		        		setTermMap.put("enterCd", enterCd);
+		        		setTermMap.put("sabun", sabun);
+		        		setTermMap.put("symd", ymd);
+		        		setTermMap.put("eymd", ymd);
+		        		setTermMap.put("pId", "TAAIF");
+		        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 					}
 				}
 				
@@ -1600,12 +1620,14 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						
 						ifHisMap.put("ifStatus", "OK");
 						retMsg = "근태신청서 처리완료";
+					} else if("END".equals(retCode)) {
+						ifHisMap.put("ifStatus", "OK");
+						retMsg = reqMap.get("retMsg").toString();
 					} else {
 						//ifHisMap.put("ifStatus", "ERR");
 						//retMsg = "프로시저 생성누락은 사유가 있어서 그래 무시해야함";
 						System.err.println("**TaaAppl reqErr " + reqMap.get("sabun").toString() + "/" + reqMap.get("sYmd").toString() + "~" + reqMap.get("eYmd").toString() + reqMap.get("retCode").toString() + "/"+ reqMap.get("retMsg").toString());
 						ifHisMap.put("ifStatus", "OK");
-						
 					}
 				} catch(Exception e){
 					ifHisMap.put("ifStatus", "ERR");

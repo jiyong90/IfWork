@@ -282,14 +282,14 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	@Override
 	public void updateTimecardCancel(Map<String, Object> paramMap) throws Exception {
 		try {
-			if(insertTimeStamp(paramMap)) {
-				logger.debug("insertTimeStampSuccess : " + paramMap.toString());
+			if(updateTimeStamp(paramMap)) {
+				logger.debug("updateTimeStampSuccess : " + paramMap.toString());
 			} else {
-				logger.debug("insertTimeStampFail : " + paramMap.toString());
+				logger.debug("updateTimeStampFail : " + paramMap.toString());
 				throw new Exception("저장에 실패하였습니다.");
 			}
 		} catch(Exception e) {
-			logger.debug("insertTimeStampFail : " +e.getMessage());
+			logger.debug("updateTimeStampFail : " +e.getMessage());
 			throw new Exception("저장에 실패하였습니다.");
 		}
  
@@ -629,7 +629,27 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			}
 	}
 	
-	
+	@Override
+	public boolean updateTimeStamp(Map<String, Object> paramMap) throws Exception {
+		try {
+			//일단 타각데이터는 저장하고 empHis랑 비교...
+			int cnt = inoutHisMapper.updateWtmInoutHis(paramMap);
+			if(cnt <= 0) {
+				throw new Exception("타각데이터 저장에 실패하였습니다.");
+			}
+			
+			WtmEmpHis emp = empRepository.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()), 
+					paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
+			if(emp == null) {
+				throw new Exception("사용자 정보 조회 중 오류가 발생하였습니다.");
+			}
+		} catch(Exception e) {
+			logger.debug("insertexception " + e.getMessage());
+			throw new Exception(e.getMessage());
+		}
+		return true;
+	}
+
 	@Override
 	public boolean insertTimeStamp(Map<String, Object> paramMap) throws Exception {
 		try {
@@ -649,22 +669,6 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			throw new Exception(e.getMessage());
 		}
 		return true;
-	}
-	
-	
-	@Override
-	public Map<String, Object> updateTimeStamp(Map<String, Object> paramMap) {
-		//근무캘린더에 시간만 업데이트
-		try {
-			wtmCalendarMapper.updateTimeCard3(paramMap);
-			
-		} catch(Exception e) {
-			logger.debug(e.getMessage());
-			e.printStackTrace();
-			return null;
-		}
-		
-		return paramMap;
 	}
 
 	@Override
