@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.isu.ifw.common.service.TenantConfigManagerService;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmEntryApplMapper;
 import com.isu.ifw.mapper.WtmInoutHisMapper;
@@ -53,6 +54,8 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 	@Autowired
 	WtmEntryApplMapper wtmEntryApplMapper;
 	
+	@Autowired
+	TenantConfigManagerService tcms;
 	
 	@Override
 	public List<Map<String, Object>> getTermList(Map<String, Object> paramMap) throws Exception  {
@@ -181,9 +184,28 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		}
 		List<WtmApplLineVO> applLine = applMapper.getWtmApplLineByApplId(Long.parseLong(applId));
 		List approvalLines = MobileUtil.makeApprLines(applLine);
+
+		if(typeCd.equals("02")) {
+			resultMap.put("useAppBtn", "true");
+
+			Map<String,Object> preference = new HashMap();
+			preference.put("extBtnLabel", "반려");
+			preference.put("useExtBtn", "true");
+			preference.put("saveBtnLabel", "승인");
+			preference.put("useSave", "true");
+			resultMap.put("preference", preference);
+			
+			Map<String,Object> actions = new HashMap();
+			String url = tcms.getConfigValue(tenantId, "WTMS.URL.EDOC_ACTION", true, "");	
+			actions.put("ep-save", url);
+			resultMap.put("actions", actions);
+			
+		} else {
+			resultMap.put("useAppBtn", "false");
+		}
+		
 		resultMap.put("title", "신청서");
 		resultMap.put("data", data);
-		resultMap.put("useAppBtn", typeCd.equals("02")?"true":"false");
 		resultMap.put("apprLines", approvalLines);
 
 		return resultMap;

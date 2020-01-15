@@ -130,6 +130,21 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 	}
 	
 	@Override
+	public Map<String, Object> init(Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception {
+		if (dataMap.get("applCd").toString().equals("ENTRY_CHG")) {
+			dataMap.put("tenantId", tenantId);
+			dataMap.put("enterCd", enterCd);
+			dataMap.put("sabun", sabun);
+			dataMap.put("ymd", dataMap.get("ymd").toString().replace(".", ""));		
+			dataMap = wtmCalendarService.getEmpWorkCalendarDayInfo(dataMap);
+			dataMap.put("ymd", dataMap.get("ymd").toString().substring(0, 4)+"."+dataMap.get("ymd").toString().substring(4, 6) +"."+dataMap.get("ymd").toString().substring(6, 8));
+		}
+
+		return dataMap;
+	}
+
+	
+	@Override
 	public ReturnParam validateOtAppl(String eventSource, Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");

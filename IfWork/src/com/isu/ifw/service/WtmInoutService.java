@@ -22,11 +22,15 @@ public interface WtmInoutService {
 	public void updateTimecardUnplanned(Map<String, Object> paramMap) throws Exception;
 	//퇴근취소 업데이트
 	public void updateTimecardCancel(Map<String, Object> paramMap) throws Exception;
+	//휴게정보 업데이트
+	public void updateTimecardExcept(Map<String, Object> paramMap) throws Exception;
 	//출퇴근정보 업데이트
 	public void updateTimecard(Map<String, Object> paramMap) throws Exception;
 	//외출복귀정보 업데이트
 	public ReturnParam updateGoBack(Map<String, Object> paramMap) throws Exception;
 
+	//타각 후처리 로직
+	public void inoutPostProcess(Map<String, Object> paramMap);
 	//타각데이터 저장
 	public boolean insertTimeStamp(Map<String, Object> paramMap) throws Exception;
 	//타각데이터 업데이트
