@@ -16,4 +16,7 @@ public interface WtmPushMgrRepository extends JpaRepository<WtmPushMgr, Long> {
 	
 	@Query(value="SELECT * FROM WTM_PUSH_MGR WHERE :ymd <= eymd AND :ymd >= symd", nativeQuery = true)
 	public List<WtmPushMgr> findBySymdAndEymd(@Param(value="ymd")String ymd);
+	
+	@Query("SELECT E FROM WtmPushMgr E WHERE E.tenantId = ?1 AND E.enterCd = ?2 AND ?3 BETWEEN E.symd AND F_WTM_NVL(E.eymd, F_WTM_TO_DATE('99991231', 'YMD')) AND E.pushObj = ?4 AND E.stdType = ?5 ")
+	public WtmPushMgr findByTenantIdAndEnterCdAndYmdBetweenAndPushObjAndStdType(Long tenantId, String enterCd, String d, String pushObj, String stdType);
 }

@@ -59,6 +59,9 @@ public class CommUser implements Serializable {
 	
 	@Column(name="phone_no")
 	private String phoneNo;
+	
+	@Column(name="enter_cd")
+	private String enterCd;
 
 	@Lob
 	private byte[] image;
@@ -242,4 +245,15 @@ public class CommUser implements Serializable {
 		this.accountLockoutYn = accountLockoutYn;
 	}
 
+
+	public String getEnterCd() {
+		return enterCd;
+	}
+
+
+	public void setEnterCd(String enterCd) {
+		this.enterCd = enterCd;
+	}
+
+	
 }

@@ -35,6 +35,13 @@ public interface WtmInoutHisMapper {
 	public int saveWtmInoutHis(Map<String, Object> paramMap) throws Exception;
 	
 	/**
+	 * 타각 테이블에 출퇴근 업데이트
+	 * @param paramMap
+	 * @return
+	 */
+	public int updateWtmInoutHis(Map<String, Object> paramMap) throws Exception;
+
+	/**
 	 * 캘린더 출퇴근 조회
 	 * @param paramMap
 	 * @return

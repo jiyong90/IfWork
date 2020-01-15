@@ -29,8 +29,8 @@ public interface WtmInoutService {
 
 	//타각데이터 저장
 	public boolean insertTimeStamp(Map<String, Object> paramMap) throws Exception;
-//	public int checkGoback(Long tenantId, String enterCd, String sabun) throws Exception;
-	public Map<String, Object> updateTimeStamp(Map<String, Object> paramMap);
+	//타각데이터 업데이트
+	public boolean updateTimeStamp(Map<String, Object> paramMap) throws Exception;
 	public List<Map<String, Object>> getMyInoutList(Map<String, Object> paramMap) throws Exception;
 	public List<Map<String, Object>> getMyInoutHistory(Map<String, Object> paramMap) throws Exception;
 	public Map<String, Object> getMyInoutDetail(Map<String, Object> paramMap) throws Exception;

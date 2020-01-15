@@ -1,5 +1,7 @@
 package com.isu.ifw.service;
 
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -16,14 +18,23 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.isu.ifw.common.entity.CommUser;
+import com.isu.ifw.common.repository.WtmCommUserRepository;
 import com.isu.ifw.common.service.TenantConfigManagerService;
+import com.isu.ifw.entity.WtmEmpAddr;
 import com.isu.ifw.entity.WtmEmpHis;
+import com.isu.ifw.entity.WtmOtp;
 import com.isu.ifw.mapper.EncryptionMapper;
+import com.isu.ifw.mapper.WtmEmpAddrMapper;
 import com.isu.ifw.mapper.WtmEmpHisMapper;
 import com.isu.ifw.mapper.WtmIfEmpMsgMapper;
+import com.isu.ifw.repository.WtmEmpAddrRepository;
 import com.isu.ifw.repository.WtmEmpHisRepository;
 import com.isu.ifw.repository.WtmIfEmpMsgRepository;
+import com.isu.ifw.repository.WtmOtpRepository;
+import com.isu.ifw.util.Sha256;
 import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
 
 
 @Service("empMgrService")
@@ -53,6 +64,18 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 	@Qualifier("WtmTenantConfigManagerService")
 	TenantConfigManagerService tcms;
 	
+	@Autowired
+	WtmEmpAddrMapper empAddrMapper;
+	
+	@Autowired
+	WtmEmpAddrRepository empAddrRepo;
+	
+	@Autowired
+	WtmOtpRepository otpRepo;
+	
+	@Autowired
+	WtmCommUserRepository commUserRepo;
+
 	@Override
 	public List<Map<String, Object>> getEmpHisList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
 		List<Map<String, Object>> empList = new ArrayList();
@@ -316,4 +339,115 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 		}
 		return cnt;
 	}
+	
+	@Override
+	public boolean checkPasswordCertificate(Long tenantId, String enterCd, String userInfo){
+		
+		String passwordCertificate = tcms.getConfigValue(tenantId, "WTMS.LOGIN.PASSWORD_CERTIFICATE", true, "");
+			
+		boolean isValid = false;
+		
+		if("PHONE".equalsIgnoreCase(passwordCertificate)) {
+			Map<String, Object> paramMap = new HashMap<String, Object>();
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+			paramMap.put("handPhone", userInfo);
+			Map<String, Object> empAddr = empAddrMapper.findByTenantIdAndEnterCdAndHandPhone(paramMap);
+			
+			if(empAddr!=null) {
+				isValid = true;
+			}
+			
+		} else {
+			WtmEmpAddr empAddr = empAddrRepo.findByTenantIdAndEnterCdAndEmail(tenantId, enterCd, userInfo);
+			
+			if(empAddr!=null) {
+				isValid = true;
+			}
+			
+		}
+
+		return isValid;
+		
+	}
+	
+	@Override
+	public ReturnParam codeCheck(Long tenantId, String enterCd, String otp, String userInfo){
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("");
+		
+		try{
+			String passwordCertificate = tcms.getConfigValue(tenantId, "WTMS.LOGIN.PASSWORD_CERTIFICATE", true, "");
+			
+			Long empAddrId = null;
+			if("PHONE".equalsIgnoreCase(passwordCertificate)) {
+				Map<String, Object> paramMap = new HashMap<String, Object>();
+				paramMap.put("tenantId", tenantId);
+				paramMap.put("enterCd", enterCd);
+				paramMap.put("handPhone", userInfo);
+				Map<String, Object> empAddr = empAddrMapper.findByTenantIdAndEnterCdAndHandPhone(paramMap);
+				
+				empAddrId = Long.valueOf(empAddr.get("empAddrId").toString());
+			} else {
+				WtmEmpAddr empAddr = empAddrRepo.findByTenantIdAndEnterCdAndEmail(tenantId, enterCd, userInfo);
+				
+				empAddrId = empAddr.getEmpAddrId();
+			}
+			
+			List<WtmOtp> result = otpRepo.findByOtpAndResourceIdAndExpireDateGreaterThanEqualOrderByExpireDateDesc(otp, empAddrId, new Date());
+			
+			if(result==null || result.size()==0) {
+				rp.setFail("인증코드가 유효하지 않습니다.");
+			} 
+			
+		}catch(Exception e){
+			e.printStackTrace();
+			rp.setFail("인증코드가 유효하지 않습니다.");
+		} 
+		return rp;
+	}
+	
+	@Transactional
+	@Override
+	public void changePw(Long tenantId, String tsId, String enterCd, Map<String, Object> paramMap){
+		String password = paramMap.get("password").toString();
+		
+		String passwordCertificate = tcms.getConfigValue(tenantId, "WTMS.LOGIN.PASSWORD_CERTIFICATE", true, "");
+		
+		String sabun = null;
+		if("PHONE".equalsIgnoreCase(passwordCertificate)) {
+			Map<String, Object> pMap = new HashMap<String, Object>();
+			pMap.put("tenantId", tenantId);
+			pMap.put("enterCd", enterCd);
+			pMap.put("handPhone", paramMap.get("userInfo").toString());
+			Map<String, Object> empAddr = empAddrMapper.findByTenantIdAndEnterCdAndHandPhone(pMap);
+			
+			sabun = empAddr.get("sabun").toString();
+		} else {
+			WtmEmpAddr empAddr = empAddrRepo.findByTenantIdAndEnterCdAndEmail(tenantId, enterCd, paramMap.get("userInfo").toString());
+			
+			sabun = empAddr.getSabun();
+		}
+		
+		String encKey = paramMap.get("encKey").toString();
+		int repeatCount = Integer.valueOf(paramMap.get("repeatCount").toString());
+		
+		CommUser user = commUserRepo.findByTenantIdAndEnterCdAndLoginIdAndEncKey(tenantId, enterCd, sabun, encKey);
+		
+		try {
+			password = Sha256.getHash(password, encKey, repeatCount);
+		} catch (NumberFormatException e1) {
+			e1.printStackTrace();
+		} catch (NoSuchAlgorithmException e1) {
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		 
+		user.setPassword(password);
+		user.setLoginFailureCount(0);
+		user.setAccountLockoutYn("N");
+		commUserRepo.save(user);
+	}
+	
 }

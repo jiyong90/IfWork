@@ -57,6 +57,16 @@ public class WtmCodeIntf {
 	}
 
 
+	public Long getCodeId() {
+		return codeId;
+	}
+
+
+	public void setCodeId(Long codeId) {
+		this.codeId = codeId;
+	}
+
+
 	public Long getTenantId() {
 		return tenantId;
 	}
