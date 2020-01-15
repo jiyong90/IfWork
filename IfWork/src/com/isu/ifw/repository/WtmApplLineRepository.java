@@ -15,6 +15,8 @@ import com.isu.ifw.entity.WtmApplLine;
 public interface WtmApplLineRepository extends JpaRepository<WtmApplLine, Long> {
 	public List<WtmApplLine> findByApplIdOrderByApprSeqAsc(Long applId);
 	
+	public List<WtmApplLine> findByApplIdOrderByApprTypeCdAscApprSeqAsc(Long applId);
+	
 	public WtmApplLine findByApplIdAndApprSeq(Long applId, int apprSeq);
 	
 	@Modifying
