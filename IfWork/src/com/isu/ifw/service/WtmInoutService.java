@@ -24,6 +24,9 @@ public interface WtmInoutService {
 	public void updateTimecardCancel(Map<String, Object> paramMap, String unplanned) throws Exception;
 	//휴게정보 업데이트
 	public void updateTimecardExcept(Map<String, Object> paramMap) throws Exception;
+
+	//출퇴근정보 업데이트
+	public void updateTimecardCancelWeb(Map<String, Object> paramMap) throws Exception;
 	//출퇴근정보 업데이트
 	public void updateTimecard(Map<String, Object> paramMap) throws Exception;
 	//외출복귀정보 업데이트

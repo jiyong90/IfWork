@@ -229,6 +229,36 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	}
 	
 	@Override
+	public void updateTimecardCancelWeb(Map<String, Object> paramMap) throws Exception {
+		try {
+		//일단 타각데이터는 저장하고 empHis랑 비교...
+			int cnt = inoutHisMapper.updateWtmInoutHis(paramMap);
+			if(cnt <= 0) {
+				logger.debug("updateTimeStampFail : " + paramMap.toString());
+				throw new Exception("타각데이터 저장에 실패하였습니다.");
+			}
+			logger.debug("updateTimeStampSuccess : " + paramMap.toString());
+				
+			WtmEmpHis emp = empRepository.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()), 
+					paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
+			if(emp == null) {
+				logger.debug("사용자 정보 조회 중 오류가 발생하였습니다." + paramMap.toString());
+				throw new Exception("사용자 정보 조회 중 오류가 발생하였습니다.");
+			}
+
+			wtmCalendarMapper.cancelEntryDateCalendar(paramMap);
+
+		} catch(Exception e) {
+			logger.debug("updateTimeStampFail : " +e.getMessage());
+			throw new Exception("저장에 실패하였습니다.");
+		}
+ 
+//		if(cnt <= 0) {
+//			throw new Exception("캘린더 정보 업데이트에 실패하였습니다.");
+//		}
+	}	
+	
+	@Override
 	public Map<String, Object> getMenuContextWeb(Long tenantId, String enterCd, String sabun) {
 
 		Map <String,Object> paramMap = new HashMap<String, Object>();
