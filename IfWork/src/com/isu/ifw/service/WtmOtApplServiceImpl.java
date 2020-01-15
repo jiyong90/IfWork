@@ -180,11 +180,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 	}
 	
 	@Override
-	public List<WtmApplLineVO> getApplLine(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		paramMap.put("tenantId", tenantId);
-		return applMapper.getWtmApplLine(paramMap);
+	public List<WtmApplLineVO> getApplLine(Long tenantId, String enterCd, String sabun, String applCd, String userId) {
+		return null;
 	}
 	
 	@Override
@@ -680,7 +677,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				//wtmOtApplMapper.calcOtMinute(paramMap);
 			}
 		}
-		saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, applSabun, userId);
+		saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, workTypeCd, applSabun, userId);
 		paramMap.put("applId", appl.getApplId());
 		//rp.put("flexibleApplId", flexibleAppl.getFlexibleApplId());
 		
@@ -912,7 +909,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		
 		return wtmApplRepo.save(appl);
 	}
-	protected void saveWtmApplLine(Long tenantId, String enterCd, int apprLvl, Long applId, String sabun, String userId) {
+	protected void saveWtmApplLine(Long tenantId, String enterCd, int apprLvl, Long applId, String applCd, String sabun, String userId) {
 		
 		//결재라인 저장
 		Map<String, Object> paramMap = new HashMap<String, Object>();
@@ -921,7 +918,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		paramMap.put("sabun", sabun);
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("d", WtmUtil.parseDateStr(new Date(), null));
-		paramMap.put("applId", applId);
+		paramMap.put("applCd", applCd);
 		//결재라인 조회 기본으로 3단계까지 가져와서 뽑아  쓰자
 		List<WtmApplLineVO> applLineVOs = applMapper.getWtmApplLine(paramMap);
 		//기본 결재라인이 없으면 저장도 안됨.
@@ -1409,7 +1406,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			wtmOtApplRepo.save(otAppl);
 		}
 
-		saveWtmApplLine(tenantId, enterCd, Integer.parseInt(paramMap.get("applLevelCd").toString()), applId, sabun, userId);
+		saveWtmApplLine(tenantId, enterCd, Integer.parseInt(paramMap.get("applLevelCd").toString()), applId, paramMap.get("applCd").toString(), sabun, userId);
 		paramMap.put("applId", appl.getApplId());
 		//rp.put("flexibleApplId", flexibleAppl.getFlexibleApplId());
 		

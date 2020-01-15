@@ -1,6 +1,7 @@
 package com.isu.ifw.service;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -138,10 +139,14 @@ public class WtmApplServiceImpl implements WtmApplService {
 	}
 
 	@Override
-	public List<WtmApplLineVO> getApplLine(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap,
-			String userId) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<WtmApplLineVO> getApplLine(Long tenantId, String enterCd, String sabun, String applCd, String userId) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("sabun", sabun);
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("applCd", applCd);
+		paramMap.put("d", WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
+		return applMapper.getWtmApplLine(paramMap);
 	}
 
 	@Override

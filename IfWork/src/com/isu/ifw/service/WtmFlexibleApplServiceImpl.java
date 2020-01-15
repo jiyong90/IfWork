@@ -11,8 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
@@ -22,7 +20,6 @@ import com.isu.ifw.entity.WtmFlexibleApplyDet;
 import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmPropertie;
-import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.entity.WtmWorkPattDet;
 import com.isu.ifw.mapper.WtmApplMapper;
@@ -132,7 +129,6 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
 		Map<String, Object> appl = flexApplMapper.findByApplId(applId);
-		appl.put("applLine", applMapper.getWtmApplLineByApplId(applId));
 		
 		//탄근제의 경우 주별 근무시간을 보여준다.
 		if(appl!=null && appl.get("applCd")!=null && "ELAS".equals(appl.get("applCd"))) {
@@ -163,15 +159,14 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			}
 		}
 		
+		appl.put("applLine", applMapper.getWtmApplLineByApplId(applId));
+		
 		return appl;
 	}
 	
 	@Override
-	public List<WtmApplLineVO> getApplLine(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		paramMap.put("tenantId", tenantId);
-		return applMapper.getWtmApplLine(paramMap);
+	public List<WtmApplLineVO> getApplLine(Long tenantId, String enterCd, String sabun, String applCd, String userId) {
+		return null;
 	}
 	
 	@Override
@@ -208,7 +203,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 				List<WtmFlexibleApplDet> flexibleApplDet = saveWtmFlexibleApplDet(tenantId, enterCd, flexibleAppl.getFlexibleApplId(), flexibleStdMgrId, sYmd, eYmd, sabun, userId);
 			}
 				
-			saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, sabun, userId);
+			saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, workTypeCd, sabun, userId);
 		
 			rp.put("applId", appl.getApplId());
 			rp.put("flexibleApplId", flexibleAppl.getFlexibleApplId());
@@ -241,7 +236,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		//근무제 신청서 테이블 조회
 		saveWtmFlexibleAppl(tenantId, enterCd, applId, flexibleStdMgrId, sYmd, eYmd, reason, sabun, userId);
 		
-		saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, sabun, userId);
+		saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, workTypeCd, sabun, userId);
 		
 		paramMap.put("applId", applId);
 		ReturnParam rp = validate(tenantId, enterCd, sabun, workTypeCd, paramMap);
@@ -803,7 +798,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		return workList;
 	}
 	
-	protected void saveWtmApplLine(Long tenantId, String enterCd, int apprLvl, Long applId, String sabun, String userId) {
+	protected void saveWtmApplLine(Long tenantId, String enterCd, int apprLvl, Long applId, String applCd, String sabun, String userId) {
 		
 		//결재라인 저장
 		Map<String, Object> paramMap = new HashMap<String, Object>();
@@ -812,7 +807,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		paramMap.put("sabun", sabun);
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("d", WtmUtil.parseDateStr(new Date(), null));
-		paramMap.put("applId", applId);
+		paramMap.put("applCd", applCd);
 		//결재라인 조회 기본으로 3단계까지 가져와서 뽑아  쓰자
 		List<WtmApplLineVO> applLineVOs = applMapper.getWtmApplLine(paramMap);
 		//기본 결재라인이 없으면 저장도 안됨.

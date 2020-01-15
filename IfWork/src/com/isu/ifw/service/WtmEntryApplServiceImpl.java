@@ -63,11 +63,14 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 	
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
-		return entryApplMapper.findByApplId(applId);
+		Map<String, Object> appl = entryApplMapper.findByApplId(applId);
+		appl.put("applLine", applMapper.getWtmApplLineByApplId(applId));		
+				
+		return appl;
 	}
-
+	
 	@Override
-	public List<WtmApplLineVO> getApplLine(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap,
+	public List<WtmApplLineVO> getApplLine(Long tenantId, String enterCd, String sabun, String applCd,
 			String userId) {
 		// TODO Auto-generated method stub
 		return null;
@@ -289,7 +292,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 		//근태사유서 신청서 저장
 		saveInOutChangeAppl(tenantId, enterCd, applId, ymd, planSdate, planEdate, entrySdate, entryEdate, chgSdate, chgEdate, reason, sabun, userId);
 		
-		saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, sabun, userId);
+		saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, workTypeCd, sabun, userId);
 		
 		rp.put("applId", applId);
 		
@@ -388,7 +391,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 		return wtmApplRepo.save(appl);
 	}
 	
-	protected void saveWtmApplLine(Long tenantId, String enterCd, int apprLvl, Long applId, String sabun, String userId) {
+	protected void saveWtmApplLine(Long tenantId, String enterCd, int apprLvl, Long applId, String applCd, String sabun, String userId) {
 		
 		//결재라인 저장
 		Map<String, Object> paramMap = new HashMap<String, Object>();
@@ -397,7 +400,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 		paramMap.put("sabun", sabun);
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("d", WtmUtil.parseDateStr(new Date(), null));
-		paramMap.put("applId", applId);
+		paramMap.put("applCd", applCd);
 		//결재라인 조회 기본으로 3단계까지 가져와서 뽑아  쓰자
 		List<WtmApplLineVO> applLineVOs = applMapper.getWtmApplLine(paramMap);
 		//기본 결재라인이 없으면 저장도 안됨.
