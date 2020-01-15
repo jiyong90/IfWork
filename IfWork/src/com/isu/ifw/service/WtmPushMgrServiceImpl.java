@@ -1,8 +1,6 @@
 package com.isu.ifw.service;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +13,9 @@ import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
 import com.isu.ifw.entity.WtmPushMgr;
+import com.isu.ifw.entity.WtmPushSendHis;
 import com.isu.ifw.repository.WtmPushMgrRepository;
+import com.isu.ifw.vo.WtmMessageVO;
 
 @Service("pushMgrService")
 public class WtmPushMgrServiceImpl implements WtmPushMgrService{
@@ -42,8 +42,11 @@ public class WtmPushMgrServiceImpl implements WtmPushMgrService{
 				code.put("pushObj", l.getPushObj());
 				code.put("stdMinute", l.getStdMinute());
 				code.put("stdType", l.getStdType());
+				code.put("title", l.getTitle());
 				code.put("pushMsg", l.getPushMsg());
+				code.put("pushDetail", 0);
 				code.put("mobileYn", l.getMobileYn());
+				code.put("smsYn", l.getSmsYn());
 				code.put("emailYn", l.getEmailYn());
 				code.put("note", l.getNote());
 				codeList.add(code);
@@ -76,8 +79,11 @@ public class WtmPushMgrServiceImpl implements WtmPushMgrService{
 				push.put("pushObj", l.getPushObj());
 				push.put("stdMinute", l.getStdMinute());
 				push.put("stdType", l.getStdType());
+				push.put("title", l.getTitle());
 				push.put("pushMsg", l.getPushMsg());
+				push.put("pushDetail", 0);
 				push.put("mobileYn", l.getMobileYn());
+				push.put("smsYn", l.getSmsYn());
 				push.put("emailYn", l.getEmailYn());
 				push.put("note", l.getNote());
 				pushList.add(push);
@@ -109,7 +115,9 @@ public class WtmPushMgrServiceImpl implements WtmPushMgrService{
 						code.setStdMinute(Integer.parseInt(l.get("stdMinute").toString()));
 						code.setStdType(l.get("stdType").toString());
 						code.setPushMsg(l.get("pushMsg").toString());
+						code.setTitle(l.get("title").toString());;
 						code.setMobileYn(l.get("mobileYn").toString());
+						code.setSmsYn(l.get("smsYn").toString());;
 						code.setEmailYn(l.get("emailYn").toString());
 						code.setNote(l.get("note").toString());
 						code.setUpdateId(userId);
@@ -147,4 +155,15 @@ public class WtmPushMgrServiceImpl implements WtmPushMgrService{
 		}
 		return cnt;
 	}
+	
+	@Override
+	public void saveMsg(Long tenantId, String enterCd, Map<String, Object> paramMap, String userId) {
+		Long pushMgrId = Long.valueOf(paramMap.get("pushMgrId").toString());
+		WtmPushMgr pushMgr = pushMgrRepository.findById(pushMgrId).get();
+		
+		pushMgr.setPushMsg(paramMap.get("pushMsg").toString());
+		
+		pushMgrRepository.save(pushMgr);
+	}
+	
 }

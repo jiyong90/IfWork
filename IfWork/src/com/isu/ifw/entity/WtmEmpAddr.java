@@ -16,33 +16,26 @@ import javax.persistence.TemporalType;
 import org.springframework.format.annotation.DateTimeFormat;
 
 @Entity
-@Table(name="WTM_PUSH_SEND_HIS")
-public class WtmPushSendHis {
+@Table(name="WTM_EMP_ADDR")
+public class WtmEmpAddr {
 	
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	@Column(name="PUSH_SEND_HIS_ID")
-	private Long pushSendHisId;
+	@Column(name="EMP_ADDR_ID")
+	private Long empAddrId;
 	@Column(name="TENANT_ID")
 	private Long tenantId;
 	@Column(name="ENTER_CD")
 	private String enterCd;
-	@Column(name="UNIT_TYPE_NM")
-	private String unitTypeNm;
-	@Column(name="STD_TYPE")
-	private String stdType;
-	@Column(name="SEND_TYPE")
-	private String sendType;
-	@Column(name="SEND_SABUN")
-	private String sendSabun;
-	@Column(name="RECEIVE_SABUN")
-	private String receiveSabun;
-	@Column(name="RECEIVE_MAIL")
-	private String receiveMail; 
-	@Column(name="SEND_MSG")
-	private String sendMsg;
+	@Column(name="SABUN")
+	private String sabun;
+	@Column(name="EMAIL")
+	private String email;
+	@Column(name="HAND_PHONE")
+	private String handPhone;
 	@Column(name="NOTE")
 	private String note;
+
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name="UPDATE_DATE", columnDefinition="DATETIME") 
 	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -50,13 +43,12 @@ public class WtmPushSendHis {
 	@Column(name="UPDATE_ID")
 	private String updateId;
 	
-		
-	public Long getPushSendHisId() {
-		return pushSendHisId;
+	public Long getEmpAddrId() {
+		return empAddrId;
 	}
 
-	public void setPushSendHisId(Long pushSendHisId) {
-		this.pushSendHisId = pushSendHisId;
+	public void setEmpAddrId(Long empAddrId) {
+		this.empAddrId = empAddrId;
 	}
 
 	public Long getTenantId() {
@@ -75,60 +67,28 @@ public class WtmPushSendHis {
 		this.enterCd = enterCd;
 	}
 
-	public String getUnitTypeNm() {
-		return unitTypeNm;
+	public String getSabun() {
+		return sabun;
 	}
 
-	public void setUnitTypeNm(String unitTypeNm) {
-		this.unitTypeNm = unitTypeNm;
+	public void setSabun(String sabun) {
+		this.sabun = sabun;
 	}
 
-	public String getStdType() {
-		return stdType;
+	public String getEmail() {
+		return email;
 	}
 
-	public void setStdType(String stdType) {
-		this.stdType = stdType;
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
-	public String getSendType() {
-		return sendType;
+	public String getHandPhone() {
+		return handPhone;
 	}
 
-	public void setSendType(String sendType) {
-		this.sendType = sendType;
-	}
-
-	public String getSendSabun() {
-		return sendSabun;
-	}
-
-	public void setSendSabun(String sendSabun) {
-		this.sendSabun = sendSabun;
-	}
-
-	public String getReceiveSabun() {
-		return receiveSabun;
-	}
-
-	public void setReceiveSabun(String receiveSabun) {
-		this.receiveSabun = receiveSabun;
-	}
-
-	public String getReceiveMail() {
-		return receiveMail;
-	}
-
-	public void setReceiveMail(String receiveMail) {
-		this.receiveMail = receiveMail;
-	}
-
-	public String getSendMsg() {
-		return sendMsg;
-	}
-
-	public void setSendMsg(String sendMsg) {
-		this.sendMsg = sendMsg;
+	public void setHandPhone(String handPhone) {
+		this.handPhone = handPhone;
 	}
 
 	public String getNote() {
@@ -164,5 +124,6 @@ public class WtmPushSendHis {
     protected void onUpdate() {
     	this.updateDate = new Date();
     }
+
 	
 }

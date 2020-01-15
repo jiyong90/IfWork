@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.Table;
@@ -39,10 +40,15 @@ public class WtmPushMgr {
 	private Integer stdMinute;
 	@Column(name="STD_TYPE")
 	private String stdType;
+	@Column(name="TITLE")
+	private String title;
+	@Lob
 	@Column(name="PUSH_MSG")
 	private String pushMsg;
 	@Column(name="MOBILE_YN")
 	private String mobileYn;
+	@Column(name="SMS_YN")
+	private String smsYn;
 	@Column(name="EMAIL_YN")
 	private String emailYn;
 	@Column(name="NOTE")
@@ -109,6 +115,12 @@ public class WtmPushMgr {
 	public void setStdType(String stdType) {
 		this.stdType = stdType;
 	}
+	public String getTitle() {
+		return title;
+	}
+	public void setTitle(String title) {
+		this.title = title;
+	}
 	public String getPushMsg() {
 		return pushMsg;
 	}
@@ -121,6 +133,12 @@ public class WtmPushMgr {
 	}
 	public void setMobileYn(String mobileYn) {
 		this.mobileYn = mobileYn;
+	}
+	public String getSmsYn() {
+		return smsYn;
+	}
+	public void setSmsYn(String smsYn) {
+		this.smsYn = smsYn;
 	}
 	public String getEmailYn() {
 		return emailYn;
