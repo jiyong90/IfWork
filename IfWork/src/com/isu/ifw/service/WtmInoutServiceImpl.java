@@ -248,6 +248,25 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 
 			wtmCalendarMapper.cancelEntryDateCalendar(paramMap);
 
+			SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
+			List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()),
+					paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
+
+			//BASE, OT, NIGHT, FIXOT appr update
+			if(results != null && results.size() > 0) {
+				for(WtmWorkDayResult r : results) {
+					if(r.getTimeTypeCd().equals("BASE") 
+								|| r.getTimeTypeCd().equals("FIXOT") 
+								|| r.getTimeTypeCd().equals("OT") 
+								|| r.getTimeTypeCd().equals("NIGHT")) {
+						logger.debug("퇴근타각, BASE, OT, NIGHT, FIXOT 인정시간 update " + r.toString());
+						r.setApprSdate(null);
+						r.setApprEdate(null);
+						r.setApprMinute(null);
+						wtmWorkDayResultRepo.save(r);
+					}
+				}
+			}
 		} catch(Exception e) {
 			logger.debug("updateTimeStampFail : " +e.getMessage());
 			throw new Exception("저장에 실패하였습니다.");
@@ -316,6 +335,26 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					entryEdate = (Date) time.get("entryEdate");
 				}
 			}
+			
+			//외출복귀정보
+			String gobackType = "GO";
+			String gobackDesc = "-";
+			List<Map<String, Object>> list2 = inoutHisMapper.getContext(paramMap);
+			for(Map<String, Object> data : list2) {
+				if(data.get("inoutTypeCd").equals("GO") || data.get("inoutTypeCd").equals("BACK")) {
+					if(data.get("inoutTypeCd").equals("GO")) {
+						gobackType = "BACK";
+						gobackDesc = "외출 " + data.get("inoutDate").toString();
+					}
+					else {
+						gobackType = "GO";
+						gobackDesc = "복귀 " + data.get("inoutDate").toString();
+					} 
+				}
+			}
+			
+			returnMap.put("exceptDesc", gobackDesc);
+			returnMap.put("exceptType", gobackType);
 			
 			returnMap.put("ymd", ymd);
 			returnMap.put("label", label);
