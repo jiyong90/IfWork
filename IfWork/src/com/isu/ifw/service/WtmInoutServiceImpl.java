@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.isu.ifw.entity.WtmEmpHis;
 import com.isu.ifw.entity.WtmWorkDayResult;
@@ -304,7 +305,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	}
 	
 	@Override
-	public void updateTimecardCancel(Map<String, Object> paramMap) throws Exception {
+	public void updateTimecardCancel(Map<String, Object> paramMap, String unplanned) throws Exception {
 		try {
 			if(updateTimeStamp(paramMap)) {
 				logger.debug("updateTimeStampSuccess : " + paramMap.toString());
@@ -318,6 +319,39 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		}
  
 		int cnt = wtmCalendarMapper.cancelEntryDateCalendar(paramMap);
+		
+		SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
+		List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()),
+				paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
+
+		//BASE, FIXOT 데이터만 삭제
+		if(unplanned.equals("Y")) {
+			if(results != null && results.size() > 0) {
+				for(WtmWorkDayResult r : results) {
+					if(r.getTimeTypeCd().equals("BASE") || r.getTimeTypeCd().equals("FIXOT")) {
+						logger.debug("퇴근타각, BASE, FIXOT 삭제 " + r.toString());
+						wtmWorkDayResultRepo.deleteById(r.getWorkDayResultId());
+					}
+				}
+			}
+		}
+		
+		//BASE, OT, NIGHT, FIXOT appr update
+		if(results != null && results.size() > 0) {
+			for(WtmWorkDayResult r : results) {
+				if(r.getTimeTypeCd().equals("BASE") 
+							|| r.getTimeTypeCd().equals("FIXOT") 
+							|| r.getTimeTypeCd().equals("OT") 
+							|| r.getTimeTypeCd().equals("NIGHT")) {
+					logger.debug("퇴근타각, BASE, OT, NIGHT, FIXOT 인정시간 update " + r.toString());
+					r.setApprSdate(null);
+					r.setApprEdate(null);
+					r.setApprMinute(null);
+					wtmWorkDayResultRepo.save(r);
+				}
+			}
+		}
+		
 //		if(cnt <= 0) {
 //			throw new Exception("캘린더 정보 업데이트에 실패하였습니다.");
 //		}
@@ -586,41 +620,25 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		}
 	}
 	
+	@Transactional
 	@Async("threadPoolTaskExecutor")
-	public void inoutPostProcess(Map<String, Object> paramMap) {
+	public void inoutPostProcess(Map<String, Object> paramMap, String unplanned) {
 		try {
 			SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
-			//BASE, FIXOT 데이터만 삭제 후 돌리기
 			List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()),
 					paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
 
-			if(results != null && results.size() > 0) {
-				for(WtmWorkDayResult r : results) {
-					if(r.getTimeTypeCd().equals("BASE") || r.getTimeTypeCd().equals("FIXOT")) {
-						logger.debug("퇴근타각, BASE, FIXOT 삭제 " + r.toString());
-						wtmWorkDayResultRepo.deleteById(r.getWorkDayResultId());
+			//BASE, FIXOT 데이터만 삭제
+			if(unplanned.equals("Y")) {
+				if(results != null && results.size() > 0) {
+					for(WtmWorkDayResult r : results) {
+						if(r.getTimeTypeCd().equals("BASE") || r.getTimeTypeCd().equals("FIXOT")) {
+							logger.debug("퇴근타각, BASE, FIXOT 삭제 " + r.toString());
+							wtmWorkDayResultRepo.deleteById(r.getWorkDayResultId());
+						}
 					}
 				}
 			}
-			
-			//외출에 대해서 다시 호출
-//			List<WtmWorkDayResult> excepts = 
-//					wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(Long.parseLong(paramMap.get("tenantId").toString()), 
-//							paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), "EXCEPT", paramMap.get("stdYmd").toString(), paramMap.get("stdYmd").toString());
-//			logger.debug("계산해야 하는 외출/복귀 : " + excepts.toString());
-//			for(WtmWorkDayResult except : excepts) {
-//				empService.addWtmDayResultInBaseTimeType(except.getTenantId(),
-//						except.getEnterCd(), 
-//						except.getYmd(),
-//						except.getSabun(),
-//						except.getTimeTypeCd(),
-//						"",
-//						except.getApprSdate(),
-//						except.getApprEdate(),
-//						null,
-//						"0",
-//						false);
-//			}
 
 			empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
 					paramMap.get("enterCd").toString(), paramMap.get("stdYmd").toString(),
