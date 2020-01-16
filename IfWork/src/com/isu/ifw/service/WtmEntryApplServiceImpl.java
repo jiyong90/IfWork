@@ -415,6 +415,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 			
 			//기 저장된 결재라인과 비교
 			if(applLines != null && applLines.size() > 0) {
+				int i=1; // apprSeq
 				int whileLoop = 0;
 				int lineCnt = 0;
 				for(WtmApplLine applLine : applLines) {
@@ -425,11 +426,12 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 						
 						if(!APPL_LINE_S.equals(applLineVO.getApprTypeCd()) || (APPL_LINE_S.equals(applLineVO.getApprTypeCd()) && lineCnt < applCnt)) {
 							applLine.setApplId(applId);
-							applLine.setApprSeq(applLineVO.getApprSeq());
+							applLine.setApprSeq(i);
 							applLine.setApprSabun(applLineVO.getSabun());
 							applLine.setApprTypeCd(applLineVO.getApprTypeCd());
 							applLine.setUpdateId(userId);
 							wtmApplLineRepo.save(applLine);
+							i++;
 						}
 						if(APPL_LINE_S.equals(applLineVO.getApprTypeCd()))
 							lineCnt++;
@@ -442,17 +444,19 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 				} 
 			}else {
 				//신규생성
+				int i=1; // apprSeq
 				int lineCnt = 0; 
 				for(WtmApplLineVO applLineVO : applLineVOs) {
 					//발신결재 결재레벨 체크
 					if(!APPL_LINE_S.equals(applLineVO.getApprTypeCd()) || (APPL_LINE_S.equals(applLineVO.getApprTypeCd()) && lineCnt < applCnt)) {
 						WtmApplLine applLine = new WtmApplLine();
 						applLine.setApplId(applId);
-						applLine.setApprSeq(applLineVO.getApprSeq());
+						applLine.setApprSeq(i);
 						applLine.setApprSabun(applLineVO.getSabun());
 						applLine.setApprTypeCd(applLineVO.getApprTypeCd());
 						applLine.setUpdateId(userId);
 						wtmApplLineRepo.save(applLine);
+						i++;
 					}
 					
 					if(APPL_LINE_S.equals(applLineVO.getApprTypeCd()))

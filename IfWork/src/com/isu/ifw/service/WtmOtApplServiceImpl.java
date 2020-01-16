@@ -929,6 +929,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			
 			//기 저장된 결재라인과 비교
 			if(applLines != null && applLines.size() > 0) {
+				int i=1; // apprSeq
 				int whileLoop = 0;
 				int lineCnt = 0;
 				for(WtmApplLine applLine : applLines) {
@@ -939,11 +940,12 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 						
 						if(!APPL_LINE_S.equals(applLineVO.getApprTypeCd()) || (APPL_LINE_S.equals(applLineVO.getApprTypeCd()) && lineCnt < applCnt)) {
 							applLine.setApplId(applId);
-							applLine.setApprSeq(applLineVO.getApprSeq());
+							applLine.setApprSeq(i);
 							applLine.setApprSabun(applLineVO.getSabun());
 							applLine.setApprTypeCd(applLineVO.getApprTypeCd());
 							applLine.setUpdateId(userId);
 							wtmApplLineRepo.save(applLine);
+							i++;
 						}
 						if(APPL_LINE_S.equals(applLineVO.getApprTypeCd()))
 							lineCnt++;
@@ -956,17 +958,19 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				} 
 			}else {
 				//신규생성
+				int i=1; // apprSeq
 				int lineCnt = 0; 
 				for(WtmApplLineVO applLineVO : applLineVOs) {
 					//발신결재 결재레벨 체크
 					if(!APPL_LINE_S.equals(applLineVO.getApprTypeCd()) || (APPL_LINE_S.equals(applLineVO.getApprTypeCd()) && lineCnt < applCnt)) {
 						WtmApplLine applLine = new WtmApplLine();
 						applLine.setApplId(applId);
-						applLine.setApprSeq(applLineVO.getApprSeq());
+						applLine.setApprSeq(i);
 						applLine.setApprSabun(applLineVO.getSabun());
 						applLine.setApprTypeCd(applLineVO.getApprTypeCd());
 						applLine.setUpdateId(userId);
 						wtmApplLineRepo.save(applLine);
+						i++;
 					}
 					
 					if(APPL_LINE_S.equals(applLineVO.getApprTypeCd()))
@@ -1197,7 +1201,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 						if(empList != null && empList.size() > 0) {
 							isEmpty = false;
 							for(Map<String, Object> empMap : empList) {
-								if(sabun.equals(empMap.get("k"))) {
+								if(empMap.get("k")!=null && sabun.equals(empMap.get("k"))) {
 									isTarget = true;
 								}
 							}
@@ -1208,7 +1212,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 						if(orgList != null && orgList.size() > 0) {
 							isEmpty = false;
 							for(Map<String, Object> orgMap : orgList) {
-								if(e.getOrgCd().equals(orgMap.get("k"))) {
+								if(e.getOrgCd()!=null && orgMap.get("k")!=null && e.getOrgCd().equals(orgMap.get("k"))) {
 									isTarget = true;
 									break;
 								}
@@ -1238,7 +1242,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 						if(jikchakList != null && jikchakList.size() > 0) {
 							isEmpty = false;
 							for(Map<String, Object> jikchakMap : jikchakList) {
-								if(e.getDutyCd().equals(jikchakMap.get("k"))) {
+								if(e.getDutyCd()!=null && jikchakMap.get("k")!=null && e.getDutyCd().equals(jikchakMap.get("k"))) {
 									isTarget = true;
 									break;
 								}
@@ -1251,7 +1255,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 						if(jobList != null && jobList.size() > 0) {
 							isEmpty = false;
 							for(Map<String, Object> jobMap : jobList) {
-								if(e.getJobCd().equals(jobMap.get("k"))) {
+								if(e.getJobCd()!=null && jobMap.get("k")!=null && e.getJobCd().equals(jobMap.get("k"))) {
 									isTarget = true;
 									break;
 								}

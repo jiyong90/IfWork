@@ -452,14 +452,24 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("taaWorkYn", "");
 		
 		Map<String, Object> flexEmp = flexEmpMapper.getFlexibleEmp(paramMap);
+		
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("unplannedYn", "N");
+		
 		if(flexEmp!=null) {
 			if(flexEmp.get("taaTimeYn")!=null) //근태시간포함여부
 				paramMap.put("taaTimeYn", flexEmp.get("taaTimeYn").toString());
 			if(flexEmp.get("taaWorkYn")!=null) //근태일 근무여부
 				paramMap.put("taaWorkYn", flexEmp.get("taaWorkYn").toString());
+			if(flexEmp.get("unplannedYn")!=null) //근무계획 없이 타각 여부 수정
+				result.put("unplannedYn", flexEmp.get("unplannedYn").toString());
 		}
 		
-		return flexEmpMapper.getFlexibleWorkTimeInfo(paramMap); 
+		Map<String, Object> worktimeInfo = flexEmpMapper.getFlexibleWorkTimeInfo(paramMap);
+		if(worktimeInfo!=null)
+			result.putAll(worktimeInfo);
+		
+		return result; 
 	}
 	
 	@Override
