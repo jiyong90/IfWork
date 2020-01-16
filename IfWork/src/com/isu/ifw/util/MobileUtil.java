@@ -241,7 +241,8 @@ public class MobileUtil {
 			temp.put("type", "emp");
 			temp.put("typeNm", applLineVO.getApprTypeNm());
 			temp.put("name", applLineVO.getEmpNm());
-
+			temp.put("statNm", applLineVO.getApprStatusNm());
+			
 			if(applLineVO.getApprTypeCd().equals("1"))
 				lines2.add(temp);
 			else if(applLineVO.getApprTypeCd().equals("2"))
