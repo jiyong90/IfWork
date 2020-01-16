@@ -188,16 +188,37 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		if(typeCd.equals("02")) {
 			resultMap.put("useAppBtn", "true");
 
+//			preference: {
+//				"useRejectBtn": false
+//				"useConfirmBtn": false
+//				"useRemoveBtn": false
+//				"useExtendBtn": false
+//				"rejectBtnLabel": "승인"
+//				"confirmBtnLabel": "반려"
+//				"removeBtnLabel": "삭제"
+//				"extendBtnLabel": "재상신"
+//			},
+//
+//			actions: {
+//				"url_reject": "https://"
+//			    "url_confirm": "https://"
+//			    "url_remove": "https://"
+//			    "url_extend": "view://"
+//			}
+			
+			
 			Map<String,Object> preference = new HashMap();
-			preference.put("extBtnLabel", "반려");
-			preference.put("useExtBtn", "true");
-			preference.put("saveBtnLabel", "승인");
-			preference.put("useSave", "true");
+			preference.put("rejectBtnLabel", "반려");
+			preference.put("useRejectBtn", "true");
+			preference.put("confirmBtnLabel", "승인");
+			preference.put("useConfirmBtn", "true");
 			resultMap.put("preference", preference);
 			
 			Map<String,Object> actions = new HashMap();
 			String url = tcms.getConfigValue(tenantId, "WTMS.URL.EDOC_ACTION", true, "");	
-			actions.put("ep-save", url);
+			actions.put("url_reject", url);
+			actions.put("url_confirm", url);
+			
 			resultMap.put("actions", actions);
 			
 		} else {
