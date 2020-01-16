@@ -1,5 +1,6 @@
 package com.isu.ifw.service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -10,13 +11,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
+import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmOtApplMapper;
 import com.isu.ifw.mapper.WtmOtCanApplMapper;
+import com.isu.ifw.repository.WtmApplCodeRepository;
 import com.isu.ifw.repository.WtmApplLineRepository;
 import com.isu.ifw.repository.WtmApplRepository;
 import com.isu.ifw.repository.WtmEntryApplRepository;
@@ -71,6 +72,9 @@ public class WtmApplServiceImpl implements WtmApplService {
 	@Autowired
 	@Qualifier("wtmEntryApplService")
 	WtmApplService entryApplService;
+	
+	@Autowired
+	WtmApplCodeRepository applCodeRepo;
 	
 	
 	@Override
@@ -146,7 +150,26 @@ public class WtmApplServiceImpl implements WtmApplService {
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("applCd", applCd);
 		paramMap.put("d", WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
-		return applMapper.getWtmApplLine(paramMap);
+		
+		List<WtmApplLineVO> result = new ArrayList<WtmApplLineVO>();
+		List<WtmApplLineVO> applLines = applMapper.getWtmApplLine(paramMap);
+		
+		WtmApplCode applCode = applCodeRepo.findByTenantIdAndEnterCdAndApplCd(tenantId, enterCd, applCd);
+		if(applCode!=null && applCode.getApplLevelCd()!=null && !"".equals(applCode.getApplLevelCd())) {
+			int applLevel = Integer.parseInt(applCode.getApplLevelCd());
+			
+			int lineCnt = 0; 
+			for(WtmApplLineVO applLine : applLines) {
+				if(!APPL_LINE_S.equals(applLine.getApprTypeCd()) || (APPL_LINE_S.equals(applLine.getApprTypeCd()) && lineCnt < applLevel)) {
+					result.add(applLine);
+				}
+				
+				if(APPL_LINE_S.equals(applLine.getApprTypeCd()))
+					lineCnt++;
+			}
+		}
+		
+		return result;
 	}
 
 	@Override

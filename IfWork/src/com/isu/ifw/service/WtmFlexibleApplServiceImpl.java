@@ -814,24 +814,29 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		if(applLineVOs != null && applLineVOs.size() > 0){
 
 			//결재라인 코드는 1,2,3으로 되어있다 이렇게 써야한다!!!! 1:1단계, 2:2단계, 3:3단계
-			//결재라인에 기안자, 수신처도 포함
-			//int applCnt = apprLvl; 
-			int applCnt = applLineVOs.size(); 
+			int applCnt = apprLvl; 
 			
 			//기 저장된 결재라인과 비교
 			if(applLines != null && applLines.size() > 0) {
 				int whileLoop = 0;
-				
+				int lineCnt = 0;
 				for(WtmApplLine applLine : applLines) {
 					
 					WtmApplLineVO applLineVO = applLineVOs.get(whileLoop);
-					if(whileLoop < applCnt) {
-						applLine.setApplId(applId);
-						applLine.setApprSeq(applLineVO.getApprSeq());
-						applLine.setApprSabun(applLineVO.getSabun());
-						applLine.setApprTypeCd(applLineVO.getApprTypeCd());
-						applLine.setUpdateId(userId);
-						wtmApplLineRepo.save(applLine);
+					
+					if(whileLoop < applLineVOs.size()) {
+						
+						if(!APPL_LINE_S.equals(applLineVO.getApprTypeCd()) || (APPL_LINE_S.equals(applLineVO.getApprTypeCd()) && lineCnt < applCnt)) {
+							applLine.setApplId(applId);
+							applLine.setApprSeq(applLineVO.getApprSeq());
+							applLine.setApprSabun(applLineVO.getSabun());
+							applLine.setApprTypeCd(applLineVO.getApprTypeCd());
+							applLine.setUpdateId(userId);
+							wtmApplLineRepo.save(applLine);
+						}
+						if(APPL_LINE_S.equals(applLineVO.getApprTypeCd()))
+							lineCnt++;
+						
 					}else {
 						//기존 결재라인이 더 많으면 지운다. 임시저장이니.. 바뀔수도 있을 것 같아서..
 						wtmApplLineRepo.delete(applLine);
@@ -842,7 +847,8 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 				//신규생성
 				int lineCnt = 0; 
 				for(WtmApplLineVO applLineVO : applLineVOs) {
-					if(lineCnt < applCnt) {
+					//발신결재 결재레벨 체크
+					if(!APPL_LINE_S.equals(applLineVO.getApprTypeCd()) || (APPL_LINE_S.equals(applLineVO.getApprTypeCd()) && lineCnt < applCnt)) {
 						WtmApplLine applLine = new WtmApplLine();
 						applLine.setApplId(applId);
 						applLine.setApprSeq(applLineVO.getApprSeq());
@@ -851,7 +857,9 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 						applLine.setUpdateId(userId);
 						wtmApplLineRepo.save(applLine);
 					}
-					lineCnt++;
+					
+					if(APPL_LINE_S.equals(applLineVO.getApprTypeCd()))
+						lineCnt++;
 				}
 			}
 		}
