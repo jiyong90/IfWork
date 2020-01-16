@@ -44,7 +44,6 @@ public interface WtmInterfaceService {
 	 */
 	public void getCodeIfResult(Long tenantId) throws Exception;
 	
-	public void saveCodeIntf(Long tenantId, List<Map<String, Object>> dataList);
 	
 	/**
 	 * 공휴일정보 이관
@@ -157,4 +156,15 @@ public interface WtmInterfaceService {
 	 * @throws Exception 
 	 */
 	public void setCloseDay(Long tenantId) throws Exception;
+	
+
+	public void saveCodeIntf(Long tenantId, List<Map<String, Object>> dataList);
+	public void saveEmpIntf(Long tenantId, List<Map<String, Object>> dataList);
+	public void saveEmpAddrIntf(Long tenantId, List<Map<String, Object>> dataList);
+	public void saveGntIntf(Long tenantId, List<Map<String, Object>> dataList);
+	public void saveHolidayIntf(Long tenantId, List<Map<String, Object>> dataList);
+	public void saveOrgIntf(Long tenantId, List<Map<String, Object>> dataList);
+	public void saveOrgConcIntf(Long tenantId, List<Map<String, Object>> dataList);
+	public void saveTaaApplIntf(Long tenantId, List<Map<String, Object>> dataList);
+	
 }

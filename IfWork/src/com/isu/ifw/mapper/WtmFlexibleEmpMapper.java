@@ -398,4 +398,6 @@ public interface WtmFlexibleEmpMapper {
 	 * @return
 	 */
 	public Map<String, Object> getWorkTermMinute(Map<String, Object> paramMap);
+	
+	public Map<String, Object> calcMinute(Map<String, Object> paramMap);
 }

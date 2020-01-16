@@ -289,6 +289,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		String ymd = null;
 		Date entrySdate = null;
 		Date entryEdate = null;
+		Date exceptDate = null;
 		String label = " - ";
 		String inoutType = "NONE";
 		String desc = "출근체크 필요시 인사팀에 문의 바랍니다";
@@ -350,6 +351,8 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 						gobackType = "GO";
 						gobackDesc = "복귀 " + data.get("inoutDate").toString();
 					} 
+					if(data.get("iDate") != null)
+						exceptDate = (Date) data.get("iDate");
 				}
 			}
 			
@@ -362,8 +365,10 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			returnMap.put("inoutType", inoutType);
 			returnMap.put("entrySymd", entrySdate==null?"":format2.format(entrySdate));
 			returnMap.put("entryEymd", entryEdate==null?"":format2.format(entryEdate));
+			returnMap.put("exceptYmd", exceptDate==null?"":format2.format(exceptDate));
 			returnMap.put("entryStime", entrySdate==null?"":format3.format(entrySdate));
 			returnMap.put("entryEtime", entryEdate==null?"":format3.format(entryEdate));
+			returnMap.put("exceptTime", exceptDate==null?"":format3.format(exceptDate));
 			
 		}catch(Exception e) {
 			logger.debug(e.getMessage());

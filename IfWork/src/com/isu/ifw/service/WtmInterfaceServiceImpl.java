@@ -14,10 +14,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import com.isu.ifw.entity.WtmCodeIntf;
+import com.isu.ifw.entity.WtmIntfCode;
+import com.isu.ifw.entity.WtmIntfEmp;
+import com.isu.ifw.entity.WtmIntfEmpAddr;
+import com.isu.ifw.entity.WtmIntfGnt;
+import com.isu.ifw.entity.WtmIntfHoliday;
+import com.isu.ifw.entity.WtmIntfOrg;
+import com.isu.ifw.entity.WtmIntfOrgConc;
+import com.isu.ifw.entity.WtmIntfTaaAppl;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmInterfaceMapper;
-import com.isu.ifw.repository.WtmCodeIntfRepository;
+import com.isu.ifw.repository.WtmIntfCodeRepository;
+import com.isu.ifw.repository.WtmIntfEmpAddrRepository;
+import com.isu.ifw.repository.WtmIntfEmpRepository;
+import com.isu.ifw.repository.WtmIntfGntRepository;
+import com.isu.ifw.repository.WtmIntfHolidayRepository;
+import com.isu.ifw.repository.WtmIntfOrgConcRepository;
+import com.isu.ifw.repository.WtmIntfOrgRepository;
+import com.isu.ifw.repository.WtmIntfTaaApplRepository;
 
 @Service
 public class WtmInterfaceServiceImpl implements WtmInterfaceService {
@@ -32,7 +46,21 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	private WtmFlexibleEmpService WtmFlexibleEmpService;
 	
 	@Autowired
-	private WtmCodeIntfRepository wtmCodeIntfRepo;
+	private WtmIntfCodeRepository wtmCodeIntfRepo;
+	@Autowired
+	private WtmIntfEmpRepository wtmEmpIntfRepo;
+	@Autowired
+	private WtmIntfEmpAddrRepository wtmEmpAddrIntfRepo;
+	@Autowired
+	private WtmIntfGntRepository wtmGntIntfRepo;
+	@Autowired
+	private WtmIntfHolidayRepository wtmHolidayIntfRepo;
+	@Autowired
+	private WtmIntfOrgRepository wtmOrgIntfRepo;
+	@Autowired
+	private WtmIntfOrgConcRepository wtmOrgConcIntfRepo;
+	@Autowired
+	private WtmIntfTaaApplRepository wtmTaaIntfRepo; 
 		
 	@Override
 	public Map<String, Object> getIfLastDate(Long tenantId, String ifType) throws Exception {
@@ -271,35 +299,6 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
         } catch(Exception e){
             e.printStackTrace();
         }
-	}
-	
-	@Override
-	public void saveCodeIntf(Long tenantId, List<Map<String, Object>> dataList) {
-		if(dataList != null && dataList.size() > 0 ) {
-			List<WtmCodeIntf> codes = new ArrayList<WtmCodeIntf>();
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-			sdf.format(new Date());
-			String yyyymmddhhmiss= sdf.format(new Date());
-			
-			for(Map<String, Object> m : dataList) {
-				WtmCodeIntf code = new WtmCodeIntf();
-				code.setYyyymmddhhmiss(yyyymmddhhmiss);
-				code.setTenantId(tenantId);
-				code.setEnterCd(m.get("ENTER_CD")+"");
-				code.setGrpCodeCd(m.get("GRCODE_CD")+"");
-				code.setCodeCd(m.get("CODE")+"");
-				code.setCodeNm(m.get("CODE_NM")+"");
-				code.setSeq((m.get("SEQ")!="")?Integer.parseInt(m.get("SEQ")+""):null);
-				code.setSymd(m.get("SYMD")+"");
-				code.setEymd(m.get("EYMD")+"");
-				code.setNote(m.get("NOTE")+"");
-				codes.add(code);
-			} 
-
-			wtmCodeIntfRepo.saveAll(codes); 
-				
-	   		
-		}
 	}
 	
 	@Override
@@ -1905,6 +1904,258 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
         		
 			}
 		}
+	}
+	
+	
+
+	@Override
+	public void saveCodeIntf(Long tenantId, List<Map<String, Object>> dataList) {
+		if(dataList != null && dataList.size() > 0 ) {
+			List<WtmIntfCode> codes = new ArrayList<WtmIntfCode>();
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+			sdf.format(new Date());
+			String yyyymmddhhmiss= sdf.format(new Date());
+			
+			for(Map<String, Object> m : dataList) {
+				WtmIntfCode code = new WtmIntfCode();
+				code.setYyyymmddhhmiss(yyyymmddhhmiss);
+				code.setTenantId(tenantId);
+				code.setEnterCd(m.get("ENTER_CD")+"");
+				code.setGrpCodeCd(m.get("GRCODE_CD")+"");
+				code.setCodeCd(m.get("CODE")+"");
+				code.setCodeNm(m.get("CODE_NM")+"");
+				code.setSeq((m.get("SEQ") != null && m.get("SEQ")!="")?Integer.parseInt(m.get("SEQ")+""):null);
+				code.setSymd(m.get("SYMD")+"");
+				code.setEymd(m.get("EYMD")+"");
+				code.setNote(m.get("NOTE")+"");
+				codes.add(code);
+			} 
+
+			wtmCodeIntfRepo.saveAll(codes); 
+				
+	   		
+		}
+	}
+
+	@Override
+	public void saveEmpIntf(Long tenantId, List<Map<String, Object>> dataList) {
+		if(dataList != null && dataList.size() > 0 ) {
+			List<WtmIntfEmp> datas = new ArrayList<WtmIntfEmp>();
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+			sdf.format(new Date());
+			String yyyymmddhhmiss= sdf.format(new Date());
+			/*
+			ENTER_CD, SABUN, EMP_NM, EMP_ENG_NM, SYMD, EYMD, STATUS_CD, ORG_CD, LOCATION_CD
+		     , DUTY_CD, POS_CD, CLASS_CD, JOB_GROUP_CD, JOB_CD, PAY_TYPE_CD, LEADER_YN
+		     */
+			for(Map<String, Object> m : dataList) {
+				WtmIntfEmp d = new WtmIntfEmp();
+			
+				d.setYyyymmddhhmiss(yyyymmddhhmiss);
+				d.setTenantId(tenantId);
+				d.setEnterCd(m.get("ENTER_CD")+"");
+				d.setSabun(m.get("SABUN")+"");
+				d.setEmpNm(m.get("EMP_NM")+"");
+				d.setEmpEngNm(m.get("EMP_ENG_NM")+"");
+				d.setSymd(m.get("SYMD")+"");
+				d.setEymd(m.get("EYMD")+"");
+				d.setStatusCd(m.get("STATUS_CD")+"");
+				d.setOrgCd(m.get("ORG_CD")+"");
+				d.setLocationCd(m.get("LOCATION_CD")+"");
+				d.setDutyCd(m.get("DUTY_CD")+"");
+				d.setPosCd(m.get("POS_CD")+"");
+				d.setClassCd(m.get("CLASS_CD")+"");
+				d.setJobGroupCd(m.get("JOB_GROUP_CD")+"");
+				d.setJobCd(m.get("JOB_CD")+"");
+				d.setPayTypeCd(m.get("PAY_TYPE_CD")+"");
+				d.setLeaderYn(m.get("LEADER_YN")+"");
+				datas.add(d);
+			} 
+			wtmEmpIntfRepo.saveAll(datas); 
+		}
+	}
+
+	@Override
+	public void saveEmpAddrIntf(Long tenantId, List<Map<String, Object>> dataList) {
+		if(dataList != null && dataList.size() > 0 ) {
+			List<WtmIntfEmpAddr> datas = new ArrayList<WtmIntfEmpAddr>();
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+			sdf.format(new Date());
+			String yyyymmddhhmiss= sdf.format(new Date());
+			/* 
+		     */
+			for(Map<String, Object> m : dataList) {
+				WtmIntfEmpAddr d = new WtmIntfEmpAddr();
+				//m.get("")+""
+				d.setYyyymmddhhmiss(yyyymmddhhmiss);
+				d.setTenantId(tenantId);
+				d.setEnterCd(m.get("ENTER_CD")+"");
+				d.setSabun(m.get("SABUN")+"");
+				d.setEmail(m.get("EMAIL")+"");
+				d.setPhone(m.get("PHONE")+"");
+				d.setNote(m.get("NOTE")+"");
+
+				datas.add(d);
+			} 
+			wtmEmpAddrIntfRepo.saveAll(datas); 
+		}
+	}
+
+	@Override
+	public void saveGntIntf(Long tenantId, List<Map<String, Object>> dataList) {
+		if(dataList != null && dataList.size() > 0 ) {
+			List<WtmIntfGnt> datas = new ArrayList<WtmIntfGnt>();
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+			sdf.format(new Date());
+			String yyyymmddhhmiss= sdf.format(new Date());
+			/*
+			ENTER_CD, GNT_CD, GNT_NM, GNT_GUBUN_CD, HOL_INCL_YN, REQ_USE_TYPE, WORK_YN, PAY_YN, NOTE
+		     */
+			for(Map<String, Object> m : dataList) {
+				WtmIntfGnt d = new WtmIntfGnt();
+				//m.get("")+""
+				d.setYyyymmddhhmiss(yyyymmddhhmiss);
+				d.setTenantId(tenantId);
+				d.setEnterCd(m.get("ENTER_CD")+"");
+				d.setGntCd(m.get("GNT_CD")+"");
+				d.setGntNm(m.get("GNT_NM")+"");
+				d.setGntGubunCd(m.get("GNT_GUBUN_CD")+"");
+				d.setHolInclYn(m.get("HOL_INCL_YN")+"");
+				d.setReqUseType(m.get("REQ_USE_TYPE")+"");
+				d.setWorkYn(m.get("WORK_YN")+"");
+				d.setPayYn(m.get("PAY_YN")+"");
+				d.setNote(m.get("NOTE")+"");
+
+				datas.add(d);
+			} 
+			wtmGntIntfRepo.saveAll(datas); 
+		}
+		
+	}
+
+	@Override
+	public void saveHolidayIntf(Long tenantId, List<Map<String, Object>> dataList) {
+		if(dataList != null && dataList.size() > 0 ) {
+			List<WtmIntfHoliday> datas = new ArrayList<WtmIntfHoliday>();
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+			sdf.format(new Date());
+			String yyyymmddhhmiss= sdf.format(new Date());
+			/*
+			ENTER_CD, LOCATION_CD, YMD, HOLIDAY_NM, FESTIVE_YN, PAY_YN
+		     */
+			for(Map<String, Object> m : dataList) {
+				WtmIntfHoliday d = new WtmIntfHoliday();
+				//m.get("")+""
+				d.setYyyymmddhhmiss(yyyymmddhhmiss);
+				d.setTenantId(tenantId);
+				d.setEnterCd(m.get("ENTER_CD")+"");
+				d.setLocationCd(m.get("LOCATION_CD")+"");
+				d.setYmd(m.get("YMD")+"");
+				d.setHolidayNm(m.get("HOLIDAY_NM")+"");
+				d.setFestiveYn(m.get("FESTIVE_YN")+"");
+				d.setPayYn(m.get("PAY_YN")+"");
+				d.setNote(m.get("NOTE")+"");
+
+				datas.add(d);
+			} 
+			wtmHolidayIntfRepo.saveAll(datas); 
+		}
+		
+	}
+
+	@Override
+	public void saveOrgIntf(Long tenantId, List<Map<String, Object>> dataList) {
+		if(dataList != null && dataList.size() > 0 ) {
+			List<WtmIntfOrg> datas = new ArrayList<WtmIntfOrg>();
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+			sdf.format(new Date());
+			String yyyymmddhhmiss= sdf.format(new Date());
+			/*
+			ENTER_CD, ORG_CD, ORG_NM,  PRIOR_ORG_CD, SEQ, ORG_LEVEL, SYMD, EYMD, ORG_TYPE, NOTE
+		     */
+			for(Map<String, Object> m : dataList) {
+				WtmIntfOrg d = new WtmIntfOrg();
+				//m.get("")+""
+				d.setYyyymmddhhmiss(yyyymmddhhmiss);
+				d.setTenantId(tenantId);
+				d.setEnterCd(m.get("ENTER_CD")+"");
+				d.setOrgCd(m.get("ORG_CD")+"");
+				d.setOrgNm(m.get("ORG_NM")+"");
+				d.setPriorOrgCd(m.get("PRIOR_ORG_CD")+"");
+				d.setSeq(m.get("SEQ")+"");
+				d.setOrgLevel(m.get("ORG_LEVEL")+"");
+				d.setSymd(m.get("SYMD")+"");
+				d.setEymd(m.get("EYMD")+"");
+				d.setOrgType(m.get("ORG_TYPE")+"");
+				d.setNote(m.get("NOTE")+"");
+
+				datas.add(d);
+			} 
+			wtmOrgIntfRepo.saveAll(datas); 
+		}
+		
+	}
+
+	@Override
+	public void saveOrgConcIntf(Long tenantId, List<Map<String, Object>> dataList) {
+		if(dataList != null && dataList.size() > 0 ) {
+			List<WtmIntfOrgConc> datas = new ArrayList<WtmIntfOrgConc>();
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+			sdf.format(new Date());
+			String yyyymmddhhmiss= sdf.format(new Date());
+			/*
+			ENTER_CD, ORG_CD, ORG_NM,  PRIOR_ORG_CD, SEQ, ORG_LEVEL, SYMD, EYMD, ORG_TYPE, NOTE
+		     */
+			for(Map<String, Object> m : dataList) {
+				WtmIntfOrgConc d = new WtmIntfOrgConc();
+				//m.get("")+""
+				d.setYyyymmddhhmiss(yyyymmddhhmiss);
+				d.setTenantId(tenantId);
+				d.setEnterCd(m.get("ENTER_CD")+"");
+				d.setOrgCd(m.get("ORG_CD")+"");
+				d.setSabun(m.get("SABUN")+"");
+				d.setSymd(m.get("SYMD")+"");
+				d.setEymd(m.get("EYMD")+"");
+				d.setNote(m.get("NOTE")+"");
+
+				datas.add(d);
+			} 
+			wtmOrgConcIntfRepo.saveAll(datas); 
+		}
+		
+	}
+
+	@Override
+	public void saveTaaApplIntf(Long tenantId, List<Map<String, Object>> dataList) {
+		if(dataList != null && dataList.size() > 0 ) {
+			List<WtmIntfTaaAppl> datas = new ArrayList<WtmIntfTaaAppl>();
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+			sdf.format(new Date());
+			String yyyymmddhhmiss= sdf.format(new Date());
+			/*
+			ENTER_CD, ORG_CD, ORG_NM,  PRIOR_ORG_CD, SEQ, ORG_LEVEL, SYMD, EYMD, ORG_TYPE, NOTE
+		     */
+			for(Map<String, Object> m : dataList) {
+				WtmIntfTaaAppl d = new WtmIntfTaaAppl();
+				//m.get("")+""
+				d.setYyyymmddhhmiss(yyyymmddhhmiss);
+				d.setTenantId(tenantId);
+				d.setEnterCd(m.get("ENTER_CD")+"");
+				d.setSabun(m.get("SABUN")+"");
+				d.setGntCd(m.get("GNT_CD")+"");
+				d.setSymd(m.get("SYMD")+"");
+				d.setEymd(m.get("EYMD")+"");
+				d.setShm(m.get("SHM")+"");
+				d.setEhm(m.get("EHM")+"");
+				d.setApplSeq(m.get("APPL_SEQ")+"");
+				d.setApplStatusCd(m.get("APPL_STATUS_CD")+"");
+				d.setNote(m.get("NOTE")+"");
+
+				datas.add(d);
+			} 
+			wtmTaaIntfRepo.saveAll(datas); 
+		}
+		
 	}
 
 }

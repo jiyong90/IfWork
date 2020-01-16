@@ -452,14 +452,24 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("taaWorkYn", "");
 		
 		Map<String, Object> flexEmp = flexEmpMapper.getFlexibleEmp(paramMap);
+		
+		Map<String, Object> result = new HashMap<String, Object>();
+		result.put("unplannedYn", "N");
+		
 		if(flexEmp!=null) {
 			if(flexEmp.get("taaTimeYn")!=null) //근태시간포함여부
 				paramMap.put("taaTimeYn", flexEmp.get("taaTimeYn").toString());
 			if(flexEmp.get("taaWorkYn")!=null) //근태일 근무여부
 				paramMap.put("taaWorkYn", flexEmp.get("taaWorkYn").toString());
+			if(flexEmp.get("unplannedYn")!=null) //근무계획 없이 타각 여부 수정
+				result.put("unplannedYn", flexEmp.get("unplannedYn").toString());
 		}
 		
-		return flexEmpMapper.getFlexibleWorkTimeInfo(paramMap); 
+		Map<String, Object> worktimeInfo = flexEmpMapper.getFlexibleWorkTimeInfo(paramMap);
+		if(worktimeInfo!=null)
+			result.putAll(worktimeInfo);
+		
+		return result; 
 	}
 	
 	@Override
@@ -1836,10 +1846,18 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		Map<String, Object> result = null;
 		if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
 			result = flexEmpMapper.calcMinuteExceptBreaktime(paramMap);
+			
+		/**
+		 * BREAK_TYPE_TIME / BREAK_TYPE_TIMEFIX는 
+		 * 휴게시간 없이 전체 인정시간으로 본다 이 메서드를 호출 할 경우 추가적으로 except 데이터를 만들어 주는것을 태워야함. 
+		 * 타임블럭단위로 넘어오기때문에 여기서 할 수 없다.. 전체 데이터 합산 기준으로 except 데이터 생성이 필요 
+		 */
 		} else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
-			result = flexEmpMapper.calcTimeTypeApprMinuteExceptBreaktime(paramMap);
+			//result = flexEmpMapper.calcTimeTypeApprMinuteExceptBreaktime(paramMap);
+			result = flexEmpMapper.calcMinute(paramMap);
 		} else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
-			result = flexEmpMapper.calcTimeTypeFixMinuteExceptBreaktime(paramMap);
+			//result = flexEmpMapper.calcTimeTypeFixMinuteExceptBreaktime(paramMap);
+			result = flexEmpMapper.calcMinute(paramMap);
 		}
 		return result;
 		
