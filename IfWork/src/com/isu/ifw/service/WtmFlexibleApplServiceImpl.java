@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
@@ -192,6 +194,8 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			
 			applId = appl.getApplId();
 			
+			saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, workTypeCd, sabun, userId);
+			
 			String sYmd = paramMap.get("sYmd").toString();
 			String eYmd = paramMap.get("eYmd").toString();
 			
@@ -201,10 +205,9 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			//탄근제의 경우 추가로 근무제 패턴을 flexibleApplDet 저장
 			if(workTypeCd.equals("ELAS")) {
 				List<WtmFlexibleApplDet> flexibleApplDet = saveWtmFlexibleApplDet(tenantId, enterCd, flexibleAppl.getFlexibleApplId(), flexibleStdMgrId, sYmd, eYmd, sabun, userId);
+				updateWtmFlexibleApplDet(flexibleApplDet, userId);
 			}
 				
-			saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, workTypeCd, sabun, userId);
-		
 			rp.put("applId", appl.getApplId());
 			rp.put("flexibleApplId", flexibleAppl.getFlexibleApplId());
 		
@@ -728,6 +731,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		
 		List<WtmFlexibleApplDet> workList = new ArrayList<WtmFlexibleApplDet>();
 		List<WtmFlexibleApplDetVO> patterns = flexApplMapper.getWorkPattern(paramMap);
+		
 		if(patterns!=null && patterns.size()>0) {
 			for(WtmFlexibleApplDetVO p : patterns) {
 				WtmFlexibleApplDet fd = new WtmFlexibleApplDet();
@@ -738,54 +742,18 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 				
 				Date planSdate = null;
 				if(p.getPlanSdate()!=null && !"".equals(p.getPlanSdate())) {
-					planSdate = WtmUtil.toDate(p.getPlanSdate(), "yyyy-MM-dd HH:mm:ss");
+					planSdate = WtmUtil.toDate(p.getPlanSdate(), "yyyyMMddHHmm");
 					fd.setPlanSdate(planSdate);
 				}
 				
 				Date planEdate = null;
 				if(p.getPlanEdate()!=null && !"".equals(p.getPlanEdate())) {
-					planEdate = WtmUtil.toDate(p.getPlanEdate(), "yyyy-MM-dd HH:mm:ss");
+					planEdate = WtmUtil.toDate(p.getPlanEdate(), "yyyyMMddHHmm");
 					fd.setPlanEdate(planEdate);
 				}
 				
-				paramMap.put("ymd", p.getYmd());
-				
-				if(planSdate!=null && planEdate!=null) {
-					paramMap.put("shm", WtmUtil.parseDateStr(planSdate, "HHmm"));
-					paramMap.put("ehm", WtmUtil.parseDateStr(planEdate, "HHmm"));
-					Map<String, Object> planMinuteMap = flexEmpService.calcElasPlanMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
-					fd.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
-					
-					paramMap.put("otType", "OTB");
-					paramMap.put("sDate", p.getPlanSdate());
-					paramMap.put("eDate", p.getPlanEdate());
-					paramMap.put("minute", p.getOtbMinute());
-					Map<String, Object> otbMinuteMap = flexEmpService.calcElasOtMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
-					
-					if(otbMinuteMap!=null) {
-						Date otbSdate = WtmUtil.toDate(otbMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
-						Date otbEdate = WtmUtil.toDate(otbMinuteMap.get("eDate").toString(), "yyyyMMddHHmmss");
-						
-						fd.setOtbSdate(otbSdate);
-						fd.setOtbEdate(otbEdate);
-						fd.setOtbMinute(Integer.parseInt(otbMinuteMap.get("calcMinute").toString()));
-					}	
-					
-					paramMap.put("otType", "OTA");
-					paramMap.put("sDate", p.getPlanSdate());
-					paramMap.put("eDate", p.getPlanEdate());
-					paramMap.put("minute", p.getOtaMinute());
-					Map<String, Object> otaMinuteMap = flexEmpService.calcElasOtMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
-					
-					if(otaMinuteMap!=null) {
-						Date otaSdate = WtmUtil.toDate(otaMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
-						Date otaEdate = WtmUtil.toDate(otaMinuteMap.get("eDate").toString(), "yyyyMMddHHmmss");
-						
-						fd.setOtaSdate(otaSdate);
-						fd.setOtaEdate(otaEdate);
-						fd.setOtaMinute(Integer.parseInt(otaMinuteMap.get("calcMinute").toString()));
-					}	
-				}
+				fd.setOtbMinute(p.getOtbMinute());
+				fd.setOtaMinute(p.getOtaMinute());
 				
 				fd.setUpdateDate(new Date());
 				fd.setUpdateId(userId);
@@ -796,6 +764,66 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		}
 		
 		return workList;
+	}
+	
+	protected void updateWtmFlexibleApplDet(List<WtmFlexibleApplDet> applDets, String userId) {
+		
+		if(applDets!=null && applDets.size()>0) {
+			for(WtmFlexibleApplDet d : applDets) {
+				Date planSdate = d.getPlanSdate();
+				Date planEdate = d.getPlanEdate();
+				
+				if(planSdate!=null && planEdate!=null) {
+					String pSdate = WtmUtil.parseDateStr(planSdate, "yyyyMMddHHmm");
+					String pEdate = WtmUtil.parseDateStr(planEdate, "yyyyMMddHHmm");
+					
+					Map<String, Object> paramMap = new HashMap<>();
+					paramMap.put("ymd", d.getYmd());
+					
+					paramMap.put("shm", WtmUtil.parseDateStr(planSdate, "HHmm"));
+					paramMap.put("ehm", WtmUtil.parseDateStr(planEdate, "HHmm"));
+					Map<String, Object> planMinuteMap = flexibleEmpService.calcElasPlanMinuteExceptBreaktime(false, d.getFlexibleApplId(), paramMap, userId);
+					d.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
+					
+					if(d.getOtbMinute()!=0) {
+						paramMap.put("otType", "OTB");
+						paramMap.put("sDate", pSdate);
+						paramMap.put("eDate", pEdate);
+						paramMap.put("minute", d.getOtbMinute());
+						Map<String, Object> otbMinuteMap = flexibleEmpService.calcElasOtMinuteExceptBreaktime(false, d.getFlexibleApplId(), paramMap, userId);
+						
+						if(otbMinuteMap!=null) {
+							Date otbSdate = WtmUtil.toDate(otbMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
+							Date otbEdate = WtmUtil.toDate(otbMinuteMap.get("eDate").toString(), "yyyyMMddHHmmss");
+							
+							d.setOtbSdate(otbSdate);
+							d.setOtbEdate(otbEdate);
+							d.setOtbMinute(Integer.parseInt(otbMinuteMap.get("calcMinute").toString()));
+						}	
+					}
+					
+					if(d.getOtaMinute()!=0) {
+						paramMap.put("otType", "OTA");
+						paramMap.put("sDate", pSdate);
+						paramMap.put("eDate", pEdate);
+						paramMap.put("minute", d.getOtaMinute());
+						Map<String, Object> otaMinuteMap = flexibleEmpService.calcElasOtMinuteExceptBreaktime(false, d.getFlexibleApplId(), paramMap, userId);
+						
+						if(otaMinuteMap!=null) {
+							Date otaSdate = WtmUtil.toDate(otaMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
+							Date otaEdate = WtmUtil.toDate(otaMinuteMap.get("eDate").toString(), "yyyyMMddHHmmss");
+							
+							d.setOtaSdate(otaSdate);
+							d.setOtaEdate(otaEdate);
+							d.setOtaMinute(Integer.parseInt(otaMinuteMap.get("calcMinute").toString()));
+						}
+					}
+						
+				}
+				
+			}	
+		}
+		
 	}
 	
 	protected void saveWtmApplLine(Long tenantId, String enterCd, int apprLvl, Long applId, String applCd, String sabun, String userId) {
