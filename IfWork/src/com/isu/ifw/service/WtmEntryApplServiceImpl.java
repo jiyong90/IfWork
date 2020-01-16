@@ -18,6 +18,7 @@ import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmCalendarMapper;
 import com.isu.ifw.mapper.WtmEntryApplMapper;
+import com.isu.ifw.mapper.WtmInoutHisMapper;
 import com.isu.ifw.repository.WtmApplCodeRepository;
 import com.isu.ifw.repository.WtmApplLineRepository;
 import com.isu.ifw.repository.WtmApplRepository;
@@ -59,6 +60,9 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 	
 	@Autowired
 	WtmValidatorService validatorService;
+	
+	@Autowired
+	WtmInoutHisMapper inoutHisMapper;
 	
 	
 	@Override
@@ -216,7 +220,6 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 		
 		appl = wtmApplRepo.save(appl);
 		
-		
 		if(lastAppr) {
 			//출퇴근 타각 저장
 			paramMap.put("tenantId", tenantId);
@@ -229,13 +232,14 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 			paramMap.put("insertRows", insertRows);
 			calendarMapper.updateEntryDateByAdm(paramMap);
 			
-			//출퇴근 타각이 둘 다 있으면 타각 정보로 인정시간 계산
-			WtmWorkCalendar calendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, applSabun, ymd);
-			if(calendar!=null && calendar.getEntrySdate()!=null && calendar.getEntryEdate()!=null) {
-				System.out.println("calcApprDayInfo>>>");
-				flexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, applSabun);
+			//계획 여부에 따라 result 생성
+			rp.put("sabun", applSabun);
+			rp.put("stdYmd", ymd);
+			Map<String, Object> unplannedYn = inoutHisMapper.getMyUnplannedYn(paramMap);
+			paramMap.put("unplannedYn", "N");
+			if(unplannedYn!=null && unplannedYn.get("unplannedYn")!=null) {
+				rp.put("unplannedYn", unplannedYn.get("unplannedYn").toString());
 			}
-			
 		}
 		
 		return rp;
