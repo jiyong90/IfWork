@@ -145,23 +145,38 @@ public class MobileUtil {
 
 		apprLines.add(line);
 		
-		Map<String, Object> type = new HashMap();
-		type.put("applTypeCd", "10");
-		type.put("typeNm", "결재");
+		Map<String, Object> type1 = new HashMap();
+		type1.put("applTypeCd", "1");
+		type1.put("typeNm", "기안");
 		
-		apprTypes.add(type);
+		Map<String, Object> type2 = new HashMap();
+		type2.put("applTypeCd", "2");
+		type2.put("typeNm", "발신결재");
+
+		Map<String, Object> type3 = new HashMap();
+		type3.put("applTypeCd", "3");
+		type3.put("typeNm", "수신결재");
+
+		apprTypes.add(type1);
+		apprTypes.add(type2);
+		apprTypes.add(type3);
 
 		for(WtmApplLineVO applLineVO : applLineVOs) {
-			if(lineCnt < Integer.parseInt(applCode.getApplLevelCd())) {
+			if(!"2".equals(applLineVO.getApprTypeCd()) || ("2".equals(applLineVO.getApprTypeCd()) && lineCnt < Integer.parseInt(applCode.getApplLevelCd()))) {
+				String apprTypeNm = applLineVO.getApprTypeCd().equals("1")?"기안":applLineVO.getApprTypeCd().equals("2")?"발신결재":"수신결재";
+				
 				Map<String, Object> temp = new HashMap();
 				temp.put("type", "emp");
-				temp.put("typeNm", "결재");
+				temp.put("typeNm", apprTypeNm);
 				temp.put("key", applCode.getEnterCd() + "@" + applLineVO.getSabun());
 				temp.put("name", applLineVO.getEmpNm());
 				lines.add(temp);
 			}
-			lineCnt++;
+			
+			if("2".equals(applLineVO.getApprTypeCd()))
+				lineCnt++;
 		}
+		
 		return apprLines;
 	}
 	
@@ -170,6 +185,7 @@ public class MobileUtil {
 		
 		List<Map<String, Object>> lines1 = new ArrayList();
 		List<Map<String, Object>> lines2 = new ArrayList();
+		List<Map<String, Object>> lines3 = new ArrayList();
 
 		int lineCnt = 0;
 		
@@ -182,15 +198,24 @@ public class MobileUtil {
 		line1.put("line", lines1);
 
 		Map<String, Object> line2 = new HashMap();
-		line2.put("name", "결재");
+		line2.put("name", "발신결재");
 		line2.put("type", "");
 		line2.put("useAdd", "false");
 		line2.put("useStatusChange", "false");
 		line2.put("apprTypes", null);
 		line2.put("line", lines2);
 		
+		Map<String, Object> line3 = new HashMap();
+		line2.put("name", "수신결재");
+		line2.put("type", "");
+		line2.put("useAdd", "false");
+		line2.put("useStatusChange", "false");
+		line2.put("apprTypes", null);
+		line2.put("line", lines3);
+
 		apprLines.add(line1);
 		apprLines.add(line2);
+		apprLines.add(line3);
 		
 		for(WtmApplLineVO applLineVO : applLineVOs) {
 			Map<String, Object> temp = new HashMap();
@@ -202,6 +227,8 @@ public class MobileUtil {
 				lines1.add(temp);
 			else if(applLineVO.getApprTypeCd().equals("2"))
 				lines2.add(temp);
+			else if(applLineVO.getApprTypeCd().equals("3"))
+				lines3.add(temp);
 		}
 		return apprLines;
 	}
