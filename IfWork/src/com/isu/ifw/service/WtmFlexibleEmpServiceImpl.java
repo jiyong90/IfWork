@@ -1198,6 +1198,14 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			}
 		}
 		logger.debug("calcApprDayInfo 16 ");
+		
+		/**
+		 * Time타입 휴게시간 일 경우만
+		 * type이 plan이면 계획데이터를 생성한다. 
+		 * 인정 데이터 생성을 위함
+		 */
+		paramMap.put("type", "APPR");
+		flexEmpMapper.createWorkDayResultOfTimeType(paramMap);
 	}
 
 	@Override
@@ -1414,6 +1422,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		return flexibleList;
 	}
 
+	/**
+	 * BASE,OT,FIXOT,NIGHT 근무시간에 대해 add 로 들어오는 타임 구간을 잘라서 만들어 준다.
+	 */
 	@Transactional
 	@Override
 	public void addWtmDayResultInBaseTimeType(Long tenantId, String enterCd, String ymd, String sabun, String addTimeTypeCd, String addTaaCd,
@@ -2031,6 +2042,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		}
 	}
 	
+	// 근무제 통계 데이터 생성
 	@Override
 	public Map<String, Object> createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
 		paramMap.put("tenantId", tenantId);

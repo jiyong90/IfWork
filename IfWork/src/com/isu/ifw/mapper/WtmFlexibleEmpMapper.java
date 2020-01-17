@@ -239,6 +239,13 @@ public interface WtmFlexibleEmpMapper {
 	 */
 	public void resetWorkDayResult(Map<String, Object> paramMap);
 	
+	/**
+	 * TIME_TYPE_CD가 TIME일 경우 EXCEPT BREAK 데이터를 생성해 주기 위함 
+	 * type : PLAN = 계획데이터 생성 else APPR 인정 데이터 생성
+	 * @param paramMap
+	 */
+	public void createWorkDayResultOfTimeType(Map<String, Object> paramMap);
+	
 	public void createWtmWorkteamOfWtmWorkDayResult(Map<String, Object> paramMap);
 	
 	/**
