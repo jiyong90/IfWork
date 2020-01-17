@@ -7,14 +7,20 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import com.isu.ifw.common.service.TenantConfigManagerService;
 import com.isu.ifw.entity.WtmInbox;
@@ -23,7 +29,6 @@ import com.isu.ifw.mapper.WtmInboxMapper;
 import com.isu.ifw.repository.WtmInboxRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
-import com.pb.async.component.ExtApiCallComponent;
 
 @Transactional
 @Service
@@ -44,10 +49,11 @@ public class WtmInboxServiceImpl implements WtmInboxService{
 	WtmInboxMapper inboxMapper;
 	
 	@Autowired
-	ExtApiCallComponent eacComponent;
-
-	@Autowired
 	TenantConfigManagerService tcms;
+	
+	@Autowired
+	private RestTemplate restTemplate;
+
 	
 	@Async("threadPoolTaskExecutor")
 	@Override
@@ -76,13 +82,12 @@ public class WtmInboxServiceImpl implements WtmInboxService{
 				System.out.println(url);
 				this.template.convertAndSend(url, data);
 			}
-
 			List<String> targetEmp = new ArrayList();
-			targetEmp.add(enterCd + "@" + sabun);
 			try {
+				targetEmp.add(enterCd + "@" + sabun);
 				sendPushMessage(tenantId, enterCd, "INFO", targetEmp, title, contents);
 			} catch(Exception e) {
-				logger.debug("sendPushMessage : FAIL " + e.getMessage());
+				logger.debug("sendPushMessage FAIL " + tenantId +", "+ enterCd +", "+ targetEmp.toString() +", "+  title +", "+  contents);
 			}
 			
 		}
@@ -196,7 +201,18 @@ public class WtmInboxServiceImpl implements WtmInboxService{
 			paramMap.put("target", targetEmp);
 			
 			logger.debug("sendPushMessage : " + paramMap.toString());
-			eacComponent.extApiPostCall(url, paramMap);
+			
+			HttpHeaders headers = new HttpHeaders();
+			headers.set("Content-Type", MediaType.APPLICATION_JSON_VALUE);
+			
+			HttpEntity<Map<String, Object>> entity = new HttpEntity<>(paramMap, headers);
+			
+			ResponseEntity<Map> res = restTemplate.postForEntity(url, entity, Map.class);
+			logger.debug("awsreturn " +res.getStatusCode().value());
+			if(res.getStatusCode().value() != HttpServletResponse.SC_OK) {
+ 				logger.debug("awsreturn FAIL");
+			}
+			//eacComponent.extApiPostCall(url, paramMap);
 		}
 	}
 }

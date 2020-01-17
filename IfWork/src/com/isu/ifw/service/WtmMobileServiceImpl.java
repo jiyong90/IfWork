@@ -23,7 +23,6 @@ import com.isu.ifw.mapper.WtmWorktimeMapper;
 import com.isu.ifw.repository.WtmApplCodeRepository;
 import com.isu.ifw.util.MobileUtil;
 import com.isu.ifw.vo.WtmApplLineVO;
-import com.pb.async.component.ExtApiCallComponent;
 
 @Service("mobileService")
 public class WtmMobileServiceImpl implements WtmMobileService{
@@ -57,11 +56,7 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 	
 	@Autowired
 	TenantConfigManagerService tcms;
-	
-	@Autowired
-	ExtApiCallComponent eacComponent;
-
-	
+		
 	@Override
 	public List<Map<String, Object>> getTermList(Map<String, Object> paramMap) throws Exception  {
 		//겸직 하위 조직 조회
@@ -173,7 +168,6 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		String applId = applKey.split("@")[2];
 		String typeCd = applKey.split("@")[3];
 		String applSabun = applKey.split("@")[4];
-		//applKey":"SAMHWACROWN@OT@872@01@198104003@WTM"
 		Map<String, Object> paramMap = new HashMap();
 		paramMap.put("applId", applId);
 		paramMap.put("sabun", applSabun);
