@@ -234,6 +234,16 @@ public interface WtmInterfaceMapper {
 	public void setCloseEntryOut(Map<String, Object> paramMap);
 	public List<Map<String, Object>> getWtmCloseDay(Map<String, Object> paramMap);
 	
+	/**
+	 * 결재id 조회
+	 **/
+	public Map<String, Object> getApplId(Map<String, Object> paramMap);
 	
+	public Map<String, Object> getCloseYnChk(Map<String, Object> paramMap);
+	
+	public List<Map<String, Object>> getTaaList(Map<String, Object> paramMap);
+	public Map<String, Object> getStdMgrList(Map<String, Object> paramMap);
+	public void deleteResult(Map<String, Object> paramMap);
+	public Map<String, Object> getTaaPlanTimeList(Map<String, Object> paramMap);
 	
 }

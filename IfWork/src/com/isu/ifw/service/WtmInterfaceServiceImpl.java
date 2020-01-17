@@ -9,11 +9,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import com.isu.ifw.common.entity.CommTenantModule;
+import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmIntfCode;
 import com.isu.ifw.entity.WtmIntfEmp;
 import com.isu.ifw.entity.WtmIntfEmpAddr;
@@ -22,8 +25,13 @@ import com.isu.ifw.entity.WtmIntfHoliday;
 import com.isu.ifw.entity.WtmIntfOrg;
 import com.isu.ifw.entity.WtmIntfOrgConc;
 import com.isu.ifw.entity.WtmIntfTaaAppl;
+import com.isu.ifw.entity.WtmTaaCode;
+import com.isu.ifw.entity.WtmTaaAppl;
+import com.isu.ifw.entity.WtmTaaApplDet;
+import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmInterfaceMapper;
+import com.isu.ifw.repository.WtmApplRepository;
 import com.isu.ifw.repository.WtmIntfCodeRepository;
 import com.isu.ifw.repository.WtmIntfEmpAddrRepository;
 import com.isu.ifw.repository.WtmIntfEmpRepository;
@@ -32,6 +40,13 @@ import com.isu.ifw.repository.WtmIntfHolidayRepository;
 import com.isu.ifw.repository.WtmIntfOrgConcRepository;
 import com.isu.ifw.repository.WtmIntfOrgRepository;
 import com.isu.ifw.repository.WtmIntfTaaApplRepository;
+import com.isu.ifw.repository.WtmTaaApplDetRepository;
+import com.isu.ifw.repository.WtmTaaApplRepository;
+import com.isu.ifw.repository.WtmTaaCodeRepository;
+import com.isu.ifw.repository.WtmWorkDayResultRepository;
+
+import com.isu.ifw.common.repository.CommTenantModuleRepository;
+import com.isu.ifw.util.WtmUtil;
 
 @Service
 public class WtmInterfaceServiceImpl implements WtmInterfaceService {
@@ -61,6 +76,27 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	private WtmIntfOrgConcRepository wtmOrgConcIntfRepo;
 	@Autowired
 	private WtmIntfTaaApplRepository wtmTaaIntfRepo; 
+
+	
+	@Autowired
+	private WtmTaaApplRepository wtmTaaApplRepo;
+	
+	@Autowired
+	private WtmTaaCodeRepository wtmTaaCodeRepo;
+	
+	@Autowired
+	private WtmWorkDayResultRepository dayResultRepo;
+	
+	@Autowired
+	private WtmTaaApplDetRepository wtmTaaApplDetRepo;
+	
+
+	@Autowired
+	@Qualifier("WtmTenantModuleRepository")
+	CommTenantModuleRepository tenantModuleRepo;
+	
+	@Autowired
+	WtmApplRepository wtmApplRepo;
 		
 	@Override
 	public Map<String, Object> getIfLastDate(Long tenantId, String ifType) throws Exception {
@@ -1431,6 +1467,352 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		}
         System.out.println("WtmInterfaceServiceImpl setTaaApplIf end");
 		return;
+	}
+	
+	@Override
+	@Transactional
+	public Map<String,Object> setTaaApplArrIf(Map reqMap) throws Exception {
+		// TODO Auto-generated method stub
+		System.out.println("WtmInterfaceServiceImpl setTaaApplArrIf");
+		// 인터페이스 결과 저장용
+    	String retMsg = "";
+    	String status = "OK";
+    	
+    	int taaCnt = 0;
+    	Map<String, Object> retMap = new HashMap<>();
+    	
+    	// 인터페이스용 변수
+    	Long tenantId = null;
+    	Long applId = null;
+    	Long taaApplId = null;
+    	String oldApplStatusCd = "";
+    	String nowApplStatusCd = "";
+    	WtmAppl appl = new WtmAppl();
+    	
+    	HashMap<String, Object> getResultMap = null;
+    	List<Map<String, Object>> setWorksList = null;
+    	List<Map<String, Object>> setWorksDetList = null;
+    	HashMap<String, Object> getCheckMap = null;
+	    	
+    	
+    	HashMap<String, Object> getIfMap = null;
+    	List<Map<String, Object>> getIfList = null;
+    	
+		// 1. 인터페이스 data 처리
+		
+			// 1.1. 필수데이터 체크
+	    	if(reqMap == null) {
+	    		status = "ERR";
+				retMsg = "인터페이스 정보없음";
+				throw new Exception(retMsg);
+	    		
+	    	} else {
+	    		if(!reqMap.containsKey("apiKey") && reqMap.get("apiKey").equals("")) {
+					retMsg = "인터페이스 pearbranch API 사용 키 정보누락";
+					throw new RuntimeException(retMsg);
+	    		}
+	    		// 테넌트정보 조회
+				String apiKey = null;
+				apiKey = reqMap.get("apiKey").toString();
+				CommTenantModule tm = null;
+			    tm = tenantModuleRepo.findByApiKey(apiKey);
+			    tenantId = tm.getTenantId();
+
+		        reqMap.put("tenantId", tenantId);
+		        
+		        if(tenantId == null) {
+		        	retMsg = "인터페이스 pearbranch API 사용 키 정보가 유효하지 않습니다";
+					throw new RuntimeException(retMsg);
+		        }
+		        
+	    		if(!reqMap.containsKey("secret") && reqMap.get("secret").equals("")) {
+					retMsg = "인터페이스 비밀번호 정보누락";
+					throw new RuntimeException(retMsg);
+	    		}
+	    		if(!reqMap.containsKey("enterCd") && reqMap.get("enterCd").equals("")) {
+					retMsg = "인터페이스 회사정보 정보누락";
+					throw new RuntimeException(retMsg);
+	    		}
+	    		if(!reqMap.containsKey("applSabun") && reqMap.get("applSabun").equals("")) {
+					retMsg = "인터페이스 신청자 정보누락";
+					throw new RuntimeException(retMsg);
+	    		}
+	    		if(!reqMap.containsKey("works") && reqMap.get("works").equals("")) {
+					retMsg = "인터페이스 근무정보 정보누락";
+					throw new RuntimeException(retMsg);
+	    		}
+	    		if(!reqMap.containsKey("applNo") && reqMap.get("applNo").equals("")) {
+					retMsg = "인터페이스 신청서 구분key 정보누락";
+					throw new RuntimeException(retMsg);
+	    		}
+	    		if(!reqMap.containsKey("status") && reqMap.get("status").equals("")) {
+					retMsg = "인터페이스 결재상태 정보누락";
+					throw new RuntimeException(retMsg);
+	    		}
+			}
+	    	
+	    	nowApplStatusCd = reqMap.get("status").toString();
+	    	
+			// 2. DATA 생성 또는 갱신
+			getResultMap = (HashMap<String, Object>) wtmInterfaceMapper.getApplId(reqMap);
+			if(getResultMap != null && getResultMap.size() > 0) {
+				// 2.1. 이미 등록된 결재건 있음.
+				applId = Long.parseLong(getResultMap.get("applId").toString());
+				oldApplStatusCd = getResultMap.get("oldApplStatusCd").toString();
+				if(!oldApplStatusCd.equals(nowApplStatusCd)) {
+					// 2.1.1. 과거상태과 현재상태가 다르면 갱신해야함.
+					appl.setApplId(applId);
+					appl.setTenantId((Long) reqMap.get("tenantId"));
+					appl.setEnterCd(reqMap.get("enterCd").toString());
+					appl.setApplCd("TAA");
+					appl.setApplSabun(reqMap.get("applSabun").toString());
+					appl.setApplInSabun(reqMap.get("applSabun").toString());
+					appl.setIfApplNo(reqMap.get("applNo").toString());
+					appl.setApplStatusCd(nowApplStatusCd);
+					appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
+					appl.setUpdateId("TAAIF");
+					wtmApplRepo.save(appl);
+				}
+			} else {
+				// 2.2. 결재정보가 없음. data를 생성하자
+				// 2.2.1. WTM_APPL 생성
+				appl.setTenantId((Long) reqMap.get("tenantId"));
+				appl.setEnterCd(reqMap.get("enterCd").toString());
+				appl.setApplCd("TAA");
+				appl.setApplSabun(reqMap.get("applSabun").toString());
+				appl.setApplInSabun(reqMap.get("applSabun").toString());
+				appl.setIfApplNo(reqMap.get("applNo").toString());
+				appl.setApplStatusCd(reqMap.get("status").toString());
+				appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
+				appl.setUpdateId("TAAIF");	
+				wtmApplRepo.save(appl);
+				applId = appl.getApplId();
+				
+				setWorksList = (List<Map<String, Object>>) reqMap.get("works");
+				// 2.2.2. 대상자정보 루프시작
+				for(Map<String, Object> empMap : setWorksList) {
+					if(empMap == null || !empMap.containsKey("sabun") && empMap.get("sabun").equals("")) {
+						retMsg = "인터페이스  대상자 정보누락";
+						throw new RuntimeException(retMsg);
+					}
+					if(empMap == null || !empMap.containsKey("worksDet") && empMap.get("worksDet").equals("")) {
+						retMsg = "인터페이스 대상자 근태정보 정보누락";
+						throw new RuntimeException(retMsg);
+					}
+					
+					// 2.2.2.1. 대상자가 근무관리 대상여부 체크
+					
+					// 2.2.2.2. 근무관리 대상이면 taaCnt 증가하고 WTM_TAA_APPL 생성
+					WtmTaaAppl taaAppl = new WtmTaaAppl();  
+					taaAppl.setTenantId((Long) reqMap.get("tenantId"));
+					taaAppl.setEnterCd(reqMap.get("enterCd").toString());
+					taaAppl.setApplId(applId);
+					taaAppl.setSabun(empMap.get("sabun").toString());
+					taaAppl.setIfApplNo(reqMap.get("applNo").toString());
+					taaAppl.setUpdateId("TAAIF");
+					wtmTaaApplRepo.save(taaAppl);
+					taaApplId = taaAppl.getTaaApplId();
+
+					// 2.2.2.3. 근무기간 루프시작
+					setWorksDetList = (List<Map<String, Object>>) empMap.get("worksDet");
+					for(Map<String, Object> empDetMap : setWorksDetList) {
+						// 2.2.2.3.1. 근무기간 루프시작
+						if(empDetMap == null || !empDetMap.containsKey("workTimeCode") && empDetMap.get("workTimeCode").equals("")) {
+							retMsg = "인터페이스  대상자 근태코드 정보누락";
+							throw new RuntimeException(retMsg);
+						}
+						if(empDetMap == null || !empDetMap.containsKey("startYmd") && empDetMap.get("startYmd").equals("")) {
+							retMsg = "인터페이스  대상자 근태시작일 정보누락";
+							throw new RuntimeException(retMsg);
+						}
+						if(empDetMap == null || !empDetMap.containsKey("endYmd") && empDetMap.get("endYmd").equals("")) {
+							retMsg = "인터페이스  대상자 근태종료일 정보누락";
+							throw new RuntimeException(retMsg);
+						}
+						// 3.1. 기간별체크, 마감여부 체크
+						getCheckMap = (HashMap<String, Object>) wtmInterfaceMapper.getCloseYnChk(reqMap);
+						if(getCheckMap != null) {
+							if(Integer.parseInt(getCheckMap.get("dayCnt").toString()) <= 0) {
+								retMsg = "근태 신청기간에 오류가 있습니다.";
+								throw new RuntimeException(retMsg);
+							}
+							if(Integer.parseInt(getCheckMap.get("closeCnt").toString()) > 0) {
+								retMsg = "근태 신청 기간이 근태마감되었습니다. 담당자에게 문의하세요.";
+								throw new RuntimeException(retMsg);
+							}
+						}
+						
+						// 3.2. WTM_TAA_APPL_DET 생성(근무상세_worksDet 루프)
+						WtmTaaApplDet taaApplDet = new WtmTaaApplDet();
+						taaApplDet.setTaaApplId(taaApplId);
+						taaApplDet.setTaaCd(empDetMap.get("workTimeCode").toString());
+						taaApplDet.setSymd(empDetMap.get("startYmd").toString());
+						taaApplDet.setEymd(empDetMap.get("endYmd").toString());
+						taaApplDet.setShm(empDetMap.get("startHm").toString());
+						taaApplDet.setEhm(empDetMap.get("endHm").toString());
+						taaApplDet.setUpdateId("TAAIF");
+						wtmTaaApplDetRepo.save(taaApplDet);
+					}
+				}
+			}
+			// 3.근태저장이 정상으로 종료됨. 근태 갱신여부를 따져보자
+			if(("".equals(oldApplStatusCd) && "99".equals(nowApplStatusCd) 												// 최초이관인데 승인완료인경우
+				|| !"99".equals(oldApplStatusCd) && "99".equals(nowApplStatusCd) 										// 이전 상태는 승인완료가 아니고 현재상태는 승인완료일때
+				|| "99".equals(oldApplStatusCd) && ("22".equals(nowApplStatusCd) || "44".equals(nowApplStatusCd)))		// 이전 상태가 승인완료였다가 현재상태가 반려 또는 취소인경우
+			  ) {
+				// 3.1 변경정보가 있으니 근무를 갱신
+				reqMap.put("applId", applId);
+				List<Map<String, Object>>  getTaaList = null;
+				getTaaList = wtmInterfaceMapper.getTaaList(reqMap); // 저장한 데이터를 읽어온다
+				if(getTaaList == null || getTaaList.size() <= 0) {
+					retMsg = "근무기록 대상자가 아닙니다.";
+					throw new RuntimeException(retMsg);
+				}
+				for(Map<String, Object> taaDetMap : getTaaList) {	
+					taaDetMap.put("tenantId", tenantId);
+					taaDetMap.put("applId", applId);
+					// 4.1 근태 코드별 기준확인
+					System.out.println("tenantId :: " + tenantId);
+					System.out.println("enterCd ::  " + reqMap.get("enterCd").toString());
+					System.out.println("taaCd :: " + taaDetMap.get("taaCd").toString() );
+					WtmTaaCode taaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, reqMap.get("enterCd").toString(), taaDetMap.get("taaCd").toString());
+					if(taaCode == null) {
+			        	retMsg = "근태코드가 없습니다. 담당자에게 문의 하세요.";
+						throw new RuntimeException(retMsg);
+					}
+					if("N".equals(taaCode.getRequestTypeCd())) {
+						retMsg = "근태신청이 불가능한 근태코드입니다.";
+						throw new RuntimeException(retMsg);
+					}
+					// 4.2. 근무옵션 확인
+					SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
+					
+					Map<String, Object>  getStdMgrMap = null;
+					getStdMgrMap = wtmInterfaceMapper.getStdMgrList(taaDetMap); 
+					if(getStdMgrMap != null && getStdMgrMap.containsKey("unplannedYn") && "Y".equals(getStdMgrMap.get("unplannedYn").toString())) {
+						// 4.2.1. 근무계획없음 체크일때 RESULT 갱신은 없음.
+						// result 생성해야함
+						if("99".equals(nowApplStatusCd)) {
+							WtmWorkDayResult dayResult = new WtmWorkDayResult();
+							Integer workMinute = Integer.parseInt(taaCode.getWorkApprHour().toString()) * 60;
+							if(!"0".equals(taaDetMap.get("workMinute").toString())) {
+								workMinute = Integer.parseInt(taaDetMap.get("workMinute").toString());
+							}
+							dayResult.setTenantId(tenantId);
+							dayResult.setEnterCd(taaDetMap.get("enterCd").toString());
+							dayResult.setYmd(taaDetMap.get("ymd").toString());
+							dayResult.setSabun(taaDetMap.get("sabun").toString());
+							dayResult.setApplId(applId);
+							dayResult.setTimeTypeCd("TAA");
+							dayResult.setTaaCd(taaDetMap.get("taaCd").toString());
+							dayResult.setPlanMinute(workMinute);
+							dayResult.setApprMinute(workMinute);
+							dayResult.setUpdateId("TAAIF");
+							dayResultRepo.save(dayResult);
+						} else {
+							// delete는 키를 못찾으니깐 쿼리문으로
+							wtmInterfaceMapper.deleteResult(taaDetMap);
+						}
+					} else {
+						// 4.2.2 근무계획이 무조건 있어야 함
+						// 근태기준이 휴일포함이거나, 휴일포함아니면 근무일일때만 data 생성
+						if("Y".equals(taaCode.getHolInclYn()) || ("N".equals(taaCode.getHolInclYn()) && "Y".equals(taaDetMap.get("holidayYn")))) {
+							String taaSdate = getStdMgrMap.get("taaSdate").toString();
+							String taaEdate = getStdMgrMap.get("taaEdate").toString();
+							if(!"0".equals(taaDetMap.get("workMinute").toString())) {
+								// 근무시간이 왔으면....신청서 근무시간대로 입력해줌
+								taaSdate = taaDetMap.get("taaSdate").toString();
+								taaEdate = taaDetMap.get("taaEdate").toString();
+							} else {
+								// 근무시간이 없으면 근태코드별 시간을 조정해야함.
+								if("A".equals(taaCode.getRequestTypeCd()) || "P".equals(taaCode.getRequestTypeCd())){
+									// 반차는 근무시간을 변경함
+									Map<String, Object>  setTimeMap = null;
+									setTimeMap.put("taaSdate",taaSdate);
+									setTimeMap.put("taaEdate",taaEdate);
+									setTimeMap.put("reqTypeCd",taaCode.getRequestTypeCd());
+									Map<String, Object>  getTimeMap = null;
+									getTimeMap = wtmInterfaceMapper.getTaaPlanTimeList(setTimeMap);
+									if(getTimeMap == null || getTimeMap.size() == 0) {
+										retMap.put("status", "ERR");
+							        	retMap.put("retMsg", "근태 시간계산중 오류가 발생하였습니다.");
+										throw new Exception(retMsg);
+									}
+									taaSdate = getTimeMap.get("taaSdate").toString();
+									taaEdate = getTimeMap.get("taaEdate").toString();
+								} 
+							}
+							if("99".equals(nowApplStatusCd)) {
+								// 근태생성
+								WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
+										  Long.parseLong(taaDetMap.get("tenantId").toString())
+										, taaDetMap.get("enterCd").toString()
+										, taaDetMap.get("ymd").toString()
+										, taaDetMap.get("sabun").toString()
+										, "TAA"
+										, taaDetMap.get("taaCd").toString()
+										, dt.parse(taaSdate)
+										, dt.parse(taaEdate)
+										, Long.parseLong(taaDetMap.get("applId").toString())
+										, "TAAIF");
+								
+								String chkYmd = WtmUtil.parseDateStr(new Date(), null);
+				        		
+				        		// 오늘 이전이면 근무마감을 다시 돌려야함.
+								if (Integer.parseInt(chkYmd) > Integer.parseInt(taaDetMap.get("ymd").toString())) {
+					        		WtmFlexibleEmpService.calcApprDayInfo(Long.parseLong(taaDetMap.get("tenantId").toString())
+					        											 , taaDetMap.get("enterCd").toString()
+					        											 , taaDetMap.get("ymd").toString()
+					        											 , taaDetMap.get("ymd").toString()
+					        											 , taaDetMap.get("sabun").toString());
+								}
+								
+							} else {
+								// 취소이면 근태삭제
+								WtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
+										Long.parseLong(taaDetMap.get("tenantId").toString())
+										, taaDetMap.get("enterCd").toString()
+										, taaDetMap.get("ymd").toString()
+										, taaDetMap.get("sabun").toString()
+										, "TAA"
+										, taaDetMap.get("taaCd").toString()
+										, dt.parse(taaSdate)
+										, dt.parse(taaEdate)
+										, Long.parseLong(taaDetMap.get("applId").toString())
+										, "TAAIF");
+								//취소는 무조건 재계산해주자
+								WtmFlexibleEmpService.calcApprDayInfo(Long.parseLong(taaDetMap.get("tenantId").toString())
+										 , taaDetMap.get("enterCd").toString()
+										 , taaDetMap.get("ymd").toString()
+										 , taaDetMap.get("ymd").toString()
+										 , taaDetMap.get("sabun").toString());
+							}
+							// 근무시간합산은 재정산한다
+			        		HashMap<String, Object> setTermMap = new HashMap();
+			        		setTermMap.put("tenantId", reqMap.get("tenantId"));
+			        		setTermMap.put("enterCd", taaDetMap.get("enterCd").toString());
+			        		setTermMap.put("sabun", taaDetMap.get("sabun").toString());
+			        		setTermMap.put("symd", taaDetMap.get("ymd").toString());
+			        		setTermMap.put("eymd", taaDetMap.get("ymd").toString());
+			        		setTermMap.put("pId", "TAAIF");
+			        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
+						}
+					}	
+				}
+			}
+		
+		retMap.put("status", "OK");
+    	retMap.put("retMsg", "");
+ 		System.out.println("WtmInterfaceServiceImpl WTM_IF_HIS save end");
+		return retMap;
+	}
+	
+	
+	@Override
+	@Transactional
+	public void setIfHis(Map<String, Object> reqMap) throws Exception {
+		// TODO Auto-generated method stub
+		wtmInterfaceMapper.insertIfHis(reqMap);
 	}
 	
 	@Override
