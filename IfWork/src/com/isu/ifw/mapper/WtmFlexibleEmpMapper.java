@@ -95,11 +95,13 @@ public interface WtmFlexibleEmpMapper {
 	
 	/**
 	 * BreakTypeCd = TIME 계산
+	 * 20.01.17 jyp 수정  TIME / TIMEFIX 는 휴게시간 무시하고 계산하고 EXCEPT BREAK DATA 생성
 	 * @param paramMap
 	 */
 	public void updateTimeTypeApprMinuteByYmdAndSabun(Map<String, Object> paramMap);
 	/**
 	 * BreakTypeCd = TIMEFIX 계산
+	 * 20.01.17 jyp 수정  TIME / TIMEFIX 는 휴게시간 무시하고 계산하고 EXCEPT BREAK DATA 생성
 	 * @param paramMap
 	 */
 	public void updateTimeFixTypeApprMinuteByYmdAndSabun(Map<String, Object> paramMap);
