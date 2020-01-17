@@ -246,6 +246,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 						line = wtmApplLineRepo.save(line);
 					} else if(APPL_LINE_S.equals(line.getApprTypeCd())) { //결재
 						//첫번째 결재자의 상태만 변경 후 스탑
+						apprSabun = line.getApprSabun();
 						line.setApprStatusCd(APPR_STATUS_REQUEST);
 						line = wtmApplLineRepo.save(line);
 						break;
@@ -526,8 +527,6 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		} else {
 			inbox.setInbox(tenantId, enterCd, apprSabun, applId, "APPR", "결재요청 : 연장근무신청", "", "N");
 		}
-
-		
 		return rp;
 
 	}
@@ -1442,6 +1441,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 						line = wtmApplLineRepo.save(line);
 					} else if(APPL_LINE_S.equals(line.getApprTypeCd())) { //결재
 						//첫번째 결재자의 상태만 변경 후 스탑
+						apprSabun = line.getApprSabun();
 						line.setApprStatusCd(APPR_STATUS_REQUEST);
 						line = wtmApplLineRepo.save(line);
 						break;
@@ -1450,6 +1450,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				}
 			}
 		}
+		inbox.setInbox(tenantId, enterCd, apprSabun, applId, "APPR", "결재요청 : 연장근무신청", "", "Y");
+
 		return rp;
 		//push전송 추가
 	}

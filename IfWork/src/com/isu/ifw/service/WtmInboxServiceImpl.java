@@ -1,5 +1,6 @@
 package com.isu.ifw.service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -7,7 +8,6 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
-import org.jboss.logging.MDC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +16,14 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.isu.ifw.common.service.TenantConfigManagerService;
 import com.isu.ifw.entity.WtmInbox;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmInboxMapper;
 import com.isu.ifw.repository.WtmInboxRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
+import com.pb.async.component.ExtApiCallComponent;
 
 @Transactional
 @Service
@@ -41,6 +43,12 @@ public class WtmInboxServiceImpl implements WtmInboxService{
 	@Resource
 	WtmInboxMapper inboxMapper;
 	
+	@Autowired
+	ExtApiCallComponent eacComponent;
+
+	@Autowired
+	TenantConfigManagerService tcms;
+	
 	@Async("threadPoolTaskExecutor")
 	@Override
 	public void setInbox(Long tenantId, String enterCd, String sabun, Long applCodeId, String type, String title, String contents, String checkYn) {
@@ -55,21 +63,28 @@ public class WtmInboxServiceImpl implements WtmInboxService{
 		data.setCheckYn(checkYn);
 		
 		try {
-			MDC.put("inbox", data.toString());
-			logger.info("setInbox", MDC.get("sessionId"), MDC.get("logId"), "S");
+			logger.debug("set inbox", data.toString());
 			
 			data = inboxRepository.save(data);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			MDC.remove("inbox");
 			//connect("/api/${tenantId}/${enterCd}/${empNo}/navTop", navTopVue.webSocketCallback);
 			if (data != null && data.getId() != null) {
 				String url = "/api/"+tenantId+"/"+enterCd+"/"+sabun+"/navTop";
 				System.out.println(url);
 				this.template.convertAndSend(url, data);
 			}
+
+			List<String> targetEmp = new ArrayList();
+			targetEmp.add(enterCd + "@" + sabun);
+			try {
+				sendPushMessage(tenantId, enterCd, "INFO", targetEmp, title, contents);
+			} catch(Exception e) {
+				logger.debug("sendPushMessage : FAIL " + e.getMessage());
+			}
+			
 		}
 	}
 	
@@ -161,5 +176,27 @@ public class WtmInboxServiceImpl implements WtmInboxService{
 		}
 		
 		return rp;
+	}
+	
+	@Override
+	public void sendPushMessage(Long tenantId, String enterCd, String category, List<String> targetEmp, String title, String content) throws Exception{
+		if(targetEmp.size() > 0){
+			String apiKey = tcms.getConfigValue(tenantId, "M_API.API_KEY", true, "");
+			String secret = tcms.getConfigValue(tenantId, "M_API.SECRET", true, "");
+			String url = tcms.getConfigValue(tenantId, "M_API.PUSH_TONG_URL", true, "");
+			Map<String, Object> paramMap = new HashMap<String, Object>();
+			paramMap.put("apiKey", apiKey);
+			paramMap.put("secret", secret);
+			paramMap.put("from", category);
+			paramMap.put("type", "INFO");
+			paramMap.put("title", title);
+			paramMap.put("issuer", "system");
+			paramMap.put("content", content);
+			paramMap.put("key", "");
+			paramMap.put("target", targetEmp);
+			
+			logger.debug("sendPushMessage : " + paramMap.toString());
+			eacComponent.extApiPostCall(url, paramMap);
+		}
 	}
 }

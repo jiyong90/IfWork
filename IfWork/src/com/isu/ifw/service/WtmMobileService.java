@@ -31,5 +31,4 @@ public interface WtmMobileService {
 
 	//신청서 상세
 	public Map<String, Object> getApplDetail(Long tenantId, String enterCd, String sabun, String applKey) throws Exception ;
-
 }

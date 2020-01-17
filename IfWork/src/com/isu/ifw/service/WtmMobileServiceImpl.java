@@ -23,6 +23,7 @@ import com.isu.ifw.mapper.WtmWorktimeMapper;
 import com.isu.ifw.repository.WtmApplCodeRepository;
 import com.isu.ifw.util.MobileUtil;
 import com.isu.ifw.vo.WtmApplLineVO;
+import com.pb.async.component.ExtApiCallComponent;
 
 @Service("mobileService")
 public class WtmMobileServiceImpl implements WtmMobileService{
@@ -56,6 +57,10 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 	
 	@Autowired
 	TenantConfigManagerService tcms;
+	
+	@Autowired
+	ExtApiCallComponent eacComponent;
+
 	
 	@Override
 	public List<Map<String, Object>> getTermList(Map<String, Object> paramMap) throws Exception  {

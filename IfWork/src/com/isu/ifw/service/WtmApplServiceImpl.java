@@ -76,6 +76,9 @@ public class WtmApplServiceImpl implements WtmApplService {
 	@Autowired
 	WtmApplCodeRepository applCodeRepo;
 	
+	@Autowired
+	WtmInboxService inbox;
+	
 	
 	@Override
 	public List<Map<String, Object>> getApprList(Long tenantId, String enterCd, String empNo, Map<String, Object> paramMap, String userId) {
@@ -209,10 +212,13 @@ public class WtmApplServiceImpl implements WtmApplService {
 			throw new Exception("사유를 입력하세요.");
 		}
 		String apprOpinion = paramMap.get("apprOpinion").toString();
-		
+		String applSabun = null;
 		List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);
 		if(lines != null && lines.size() > 0) {
 			for(WtmApplLine line : lines) {
+				if(line.getApprSeq() == 1) {
+					applSabun = line.getApprSabun();
+				}
 				if(line.getApprSeq() <= apprSeq) {
 					line.setApprStatusCd(APPR_STATUS_REJECT);
 					line.setApprDate(WtmUtil.parseDateStr(new Date(), null));
@@ -232,6 +238,8 @@ public class WtmApplServiceImpl implements WtmApplService {
 		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
 		appl.setUpdateId(userId);	
 		wtmApplRepo.save(appl);
+		
+		inbox.setInbox(tenantId, enterCd, applSabun, applId, "APPLY", "결재완료", "신청서가  반려되었습니다.", "N");
 	}
 
 	@Override
