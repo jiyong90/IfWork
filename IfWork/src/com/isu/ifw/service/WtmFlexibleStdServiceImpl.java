@@ -188,44 +188,48 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 		List<Map<String, Object>> workPattList = new ArrayList();	
 		List<WtmWorkPattDet> list = workPattDetRepository.findByFlexibleStdMgrId(flexibleStdMgrId);
 
-		for(WtmWorkPattDet l : list) {
-			Map<String, Object> workPatt = new HashMap();
-			workPatt.put("workPattDetId", l.getWorkPattDetId());
-			workPatt.put("flexibleStdMgrId", l.getFlexibleStdMgrId());
-			workPatt.put("seq", l.getSeq());
-			workPatt.put("timeCdMgrId", l.getTimeCdMgrId());
-			
-			WtmTimeCdMgr timeCdMgr = timeCdMgrRepo.findById(l.getTimeCdMgrId()).get();
-			
-			double subGrp = l.getSeq()%7==0 ? Math.floor(l.getSeq()/7) : Math.floor(l.getSeq()/7)+1;
-			workPatt.put("subGrp", subGrp);
-			
-			workPatt.put("planShm", l.getPlanShm());
-			workPatt.put("planEhm", l.getPlanEhm());
+		if(list!=null && list.size()>0) {
+			for(WtmWorkPattDet l : list) {
+				Map<String, Object> workPatt = new HashMap();
+				workPatt.put("workPattDetId", l.getWorkPattDetId());
+				workPatt.put("flexibleStdMgrId", l.getFlexibleStdMgrId());
+				workPatt.put("seq", l.getSeq());
+				workPatt.put("timeCdMgrId", l.getTimeCdMgrId());
+				
+				WtmTimeCdMgr timeCdMgr = timeCdMgrRepo.findById(l.getTimeCdMgrId()).get();
+				
+				if(l.getSeq()!=0) {
+					double subGrp = l.getSeq()%7==0 ? Math.floor(l.getSeq()/7) : Math.floor(l.getSeq()/7)+1;
+					workPatt.put("subGrp", subGrp);
+				}
+				
+				workPatt.put("planShm", l.getPlanShm());
+				workPatt.put("planEhm", l.getPlanEhm());
 
-			if(timeCdMgr.getHolYn()!=null && !"Y".equals(timeCdMgr.getHolYn()))
-				workPatt.put("planMinute", l.getPlanMinute());
-			else 
-				workPatt.put("planMinute", "");
-			
-			workPatt.put("otbMinute", l.getOtbMinute());
-			workPatt.put("otaMinute", l.getOtaMinute());
-			
-			int otMinute = 0;
-			
-			if(timeCdMgr.getHolYn()!=null && "Y".equals(timeCdMgr.getHolYn()) && l.getPlanMinute()!=null) {
-				otMinute = l.getPlanMinute();
-			} 
-			
-			if(otMinute!=0) {
-				workPatt.put("otMinute", otMinute);
-			} else {
-				workPatt.put("otMinute", "");
+				if(timeCdMgr.getHolYn()!=null && !"Y".equals(timeCdMgr.getHolYn()))
+					workPatt.put("planMinute", l.getPlanMinute());
+				else 
+					workPatt.put("planMinute", "");
+				
+				workPatt.put("otbMinute", l.getOtbMinute());
+				workPatt.put("otaMinute", l.getOtaMinute());
+				
+				int otMinute = 0;
+				
+				if(timeCdMgr.getHolYn()!=null && "Y".equals(timeCdMgr.getHolYn()) && l.getPlanMinute()!=null) {
+					otMinute = l.getPlanMinute();
+				} 
+				
+				if(otMinute!=0) {
+					workPatt.put("otMinute", otMinute);
+				} else {
+					workPatt.put("otMinute", "");
+				}
+				
+				workPatt.put("note", l.getNote());
+				workPattList.add(workPatt);
+
 			}
-			
-			workPatt.put("note", l.getNote());
-			workPattList.add(workPatt);
-
 		}
 		
 		return workPattList;
