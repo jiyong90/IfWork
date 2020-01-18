@@ -16,6 +16,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import com.isu.ifw.entity.WtmCode;
 import com.isu.ifw.mapper.WtmCalendarMapper;
 import com.isu.ifw.mapper.WtmInOutChangeMapper;
+import com.isu.ifw.mapper.WtmInoutHisMapper;
 
 @Service("inOutChangeService")
 public class WtmInOutChangeServiceImpl implements WtmInOutChangeService{
@@ -33,6 +34,9 @@ public class WtmInOutChangeServiceImpl implements WtmInOutChangeService{
 	
 	@Autowired
 	WtmFlexibleEmpService empService;
+	
+	@Autowired
+	WtmInoutHisMapper inoutHisMapper;
 		
 	@Override
 	public int setInOutChangeList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) {
@@ -95,6 +99,26 @@ public class WtmInOutChangeServiceImpl implements WtmInOutChangeService{
 //
 //			cnt++;
 //		}
+	}
+	
+	
+	@Override
+	@Transactional
+	public Map<String, Object> setInOutChange( Map<String, Object> paramMap) {
+		Map<String, Object> retMap = new HashMap();
+		int cnt = 0;
+		
+		cnt = inOutChangeMapper.setInOutChange(paramMap);
+		System.out.println("inOutChangeMapper.setInOutChange " + cnt);
+		cnt = calendarMapper.updateEntryDateByAdmRow(paramMap);
+		System.out.println("calendarMapper.updateEntryDateByAdmRow " + cnt);
+		try {
+			retMap = calendarMapper.getStdMgrInfo(paramMap);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		return retMap;
 	}
 	
 	@Override

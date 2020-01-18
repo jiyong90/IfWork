@@ -97,6 +97,7 @@ public interface WtmCalendarMapper {
 	 * @throws Exception
 	 */
 	public int updateEntryDateByAdm(Map<String, Object> paramMap);
+	public int updateEntryDateByAdmRow(Map<String, Object> paramMap);
 
 	public int updateEntryDateByAdmTest(Map<String, Object> paramMap);
 	

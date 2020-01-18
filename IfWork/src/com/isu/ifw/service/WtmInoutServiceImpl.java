@@ -701,7 +701,6 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
 			List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()),
 					paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
-
 			//BASE, FIXOT 데이터만 삭제
 			if(unplanned.equals("Y")) {
 				if(results != null && results.size() > 0) {
@@ -713,11 +712,10 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					}
 				}
 			}
-
 			empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
 					paramMap.get("enterCd").toString(), paramMap.get("stdYmd").toString(),
 					paramMap.get("stdYmd").toString(), paramMap.get("sabun").toString());
-			
+			System.out.println("inoutPostProcess4");
 			Map<String, Object> tempTimeMap = new HashMap();
 			tempTimeMap.put("tenantId", Long.parseLong(paramMap.get("tenantId").toString()));
 			tempTimeMap.put("enterCd", paramMap.get("enterCd").toString());
