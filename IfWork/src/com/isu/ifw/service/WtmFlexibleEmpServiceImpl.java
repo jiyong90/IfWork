@@ -437,6 +437,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		Double i = 0d;
 		
 		H = Double.parseDouble(min)/60;
+		H = Math.ceil(H*100)/100.0;
 		i = (H - H.intValue()) * 60;
 		
 		return ((H.intValue()>0)?String.format("%02d", H.intValue()):"00")+":"+((i.intValue()>0)?String.format("%02d", i.intValue()):"00");
@@ -556,7 +557,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 			//일별 고정 OT의 경우 기설정된 OT정보를 찾아 지워주자.
 			//지우기 전에 기본근무 시간 종료시간을 가지고 오자.
-			if(defaultWorkUseYn!=null && defaultWorkUseYn.equals("Y") && fixotUseType!=null && fixotUseType.equalsIgnoreCase("DAY")) {
+			/*if(defaultWorkUseYn!=null && defaultWorkUseYn.equals("Y") && fixotUseType!=null && fixotUseType.equalsIgnoreCase("DAY")) {
 				pMap.put("timeTypeCd", WtmApplService.TIME_TYPE_BASE);
 				//기본근무 종료시간을 구하자.
 				Date maxEdate = flexEmpMapper.getMaxPlanEdate(pMap);
@@ -573,7 +574,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						workDayResultRepo.delete(otDayResult);
 				}
 				
-			}
+			}*/
+			
+			//기설정된 고정 OT지우기.
+			//설정 값이 변경되어 FIXOT가 안지워짐
+			workDayResultRepo.deleteByTenantIdAndEnterCdAndYmdAndTimeTypeCdAndSabun(tenantId, enterCd, ymd, WtmApplService.TIME_TYPE_FIXOT, sabun);
 			
 			//기본근무 정보는 삭제 하고 다시 만들자 그게 속편하다
 			workDayResultRepo.deleteByTenantIdAndEnterCdAndYmdAndTimeTypeCdAndSabun(tenantId, enterCd, ymd, timeTypeCd, sabun);
@@ -699,7 +704,27 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						//데이터가 있으면 안되는디.. 
 						System.out.println("고정 OT 데이터 생성 실패... 있다 이미... 왜!!");
 					} 
-				} 
+				}
+				
+				/**
+				 * Time타입 휴게시간 일 경우만
+				 * type이 plan이면 계획데이터를 생성한다. 
+				 * 인정 데이터 생성을 위함
+				 */
+				pMap.put("sYmd", WtmUtil.parseDateStr(planSdate, "yyyyMMdd"));
+				pMap.put("eYmd", WtmUtil.parseDateStr(planEdate, "yyyyMMdd"));
+				pMap.put("type", "PLAN");
+				pMap.put("userId", userId);
+				flexEmpMapper.createWorkDayResultOfTimeType(pMap);
+				
+				//만약 대체휴가와 같은 time block이 있어 base가 여러 개인 경우에 base를 다시 만들어줌
+				List<WtmWorkDayResult> dupTimeList = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdNotAndPlanSdateGreaterThanEqualAndPlanEdateLessThanEqualOrderByPlanSdateAsc(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_BASE, planSdate, planEdate);
+				if(dupTimeList!=null && dupTimeList.size()>0) {
+					for(WtmWorkDayResult r : dupTimeList) {
+						addWtmDayResultInBaseTimeType(tenantId, enterCd, ymd, sabun, r.getTimeTypeCd(), r.getTaaCd(), r.getPlanSdate(), r.getPlanEdate(), applId, userId, false);
+					}
+				}
+				
 			}
 		}
 		return rp;
@@ -876,18 +901,14 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						if(shm!=null && ehm!=null) {
 							paramMap.put("shm", shm);
 							paramMap.put("ehm", ehm);
-							Map<String, Object> planMinuteMap = calcElasPlanMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
+							Map<String, Object> planMinuteMap = calcMinuteExceptBreaktimeForElas(false, flexibleApplId, paramMap, userId);
 							applDet.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
 						} else {
 							applDet.setPlanMinute(null);
 						}
 						
 						if(shm!=null && ehm!=null && vMap.get("otbMinute") != null && !vMap.get("otbMinute").equals("")) {
-							paramMap.put("otType", "OTB");
-							paramMap.put("sDate", k+shm );
-							paramMap.put("eDate", k+ehm );
-							paramMap.put("minute", vMap.get("otbMinute"));
-							Map<String, Object> otbMinuteMap = calcElasOtMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
+							Map<String, Object> otbMinuteMap = calcOtMinuteExceptBreaktimeForElas(false, flexibleApplId, k+shm, k+ehm, "OTB", Integer.parseInt(vMap.get("otbMinute").toString()), userId);
 							
 							if(otbMinuteMap!=null) {
 								Date otbSdate = WtmUtil.toDate(otbMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
@@ -905,12 +926,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}
 						
 						if(shm!=null && ehm!=null && vMap.get("otaMinute") != null && !vMap.get("otaMinute").equals("")) {
-							paramMap.put("otType", "OTA");
-							paramMap.put("sDate", k+shm );
-							paramMap.put("eDate", k+ehm );
-							paramMap.put("minute", vMap.get("otaMinute"));
-							
-							Map<String, Object> otaMinuteMap = calcElasOtMinuteExceptBreaktime(false, flexibleApplId, paramMap, userId);
+							Map<String, Object> otaMinuteMap = calcOtMinuteExceptBreaktimeForElas(false, flexibleApplId, k+shm, k+ehm, "OTA", Integer.parseInt(vMap.get("otaMinute").toString()), userId);
 							Date otaSdate = WtmUtil.toDate(otaMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
 							Date otaEdate = WtmUtil.toDate(otaMinuteMap.get("eDate").toString(), "yyyyMMddHHmmss");
 							
@@ -980,6 +996,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				if(plan.containsKey("minute") && plan.get("minute") != null) {
 					m = plan.get("minute").toString();
 					H = Double.parseDouble(m)/60;
+					H = Math.ceil(H*100)/100.0;
 					i = (H - H.intValue()) * 60;
 				}
 
@@ -1844,6 +1861,76 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 	
 	@Override
+	public Map<String, Object> calcMinuteExceptBreaktimeForElas(boolean adminYn, Long flexibleApplId, Map<String, Object> paramMap, String userId) {
+		Map<String, Object> result = null;
+		Long timeCdMgrId = null;
+		
+		if(adminYn) {
+			WtmFlexibleApplyDet flexApplyDet = flexibleApplyDetRepo.findByFlexibleApplyIdAndYmd(flexibleApplId, paramMap.get("ymd").toString());
+		
+			if(flexApplyDet!=null && flexApplyDet.getTimeCdMgrId()!=null)
+				timeCdMgrId = Long.valueOf(flexApplyDet.getTimeCdMgrId());
+			
+			paramMap.put("tableName", "WTM_FLEXIBLE_APPLY_DET");
+			paramMap.put("key", "FLEXIBLE_APPLY_ID");
+			paramMap.put("value", flexibleApplId);
+		} else {
+			WtmFlexibleApplDet flexApplDet = flexApplDetRepo.findByFlexibleApplIdAndYmd(flexibleApplId, paramMap.get("ymd").toString());
+			
+			if(flexApplDet!=null && flexApplDet.getTimeCdMgrId()!=null)
+				timeCdMgrId = Long.valueOf(flexApplDet.getTimeCdMgrId());
+			
+			paramMap.put("tableName", "WTM_FLEXIBLE_APPL_DET");
+			paramMap.put("key", "FLEXIBLE_APPL_ID");
+			paramMap.put("value", flexibleApplId);
+		}
+		
+		if(timeCdMgrId!=null) {
+			result = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, userId);
+		}
+		
+		return result;
+	}
+	
+	@Override
+	public Map<String, Object> calcOtMinuteExceptBreaktimeForElas(boolean adminYn, Long flexibleApplId, String sDate, String eDate, String otType, int otMinute, String userId) {
+		Map<String, Object> result = null;
+		Map<String, Object> otParamMap = new HashMap<String, Object>();
+		if(adminYn) {
+			otParamMap.put("tableName", "WTM_FLEXIBLE_APPLY_DET");
+			otParamMap.put("key", "FLEXIBLE_APPLY_ID");
+			otParamMap.put("value", flexibleApplId);
+		} else {
+			otParamMap.put("tableName", "WTM_FLEXIBLE_APPL_DET");
+			otParamMap.put("key", "FLEXIBLE_APPL_ID");
+			otParamMap.put("value", flexibleApplId);
+		}
+		
+		otParamMap.put("sDate", sDate);
+		otParamMap.put("eDate", eDate);
+		otParamMap.put("otType", otType);
+		otParamMap.put("minute", otMinute);
+		
+		Map<String, Object> otMinuteMap = flexEmpMapper.getElasOtHm(otParamMap);
+		if(otMinuteMap!=null && otMinuteMap.get("timeCdMgrId")!=null && otMinuteMap.get("shm")!=null && otMinuteMap.get("ehm")!=null) {
+			Long timeCdMgrId = Long.valueOf(otMinuteMap.get("timeCdMgrId").toString());
+			
+			Date otSdate = WtmUtil.toDate(otMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
+			Date otEdate = WtmUtil.toDate(otMinuteMap.get("eDate").toString(), "yyyyMMddHHmmss");
+			
+			Map<String, Object> paramMap = new HashMap<String, Object>();
+			paramMap.put("shm", WtmUtil.parseDateStr(otSdate, "HHmm"));
+			paramMap.put("ehm", WtmUtil.parseDateStr(otEdate, "HHmm"));
+			
+			result = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, userId);
+			result.put("sDate", otSdate);
+			result.put("eDate", otEdate);
+		}
+		
+		return result;
+	}
+	
+	@Override
 	public Map<String, Object> calcMinuteExceptBreaktime(Long timeCdMgrId, Map<String, Object> paramMap, String userId) {
 		//break_type_cd
 		String breakTypeCd = "";
@@ -1870,94 +1957,20 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//result = flexEmpMapper.calcTimeTypeFixMinuteExceptBreaktime(paramMap);
 			result = flexEmpMapper.calcMinute(paramMap);
 		}
-		return result;
 		
-	}
-	
-	@Override
-	public Map<String, Object> calcElasPlanMinuteExceptBreaktime(boolean adminYn, Long flexibleApplId, Map<String, Object> paramMap, String userId) {
-		//break_type_cd
-		String breakTypeCd = "";
 		
-		Long timeCdMgrId = null;
-		
-		if(adminYn) {
-			WtmFlexibleApplyDet flexApplyDet = flexibleApplyDetRepo.findByFlexibleApplyIdAndYmd(flexibleApplId, paramMap.get("ymd").toString());
-		
-			if(flexApplyDet!=null && flexApplyDet.getTimeCdMgrId()!=null)
-				timeCdMgrId = Long.valueOf(flexApplyDet.getTimeCdMgrId());
-			
-			paramMap.put("tableName", "WTM_FLEXIBLE_APPLY_DET");
-			paramMap.put("key", "FLEXIBLE_APPLY_ID");
-			paramMap.put("value", flexibleApplId);
-		} else {
-			WtmFlexibleApplDet flexApplDet = flexApplDetRepo.findByFlexibleApplIdAndYmd(flexibleApplId, paramMap.get("ymd").toString());
-			
-			if(flexApplDet!=null && flexApplDet.getTimeCdMgrId()!=null)
-				timeCdMgrId = Long.valueOf(flexApplDet.getTimeCdMgrId());
-			
-			paramMap.put("tableName", "WTM_FLEXIBLE_APPL_DET");
-			paramMap.put("key", "FLEXIBLE_APPL_ID");
-			paramMap.put("value", flexibleApplId);
-		}
-		
-		if(timeCdMgrId!=null) {
-			WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(timeCdMgrId).get();
-			if(timeCdMgr!=null && timeCdMgr.getBreakTypeCd()!=null)
-				breakTypeCd = timeCdMgr.getBreakTypeCd();
-		}
-		
-		Map<String, Object> result = null;
-		if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
-			result = flexEmpMapper.calcElasPlanMinuteExceptBreaktime(paramMap);
-		} else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
-			result = flexEmpMapper.calcTimeTypeElasPlanMinuteExceptBreaktime(paramMap);
+		paramMap.put("breakTypeCd", breakTypeCd);
+		Map<String, Object> breakMinuteMap = null;
+		if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
+			breakMinuteMap = flexEmpMapper.calcTimeBreakMinute(paramMap);
+			if(breakMinuteMap!=null)
+				result.putAll(breakMinuteMap);
 		} else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
-			result = flexEmpMapper.calcTimeTypeFixElasPlanMinuteExceptBreaktime(paramMap);
-		}
-		
-		return result;
-		
-	}
-	
-	@Override
-	public Map<String, Object> calcElasOtMinuteExceptBreaktime(boolean adminYn, Long flexibleApplId, Map<String, Object> paramMap, String userId) {
-		String breakTypeCd = "";
-		
-		Long timeCdMgrId = null;
-		
-		if(adminYn) {
-			WtmFlexibleApplyDet flexApplyDet = flexibleApplyDetRepo.findByFlexibleApplyIdAndYmd(flexibleApplId, paramMap.get("ymd").toString());
-		
-			if(flexApplyDet!=null && flexApplyDet.getTimeCdMgrId()!=null)
-				timeCdMgrId = Long.valueOf(flexApplyDet.getTimeCdMgrId());
 			
-			paramMap.put("tableName", "WTM_FLEXIBLE_APPLY_DET");
-			paramMap.put("key", "FLEXIBLE_APPLY_ID");
-		} else {
-			WtmFlexibleApplDet flexApplDet = flexApplDetRepo.findByFlexibleApplIdAndYmd(flexibleApplId, paramMap.get("ymd").toString());
-			
-			if(flexApplDet!=null && flexApplDet.getTimeCdMgrId()!=null)
-				timeCdMgrId = Long.valueOf(flexApplDet.getTimeCdMgrId());
-			
-			paramMap.put("tableName", "WTM_FLEXIBLE_APPL_DET");
-			paramMap.put("key", "FLEXIBLE_APPL_ID");
 		}
 		
-		if(timeCdMgrId!=null) {
-			WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(timeCdMgrId).get();
-			if(timeCdMgr!=null && timeCdMgr.getBreakTypeCd()!=null)
-				breakTypeCd = timeCdMgr.getBreakTypeCd();
-		}
-		
-		Map<String, Object> result = null;
-		if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
-			result = flexEmpMapper.calcElasOtMinuteExceptBreaktime(paramMap);
-		} else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
-			result = flexEmpMapper.calcTimeTypeElasOtMinuteExceptBreaktime(paramMap);
-		} else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
-			result = flexEmpMapper.calcTimeTypeFixElasOtMinuteExceptBreaktime(paramMap);
-		}
+		if(breakMinuteMap!=null)
+			result.putAll(breakMinuteMap);
 		
 		return result;
 		

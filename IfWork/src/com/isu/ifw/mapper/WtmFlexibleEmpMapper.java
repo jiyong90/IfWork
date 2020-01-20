@@ -370,6 +370,20 @@ public interface WtmFlexibleEmpMapper {
 	 */
 	public List<Map<String, Object>> getElasWeekHour(Map<String, Object> paramMap);
 	
+	/**
+	 * 탄근제 계획시간으로 ot시간 조회
+	 * @param paramMap
+	 * tableName
+	 * key
+	 * value
+	 * otType : OTB(조출), OTA(연장)
+	 * sDate 탄근제 계획 시작시간
+	 * eDate 탄근제 계획 종료시간
+	 * minute ot시간(분)
+	 * @return
+	 */
+	public Map<String, Object> getElasOtHm(Map<String, Object> paramMap);
+	
 
 	/**
 	 * 유연근무 변경/취소 확인
@@ -409,4 +423,6 @@ public interface WtmFlexibleEmpMapper {
 	public Map<String, Object> getWorkTermMinute(Map<String, Object> paramMap);
 	
 	public Map<String, Object> calcMinute(Map<String, Object> paramMap);
+	
+	public Map<String, Object> calcTimeBreakMinute(Map<String, Object> paramMap);
 }

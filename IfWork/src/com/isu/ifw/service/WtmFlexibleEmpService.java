@@ -256,22 +256,17 @@ public interface WtmFlexibleEmpService {
 	
 	/**
 	 * 탄근제 근무시간 계산
+	 * 탄근제의 경우, timeCdMgrId 구하는 방법이 다르기 때문에 분리
+	 * @param adminYn
 	 * @param flexibleApplId
-	 * @param paramMap ymd, shm, ehm 
+	 * @param paramMap
 	 * @param userId
 	 * @return
 	 */
-	public Map<String, Object> calcElasPlanMinuteExceptBreaktime(boolean adminYn,Long flexibleApplId, Map<String, Object> paramMap, String userId);
-
-	/**
-	 * 탄근제 연장 근무시간 계산
-	 * @param flexibleApplId
-	 * @param paramMap ymd, shm, ehm 
-	 * @param userId
-	 * @return
-	 */
-	public Map<String, Object> calcElasOtMinuteExceptBreaktime(boolean adminYn, Long flexibleApplId, Map<String, Object> paramMap, String userId);
-
+	public Map<String, Object> calcMinuteExceptBreaktimeForElas(boolean adminYn, Long flexibleApplId, Map<String, Object> paramMap, String userId);
+	
+	public Map<String, Object> calcOtMinuteExceptBreaktimeForElas(boolean adminYn, Long flexibleApplId, String sDate, String eDate, String otType, int otMinute, String userId);
+	
 	/**
 	 * 사용자의 권한 조회
 	 * @param tenantId

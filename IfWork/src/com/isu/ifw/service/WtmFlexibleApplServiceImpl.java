@@ -782,15 +782,11 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 					
 					paramMap.put("shm", WtmUtil.parseDateStr(planSdate, "HHmm"));
 					paramMap.put("ehm", WtmUtil.parseDateStr(planEdate, "HHmm"));
-					Map<String, Object> planMinuteMap = flexibleEmpService.calcElasPlanMinuteExceptBreaktime(false, d.getFlexibleApplId(), paramMap, userId);
+					Map<String, Object> planMinuteMap = flexibleEmpService.calcMinuteExceptBreaktimeForElas(false, d.getFlexibleApplId(), paramMap, userId);
 					d.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
 					
 					if(d.getOtbMinute()!=0) {
-						paramMap.put("otType", "OTB");
-						paramMap.put("sDate", pSdate);
-						paramMap.put("eDate", pEdate);
-						paramMap.put("minute", d.getOtbMinute());
-						Map<String, Object> otbMinuteMap = flexibleEmpService.calcElasOtMinuteExceptBreaktime(false, d.getFlexibleApplId(), paramMap, userId);
+						Map<String, Object> otbMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(false, d.getFlexibleApplId(), pSdate, pEdate, "OTB", d.getOtbMinute(), userId);
 						
 						if(otbMinuteMap!=null) {
 							Date otbSdate = WtmUtil.toDate(otbMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
@@ -803,11 +799,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 					}
 					
 					if(d.getOtaMinute()!=0) {
-						paramMap.put("otType", "OTA");
-						paramMap.put("sDate", pSdate);
-						paramMap.put("eDate", pEdate);
-						paramMap.put("minute", d.getOtaMinute());
-						Map<String, Object> otaMinuteMap = flexibleEmpService.calcElasOtMinuteExceptBreaktime(false, d.getFlexibleApplId(), paramMap, userId);
+						Map<String, Object> otaMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(false, d.getFlexibleApplId(), pSdate, pEdate, "OTA", d.getOtaMinute(), userId);
 						
 						if(otaMinuteMap!=null) {
 							Date otaSdate = WtmUtil.toDate(otaMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
