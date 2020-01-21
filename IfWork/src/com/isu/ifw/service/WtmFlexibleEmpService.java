@@ -265,7 +265,7 @@ public interface WtmFlexibleEmpService {
 	 */
 	public Map<String, Object> calcMinuteExceptBreaktimeForElas(boolean adminYn, Long flexibleApplId, Map<String, Object> paramMap, String userId);
 	
-	public Map<String, Object> calcOtMinuteExceptBreaktimeForElas(boolean adminYn, Long flexibleApplId, String sDate, String eDate, String otType, int otMinute, String userId);
+	public Map<String, Object> calcOtMinuteExceptBreaktimeForElas(boolean adminYn, Long flexibleApplId, String ymd, String sDate, String eDate, String otType, int otMinute, String userId);
 	
 	/**
 	 * 사용자의 권한 조회

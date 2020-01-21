@@ -766,7 +766,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 					d.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
 					
 					if(d.getOtbMinute()!=0) {
-						Map<String, Object> otbMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), pSdate, pEdate, "OTB", d.getOtbMinute(), userId);
+						Map<String, Object> otbMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), d.getYmd(), pSdate, pEdate, "OTB", d.getOtbMinute(), userId);
 						
 						if(otbMinuteMap!=null) {
 							Date otbSdate = WtmUtil.toDate(otbMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
@@ -779,7 +779,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 					}
 					
 					if(d.getOtaMinute()!=0) {
-						Map<String, Object> otaMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), pSdate, pEdate, "OTA", d.getOtaMinute(), userId);
+						Map<String, Object> otaMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), d.getYmd(), pSdate, pEdate, "OTA", d.getOtaMinute(), userId);
 						
 						if(otaMinuteMap!=null) {
 							Date otaSdate = WtmUtil.toDate(otaMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
@@ -794,6 +794,8 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				}
 				
 			}	
+			
+			flexibleApplyDetRepo.saveAll(applyDets);
 		}
 		
 	}

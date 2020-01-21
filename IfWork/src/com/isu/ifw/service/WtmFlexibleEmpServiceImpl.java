@@ -908,7 +908,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}
 						
 						if(shm!=null && ehm!=null && vMap.get("otbMinute") != null && !vMap.get("otbMinute").equals("")) {
-							Map<String, Object> otbMinuteMap = calcOtMinuteExceptBreaktimeForElas(false, flexibleApplId, k+shm, k+ehm, "OTB", Integer.parseInt(vMap.get("otbMinute").toString()), userId);
+							Map<String, Object> otbMinuteMap = calcOtMinuteExceptBreaktimeForElas(false, flexibleApplId, k, k+shm, k+ehm, "OTB", Integer.parseInt(vMap.get("otbMinute").toString()), userId);
 							
 							if(otbMinuteMap!=null) {
 								Date otbSdate = WtmUtil.toDate(otbMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
@@ -926,7 +926,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}
 						
 						if(shm!=null && ehm!=null && vMap.get("otaMinute") != null && !vMap.get("otaMinute").equals("")) {
-							Map<String, Object> otaMinuteMap = calcOtMinuteExceptBreaktimeForElas(false, flexibleApplId, k+shm, k+ehm, "OTA", Integer.parseInt(vMap.get("otaMinute").toString()), userId);
+							Map<String, Object> otaMinuteMap = calcOtMinuteExceptBreaktimeForElas(false, flexibleApplId, k, k+shm, k+ehm, "OTA", Integer.parseInt(vMap.get("otaMinute").toString()), userId);
 							Date otaSdate = WtmUtil.toDate(otaMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
 							Date otaEdate = WtmUtil.toDate(otaMinuteMap.get("eDate").toString(), "yyyyMMddHHmmss");
 							
@@ -1893,7 +1893,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 	
 	@Override
-	public Map<String, Object> calcOtMinuteExceptBreaktimeForElas(boolean adminYn, Long flexibleApplId, String sDate, String eDate, String otType, int otMinute, String userId) {
+	public Map<String, Object> calcOtMinuteExceptBreaktimeForElas(boolean adminYn, Long flexibleApplId, String ymd, String sDate, String eDate, String otType, int otMinute, String userId) {
 		Map<String, Object> result = null;
 		Map<String, Object> otParamMap = new HashMap<String, Object>();
 		if(adminYn) {
@@ -1906,21 +1906,21 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			otParamMap.put("value", flexibleApplId);
 		}
 		
+		otParamMap.put("ymd", ymd);
 		otParamMap.put("sDate", sDate);
 		otParamMap.put("eDate", eDate);
 		otParamMap.put("otType", otType);
 		otParamMap.put("minute", otMinute);
 		
 		Map<String, Object> otMinuteMap = flexEmpMapper.getElasOtHm(otParamMap);
-		if(otMinuteMap!=null && otMinuteMap.get("timeCdMgrId")!=null && otMinuteMap.get("shm")!=null && otMinuteMap.get("ehm")!=null) {
+		if(otMinuteMap!=null && otMinuteMap.get("timeCdMgrId")!=null && otMinuteMap.get("sDate")!=null && otMinuteMap.get("eDate")!=null) {
 			Long timeCdMgrId = Long.valueOf(otMinuteMap.get("timeCdMgrId").toString());
-			
-			Date otSdate = WtmUtil.toDate(otMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
-			Date otEdate = WtmUtil.toDate(otMinuteMap.get("eDate").toString(), "yyyyMMddHHmmss");
+			String otSdate = otMinuteMap.get("sDate").toString();
+			String otEdate = otMinuteMap.get("eDate").toString();
 			
 			Map<String, Object> paramMap = new HashMap<String, Object>();
-			paramMap.put("shm", WtmUtil.parseDateStr(otSdate, "HHmm"));
-			paramMap.put("ehm", WtmUtil.parseDateStr(otEdate, "HHmm"));
+			paramMap.put("shm", WtmUtil.parseDateStr(WtmUtil.toDate(otSdate, "yyyyMMddHHmmss"), "HHmm"));
+			paramMap.put("ehm", WtmUtil.parseDateStr(WtmUtil.toDate(otEdate, "yyyyMMddHHmmss"), "HHmm"));
 			
 			result = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, userId);
 			result.put("sDate", otSdate);
