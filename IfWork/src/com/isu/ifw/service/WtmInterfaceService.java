@@ -184,4 +184,11 @@ public interface WtmInterfaceService {
 	public void saveOrgConcIntf(Long tenantId, List<Map<String, Object>> dataList);
 	public void saveTaaApplIntf(Long tenantId, List<Map<String, Object>> dataList);
 	
+	/**
+	 * 근태 타각 미갱신자료 정산
+	 * @param tenantId - 테넌트 아이디
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void setTempHj(HashMap reqMap) throws Exception;
 }

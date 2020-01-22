@@ -1688,7 +1688,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
 					
 					Map<String, Object>  getStdMgrMap = null;
-					getStdMgrMap = wtmInterfaceMapper.getStdMgrList(taaDetMap); 
+					getStdMgrMap = wtmInterfaceMapper.getStdMgrList(taaDetMap);
+					String timeTypeCd = "TAA";
+					if("Y".equals(taaCode.getWorkYn())) {
+						timeTypeCd = "REGA";
+					}
 					if(getStdMgrMap != null && getStdMgrMap.containsKey("unplannedYn") && "Y".equals(getStdMgrMap.get("unplannedYn").toString())) {
 						// 4.2.1. 근무계획없음 체크일때 RESULT 갱신은 없음.
 						// result 생성해야함
@@ -1703,7 +1707,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 							dayResult.setYmd(taaDetMap.get("ymd").toString());
 							dayResult.setSabun(taaDetMap.get("sabun").toString());
 							dayResult.setApplId(applId);
-							dayResult.setTimeTypeCd("TAA");
+							dayResult.setTimeTypeCd(timeTypeCd);
 							dayResult.setTaaCd(taaDetMap.get("taaCd").toString());
 							dayResult.setPlanMinute(workMinute);
 							dayResult.setApprMinute(workMinute);
@@ -1749,7 +1753,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										, taaDetMap.get("enterCd").toString()
 										, taaDetMap.get("ymd").toString()
 										, taaDetMap.get("sabun").toString()
-										, "TAA"
+										, timeTypeCd
 										, taaDetMap.get("taaCd").toString()
 										, dt.parse(taaSdate)
 										, dt.parse(taaEdate)
@@ -1774,7 +1778,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										, taaDetMap.get("enterCd").toString()
 										, taaDetMap.get("ymd").toString()
 										, taaDetMap.get("sabun").toString()
-										, "TAA"
+										, timeTypeCd
 										, taaDetMap.get("taaCd").toString()
 										, dt.parse(taaSdate)
 										, dt.parse(taaEdate)
@@ -2122,13 +2126,13 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				wtmInterfaceMapper.insertDayResult(l);
 				*/
 				// wtmInterfaceMapper.updateDayResult2(l);
-				
+				/*
         		String enterCd = l.get("enterCd").toString();
         		String sabun = l.get("sabun").toString();
         		String closeYmd = l.get("ymd").toString();
         		System.out.println("********** sabun : " + sabun + ", ymd : " + closeYmd);
         		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, closeYmd, closeYmd, sabun);
-        		
+        		*/
         		// 문제가 없으면 근무계획시간 합산
 				
 				l.put("symd", l.get("ymd").toString());
@@ -2157,6 +2161,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				System.out.println("sabun : " + l.get("sabun").toString());
         		*/
 			}
+			System.out.println("********** END");
 		}
 		return;
 	}
@@ -2538,6 +2543,26 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			wtmTaaIntfRepo.saveAll(datas); 
 		}
 		
+	}
+	
+	@Override
+	public void setTempHj(HashMap reqMap) throws Exception {
+		// TODO Auto-generated method stub
+		
+		String ifUrl = "";
+		Map<String, Object> paramMap = new HashMap<>();
+		paramMap.put("tenantId", reqMap.get("tenantId"));
+		List<Map<String, Object>> dataList = new ArrayList();
+		String userId = "1";
+		dataList = wtmInterfaceMapper.setCalcDay(Long.parseLong(reqMap.get("tenantId").toString()));
+		if(dataList != null && dataList.size() > 0) {
+			// 일마감처리로 지각조퇴결근, 근무시간계산처리를 완료한다
+			for(Map<String, Object> l : dataList) {
+				ifUrl = l.get("callUrl").toString();
+				System.out.println("ifUrl : " + ifUrl);
+				getIfRt(ifUrl);
+			}
+		}
 	}
 
 }

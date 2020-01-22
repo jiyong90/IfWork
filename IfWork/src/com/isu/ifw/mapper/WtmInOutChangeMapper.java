@@ -7,4 +7,6 @@ public interface WtmInOutChangeMapper {
 	public List<Map<String, Object>> getInOutChangeList(Map<String, Object> paramMap);
 	
 	public int setInOutChangeList(Map<String, Object> data);
+	
+	public int setInOutChange(Map<String, Object> data);
 }
