@@ -66,6 +66,9 @@ public class ClientDetailsImpl implements ClientDetails{
 	@Column(name = "login_page_url")
 	String loginPageUrl;
 
+	@Column(name="logout_callback_url")
+	String logoutCallbackUrl;
+	  
 	@Column(name = "login_endpoint_url")
 	String loginEndpointUrl;
 
@@ -162,4 +165,13 @@ public class ClientDetailsImpl implements ClientDetails{
 		this.loginEndpointMethod = loginEndpointMethod;
 	}
 
+	public String getLogoutCallbackUrl() {
+		return logoutCallbackUrl;
+	}
+
+	public void setLogoutCallbackUrl(String logoutCallbackUrl) {
+		this.logoutCallbackUrl = logoutCallbackUrl;
+	}
+
+	
 }

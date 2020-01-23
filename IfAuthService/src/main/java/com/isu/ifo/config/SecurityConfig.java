@@ -7,15 +7,18 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import com.isu.ifo.handler.CustomAuthenticationEntryPoint;
 import com.isu.ifo.handler.CustomAuthenticationFailureHandler;
 import com.isu.ifo.handler.CustomAuthenticationProvider;
 import com.isu.ifo.handler.CustomAuthenticationSuccessHandler;
+import com.isu.ifo.handler.CustomLogoutSuccessHandler;
 import com.isu.ifo.handler.CustomPasswordEncoderFactories;
 import com.isu.ifo.handler.CustomUsernamePasswordAuthenticationFilter;
 
@@ -54,17 +57,29 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity security) throws Exception {
-        security.cors().and()
-                .csrf().disable()
-                .headers().frameOptions().disable()
-                .and()
-                .authorizeRequests().antMatchers("/client/**", "/oauth/**", "/oauth/token", "/oauth2/**", "/h2-console/*").permitAll()
-                .and()
-                .exceptionHandling().authenticationEntryPoint(authenticationEntryPoint())
-                .and()
-                .addFilter(authenticationFilter())
-                .formLogin().and()
-                .httpBasic();
+    	 //((HttpSecurity)((HttpSecurity)((HttpSecurity)((HttpSecurity)((ExpressionUrlAuthorizationConfigurer.AuthorizedUrl)((HttpSecurity)((HttpSecurity)((HttpSecurity)((HttpSecurity)
+    			 security
+    		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
+    		      .and()
+    		      .cors().and()
+    		      .csrf().disable()
+    		      .headers().frameOptions().disable()
+    		      .and()
+    		      .authorizeRequests().antMatchers(new String[] { "/client/**", "/oauth/**", "/oauth/token", "/oauth2/**", "/h2-console/*" }).permitAll()
+    		      .and()
+    		      .exceptionHandling().authenticationEntryPoint(authenticationEntryPoint())
+    		      .and()
+    		      .addFilter(authenticationFilter())
+    		      .formLogin().and()
+    		      .httpBasic()
+    		      .and().logout()
+    		      .logoutRequestMatcher(new AntPathRequestMatcher("/logout/*"))
+    		      .clearAuthentication(true).deleteCookies(new String[] { "*" }).invalidateHttpSession(true)
+    		      .logoutSuccessHandler(customLogoutSuccessHandler());
+    }
+    @Bean
+    public CustomLogoutSuccessHandler customLogoutSuccessHandler() {
+      return new CustomLogoutSuccessHandler();
     }
     /*
      * Form Login시 걸리는 Filter bean register
