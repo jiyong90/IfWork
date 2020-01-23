@@ -298,4 +298,16 @@ public interface WtmFlexibleEmpService {
 	 */
 	public Map<String, Object> createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId);
 	
+	/**
+	 * 대상자리스트의 연장근무 잔여시간 조회
+	 * @param tenantId
+	 * @param enterCd
+	 * @param sabun
+	 * @param paramMap
+	 * ymd
+	 * List<String> applSabuns
+	 * @param userId
+	 * @return
+	 */
+	public ReturnParam getOtMinute(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId);
 }
