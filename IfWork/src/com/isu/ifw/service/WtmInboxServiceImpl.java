@@ -57,39 +57,44 @@ public class WtmInboxServiceImpl implements WtmInboxService{
 	
 	@Async("threadPoolTaskExecutor")
 	@Override
-	public void setInbox(Long tenantId, String enterCd, String sabun, Long applCodeId, String type, String title, String contents, String checkYn) {
-		WtmInbox data = new WtmInbox();
-		data.setEnterCd(enterCd);
-		data.setSabun(sabun);
-		data.setTenantId(tenantId);
-		data.setType(type);
-		data.setTitle(title);
-		data.setContents(contents);
-		data.setApplCodeId(String.valueOf(applCodeId));
-		data.setCheckYn(checkYn);
+	public void setInbox(Long tenantId, String enterCd, List<String> sabuns, Long applCodeId, String type, String title, String contents, String checkYn) {
+		
+		List<String> emps = new ArrayList();
+		for(String sabun: sabuns) {
+			emps.add(enterCd + "@" + sabun);
+			WtmInbox data = new WtmInbox();
+			data.setEnterCd(enterCd);
+			data.setSabun(sabun);
+			data.setTenantId(tenantId);
+			data.setType(type);
+			data.setTitle(title);
+			data.setContents(contents);
+			data.setApplCodeId(String.valueOf(applCodeId));
+			data.setCheckYn(checkYn);
+			
+			try {
+				System.out.println("0000000000000 2 " +  data.toString());
+
+				data = inboxRepository.save(data);
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			} finally {
+				//connect("/api/${tenantId}/${enterCd}/${empNo}/navTop", navTopVue.webSocketCallback);
+				if (data != null && data.getId() != null) {
+					String url = "/api/"+tenantId+"/"+enterCd+"/"+sabun+"/navTop";
+					System.out.println(url);
+					this.template.convertAndSend(url, data);
+				}
+				List<String> targetEmp = new ArrayList();
+			}
+		}
 		
 		try {
-			logger.debug("set inbox", data.toString());
-			
-			data = inboxRepository.save(data);
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			//connect("/api/${tenantId}/${enterCd}/${empNo}/navTop", navTopVue.webSocketCallback);
-			if (data != null && data.getId() != null) {
-				String url = "/api/"+tenantId+"/"+enterCd+"/"+sabun+"/navTop";
-				System.out.println(url);
-				this.template.convertAndSend(url, data);
-			}
-			List<String> targetEmp = new ArrayList();
-			try {
-				targetEmp.add(enterCd + "@" + sabun);
-				sendPushMessage(tenantId, enterCd, "INFO", targetEmp, title, contents);
-			} catch(Exception e) {
-				logger.debug("sendPushMessage FAIL " + tenantId +", "+ enterCd +", "+ targetEmp.toString() +", "+  title +", "+  contents);
-			}
-			
+			System.out.println("0000000000000 3 " +  emps.toString());
+			sendPushMessage(tenantId, enterCd, "INFO", emps, title, contents);
+		} catch(Exception e) {
+			System.out.println("0000000000000 6 " +  e.getMessage());
 		}
 	}
 	
@@ -200,7 +205,7 @@ public class WtmInboxServiceImpl implements WtmInboxService{
 			paramMap.put("key", "");
 			paramMap.put("target", targetEmp);
 			
-			logger.debug("sendPushMessage : " + paramMap.toString());
+			System.out.println("0000000000000 3 " +  paramMap.toString());
 			
 			HttpHeaders headers = new HttpHeaders();
 			headers.set("Content-Type", MediaType.APPLICATION_JSON_VALUE);
@@ -208,9 +213,45 @@ public class WtmInboxServiceImpl implements WtmInboxService{
 			HttpEntity<Map<String, Object>> entity = new HttpEntity<>(paramMap, headers);
 			
 			ResponseEntity<Map> res = restTemplate.postForEntity(url, entity, Map.class);
-			logger.debug("awsreturn " +res.getStatusCode().value());
+			System.out.println("0000000000000 4 " +  res.getStatusCode().value());
 			if(res.getStatusCode().value() != HttpServletResponse.SC_OK) {
- 				logger.debug("awsreturn FAIL");
+				System.out.println("0000000000000 5 ");
+			}
+			//eacComponent.extApiPostCall(url, paramMap);
+		}
+	}
+	
+	@Override
+	public void sendPushMessage(Long tenantId, String enterCd, String category, String targetEmp, String title, String content) throws Exception{
+		if(!targetEmp.equals("")){
+			List<String> emps = new ArrayList();
+			emps.add(targetEmp);
+			
+			String apiKey = tcms.getConfigValue(tenantId, "M_API.API_KEY", true, "");
+			String secret = tcms.getConfigValue(tenantId, "M_API.SECRET", true, "");
+			String url = tcms.getConfigValue(tenantId, "M_API.PUSH_TONG_URL", true, "");
+			Map<String, Object> paramMap = new HashMap<String, Object>();
+			paramMap.put("apiKey", apiKey);
+			paramMap.put("secret", secret);
+			paramMap.put("from", category);
+			paramMap.put("type", "INFO");
+			paramMap.put("title", title);
+			paramMap.put("issuer", "system");
+			paramMap.put("content", content);
+			paramMap.put("key", "");
+			paramMap.put("target", emps);
+			
+			System.out.println("0000000000000 3 " +  paramMap.toString());
+			
+			HttpHeaders headers = new HttpHeaders();
+			headers.set("Content-Type", MediaType.APPLICATION_JSON_VALUE);
+			
+			HttpEntity<Map<String, Object>> entity = new HttpEntity<>(paramMap, headers);
+			
+			ResponseEntity<Map> res = restTemplate.postForEntity(url, entity, Map.class);
+			System.out.println("0000000000000 4 " +  res.getStatusCode().value());
+			if(res.getStatusCode().value() != HttpServletResponse.SC_OK) {
+				System.out.println("0000000000000 5 ");
 			}
 			//eacComponent.extApiPostCall(url, paramMap);
 		}

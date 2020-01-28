@@ -2,25 +2,36 @@ package com.isu.ifw.service;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Resource;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
+import com.isu.ifw.entity.WtmEmpHis;
+import com.isu.ifw.entity.WtmPushMgr;
+import com.isu.ifw.entity.WtmPushSendHis;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmScheduleMapper;
+import com.isu.ifw.repository.WtmEmpHisRepository;
+import com.isu.ifw.repository.WtmPushMgrRepository;
+import com.isu.ifw.repository.WtmPushSendHisRepository;
+import com.isu.ifw.util.WtmUtil;
 
 @Service
 public class WtmScheduleServiceImpl implements WtmScheduleService {
 		
+	private static final Logger logger = LoggerFactory.getLogger("ifwFileLog");
+
 	@Autowired
 	WtmScheduleMapper wtmScheduleMapper;
 	
@@ -29,6 +40,21 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 	
 	@Autowired
 	private WtmFlexibleEmpService WtmFlexibleEmpService;
+	
+	@Resource
+	WtmPushMgrRepository pushMgrRepository;
+
+	@Autowired
+	WtmScheduleMapper schedulerMapper;
+
+	@Resource	
+	WtmPushSendHisRepository pushHisRepository;
+
+	@Autowired
+	WtmInboxService inboxService;
+
+	@Resource
+	WtmEmpHisRepository empRepository;
 	
 	@Override
 	@Transactional
@@ -90,4 +116,138 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 		}
 	}
 
+	@Override
+	public void sendPushMessageMin(Long tenantId, String enterCd) {
+		
+		String f = "yyyyMMdd";
+		SimpleDateFormat sdf = new SimpleDateFormat(f);
+		String today = sdf.format(new Date());
+		
+		List<WtmPushMgr> pushList = new ArrayList();
+		try {
+			if(tenantId != null && enterCd != null) {
+				pushList = pushMgrRepository.findByTenantIdAndEnterCdAndSymdAndEymd(tenantId, enterCd, today);
+			} else {
+				pushList = pushMgrRepository.findBySymdAndEymd(today);
+			}
+
+			logger.debug("pushlist : " + pushList.toString());
+			System.out.println("pushlist : " + pushList.toString());
+			
+			for(WtmPushMgr push : pushList) {
+				List<String> empKeys =  new ArrayList();
+				
+				String stdType = push.getStdType();
+				if("B_IN".equals(stdType) || "A_OUT".equals(stdType)) {
+					//기준가져오기
+					Map<String, Object> param = new HashMap();
+					param.put("stdType", stdType);
+					
+					param.put("enterCd", push.getEnterCd());
+					param.put("stdMinute", "B_IN".equals(stdType)?-push.getStdMinute():push.getStdMinute());
+					
+					//기준에 맞는 대상자 리스트 가져오기
+					List<String> pushEmps = schedulerMapper.getInoutCheckList(param);
+					if(pushEmps != null && pushEmps.size() > 0) {
+						logger.debug(pushEmps.toString());
+						System.out.println(pushEmps.toString());
+						inboxService.sendPushMessage(push.getTenantId(), push.getEnterCd(), "INFO", pushEmps, push.getTitle(), push.getPushMsg());
+					}
+				}
+			}	
+		} catch(Exception e) {
+			logger.debug(e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	public void sendPushMessageDay(Long tenantId, String enterCd) {
+		
+		String f = "yyyyMMdd";
+		SimpleDateFormat sdf = new SimpleDateFormat(f);
+		String today = sdf.format(new Date());
+		
+		List<WtmPushMgr> pushList = new ArrayList();
+		try {
+			if(tenantId != null && enterCd != null) {
+				pushList = pushMgrRepository.findByTenantIdAndEnterCdAndSymdAndEymd(tenantId, enterCd, today);
+			} else {
+				pushList = pushMgrRepository.findBySymdAndEymd(today);
+			}
+
+			logger.debug("pushlist : " + pushList.toString());
+			System.out.println("pushlist : " + pushList.toString());
+
+			for(WtmPushMgr push : pushList) {
+				logger.debug("000000000000000000000000000 " + push.toString());
+				String stdType = push.getStdType();
+				if("R_OT".equals(stdType) || "R_WORK".equals(stdType)) {
+					Long stdOtTime = Long.valueOf(push.getStdMinute());
+					List<Map<String, Object>> otList = new ArrayList();
+					
+					Map<String, Object> param = new HashMap();
+					param.put("stdOtTime", stdOtTime);
+					param.put("tenantId", push.getTenantId());
+					param.put("enterCd", push.getEnterCd());
+					param.put("stdType", stdType);
+					param.put("businessPlaceCd", push.getBusinessPlaceCd());
+					param.put("ymd", today);
+					otList = schedulerMapper.getOtList(param);
+					
+					logger.debug("근로시간 초과자 리스트 : " + otList.toString());
+//					Map<String, Object> toMail  = new HashMap();
+					List<String> empKeys = new ArrayList();
+					String toObj = !push.getPushObj().equals("EMP")?"LEADER":"EMP"; //LEADER, EMAIL
+					
+					Map<String, Object> toPush  = new HashMap();
+					
+					for(Map<String, Object> otMap : otList) {
+						empKeys.add(push.getEnterCd()+"@"+otMap.get(toObj));
+						String names = "";
+						if(otMap.get(toObj) != null && !otMap.get(toObj).equals("")) {
+							String empNames = "";
+							if(toPush.containsKey(otMap.get(toObj).toString())) {
+								empNames = toPush.get(otMap.get(toObj)).toString() + ", " + otMap.get("EMP_NM").toString();
+							} else {
+								empNames = otMap.get("EMP_NM").toString();
+							}
+							toPush.put(otMap.get(toObj).toString(), empNames);
+						}
+					}
+					//메일전송, db 저장
+					String title = "근무시간 관리 알림 서비스";
+					String fromEmail = "SYSTEM";
+					String contents = push.getPushMsg();
+					
+					for( Map.Entry<String, Object> data : toPush.entrySet() ) { 
+						if(contents.contains("[[NAME]]")) {
+							contents = contents.replace("[[NAME]]", "[" + data.getValue() + "]");
+						}
+						//일단 db 먼저 넣고 나중에 db 내역 보여주는 메뉴 추가하면...
+						WtmPushSendHis pushSendHis = new WtmPushSendHis();
+						pushSendHis.setEnterCd(push.getEnterCd());
+						pushSendHis.setTenantId(push.getTenantId());
+						pushSendHis.setStdType(stdType);
+						pushSendHis.setSendType("PUSH");
+						pushSendHis.setReceiveSabun(data.getKey());
+						pushSendHis.setReceiveMail(data.getKey());
+						pushSendHis.setSendMsg(contents);
+						pushSendHis.setUpdateId("SYSTEM");
+						pushHisRepository.save(pushSendHis);
+						logger.debug("근로시간 초과자 알림 저장 : " + pushSendHis.toString());
+						System.out.println("근로시간 초과자 알림 저장 : " + pushSendHis.toString());
+
+						logger.debug("000000000000000000000000000 " + data.getKey());
+						logger.debug("000000000000000000000000000 " + contents);
+						inboxService.sendPushMessage(push.getTenantId(), push.getEnterCd(), "INFO", data.getKey(), title, contents);
+						
+					}
+				} 
+			}	
+		} catch(Exception e) {
+			logger.debug(e.getMessage());
+			e.printStackTrace();
+		}
+	}
 }

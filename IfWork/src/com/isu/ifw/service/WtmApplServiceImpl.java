@@ -212,12 +212,14 @@ public class WtmApplServiceImpl implements WtmApplService {
 			throw new Exception("사유를 입력하세요.");
 		}
 		String apprOpinion = paramMap.get("apprOpinion").toString();
+		List<String> emps = new ArrayList();
+		
 		String applSabun = null;
 		List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);
 		if(lines != null && lines.size() > 0) {
 			for(WtmApplLine line : lines) {
 				if(line.getApprSeq() == 1) {
-					applSabun = line.getApprSabun();
+					emps.add(line.getApprSabun());
 				}
 				if(line.getApprSeq() <= apprSeq) {
 					line.setApprStatusCd(APPR_STATUS_REJECT);
@@ -239,7 +241,8 @@ public class WtmApplServiceImpl implements WtmApplService {
 		appl.setUpdateId(userId);	
 		wtmApplRepo.save(appl);
 		
-		inbox.setInbox(tenantId, enterCd, applSabun, applId, "APPLY", "결재완료", "신청서가  반려되었습니다.", "N");
+		System.out.println("1111111111111111111 3" + emps.toString());
+		inbox.setInbox(tenantId, enterCd, emps, applId, "APPLY", "결재완료", "신청서가  반려되었습니다.", "N");
 	}
 
 	@Override
