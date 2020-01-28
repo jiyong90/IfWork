@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.common.service.TenantConfigManagerService;
 import com.isu.ifw.entity.WtmEmpHis;
@@ -36,6 +35,7 @@ import com.isu.ifw.mapper.WtmFlexibleApplMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmFlexibleStdMapper;
 import com.isu.ifw.mapper.WtmOrgChartMapper;
+import com.isu.ifw.mapper.WtmOtApplMapper;
 import com.isu.ifw.repository.WtmApplRepository;
 import com.isu.ifw.repository.WtmEmpHisRepository;
 import com.isu.ifw.repository.WtmFlexibleApplDetRepository;
@@ -126,6 +126,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	@Autowired
 	WtmFlexibleApplyDetRepository flexibleApplyDetRepo;
 	
+	@Autowired
+	WtmOtApplMapper otApplMapper;
 	
 	@Override
 	public List<Map<String, Object>> getFlexibleEmpList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
@@ -2065,6 +2067,55 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
 		
 		return flexEmpMapper.getWorkTermMinute(paramMap);
+	}
+	
+	@Override
+	public ReturnParam getOtMinute(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
+		
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("");
+		
+		ObjectMapper mapper = new ObjectMapper();
+		
+		try {
+			//신청 대상자
+			List<String> sabunList = null;
+			if(paramMap.get("applSabuns")!=null && !"".equals(paramMap.get("applSabuns"))) {
+				//유연근무신청 관리자 화면에서 선택한 대상자 리스트
+				sabunList = mapper.readValue(paramMap.get("applSabuns").toString(), new ArrayList<String>().getClass());
+			} else {
+				//개인 신청
+				sabunList = new ArrayList<String>();
+				sabunList.add(sabun);
+			}
+			
+			//대상자의 잔여 연장근무시간
+			if(sabunList!=null && sabunList.size()>0) {
+				Map<String, Object> targetList = new HashMap<String, Object>();
+				paramMap.put("tenantId", tenantId);
+				paramMap.put("enterCd", enterCd);
+				paramMap.put("sabuns", sabunList);
+				List<Map<String, Object>> emps = otApplMapper.getRestOtMinute(paramMap);
+				if(emps!=null && emps.size()>0) {
+					for(Map<String, Object> emp : emps) {
+						int restOtMin = 0;
+						if(emp.get("restOtMinute")!=null && !"".equals(emp.get("restOtMinute")))
+							restOtMin = Integer.parseInt(emp.get("restOtMinute").toString());
+						targetList.put(emp.get("sabun").toString(), restOtMin);
+					}
+				}
+				
+				rp.put("targetList", targetList);
+				
+			}
+		
+		} catch(Exception e) {
+			e.printStackTrace();
+			rp.setFail("잔여 연장근무시간 조회 시 오류가 발생했습니다.");
+			return rp;
+		}
+		
+		return rp;
 	}
 	
 }

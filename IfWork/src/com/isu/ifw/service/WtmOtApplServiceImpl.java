@@ -145,7 +145,19 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				
 				//대상자
 				if(sabuns.size()>0) {
-					List<WtmEmpHis> targetList = wtmEmpHisRepo.findByTenantIdAndEnterCdAndYmdAndSabuns(tenantId, enterCd, ymd, sabuns);
+					Map<String, Object> targetList = new HashMap<String, Object>();
+					Map<String, Object> rMap = new HashMap<String, Object>();
+					rMap.put("tenantId", tenantId);
+					rMap.put("enterCd", enterCd);
+					rMap.put("ymd", ymd);
+					rMap.put("sabuns", sabuns);
+					List<Map<String, Object>> emps = wtmOtApplMapper.getRestOtMinute(rMap);
+					
+					if(emps!=null && emps.size()>0) {
+						for(Map<String, Object> emp : emps) {
+							targetList.put(emp.get("sabun").toString(), emp);
+						}
+					}
 					otAppl.put("targetList", targetList);
 				}
 				

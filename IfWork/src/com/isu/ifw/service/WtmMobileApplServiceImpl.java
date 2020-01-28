@@ -117,6 +117,10 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 //		if(eventSource.equals("ymd")) {
 		dataMap.put("ymd", dataMap.get("ymd").toString().replace(".", ""));		
 		dataMap = wtmCalendarService.getEmpWorkCalendarDayInfo(dataMap);
+		if(dataMap == null) {
+			rp.setFail("해당일은 근무시간 정정이 불가합니다.");
+			return rp;
+		}
 //			ReturnParam rp = entryApplService.validate(tenantId, enterCd, sabun, "ENTRY_CHG", dataMap);
 //			if(rp!=null && rp.getStatus()!=null && "OK".equals(rp.getStatus())) {
 //				entryApplService.request(tenantId, enterCd, applId, workTypeCd, paramMap, sabun, userId);

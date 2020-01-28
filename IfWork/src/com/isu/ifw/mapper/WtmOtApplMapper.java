@@ -47,4 +47,15 @@ public interface WtmOtApplMapper {
 	 */
 	public Map<String, Object> otApplDetailByApplId(Map<String, Object> paramMap);
 	
+	/**
+	 * 잔여 연장근로 
+	 * @param paramMap
+	 * tenantId
+	 * enterCd
+	 * List<String> sabuns
+	 * ymd
+	 * @return
+	 */
+	public List<Map<String, Object>> getRestOtMinute(Map<String, Object> paramMap);
+	
 }

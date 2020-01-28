@@ -118,7 +118,19 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 			
 			//대상자
 			if(sabuns.size()>0) {
-				List<WtmEmpHis> targetList = wtmEmpHisRepo.findByTenantIdAndEnterCdAndYmdAndSabuns(tenantId, enterCd, ymd, sabuns);
+				Map<String, Object> targetList = new HashMap<String, Object>();
+				Map<String, Object> rMap = new HashMap<String, Object>();
+				rMap.put("tenantId", tenantId);
+				rMap.put("enterCd", enterCd);
+				rMap.put("ymd", ymd);
+				rMap.put("sabuns", sabuns);
+				List<Map<String, Object>> emps = wtmOtApplMapper.getRestOtMinute(rMap);
+				
+				if(emps!=null && emps.size()>0) {
+					for(Map<String, Object> emp : emps) {
+						targetList.put(emp.get("sabun").toString(), emp);
+					}
+				}
 				otCanAppl.put("targetList", targetList);
 			}
 			
@@ -389,10 +401,8 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 				otAppl.setCancelYn("Y");
 				wtmOtApplRepo.save(otAppl);
 				
-				WtmWorkDayResult r = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndApplId(tenantId, enterCd, otAppl.getSabun(), otAppl.getApplId());
-				
 				//근무제 신청서 테이블 조회
-				WtmOtCanAppl otCanAppl = saveWtmOtCanAppl(tenantId, enterCd, applId, otAppl.getOtApplId(), r.getWorkDayResultId(), r.getYmd(), r.getTimeTypeCd(), r.getPlanSdate(), r.getPlanEdate(), r.getPlanMinute(), r.getApprSdate(), r.getApprEdate(), r.getApprMinute(), reason, r.getSabun(), userId);
+				WtmOtCanAppl otCanAppl = saveWtmOtCanAppl(tenantId, enterCd, applId, otAppl.getOtApplId(), workDayResultId, result.getYmd(), result.getTimeTypeCd(), result.getPlanSdate(), result.getPlanEdate(), result.getPlanMinute(), result.getApprSdate(), result.getApprEdate(), result.getApprMinute(), reason, result.getSabun(), userId);
 			}
 		}
 		
