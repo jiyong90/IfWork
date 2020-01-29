@@ -15,7 +15,7 @@ import com.isu.ifw.vo.ReturnParam;
 @Service("WtmInboxService")
 public interface WtmInboxService{
 	
-	public void setInbox(Long tenantId, String enterCd, String sabun, Long applCodeId, String type, String title, String contents, String checkYn);
+	public void setInbox(Long tenantId, String enterCd, List<String> sabuns, Long applCodeId, String type, String title, String contents, String checkYn);
 	
 	public ReturnParam getInboxCount(Long tenantId, String enterCd, String sabun);
 
@@ -24,4 +24,6 @@ public interface WtmInboxService{
 	public ReturnParam setInboxCheckYn(Long tenantId, String enterCd, String sabun, long id);
 	
 	public void sendPushMessage(Long tenantId, String enterCd, String category, List<String> targetEmp, String title, String content)throws Exception;
+
+	public void sendPushMessage(Long tenantId, String enterCd, String category, String targetEmp, String title, String content)throws Exception;
 }

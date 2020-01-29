@@ -174,5 +174,14 @@ public class WtmPushMgr {
     protected void onUpdate() {
     	this.updateDate = new Date();
     }
+    
+	@Override
+	public String toString() {
+		return "WtmPushMgr [pushMgrId=" + pushMgrId + ", tenantId=" + tenantId + ", enterCd=" + enterCd
+				+ ", businessPlaceCd=" + businessPlaceCd + ", symd=" + symd + ", eymd=" + eymd + ", pushObj=" + pushObj
+				+ ", stdMinute=" + stdMinute + ", stdType=" + stdType + ", title=" + title + ", pushMsg=" + pushMsg
+				+ ", mobileYn=" + mobileYn + ", smsYn=" + smsYn + ", emailYn=" + emailYn + ", note=" + note
+				+ ", updateDate=" + updateDate + ", updateId=" + updateId + "]";
+	}
 	
 }

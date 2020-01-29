@@ -17,4 +17,21 @@ public interface WtmScheduleService {
 	 * @throws Exception 
 	 */
 	public void setCloseDay(Long tenantId) throws Exception;
+
+
+	/**
+	 * push 전송
+	 * @param reqMap - 파라메터 맵
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void sendPushMessageMin(Long tenantId, String enterCd);
+
+	/**
+	 * push 전송
+	 * @param reqMap - 파라메터 맵
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void sendPushMessageDay(Long tenantId, String enterCd);
 }
