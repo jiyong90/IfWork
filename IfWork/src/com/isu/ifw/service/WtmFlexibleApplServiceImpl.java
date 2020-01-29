@@ -403,7 +403,20 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			emp.setWorkTypeCd(appl.getApplCd());
 			
 			emp = wtmFlexibleEmpRepo.save(emp);
-
+			
+			//유연근무 승인 시 해당 구간 내의 result는 지워야 한다. //리셋 프로시져에서 지우지 않음.  
+			//result 에 base와 ot, fixot 있으면 삭제
+			List<String> timeTypCds = new ArrayList<String>();
+			timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
+			timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
+			timeTypCds.add(WtmApplService.TIME_TYPE_OT);
+			
+			List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, appl.getApplSabun(), timeTypCds, flexibleAppl.getSymd(), flexibleAppl.getEymd());
+			if(results!=null && results.size()>0) {
+				wtmWorkDayResultRepo.deleteAll(results);
+				wtmWorkDayResultRepo.flush();
+			}
+			
 			//승인완료 시 해당 대상자의 통계데이터를 갱신하기 위함.
 			rp.put("sabun", emp.getSabun());
 			rp.put("symd", emp.getSymd());
@@ -470,18 +483,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 						wtmWorkDayResultRepo.flush();
 					}*/
 					
-					//result 에 base와 ot, fixot 있으면 삭제하고 다시 만들어주자.
-					List<String> timeTypCds = new ArrayList<String>();
-					timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
-					timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
-					timeTypCds.add(WtmApplService.TIME_TYPE_OT);
-					
-					List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, appl.getApplSabun(), timeTypCds, flexibleAppl.getSymd(), flexibleAppl.getEymd());
-					if(results!=null && results.size()>0) {
-						wtmWorkDayResultRepo.deleteAll(results);
-						wtmWorkDayResultRepo.flush();
-					}
-					
+					//탄근제 신청 시 입력한 계획을 옮기다
 					for(Map<String, Object> det : dets) {
 						Date s = null;
 						Date e = null;
