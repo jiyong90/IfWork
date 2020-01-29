@@ -409,9 +409,25 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 								wtmWorkDayResultRepo.saveAll(result);
 						}
 						
+					} else {
+						// 근무제도 시행시 시행할 기간의 근무제도가 기본근무의 정보는 지워야함.
+						//유연근무 승인 시 해당 구간 내의 result는 지워야 한다. //리셋 프로시져에서 지우지 않음.  
+						//result 에 base와 ot, fixot 있으면 삭제
+						List<String> timeTypCds = new ArrayList<String>();
+						timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
+						timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
+						timeTypCds.add(WtmApplService.TIME_TYPE_OT);
+						
+						String sd = saveMap.get("symd").toString();
+						String ed = saveMap.get("eymd").toString();
+						String sabun = saveMap.get("sabun").toString();
+						
+						List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypCds, sd, ed);
+						if(results!=null && results.size()>0) {
+							wtmWorkDayResultRepo.deleteAll(results);
+							wtmWorkDayResultRepo.flush();
+						}
 					}
-					
-					
 					
 //					Long flexibleStdMgrId = Long.parseLong(saveMap.get("flexibleStdMgrId").toString());
 //					System.out.println("flexibleStdMgrId : " + flexibleStdMgrId);
