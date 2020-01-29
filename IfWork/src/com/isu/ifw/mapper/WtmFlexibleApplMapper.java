@@ -36,4 +36,11 @@ public interface WtmFlexibleApplMapper {
 	 * @return
 	 */
 	public List<Map<String, Object>> getElasApplDetail(Map<String, Object> paramMap);
+	
+	/**
+	 * 임시저장된 유연근무제 신청서 가져오기
+	 * @param paramMap
+	 * @return
+	 */
+	public List<Map<String, Object>> getImsiFlexAppl(Map<String, Object> paramMap);
 }
