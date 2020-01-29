@@ -195,7 +195,7 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 		
 		//결재라인 상태값 업데이트
 		//WtmApplLine line = wtmApplLineRepo.findByApplIdAndApprSeq(applId, apprSeq);
-		String apprSabun = null;
+		List<String> apprSabun = new ArrayList();
 		if(rp!=null && rp.getStatus()!=null && "OK".equals(rp.getStatus())) {
 			applId = Long.valueOf(rp.get("applId").toString());
 			List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprTypeCdAscApprSeqAsc(applId);
@@ -210,6 +210,7 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 						line = wtmApplLineRepo.save(line);
 					} else if(APPL_LINE_S.equals(line.getApprTypeCd())) { //결재
 						//첫번째 결재자의 상태만 변경 후 스탑
+						apprSabun.add(line.getApprSabun());
 						line.setApprStatusCd(APPR_STATUS_REQUEST);
 						line = wtmApplLineRepo.save(line);
 						break;
@@ -330,10 +331,13 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 			 
 		}
 		
+		List<String> pushSabun = new ArrayList();
 		if(lastAppr) {
-			inbox.setInbox(tenantId, enterCd, sabun, applId, "APPLY", "결재완료", "연장근무취소 신청서가  승인되었습니다.", "N");
+			pushSabun.add(sabun);
+			inbox.setInbox(tenantId, enterCd, pushSabun, applId, "APPLY", "결재완료", "연장근무취소 신청서가  승인되었습니다.", "N");
 		} else {
-			inbox.setInbox(tenantId, enterCd, apprSabun, applId, "APPR", "결재요청 : 연장근무취소신청", "", "N");
+			pushSabun.add(apprSabun);
+			inbox.setInbox(tenantId, enterCd, pushSabun, applId, "APPR", "결재요청 : 연장근무취소신청", "", "N");
 		}
 		
 		return rp;
@@ -346,7 +350,9 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 			throw new Exception("사유를 입력하세요.");
 		}
 
-		String applSabun = paramMap.get("applSabun").toString();
+		List<String> applSabun = new ArrayList();
+		applSabun.add(paramMap.get("applSabun").toString());
+//		String applSabun = paramMap.get("applSabun").toString();
 		String apprOpinion = paramMap.get("apprOpinion").toString();
 		
 		List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);

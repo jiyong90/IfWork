@@ -236,6 +236,13 @@ public interface WtmFlexibleEmpMapper {
 	public void resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(Map<String, Object> paramMap);
 	
 	/**
+	 * 완전선근제 이며, 계획데이터가 있는 경우에만 속한다
+	 * 계획데이터가 있어도 타각데이터 기준으로 적용하고 싶을때, 
+	 * @param paramMap
+	 */
+	public void calcFlexApplyEntryDatetimeByFlexibleEmpId(Map<String, Object> paramMap);
+	
+	/**
 	 * calendar를 기반으로 result의 다시 생성
 	 * @param paramMap
 	 */

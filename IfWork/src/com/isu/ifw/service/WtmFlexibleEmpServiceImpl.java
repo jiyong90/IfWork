@@ -1166,7 +1166,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 		paramMap.put("taaCd", absenceTaaCode.getTaaCd());
 		logger.debug("calcApprDayInfo 9");
+		//결근을 제외한 day result의 모든 계획데이터를 인정데이터로 만들어 준다. 
 		flexEmpMapper.updateApprDatetimeByYmdAndSabun(paramMap);
+		
+		//시작일 타각 데이터 기준 옵션에 해당하는 내용을 인정시간을 다시 업데이트 하자
+		//계획이 있지만 타각데이터로 인정하는 케이스는 완전선근제 옵션에만 있다. 기억하자 까묵지마라.
+		//unplanned 가Y이면 어카지? BASE 데이터가 없을텐데.. resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt 쪼 밑에서 하고 있다
+		flexEmpMapper.calcFlexApplyEntryDatetimeByFlexibleEmpId(paramMap);
 		
 		// 이곳은 출/퇴근 타각데이터가 있는 사람에 한한다.. 
 

@@ -26,6 +26,7 @@ import com.isu.ifw.repository.WtmEntryApplRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.WtmApplLineVO;
+import com.sun.media.jfxmedia.logging.Logger;
 import com.isu.ifw.vo.ReturnParam;
 
 @Service("wtmEntryApplService")
@@ -111,7 +112,8 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 		ReturnParam rp = new ReturnParam();
 		
 		rp = imsi(tenantId, enterCd, applId, workTypeCd, paramMap, this.APPL_STATUS_APPLY_ING, sabun, userId);
-		String apprSabun = null;
+		List<String> emps = new ArrayList();
+//		String apprSabun = null;
 		if(rp!=null && rp.getStatus()!=null && "OK".equals(rp.getStatus())) {
 			applId = Long.valueOf(rp.get("applId").toString());
 			List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprTypeCdAscApprSeqAsc(applId);
@@ -126,7 +128,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 						line = wtmApplLineRepo.save(line);
 					} else if(APPL_LINE_S.equals(line.getApprTypeCd())) { //결재
 						//첫번째 결재자의 상태만 변경 후 스탑
-						apprSabun = line.getApprSabun();
+						emps.add(line.getApprSabun());
 						line.setApprStatusCd(APPR_STATUS_REQUEST);
 						line = wtmApplLineRepo.save(line);
 						break;
@@ -135,7 +137,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 				}
 			}
 		}
-		inbox.setInbox(tenantId, enterCd, apprSabun, applId, "APPR", "결재요청 : 연장근무신청", "", "Y");
+		inbox.setInbox(tenantId, enterCd, emps, applId, "APPR", "결재요청 : 연장근무신청", "", "Y");
 	}
 	
 	//모바일용 동기처리
@@ -149,7 +151,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 		Long applId = null;
 		rp = imsi(tenantId, enterCd, null, paramMap.get("applCd").toString(), paramMap, this.APPL_STATUS_APPLY_ING, sabun, userId);
 		
-		String apprSabun = null;
+		List<String> emps = new ArrayList();
 		if(rp!=null && rp.getStatus()!=null && "OK".equals(rp.getStatus())) {
 			applId = Long.valueOf(rp.get("applId").toString());
 			List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprTypeCdAscApprSeqAsc(applId);
@@ -164,7 +166,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 						line = wtmApplLineRepo.save(line);
 					} else if(APPL_LINE_S.equals(line.getApprTypeCd())) { //결재
 						//첫번째 결재자의 상태만 변경 후 스탑
-						apprSabun = line.getApprSabun();
+						emps.add(line.getApprSabun());
 						line.setApprStatusCd(APPR_STATUS_REQUEST);
 						line = wtmApplLineRepo.save(line);
 						break;
@@ -174,7 +176,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 			}
 		}
 		
-		inbox.setInbox(tenantId, enterCd, apprSabun, applId, "APPR", "결재요청 : 연장근무신청", "", "Y");
+		inbox.setInbox(tenantId, enterCd, emps, applId, "APPR", "결재요청 : 연장근무신청", "", "Y");
 
 		return rp;
 		//push전송 추가
@@ -255,10 +257,15 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 			}
 		}
 		
+		List<String> emps = new ArrayList();
 		if(lastAppr) {
-			inbox.setInbox(tenantId, enterCd, sabun, applId, "APPLY", "결재완료", "연장근무 신청서가  승인되었습니다.", "N");
+			emps.add(applSabun);
+			System.out.println("1111111111111111111 1" + emps.toString());
+			inbox.setInbox(tenantId, enterCd, emps, applId, "APPLY", "결재완료", "연장근무 신청서가  승인되었습니다.", "N");
 		} else {
-			inbox.setInbox(tenantId, enterCd, apprSabun, applId, "APPR", "결재요청 : 연장근무신청", "", "N");
+			emps.add(apprSabun);
+			System.out.println("1111111111111111111 2" + emps.toString());
+			inbox.setInbox(tenantId, enterCd, emps, applId, "APPR", "결재요청 : 연장근무신청", "", "N");
 		}
 
 		return rp;
