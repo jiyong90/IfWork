@@ -24,6 +24,12 @@ public class MobileUtil {
 			if(temp.get("key2") != null) {
 				temp.put("key", (temp.get("key2")));
 			}
+			if(temp.get("captionLb") != null) {
+				temp.put("caption_lb", (temp.get("captionLb")));
+			}
+			if(temp.get("captionRb") != null) {
+				temp.put("caption_rb", (temp.get("captionRb")));
+			}
 		}
 		return l;
 	}
