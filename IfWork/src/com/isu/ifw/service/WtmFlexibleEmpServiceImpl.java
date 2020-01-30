@@ -715,6 +715,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				 */
 				pMap.put("sYmd", WtmUtil.parseDateStr(planSdate, "yyyyMMdd"));
 				pMap.put("eYmd", WtmUtil.parseDateStr(planEdate, "yyyyMMdd"));
+				pMap.put("taaInfoCd", "BREAK");
 				pMap.put("type", "PLAN");
 				pMap.put("userId", userId);
 				flexEmpMapper.createWorkDayResultOfTimeType(pMap);
@@ -1229,7 +1230,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		 * type이 plan이면 계획데이터를 생성한다. 
 		 * 인정 데이터 생성을 위함
 		 */
-		paramMap.put("type", "APPR");
+		paramMap.put("type", "APPR");paramMap.put("taaInfoCd", "BREAK");
 		flexEmpMapper.createWorkDayResultOfTimeType(paramMap);
 	}
 
