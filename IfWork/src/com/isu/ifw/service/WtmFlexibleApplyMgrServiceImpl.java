@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmFlexibleApplyDet;
 import com.isu.ifw.entity.WtmFlexibleApplyMgr;
+import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.entity.WtmWorkPattDet;
@@ -30,6 +31,7 @@ import com.isu.ifw.mapper.WtmFlexibleApplyMgrMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.repository.WtmFlexibleApplyDetRepository;
 import com.isu.ifw.repository.WtmFlexibleApplyMgrRepository;
+import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
@@ -48,6 +50,9 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 	
 	@Autowired
 	WtmFlexibleStdMgrRepository flexStdMgrRepo;
+	
+	@Autowired
+	WtmFlexibleEmpRepository wtmFlexibleEmpRepo;
 //	@Resource
 //	WtmFlexibleApplyGrpRepository flexibleApplyGrpRepository;
 //	@Resource
@@ -331,12 +336,54 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 					searchMap = wtmFlexibleApplyMgrMapper.setApplyEmpId(saveMap);
 					saveMap.put("flexibleEmpId", Long.parseLong(searchMap.get("flexibleEmpId").toString()));
 					
+					String sd = repeatForList.get(j).get("symd").toString();
+					String ed = repeatForList.get(j).get("eymd").toString();
+					String sabun = saveMap.get("sabun").toString();
+					System.out.println("sd : " + sd);
+					System.out.println("ed : " + ed);
+					WtmFlexibleEmp emp = new WtmFlexibleEmp();
+					List<WtmFlexibleEmp> empList = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCd(tenantId, enterCd, sabun, sd, ed, "BASE");
+					if(empList != null) {
+						for(WtmFlexibleEmp e : empList) {
+							//신청기간내에 시작 종료가 포함되어있을 경우
+							if(Integer.parseInt(sd) <= Integer.parseInt(e.getSymd()) && Integer.parseInt(ed) >= Integer.parseInt(e.getEymd())) {
+								wtmFlexibleEmpRepo.delete(e);
+							//신청 시작일과 종료일이 기존 근무정보 내에 있을 경우 
+							}else if(Integer.parseInt(sd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(ed) < Integer.parseInt(e.getEymd())) {
+								String meymd = e.getEymd();
+								
+								e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sd, ""), -1),null));
+								wtmFlexibleEmpRepo.save(e);
+								WtmFlexibleEmp newEmp = new WtmFlexibleEmp();
+								newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
+								newEmp.setTenantId(e.getTenantId());
+								newEmp.setEnterCd(e.getEnterCd());
+								newEmp.setSabun(e.getSabun());
+								newEmp.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(ed, ""), 1),null));
+								newEmp.setEymd(meymd);
+								newEmp.setUpdateId(userId);
+								newEmp.setWorkTypeCd(e.getWorkTypeCd());
+								newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
+								wtmFlexibleEmpRepo.save(newEmp);
+
+							//시작일만 포함되어있을 경우 
+							}else if(Integer.parseInt(sd) >= Integer.parseInt(e.getSymd()) && Integer.parseInt(ed) < Integer.parseInt(e.getEymd())) {
+								//시작일을 신청종료일 다음날로 업데이트 해주자
+								e.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(ed, ""), 1),null));
+								wtmFlexibleEmpRepo.save(e);
+							//종료일만 포함되어있을 경우
+							}else if(Integer.parseInt(sd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(ed) <= Integer.parseInt(e.getEymd())) {
+								//종료일을 신청시작일 전날로 업데이트 해주자
+								e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sd, ""), -1),null));
+								wtmFlexibleEmpRepo.save(e);
+								
+							}
+						}
+					}
+					
 					//탄근제의 경우 근무 계획까지 작성하여 신청을 하기 때문에
 					//calendar, result 만들어준다.
 					if(workTypeCd.equals("ELAS")) {
-						String sd = repeatForList.get(j).get("symd").toString();
-						String ed = repeatForList.get(j).get("eymd").toString();
-						String sabun = saveMap.get("sabun").toString();
 						
 						//calendar 있으면 삭제하고 다시 만들어주자.
 						//initWtmFlexibleEmpOfWtmWorkDayResult 프로시저에서 calendar 만들어주기 때문에 생략
@@ -417,10 +464,6 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 						timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
 						timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
 						timeTypCds.add(WtmApplService.TIME_TYPE_OT);
-						
-						String sd = saveMap.get("symd").toString();
-						String ed = saveMap.get("eymd").toString();
-						String sabun = saveMap.get("sabun").toString();
 						
 						List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypCds, sd, ed);
 						if(results!=null && results.size()>0) {
