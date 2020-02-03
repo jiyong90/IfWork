@@ -24,4 +24,15 @@ public interface WtmApplMapper {
 	//모바일에서 사용할 신청서 갯수
 	public Map<String, Object> getEdocCountForMobile(Map<String, Object> paramMap);
 	
+	/**
+	 * 신청서별 수신처 조회
+	 * @param paramMap
+	 * tenantId
+	 * enterCd
+	 * d : 오늘 날짜
+	 * applCodeId : 신청서 id
+	 * @return
+	 */
+	public List<Map<String, Object>> getRecLine(Map<String, Object> paramMap);
+	
 }

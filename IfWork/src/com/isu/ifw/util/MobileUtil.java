@@ -10,6 +10,7 @@ import java.util.Map;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.vo.WtmApplLineVO;
 
@@ -20,18 +21,33 @@ public class MobileUtil {
 		if(list == null || list.size() <= 0) 
 			throw new Exception("조회 결과가 없습니다.");
 		List<Map<String, Object>> l = list;
+		List<Map<String, Object>> l2 = new ArrayList();
 		for(Map<String,Object> temp : list) {
+			Map<String, Object> temp2 = new HashMap();
+			temp2.putAll(temp);
+			
 			if(temp.get("key2") != null) {
-				temp.put("key", (temp.get("key2")));
+				temp2.put("key", (temp.get("key2")));
 			}
-			if(temp.get("captionLb") != null) {
-				temp.put("caption_lb", (temp.get("captionLb")));
+			if(temp.containsKey("captionLb")) {
+				temp2.put("caption_lb", (temp.get("captionLb")));
+//				temp.put("cc", "remappingFunction");
+//				temp2.put("caption_lb", (temp.get("captionLb")));
+//				temp3.put("caption_lb", (temp.get("captionLb")));
+//				System.out.println("00000000000001 " + temp.toString());
+//				System.out.println("00000000000002 " + temp2.toString());
+//				System.out.println("00000000000003 " + temp3.toString());
 			}
-			if(temp.get("captionRb") != null) {
-				temp.put("caption_rb", (temp.get("captionRb")));
+			if(temp.containsKey("captionRb")) {
+				temp2.put("caption_rb", (temp.get("captionRb")));
 			}
+			l2.add(temp2);
 		}
-		return l;
+		
+//		for(Map<String,Object> temp : list) {
+//			System.out.println("00000000000002 " + temp.toString());
+//		}
+		return l2;
 	}
 	
 	public static List<Map<String, Object>> parseApprList(List<Map<String, Object>> l) {

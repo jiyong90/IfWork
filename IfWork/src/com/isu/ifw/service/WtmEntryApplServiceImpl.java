@@ -261,11 +261,11 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 		if(lastAppr) {
 			emps.add(applSabun);
 			System.out.println("1111111111111111111 1" + emps.toString());
-			inbox.setInbox(tenantId, enterCd, emps, applId, "APPLY", "결재완료", "연장근무 신청서가  승인되었습니다.", "N");
+			inbox.setInbox(tenantId, enterCd, emps, applId, "APPLY", "결재완료", "근태사유서가  승인되었습니다.", "N");
 		} else {
 			emps.add(apprSabun);
 			System.out.println("1111111111111111111 2" + emps.toString());
-			inbox.setInbox(tenantId, enterCd, emps, applId, "APPR", "결재요청 : 연장근무신청", "", "N");
+			inbox.setInbox(tenantId, enterCd, emps, applId, "APPR", "결재요청 : 근태사유서", "", "N");
 		}
 
 		return rp;
