@@ -131,8 +131,8 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 				pushList = pushMgrRepository.findBySymdAndEymd(today);
 			}
 
-			logger.debug("pushlist : " + pushList.toString());
-			System.out.println("pushlist : " + pushList.toString());
+//			logger.debug("pushlist : " + pushList.toString());
+//			System.out.println("pushlist : " + pushList.toString());
 			
 			for(WtmPushMgr push : pushList) {
 				List<String> empKeys =  new ArrayList();
@@ -144,14 +144,32 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 					param.put("stdType", stdType);
 					
 					param.put("enterCd", push.getEnterCd());
-					param.put("stdMinute", "B_IN".equals(stdType)?-push.getStdMinute():push.getStdMinute());
+					param.put("stdMinute", push.getStdMinute());
 					
 					//기준에 맞는 대상자 리스트 가져오기
-					List<String> pushEmps = schedulerMapper.getInoutCheckList(param);
+					List<Map<String, Object>> pushEmps = schedulerMapper.getInoutCheckList(param);
 					if(pushEmps != null && pushEmps.size() > 0) {
-						logger.debug(pushEmps.toString());
-						System.out.println(pushEmps.toString());
-						inboxService.sendPushMessage(push.getTenantId(), push.getEnterCd(), "INFO", pushEmps, push.getTitle(), push.getPushMsg());
+						//logger.debug("======pushEmps=====" + pushEmps.toString());
+						//System.out.println(pushEmps.toString());
+						List<String> target = new ArrayList();
+						for(Map<String, Object> pushEmp : pushEmps) {
+							target.add(pushEmp.get("EMP_KEY").toString());
+						}
+						
+						//일단 db 먼저 넣고 나중에 db 내역 보여주는 메뉴 추가하면...
+						WtmPushSendHis pushSendHis = new WtmPushSendHis();
+						pushSendHis.setEnterCd(push.getEnterCd());
+						pushSendHis.setTenantId(push.getTenantId());
+						pushSendHis.setStdType(stdType);
+						pushSendHis.setSendType("PUSH");
+						pushSendHis.setReceiveSabun(target.toString());
+						pushSendHis.setReceiveMail(target.toString());
+						pushSendHis.setSendMsg(push.getPushMsg());
+						pushSendHis.setUpdateId("SYSTEM");
+						pushHisRepository.save(pushSendHis);
+						logger.debug("******************출퇴근미타각 알림 저장 : " + pushSendHis.toString());
+						
+						inboxService.sendPushMessage(push.getTenantId(), push.getEnterCd(), "INFO", target, push.getTitle(), push.getPushMsg());
 					}
 				}
 			}	

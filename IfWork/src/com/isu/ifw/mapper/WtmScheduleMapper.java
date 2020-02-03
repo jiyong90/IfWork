@@ -25,5 +25,5 @@ public interface WtmScheduleMapper {
 	 * @param paramMap
 	 * @return 
 	 */
-	public List<String> getInoutCheckList(Map<String, Object> paramMap);
+	public List<Map<String, Object>> getInoutCheckList(Map<String, Object> paramMap);
 }
