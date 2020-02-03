@@ -180,5 +180,13 @@ public class WtmWorkDayResult {
     protected void onUpdate() {
     	this.updateDate = new Date();
     }
+	@Override
+	public String toString() {
+		return "WtmWorkDayResult [workDayResultId=" + workDayResultId + ", tenantId=" + tenantId + ", enterCd="
+				+ enterCd + ", sabun=" + sabun + ", ymd=" + ymd + ", applId=" + applId + ", timeTypeCd=" + timeTypeCd
+				+ ", taaCd=" + taaCd + ", planSdate=" + planSdate + ", planEdate=" + planEdate + ", apprSdate="
+				+ apprSdate + ", apprEdate=" + apprEdate + ", planMinute=" + planMinute + ", apprMinute=" + apprMinute
+				+ ", workYn=" + workYn + ", updateDate=" + updateDate + ", updateId=" + updateId + "]";
+	}
 	
 }
