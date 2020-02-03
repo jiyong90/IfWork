@@ -16,11 +16,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.isu.ifw.entity.WtmEmpHis;
+import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmCalendarMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmInoutHisMapper;
 import com.isu.ifw.repository.WtmEmpHisRepository;
+import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
@@ -44,6 +46,9 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	
 	@Resource
 	WtmEmpHisRepository empRepository;
+
+	@Resource
+	WtmWorkCalendarRepository calendarRepository;
 
 	@Autowired
 	WtmWorkDayResultRepository wtmWorkDayResultRepo;
@@ -701,7 +706,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
 			List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()),
 					paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
-			//BASE, FIXOT 데이터만 삭제
+			//BASE, FIXOT 데이터만 삭제, BASE만 생성하고 외출복귀 반복
 			if(unplanned.equals("Y")) {
 				if(results != null && results.size() > 0) {
 					for(WtmWorkDayResult r : results) {
@@ -710,6 +715,39 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 							wtmWorkDayResultRepo.deleteById(r.getWorkDayResultId());
 						}
 					}
+				}
+				
+				WtmWorkCalendar cal = calendarRepository.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()),
+						paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
+				
+				WtmWorkDayResult base = new WtmWorkDayResult();
+				base.setTimeTypeCd("BASE");
+				base.setTenantId(cal.getTenantId());
+				base.setEnterCd(cal.getEnterCd());
+				base.setSabun(cal.getSabun());
+				base.setYmd(cal.getSabun());
+				base.setPlanEdate(cal.getEntrySdate());
+				base.setPlanEdate(cal.getEntryEdate());
+				base.setUpdateId(cal.getSabun());
+				wtmWorkDayResultRepo.save(base);
+				
+				//외출에 대해서 다시 호출
+				List<WtmWorkDayResult> excepts = 
+						wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(Long.parseLong(paramMap.get("tenantId").toString()), 
+								paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), "EXCEPT", paramMap.get("stdYmd").toString(), paramMap.get("stdYmd").toString());
+				logger.debug("계산해야 하는 외출/복귀 : " + excepts.toString());
+				for(WtmWorkDayResult except : excepts) {
+					empService.addWtmDayResultInBaseTimeType(except.getTenantId(),
+							except.getEnterCd(), 
+							except.getYmd(),
+							except.getSabun(),
+							except.getTimeTypeCd(),
+							"",
+							except.getApprSdate(),
+							except.getApprEdate(),
+							null,
+							"0",
+							false);
 				}
 			}
 			empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
