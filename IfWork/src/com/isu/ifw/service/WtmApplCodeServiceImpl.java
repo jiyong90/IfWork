@@ -1,6 +1,7 @@
 package com.isu.ifw.service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,10 +11,16 @@ import javax.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.isu.ifw.entity.WtmApplCode;
+import com.isu.ifw.entity.WtmApplRecLine;
+import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.repository.WtmApplCodeRepository;
+import com.isu.ifw.repository.WtmApplRecLineRepository;
+import com.isu.ifw.util.WtmUtil;
 
 @Service("applCodeService")
 public class WtmApplCodeServiceImpl implements WtmApplCodeService{
@@ -22,6 +29,12 @@ public class WtmApplCodeServiceImpl implements WtmApplCodeService{
 	
 	@Resource
 	WtmApplCodeRepository applCodeRepository;
+	
+	@Autowired
+	WtmApplMapper applMapper;
+	
+	@Autowired
+	WtmApplRecLineRepository applRecLineRepo;
 
 	@Override
 	public List<Map<String, Object>> getApplCodeList(Long tenantId, String enterCd) {
@@ -135,4 +148,78 @@ public class WtmApplCodeServiceImpl implements WtmApplCodeService{
 		}
 		return cnt;
 	}
+	
+
+	@Override
+	public List<Map<String, Object>> getRecLine(Long tenantId, String enterCd, Map<String, Object> paramMap) {
+		try {
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+			paramMap.put("d", WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
+			
+			return applMapper.getRecLine(paramMap);
+		} catch(Exception e) {
+			e.printStackTrace();
+			logger.warn(e.toString(), e);
+		} finally {
+			logger.debug("getRecLine Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
+			MDC.clear();
+		}
+		
+		return null;
+	}
+	
+	@Override
+	@Transactional
+	public int saveRecLine(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) {
+		int cnt = 0;
+		try {
+			if(convertMap.containsKey("mergeRows") && ((List)convertMap.get("mergeRows")).size() > 0) {
+				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("mergeRows");
+				List<WtmApplRecLine> codes = new ArrayList();
+				if(iList != null && iList.size() > 0) {
+					for(Map<String, Object> l : iList) {
+						WtmApplRecLine recLine = new WtmApplRecLine();
+						recLine.setApplCodeId(Long.parseLong(l.get("applCodeId").toString()));
+						recLine.setSeq(Integer.valueOf(l.get("seq").toString()));
+						recLine.setSabun(l.get("sabun").toString());
+						recLine.setNote(l.get("note").toString());
+						recLine.setUpdateId(userId);
+						codes.add(recLine);
+					}
+					codes = applRecLineRepo.saveAll(codes);
+					cnt += codes.size();
+				}
+				
+				MDC.put("insert cnt", "" + cnt);
+			}
+		
+			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {
+				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("deleteRows");
+				List<WtmApplRecLine> recLines = new ArrayList();
+				if(iList != null && iList.size() > 0) {
+					for(Map<String, Object> l : iList) {
+						WtmApplRecLine recLine = applRecLineRepo.findByApplCodeIdAndSabun(Long.parseLong(l.get("applCodeId").toString()), l.get("sabun").toString());
+						
+						if(recLine!=null)
+							recLines.add(recLine);
+					}
+					applRecLineRepo.deleteAll(recLines);
+				}
+				
+				MDC.put("delete cnt", "" + iList.size());
+				cnt += iList.size();
+			}
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+			logger.warn(e.toString(), e);
+		} finally {
+			logger.debug("saveRecLine Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
+			MDC.clear();
+		}
+		return cnt;
+	}
+	
+	
 }
