@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
@@ -115,6 +116,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 //			for ( String key : result.keySet() ) {
 //    		    System.out.println("key : " + key +" / value : " + result.get(key));
 //    		}
+			// System.out.println("getIfLastDate result : " + result.toString());
 			if(result != null && result.size() > 0) {
 				try {
         			lastDataTime = result.get("lastDate").toString();
@@ -127,6 +129,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			}
 			
 			result = wtmInterfaceMapper.getIfNowDate(paramMap);
+			// System.out.println("getIfNowDate result : " + result.toString());
 			if(result != null && result.size() > 0) {
 				try {
 					nowDataTime = result.get("ifDate").toString();
@@ -140,6 +143,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			retMap.put("lastDate", lastDataTime);
 			retMap.put("nowDate", nowDataTime);
 		} catch (Exception e) {
+			System.out.println("getIfLastDate Exception!!!!!!!");
             e.printStackTrace();
 		}
 		return retMap;
@@ -1201,7 +1205,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					System.out.println("sabun : " + setEmpMap.get("sabun").toString());
 					setEmpMap.put("pId", setEmpMap.get("userId").toString());
 					// 입사자만? 이력정리용 프로시저 호출하기
-			    	// wtmFlexibleEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(setEmpMap);
+			    	wtmFlexibleEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(setEmpMap);
 					wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setEmpMap);
 				}
 			}
@@ -1347,11 +1351,14 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			reqMap.put("taaApplId", "");
 			reqMap.put("applId", "");
 			reqMap.put("oldStatus", "");
+			System.out.println("reqMap.get(oldStatus) 11111111111111111 == " + reqMap.get("oldStatus").toString());
 			wtmInterfaceMapper.setTaaApplIf(reqMap);
+			System.out.println("reqMap.get(oldStatus) 22222222222222222 == " + reqMap.get("oldStatus").toString());
 			
 			String retCode = reqMap.get("retCode").toString();
 			System.out.println("retCode : " + retCode);
 			System.out.println("retMsg : " + reqMap.get("retMsg").toString());
+			System.out.println("taaApplId : " + reqMap.get("taaApplId").toString());
 			String oldStatusCd = "";
 			if(reqMap.get("oldStatus") != null) { oldStatusCd = reqMap.get("oldStatus").toString();}
 			
@@ -1395,6 +1402,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					} else {
 						// 오류가 아니면.. 근태시간을 생성체크하자
 						String taaSetYn = reqDayMap.get("taaSetYn").toString();
+						System.out.println("taaSetYn : " + taaSetYn);
 						if("I".equals(taaSetYn)) {
 							// 근태생성
 							WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
@@ -1693,7 +1701,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					if("Y".equals(taaCode.getWorkYn())) {
 						timeTypeCd = "REGA";
 					}
+					System.out.println("timeTypeCd : " + timeTypeCd);
 					if(getStdMgrMap != null && getStdMgrMap.containsKey("unplannedYn") && "Y".equals(getStdMgrMap.get("unplannedYn").toString())) {
+						System.out.println("unplannedYn : Y start");
 						// 4.2.1. 근무계획없음 체크일때 RESULT 갱신은 없음.
 						// result 생성해야함
 						if("99".equals(nowApplStatusCd)) {
@@ -1718,9 +1728,10 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 							wtmInterfaceMapper.deleteResult(taaDetMap);
 						}
 					} else {
+						System.out.println("unplannedYn : N start");
 						// 4.2.2 근무계획이 무조건 있어야 함
 						// 근태기준이 휴일포함이거나, 휴일포함아니면 근무일일때만 data 생성
-						if("Y".equals(taaCode.getHolInclYn()) || ("N".equals(taaCode.getHolInclYn()) && "Y".equals(taaDetMap.get("holidayYn")))) {
+						if("Y".equals(taaCode.getHolInclYn()) || ("N".equals(taaCode.getHolInclYn()) && "N".equals(taaDetMap.get("holidayYn")))) {
 							String taaSdate = getStdMgrMap.get("taaSdate").toString();
 							String taaEdate = getStdMgrMap.get("taaEdate").toString();
 							if(!"0".equals(taaDetMap.get("workMinute").toString())) {
@@ -1746,6 +1757,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 									taaEdate = getTimeMap.get("taaEdate").toString();
 								} 
 							}
+							System.out.println("taaSdate : " + taaSdate);
+							System.out.println("taaEdate : " + taaEdate);
 							if("99".equals(nowApplStatusCd)) {
 								// 근태생성
 								WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
@@ -2117,6 +2130,49 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			for(Map<String, Object> l : dataList) {
 				// RESULT 생성하기
 				l.put("tenantId", tenantId);
+				
+				String enterCd = l.get("enterCd").toString();
+        		String sabun = l.get("sabun").toString();
+        		String ymd = l.get("ymd").toString();
+        		Integer gooutCnt = Integer.parseInt(l.get("gooutCnt").toString());
+        		System.out.println("********** sabun : " + sabun + ", ymd : " + ymd + ", gooutCnt : " + gooutCnt);
+        		l.put("symd", l.get("ymd").toString());
+				l.put("eymd", l.get("ymd").toString());
+				l.put("sYmd", l.get("ymd").toString());
+				l.put("eYmd", l.get("ymd").toString());
+				l.put("pId", userId);
+				l.put("userId", userId);
+				
+				// wtmFlexibleEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(l);
+				
+        		// 브로제 외출복귀 있으면 create result 호출하고 마감돌려야함.
+        		if(gooutCnt > 0) {
+        			// create result 호출
+        			wtmFlexibleEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(l);
+        			
+        			// 외출횟수만큼 근무시간을 짤라야함 외출정보를 조회하자
+        			List<Map<String, Object>> goOutList = new ArrayList();
+        			goOutList = wtmInterfaceMapper.setCalcDayResult(l);
+        			if(goOutList != null && goOutList.size() > 0) {
+        				for(Map<String, Object> f : goOutList) {
+        					System.out.println("goout send: " + f.toString());
+		        			SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
+		    				WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
+		    						  tenantId
+		    						, enterCd
+		    						, ymd
+		    						, sabun
+		    						, f.get("timeTypeCd").toString()
+		    						, ""
+		    						, dt.parse(f.get("planSdate").toString())
+		    						, dt.parse(f.get("planEdate").toString())
+		    						, null
+		    						, "0"
+		    						, false);
+        				}
+        			}
+        		}
+				
 				/*
 				l.put("shm", l.get("planSdate").toString().substring(8,12));
 				l.put("ehm", l.get("planEdate").toString().substring(8,12));
@@ -2126,42 +2182,187 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				wtmInterfaceMapper.insertDayResult(l);
 				*/
 				// wtmInterfaceMapper.updateDayResult2(l);
-				/*
-        		String enterCd = l.get("enterCd").toString();
-        		String sabun = l.get("sabun").toString();
-        		String closeYmd = l.get("ymd").toString();
-        		System.out.println("********** sabun : " + sabun + ", ymd : " + closeYmd);
-        		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, closeYmd, closeYmd, sabun);
-        		*/
+        		
+        		// 일마감생성
+        		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
+        		
         		// 문제가 없으면 근무계획시간 합산
-				
-				l.put("symd", l.get("ymd").toString());
-				l.put("eymd", l.get("ymd").toString());
-				l.put("pId", userId);
-				for ( String key : l.keySet() ) {
-	    		    System.out.println("key : " + key +" / value : " + l.get(key));
-	    		}
 				wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(l);
+				System.out.println("********** sabun : " + sabun + ", ymd : " + ymd + " end");
+			}
+			System.out.println("********** ALL END");
+		}
+		return;
+	}
+	
+	@Override
+	@Transactional
+	@Async("threadPoolTaskExecutor")
+	public void setCalcDayParam(Long tenantId, String enterCd, String sabun, String sYmd, String eYmd) throws Exception {
+		List<Map<String, Object>> dataList = new ArrayList();
+		String userId = "1";
+		Map<String, Object> paramMap = new HashMap<>();
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("sabun", sabun);
+		paramMap.put("sYmd", sYmd);
+		paramMap.put("eYmd", eYmd);
+		
+		dataList = wtmInterfaceMapper.setCalcDayParam(paramMap);
+		// dataList = wtmInterfaceMapper.setCalcDayResult(tenantId);
+		
+		if(dataList != null && dataList.size() > 0) {
+			// 일마감처리로 지각조퇴결근, 근무시간계산처리를 완료한다
+			for(Map<String, Object> l : dataList) {
+				// RESULT 생성하기
+				l.put("tenantId", tenantId);
+				
+        		String ymd = l.get("ymd").toString();
+        		Integer gooutCnt = Integer.parseInt(l.get("gooutCnt").toString());
+        		System.out.println("********** sabun : " + sabun + ", ymd : " + ymd + ", gooutCnt : " + gooutCnt);
+        		l.put("symd", l.get("ymd").toString());
+				l.put("eymd", l.get("ymd").toString());
+				l.put("sYmd", l.get("ymd").toString());
+				l.put("eYmd", l.get("ymd").toString());
+				l.put("pId", userId);
+				l.put("userId", userId);
+				
+				// 임시 RESULT 생성
+				// wtmFlexibleEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(l);
+				
+        		// 브로제 외출복귀 있으면 create result 호출하고 마감돌려야함.
+        		if(gooutCnt > 0) {
+        			// create result 호출
+        			System.out.println("goout!!!");
+        			wtmFlexibleEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(l);
+        			
+        			// 외출횟수만큼 근무시간을 짤라야함 외출정보를 조회하자
+        			List<Map<String, Object>> goOutList = new ArrayList();
+        			goOutList = wtmInterfaceMapper.setCalcDayResult(l);
+        			if(goOutList != null && goOutList.size() > 0) {
+        				for(Map<String, Object> f : goOutList) {
+        					System.out.println("goout send: " + f.toString());
+		        			SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
+		    				WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
+		    						  tenantId
+		    						, enterCd
+		    						, ymd
+		    						, sabun
+		    						, f.get("timeTypeCd").toString()
+		    						, ""
+		    						, dt.parse(f.get("planSdate").toString())
+		    						, dt.parse(f.get("planEdate").toString())
+		    						, null
+		    						, "0"
+		    						, false);
+        				}
+        			}
+        		}
 				
 				/*
-				// 외근 근무시간 기본근무적용
-				SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
-				WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
-						  Long.parseLong(l.get("tenantId").toString())
-						, l.get("enterCd").toString()
-						, l.get("ymd").toString()
-						, l.get("sabun").toString()
-						, l.get("timeTypeCd").toString()
-						, ""
-						, dt.parse(l.get("taaSdate").toString())
-						, dt.parse(l.get("taaEdate").toString())
-						, null
-						, "0"
-						, true);
-				System.out.println("sabun : " + l.get("sabun").toString());
-        		*/
+				l.put("shm", l.get("planSdate").toString().substring(8,12));
+				l.put("ehm", l.get("planEdate").toString().substring(8,12));
+				
+				Map<String, Object> planMinuteMap = WtmFlexibleEmpService.calcMinuteExceptBreaktime(Long.parseLong(l.get("timeCdMgrId").toString()), l, userId);
+				l.put("planMinute", (Integer.parseInt(planMinuteMap.get("calcMinute")+"")));
+				wtmInterfaceMapper.insertDayResult(l);
+				*/
+				// wtmInterfaceMapper.updateDayResult2(l);
+        		
+        		// 일마감생성
+        		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);        		
+        		// 문제가 없으면 근무계획시간 합산
+				wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(l);
+				System.out.println("********** sabun : " + sabun + ", ymd : " + ymd + " end");
 			}
-			System.out.println("********** END");
+			System.out.println("********** ALL END");
+		}
+		return;
+	}
+	
+	@Override
+	public List<Map<String, Object>> getCalcDayLoopEmp(Long tenantId) {
+		List<Map<String, Object>> dataList = new ArrayList();
+		
+		try {
+			dataList = wtmInterfaceMapper.getCalcDayLoopEmp(tenantId);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		return dataList;
+	}
+	
+	@Override
+	@Transactional
+	@Async("threadPoolTaskExecutor")
+	public void setCalcDayLoop(Long tenantId, String enterCd, String sabun, String sYmd, String eYmd) throws Exception {
+		List<Map<String, Object>> dataList = new ArrayList();
+		String userId = "1";
+		Map<String, Object> paramMap = new HashMap<>();
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("sabun", sabun);
+		paramMap.put("sYmd", sYmd);
+		paramMap.put("eYmd", eYmd);
+		
+		// 일단 result를 지우고
+		// wtmInterfaceMapper.deleteCalcDayLoop(paramMap);
+		
+		dataList = wtmInterfaceMapper.setCalcDayLoop(paramMap);
+		// dataList = wtmInterfaceMapper.setCalcDayResult(tenantId);
+		
+		if(dataList != null && dataList.size() > 0) {
+			// 일마감처리로 지각조퇴결근, 근무시간계산처리를 완료한다
+			for(Map<String, Object> l : dataList) {
+				// RESULT 생성하기
+				l.put("tenantId", tenantId);
+				
+        		String ymd = l.get("ymd").toString();
+        		Integer gooutCnt = Integer.parseInt(l.get("gooutCnt").toString());
+        		System.out.println("********** sabun : " + sabun + ", ymd : " + ymd + ", gooutCnt : " + gooutCnt);
+        		l.put("symd", l.get("ymd").toString());
+				l.put("eymd", l.get("ymd").toString());
+				l.put("sYmd", l.get("ymd").toString());
+				l.put("eYmd", l.get("ymd").toString());
+				l.put("pId", userId);
+				l.put("userId", userId);
+				
+        		// 브로제 외출복귀 있으면 create result 호출하고 마감돌려야함.
+        		if(gooutCnt > 0) {
+        			// create result 호출
+        			wtmFlexibleEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(l);
+        			
+        			// 외출횟수만큼 근무시간을 짤라야함 외출정보를 조회하자
+        			List<Map<String, Object>> goOutList = new ArrayList();
+        			goOutList = wtmInterfaceMapper.setCalcDayResult(l);
+        			if(goOutList != null && goOutList.size() > 0) {
+        				for(Map<String, Object> f : goOutList) {
+        					System.out.println("goout send: " + f.toString());
+		        			SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
+		    				WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
+		    						  tenantId
+		    						, enterCd
+		    						, ymd
+		    						, sabun
+		    						, f.get("timeTypeCd").toString()
+		    						, ""
+		    						, dt.parse(f.get("planSdate").toString())
+		    						, dt.parse(f.get("planEdate").toString())
+		    						, null
+		    						, "0"
+		    						, false);
+        				}
+        			}
+        		}
+        		
+        		// 일마감생성
+        		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
+        		
+        		// 문제가 없으면 근무계획시간 합산
+				wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(l);
+				System.out.println("********** sabun : " + sabun + ", ymd : " + ymd + " end");
+			}
+			System.out.println("********** ALL END");
 		}
 		return;
 	}
@@ -2259,13 +2460,13 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     	}
     	
     	getDateMap = new HashMap();
-    	// ymd = "20191202";
+    	ymd = "20200203";
     	getDateMap.put("tenantId", tenantId);
     	getDateMap.put("ymd", ymd);
     	getDateMap.put("closeType", closeType);
     	
     	// DB로 타각 갱신부터 처리한다.
-    	wtmInterfaceMapper.setCloseEntryOut(getDateMap);
+    	// wtmInterfaceMapper.setCloseEntryOut(getDateMap);
     	
     	// 타각갱신이 완료되면, 출퇴근 기록완성자의 근무시간을 갱신해야한다.
 		List<Map<String, Object>> closeList = new ArrayList();

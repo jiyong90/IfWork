@@ -159,6 +159,30 @@ public interface WtmInterfaceService {
 	public void setCalcDay(Long tenantId) throws Exception;
 	
 	/**
+	 * 근태 타각 미갱신자료 파람받아서 처리하기
+	 * @param tenantId - 테넌트 아이디
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void setCalcDayParam(Long tenantId, String enterCd, String sabun, String sYmd, String eYmd) throws Exception;
+	
+	/**
+	 * 근태 타각 미갱신자료 정산(사람별 데이터 생성용)
+	 * @param tenantId - 테넌트 아이디
+	 * @return 
+	 * @throws Exception 
+	 */
+	public List<Map<String, Object>> getCalcDayLoopEmp(Long tenantId);
+	
+	/**
+	 * 근태 타각 미갱신자료 정산 루프용 파람받아서 처리하기
+	 * @param tenantId - 테넌트 아이디
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void setCalcDayLoop(Long tenantId, String enterCd, String sabun, String sYmd, String eYmd) throws Exception;
+	
+	/**
 	 * 데이터이관용
 	 * @param reqMap - 파라메터 맵
 	 * @return 
