@@ -208,7 +208,28 @@ public interface WtmInterfaceMapper {
 	/**
 	 * 타각자료 갱신
 	 **/
-	public List<Map<String, Object>> setCalcDayResult(Long tenantId);
+	public List<Map<String, Object>> setCalcDayParam(Map<String, Object> paramMap);
+	
+	/**
+	 * 타각자료 갱신
+	 **/
+	public List<Map<String, Object>> getCalcDayLoopEmp(Long tenantId);
+	
+	
+	/**
+	 * 타각자료 갱신
+	 **/
+	public void deleteCalcDayLoop(Map<String, Object> paramMap);
+	
+	/**
+	 * 타각자료 갱신
+	 **/
+	public List<Map<String, Object>> setCalcDayLoop(Map<String, Object> paramMap);
+	
+	/**
+	 * 타각자료 갱신
+	 **/
+	public List<Map<String, Object>> setCalcDayResult(Map<String, Object> paramMap);
 	
 	
 	/**
