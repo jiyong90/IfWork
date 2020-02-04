@@ -144,11 +144,11 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		
 		List<Map<String, Object>> apprList = null;
 		if(typeCd.equals("01"))
-			apprList = applMapper.getApprList01(paramMap);
+			apprList = applMapper.getMobileApprList01(paramMap);
 		else if(typeCd.equals("02"))
-			apprList = applMapper.getApprList02(paramMap);
+			apprList = applMapper.getMobileApprList02(paramMap);
 		else if(typeCd.equals("03"))
-			apprList = applMapper.getApprList03(paramMap);
+			apprList = applMapper.getMobileApprList03(paramMap);
 	
 		if(apprList != null && apprList.size() > 0) {
 			for(Map<String, Object> appr : apprList) {

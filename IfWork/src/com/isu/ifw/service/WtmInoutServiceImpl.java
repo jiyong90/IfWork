@@ -752,8 +752,6 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 
 							flexEmpMapper.deleteResult(paramMap);
 							
-//							wtmWorkDayResultRepo.deleteById(r.getWorkDayResultId());
-
 							logger.debug("inoutPostProcess3 delete " + r.toString());
 //						} else 
 						if (r.getTimeTypeCd().equals("GOBACK")) {
@@ -804,6 +802,13 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					}
 
 					flexEmpMapper.updateResultAppr(paramMap);
+					
+					List<Map<String, Object>> results2 = wtmCalendarMapper.getEmpWorkDayResult(paramMap);
+
+					for(Map<String, Object> w : results2) {
+						System.out.println("=================3 " + w.toString());
+					}
+					
 					logger.debug("inoutPostProcess6 result에 appr비우기" + paramMap.toString());
 //					List<WtmWorkDayResult> results2 = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()),
 //							paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());

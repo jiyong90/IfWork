@@ -115,4 +115,12 @@ public interface WtmCalendarMapper {
 	 * @throws Exception
 	 */
 	public int cancelEntryDateCalendar(Map<String, Object> paramMap);
+	
+	/**
+	 * work_day_result list
+	 * @param paramMap
+	 * @return
+	 * @throws Exception
+	 */
+	public List<Map<String, Object>> getEmpWorkDayResult(Map<String, Object> paramMap);
 }

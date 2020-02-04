@@ -16,6 +16,10 @@ public interface WtmApplMapper {
 	public List<Map<String, Object>> getApprList02(Map<String, Object> paramMap);
 	public List<Map<String, Object>> getApprList03(Map<String, Object> paramMap);
 
+	public List<Map<String, Object>> getMobileApprList01(Map<String, Object> paramMap);
+	public List<Map<String, Object>> getMobileApprList02(Map<String, Object> paramMap);
+	public List<Map<String, Object>> getMobileApprList03(Map<String, Object> paramMap);
+
 	public int countByApprList01(Map<String, Object> paramMap);
 	public int countByApprList02(Map<String, Object> paramMap);
 	
