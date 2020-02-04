@@ -9,17 +9,18 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.aop.ThrowsAdvice;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
 
 import com.isu.ifw.entity.WtmEmpHis;
 import com.isu.ifw.entity.WtmFlexibleEmp;
-import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmCalendarMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
@@ -63,6 +64,15 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	@Autowired
 	WtmFlexibleEmpMapper flexEmpMapper;
 
+	@Autowired
+	PlatformTransactionManager transactionManager;
+	
+	@Autowired
+    private org.mybatis.spring.SqlSessionTemplate sqlSessionTemplate;
+	
+	@Autowired   
+	SqlSessionFactory sqlSessionFactory;
+	
 	@Override
 	public Map<String, Object> getMenuContext(Long tenantId, String enterCd, String sabun) {
 
@@ -479,6 +489,9 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			if(!time.containsKey("pSymd") ||  !time.containsKey("pEymd"))
 				continue;
 			
+			entrySdate = time.get("entrySdate")!=null?time.get("entrySdate").toString():null;
+			entryEdate = time.get("entryEdate")!=null?time.get("entryEdate").toString():null;
+
 			if(time.get("pSymd").toString().equals(today) && 
 					time.get("holydayYn").toString().equals("Y") && time.get("pSdate") == null && time.get("pEdate") == null) {
 				throw new Exception("휴일 근무계획이 없습니다.");
@@ -493,6 +506,12 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				inoutType = "OUT";
 				break;
 			} 
+		}
+		
+		//3.출근타각이 있으면 반영안됨(삼화 인터페이스 두번 들어올 수 있음)
+		if("IN".equals(paramMap.get("inoutType").toString()) && entrySdate !=null) {
+			logger.debug("출근 타각시간이 존재하므로 반영하지 않습니다." + paramMap.toString());
+			return;
 		}
 		
 		String gobackType = "GO";
@@ -727,6 +746,214 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		}
 	}
 	
+	@Override
+	public void updateTimecardUnplanned2(Map<String, Object> paramMap) throws Exception {
+
+		//캘린더에 초가 들어가면 안된...
+		paramMap.put("inoutDateTime", paramMap.get("inoutDate").toString().substring(0,12)+"00");
+		
+		//1. 무조건 타각 저장
+		try {
+			if(insertTimeStamp(paramMap)) {
+				logger.debug("insertTimeStampSuccess : " + paramMap.toString());
+			} else {
+				logger.debug("insertTimeStampFail : " + paramMap.toString());
+				throw new Exception("저장에 실패하였습니다.");
+			}
+		} catch(Exception e) {
+			logger.debug("insertTimeStampFail : " +e.getMessage());
+			throw new Exception("저장에 실패하였습니다.");
+		}
+		
+		//2. 근무일과 타각상태 가져오기
+		List<Map<String, Object>> list = inoutHisMapper.getInoutStatus(paramMap);
+		logger.debug("inoutStatus : " + list.toString());
+
+		String today = paramMap.get("inoutDate").toString().substring(0, 8);
+		String stdYmd = today;
+		String inoutType = "NONE";
+		String entrySdate = null;
+		String entryEdate = null;
+		
+		for(Map<String, Object> time : list) {
+			if(today.equals(time.get("ymd").toString())) {
+				entrySdate = time.get("entrySdate")!=null?time.get("entrySdate").toString():null;
+				entryEdate = time.get("entryEdate")!=null?time.get("entryEdate").toString():null;
+				
+				if(time.get("entrySdate") == null) {
+					stdYmd = time.get("ymd").toString();
+					inoutType = "IN";
+					break;
+				} else if(time.get("entryEdate") == null) {
+					stdYmd = time.get("ymd").toString();
+					inoutType = "OUT";
+					break;
+				} 
+			}
+		}
+		
+		//3.출근타각이 있으면 반영안됨 (브로제)
+		if("IN".equals(paramMap.get("inoutType").toString()) && entrySdate !=null) {
+			throw new Exception("출근 타각시간이 존재하므로 반영하지 않습니다.");
+		}
+		
+		String gobackType = "GO";
+		//4.외출 복귀 마지막 상태 가져오기(5번에서 사용)
+		Map<String, Object> goback = inoutHisMapper.getGoBackStatus(paramMap);
+		if(goback == null || "GO".equals(goback.get("inoutType").toString())) {
+			gobackType = "GO";
+		} else {
+			gobackType = "BACK";
+		}
+		
+		//5.퇴근일때 복귀도 강제로 생성
+		if("OUT".equals(paramMap.get("inoutType").toString()) && gobackType.equals("BACK")) {
+			Map<String, Object> tempMap = new HashMap();
+			tempMap.putAll(paramMap);
+			tempMap.put("entryTypeCd", "API");
+			tempMap.put("inoutType", gobackType);
+			logger.debug("퇴근할때 강제 복귀 생성 " + paramMap.toString());
+			updateTimecardExcept(tempMap);
+		}
+		paramMap.put("stdYmd", stdYmd);
+
+		//6.캘린더 업데이트
+		int cnt = wtmCalendarMapper.updateEntryDateCalendar(paramMap);
+		if(cnt <= 0) {
+			throw new Exception("캘린더 정보 업데이트에 실패하였습니다.");
+		}
+		
+		////////////////////////////////////////////
+		SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
+//		List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()),
+//				paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
+		
+		
+		//BASE, FIXOT 데이터만 삭제
+
+//		if(results != null && results.size() > 0) {
+//			for(WtmWorkDayResult r : results) {
+				logger.debug("퇴근타각, BASE, FIXOT 삭제 " + paramMap.toString());
+					flexEmpMapper.deleteResult(paramMap);
+					
+//				if (r.getTimeTypeCd().equals("GOBACK")) {
+//					gobacks.add(r);
+//				}
+//			}
+//		}
+
+		List<WtmWorkDayResult> gobacks = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(
+				Long.parseLong(paramMap.get("tenantId").toString()), 
+				paramMap.get("enterCd").toString(), 
+				paramMap.get("sabun").toString(),
+				"GOBACK",
+				paramMap.get("stdYmd").toString(), paramMap.get("stdYmd").toString());
+
+		if(gobacks != null && gobacks.size() > 0) {
+			logger.debug("inoutPostProcess4 외출복귀몇개 " + gobacks.size());
+	
+			List<WtmFlexibleEmp> emps = flexEmpRepo.findAllTypeFixotByTenantIdAndEnterCdAndSabunAndSymdAndEymdAnd(
+					Long.parseLong(paramMap.get("tenantId").toString()), 
+					paramMap.get("enterCd").toString(), 
+					paramMap.get("sabun").toString(), 
+					paramMap.get("stdYmd").toString(), 
+					paramMap.get("stdYmd").toString());
+			
+			if(emps == null || emps.size() == 0) {
+				throw new Exception("WtmFlexibleEmp 없음. 계산불가");
+			}
+			
+			logger.debug("inoutPostProcess5 CREATE_N 시작 " + emps.get(0).getFlexibleEmpId());
+
+			paramMap.put("flexibleEmpId", emps.get(0).getFlexibleEmpId());
+			paramMap.put("sYmd", paramMap.get("stdYmd").toString());
+			paramMap.put("eYmd", paramMap.get("stdYmd").toString());
+			paramMap.put("userId", paramMap.get("sabun").toString());
+			flexEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(paramMap);
+			
+			logger.debug("inoutPostProcess6 CREATE_N 끗 " + paramMap.toString());
+
+			for(WtmWorkDayResult except : gobacks) {
+				empService.addWtmDayResultInBaseTimeType(except.getTenantId(),
+						except.getEnterCd(), 
+						except.getYmd(),
+						except.getSabun(),
+						except.getTimeTypeCd(),
+						"",
+						except.getApprSdate(),
+						except.getApprEdate(),
+						null,
+						"0",
+						false);
+
+				logger.debug("inoutPostProcess6 외출복귀나누기 " + except.toString());
+			}
+
+//			List<Map<String, Object>> results1 = wtmCalendarMapper.getEmpWorkDayResult(paramMap);
+//
+//			for(Map<String, Object> w : results1) {
+//				System.out.println("=================2 " + w.toString());
+//			}
+				
+			flexEmpMapper.updateResultAppr(paramMap);
+			
+//			List<Map<String, Object>> results2 = wtmCalendarMapper.getEmpWorkDayResult(paramMap);
+//
+//			for(Map<String, Object> w : results2) {
+//				System.out.println("=================3 " + w.toString());
+//			}
+				
+			logger.debug("inoutPostProcess6 result에 appr비우기" + paramMap.toString());
+//				List<WtmWorkDayResult> results2 = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()),
+//						paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
+//
+//				int cnt = 0;
+//				for(WtmWorkDayResult r : results2) {
+//					if(r.getTimeTypeCd().equals("GOBACK")) 
+//						continue;
+//					r.setApprSdate(null);
+//					r.setApprEdate(null);
+//					r.setApprMinute(null);
+//					wtmWorkDayResultRepo.save(r);
+//					cnt++;
+//				}
+//				logger.debug("inoutPostProcess6 result에 appr비우기 끗 " + cnt);
+//			}
+//			sqlSession.commit();
+			//TransactionSynchronization.
+		}
+	}
+	
+	@Transactional
+	@Async("threadPoolTaskExecutor")
+	public void inoutPostProcess2(Map<String, Object> paramMap, String unplanned) {
+		try {
+			logger.debug("inoutPostProcess21");
+			SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
+			
+			logger.debug("inoutPostProcess22 calc 시작 " + paramMap.get("sabun").toString());
+			empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
+					paramMap.get("enterCd").toString(), paramMap.get("stdYmd").toString(),
+					paramMap.get("stdYmd").toString(), paramMap.get("sabun").toString());
+			
+			logger.debug("inoutPostProcess23 calc 종료 " + paramMap.get("sabun").toString());
+			
+			Map<String, Object> tempTimeMap = new HashMap();
+			tempTimeMap.put("tenantId", Long.parseLong(paramMap.get("tenantId").toString()));
+			tempTimeMap.put("enterCd", paramMap.get("enterCd").toString());
+			tempTimeMap.put("sabun", paramMap.get("sabun").toString());
+			tempTimeMap.put("symd", paramMap.get("stdYmd").toString());
+			tempTimeMap.put("eymd", paramMap.get("stdYmd").toString());
+			tempTimeMap.put("pId", paramMap.get("sabun").toString());
+
+			wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(tempTimeMap);
+			logger.debug("inoutPostProcess24 워크텀 끗 " + tempTimeMap.toString());
+
+		} catch(Exception e) {
+			logger.debug("****인정시간 계산 중 오류가 발생했습니다. " + paramMap.toString() + ", " + e.getMessage());
+		}
+	}
+	
 	@Transactional
 	@Async("threadPoolTaskExecutor")
 	public void inoutPostProcess(Map<String, Object> paramMap, String unplanned) {
@@ -745,6 +972,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			logger.debug("inoutPostProcess2 " + unplanned);
 
 			if(unplanned.equals("Y")) {
+//				SqlSession sqlSession = sqlSessionFactory.openSession();
 				if(results != null && results.size() > 0) {
 					for(WtmWorkDayResult r : results) {
 //						if(r.getTimeTypeCd().equals("BASE") || r.getTimeTypeCd().equals("FIXOT") || r.getTimeTypeCd().equals("EXCEPT")) {
@@ -801,8 +1029,14 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 						logger.debug("inoutPostProcess6 외출복귀나누기 " + except.toString());
 					}
 
-					flexEmpMapper.updateResultAppr(paramMap);
+					List<Map<String, Object>> results1 = wtmCalendarMapper.getEmpWorkDayResult(paramMap);
+
+					for(Map<String, Object> w : results1) {
+						System.out.println("=================2 " + w.toString());
+					}
 					
+					flexEmpMapper.updateResultAppr(paramMap);
+				
 					List<Map<String, Object>> results2 = wtmCalendarMapper.getEmpWorkDayResult(paramMap);
 
 					for(Map<String, Object> w : results2) {
@@ -825,8 +1059,13 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 //					}
 //					logger.debug("inoutPostProcess6 result에 appr비우기 끗 " + cnt);
 				}
+//				sqlSession.commit();
+				//TransactionSynchronization.
 			}
+
 			
+//			transactionManager.commit(status);
+		
 			logger.debug("inoutPostProcess7 calc 시작 " + paramMap.get("sabun").toString());
 			empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
 					paramMap.get("enterCd").toString(), paramMap.get("stdYmd").toString(),
@@ -849,191 +1088,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			logger.debug("****인정시간 계산 중 오류가 발생했습니다. " + paramMap.toString() + ", " + e.getMessage());
 		}
 	}
-	
-	public void updateTimecardUnplanned_backup(Map<String, Object> paramMap) throws Exception {
 
-		//캘린더에 초가 들어가면 안된...
-		paramMap.put("inoutDateTime", paramMap.get("inoutDate").toString().substring(0,12)+"00");
-		
-		//1. 근무일과 타각상태 가져오기
-		List<Map<String, Object>> list = inoutHisMapper.getInoutStatus(paramMap);
-		logger.debug("inoutStatus : " + list.toString());
-
-		String today = paramMap.get("inoutDate").toString().substring(0, 8);
-		String stdYmd = today;
-		String inoutType = "NONE";
-		String entrySdate = null;
-		String entryEdate = null;
-		
-		for(Map<String, Object> time : list) {
-			if(today.equals(time.get("ymd").toString())) {
-				if(time.get("holydayYn").toString().equals("Y") 
-						&& time.get("pSdate") == null && time.get("pEdate") == null) {
-					throw new Exception("휴일 근무계획이 없습니다.");
-				}
-				entrySdate = time.get("entrySdate")!=null?time.get("entrySdate").toString():null;
-				entryEdate = time.get("entryEdate")!=null?time.get("entryEdate").toString():null;
-				
-				if(time.get("entrySdate") == null) {
-					stdYmd = time.get("ymd").toString();
-					inoutType = "IN";
-					break;
-				} else if(time.get("entryEdate") == null) {
-					stdYmd = time.get("ymd").toString();
-					inoutType = "OUT";
-					break;
-				} 
-			}
-			
-		}
-		
-		String gobackType = "GO";
-		//외출 복귀 마지막 상태 가져오기
-		Map<String, Object> goback = inoutHisMapper.getGoBackStatus(paramMap);
-		if(goback == null || "GO".equals(goback.get("inoutType").toString())) {
-			gobackType = "GO";
-		} else {
-			gobackType = "BACK";
-			paramMap.put("exceptSYmd", goback.get("exceptSYmd"));
-		}
-
-		if("EXCEPT".equals(paramMap.get("inoutType").toString())) {
-			if(inoutType.equals("IN")) {
-				throw new Exception("출근 전에는 외출/복귀 메뉴를 사용할 수 없습니다.");
-			} else if(inoutType.equals("NONE")) {
-				throw new Exception("출근 전, 퇴근 후에는 외출/복귀 메뉴를 사용할 수 없습니다.");
-			}
-			paramMap.put("inoutType", gobackType);
-		}
-
-		//2.일단 타각 데이터만 저장
-		try {
-			if(insertTimeStamp(paramMap)) {
-				logger.debug("insertTimeStampSuccess : " + paramMap.toString());
-				//퇴근일때 복귀도 강제로 생성
-				if("OUT".equals(paramMap.get("inoutType").toString()) && gobackType.equals("BACK")) {
-					Map<String, Object> tempMap = new HashMap();
-					tempMap.putAll(paramMap);
-					tempMap.put("inoutType", gobackType);
-					logger.debug("퇴근할때 강제 복귀 생성");
-					insertTimeStamp(tempMap);
-				}
-				
-			} else {
-				logger.debug("insertTimeStampFail : " + paramMap.toString());
-				throw new Exception("저장에 실패하였습니다.");
-			}
-		} catch(Exception e) {
-			logger.debug("insertTimeStampFail : " +e.getMessage());
-			throw new Exception("저장에 실패하였습니다.");
-		}
-		
-		//3.출근타각이 있으면 반영안됨 (브로제)
-		if("IN".equals(paramMap.get("inoutType").toString()) && entrySdate !=null) {
-			throw new Exception("출근 타각시간이 존재하므로 반영하지 않습니다.");
-		}
-		//4. 퇴근취소는 기준일 정보 받은걸 셋팅
-		if(paramMap.get("inoutType").toString().equals("OUTC")) {
-			paramMap.put("stdYmd", paramMap.get("ymd"));
-		} else {
-			paramMap.put("stdYmd", stdYmd);
-		}
- 
-		//5. 출퇴근,퇴근취소만 캘린더 업데이트
-		if("IN".equals(paramMap.get("inoutType").toString()) 
-					|| "OUT".equals(paramMap.get("inoutType").toString())
-					|| "OUTC".equals(paramMap.get("inoutType").toString())) {
-		
-			int cnt = wtmCalendarMapper.updateEntryDateCalendar(paramMap);
-			if(cnt <= 0) {
-				throw new Exception("캘린더 정보 업데이트에 실패하였습니다.");
-			}
-		}
-
-		SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
-		
-		// 복귀일때 근무시간 짜르기가 필요함.
-//		if(paramMap.get("inoutType").equals("BACK") || 
-//				("OUT".equals(paramMap.get("inoutType").toString()) && gobackType.equals("BACK"))) {
-		if(paramMap.get("inoutType").equals("BACK")) {
-			// 외출복귀 시간을 조회한다.
-			try {
-				WtmWorkDayResult except = new WtmWorkDayResult();
-				except.setTenantId(Long.parseLong(paramMap.get("tenantId").toString()));
-				except.setEnterCd(paramMap.get("enterCd").toString());
-				except.setSabun(paramMap.get("sabun").toString());
-				except.setYmd(paramMap.get("stdYmd").toString());
-				except.setTimeTypeCd("GOBACK");
-				except.setEnterCd(paramMap.get("enterCd").toString());
-				except.setPlanSdate(dt.parse(paramMap.get("exceptSYmd").toString()));
-				except.setPlanEdate(dt.parse(paramMap.get("inoutDateTime").toString()));
-				except.setApprSdate(dt.parse(paramMap.get("exceptSYmd").toString()));
-				except.setApprEdate(dt.parse(paramMap.get("inoutDateTime").toString()));
-				except.setUpdateId(paramMap.get("sabun").toString());
-
-				wtmWorkDayResultRepo.save(except);
-			} catch(Exception e) {
-				logger.debug(e.getMessage());
-				throw new Exception("외출복귀 기록 중 오류가 발생했습니다.");
-			}
-		}
-
-		//퇴근일때만 인정시간 계산
-		if(paramMap.get("inoutType").toString().equals("OUT"))
-			try {
-				//BASE, FIXOT 데이터만 삭제 후 돌리기
-				List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()),
-						paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
-
-				if(results != null && results.size() > 0) {
-					for(WtmWorkDayResult r : results) {
-						if(r.getTimeTypeCd().equals("BASE") || r.getTimeTypeCd().equals("FIXOT")) {
-							logger.debug("퇴근타각, BASE, FIXOT 삭제 " + r.toString());
-							wtmWorkDayResultRepo.deleteById(r.getWorkDayResultId());
-						}
-					}
-				}
-				
-				
-				//외출에 대해서 다시 호출
-				List<WtmWorkDayResult> excepts = 
-						wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(Long.parseLong(paramMap.get("tenantId").toString()), 
-								paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), "EXCEPT", paramMap.get("stdYmd").toString(), paramMap.get("stdYmd").toString());
-				logger.debug("계산해야 하는 외출/복귀 : " + excepts.toString());
-				for(WtmWorkDayResult except : excepts) {
-					empService.addWtmDayResultInBaseTimeType(except.getTenantId(),
-							except.getEnterCd(), 
-							except.getYmd(),
-							except.getSabun(),
-							except.getTimeTypeCd(),
-							"",
-							except.getApprSdate(),
-							except.getApprEdate(),
-							null,
-							"0",
-							false);
-				}
-
-				empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
-						paramMap.get("enterCd").toString(), paramMap.get("stdYmd").toString(),
-						paramMap.get("stdYmd").toString(), paramMap.get("sabun").toString());
-				
-				// #{tenantId}, #{enterCd}, #{sabun}, #{symd}, #{eymd}, #{pId} 
-				Map<String, Object> tempTimeMap = new HashMap();
-				tempTimeMap.put("tenantId", Long.parseLong(paramMap.get("tenantId").toString()));
-				tempTimeMap.put("enterCd", paramMap.get("enterCd").toString());
-				tempTimeMap.put("sabun", paramMap.get("sabun").toString());
-				tempTimeMap.put("symd", paramMap.get("stdYmd").toString());
-				tempTimeMap.put("eymd", paramMap.get("stdYmd").toString());
-				tempTimeMap.put("pId", paramMap.get("sabun").toString());
-				wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(tempTimeMap);
-				
-			} catch(Exception e) {
-				logger.debug(e.getMessage());
-				throw new Exception("인정시간 계산 중 오류가 발생했습니다.");
-			}
-	}
-	
 	@Override
 	public boolean updateTimeStamp(Map<String, Object> paramMap) throws Exception {
 		try {
