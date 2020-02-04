@@ -146,9 +146,14 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 			
 			//결재요청중일 때 회수 버튼 보여주기
 			if(applLine!=null && applLine.size()>0) {
+				int seq = 1;
 				for(WtmApplLineVO l : applLine) {
-					if(l.getApprSeq()==1 && "10".equals(l.getApprStatusCd()) && sabuns.indexOf(sabun)!=-1 )
-						isRecovery = true;
+					if(APPL_LINE_S.equals(l.getApprTypeCd())) {
+						if(seq==1 && APPR_STATUS_REQUEST.equals(l.getApprStatusCd()) && sabuns.indexOf(sabun)!=-1 )
+							isRecovery = true;
+						
+						seq++;
+					}
 				}
 			}
 			

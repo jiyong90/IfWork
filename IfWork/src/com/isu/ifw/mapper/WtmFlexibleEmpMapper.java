@@ -439,4 +439,14 @@ public interface WtmFlexibleEmpMapper {
 	//인정시간을 다시 계산하기 위해 appr~ null로 없데이트
 	public void updateResultAppr(Map<String, Object> paramMap);
 	
+	/**
+	 * @param paramMap
+	 * tenantId
+	 * enterCd
+	 * ymd
+	 * timeTypeCd
+	 * @return
+	 */
+	public List<Map<String, Object>> getResultBySabunAndYmdAndTimeTypeCds(Map<String, Object> paramMap);
+	
 }

@@ -129,7 +129,8 @@ public class WtmApplServiceImpl implements WtmApplService {
 						appl = wtmFlexibleApplService.getAppl(tenantId, enterCd, applSabun, applId, userId); 
 					}
 					
-					appl.put("sabun", empNo);
+					if(appl!=null)
+						appl.put("sabun", empNo);
 					appr.put("appl", appl);
 					
 				}

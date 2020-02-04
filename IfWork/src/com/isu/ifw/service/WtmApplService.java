@@ -60,6 +60,8 @@ public interface WtmApplService {
 	final static String TIME_TYPE_TAA = "TAA";
 	// 지각/조퇴
 	final static String TIME_TYPE_LLA = "LLA";
+	//외출
+	final static String TIME_TYPE_GOBACK = "GOBACK";
 	
 	//결재
 	final static String APPL_TYPE_REQUEST = "01"; //신청
