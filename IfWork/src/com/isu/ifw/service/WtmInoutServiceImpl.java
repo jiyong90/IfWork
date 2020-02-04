@@ -1,6 +1,7 @@
 package com.isu.ifw.service;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -10,18 +11,21 @@ import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.ThrowsAdvice;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.isu.ifw.entity.WtmEmpHis;
+import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmCalendarMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmInoutHisMapper;
 import com.isu.ifw.repository.WtmEmpHisRepository;
+import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.util.WtmUtil;
@@ -47,11 +51,17 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	@Resource
 	WtmEmpHisRepository empRepository;
 
+	@Autowired
+	WtmWorkDayResultRepository wtmWorkDayResultRepo;
+	
 	@Resource
 	WtmWorkCalendarRepository calendarRepository;
 
 	@Autowired
-	WtmWorkDayResultRepository wtmWorkDayResultRepo;
+	WtmFlexibleEmpRepository flexEmpRepo;
+	
+	@Autowired
+	WtmFlexibleEmpMapper flexEmpMapper;
 
 	@Override
 	public Map<String, Object> getMenuContext(Long tenantId, String enterCd, String sabun) {
@@ -605,7 +615,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				except.setEnterCd(paramMap.get("enterCd").toString());
 				except.setSabun(paramMap.get("sabun").toString());
 				except.setYmd(paramMap.get("ymd").toString());
-				except.setTimeTypeCd("EXCEPT");
+				except.setTimeTypeCd("GOBACK");
 				except.setEnterCd(paramMap.get("enterCd").toString());
 				except.setPlanSdate(dt.parse(paramMap.get("exceptSYmd").toString()));
 				except.setPlanEdate(dt.parse(paramMap.get("inoutDateTime").toString()));
@@ -614,6 +624,24 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				except.setUpdateId(paramMap.get("sabun").toString());
 
 				wtmWorkDayResultRepo.save(except);
+			
+			
+			// 복귀일때 근무시간 짜르기가 필요함.	
+			// 외출복귀 시간을 조회한다.
+				Map <String,Object> exceptMap = new HashMap<String, Object>();					
+				SimpleDateFormat dt2 = new SimpleDateFormat("yyyyMMddHHmmss");
+				empService.addWtmDayResultInBaseTimeType(	
+						Long.parseLong(paramMap.get("tenantId").toString())
+						, paramMap.get("enterCd").toString()		
+						, paramMap.get("ymd").toString()
+						, paramMap.get("sabun").toString()
+						, "GOBACK"
+						, ""
+						, dt2.parse(paramMap.get("exceptSYmd").toString())
+						, dt2.parse(paramMap.get("inoutDateTime").toString())
+						, null
+						, "0"
+						, false);
 			} catch(Exception e) {
 				logger.debug(e.getMessage());
 				throw new Exception("외출복귀 기록 중 오류가 발생했습니다.");
@@ -703,57 +731,104 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	@Async("threadPoolTaskExecutor")
 	public void inoutPostProcess(Map<String, Object> paramMap, String unplanned) {
 		try {
+			logger.debug("inoutPostProcess1");
 			SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
 			List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()),
 					paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
-			//BASE, FIXOT 데이터만 삭제, BASE만 생성하고 외출복귀 반복
+			
+			List<WtmWorkDayResult> gobacks = new ArrayList();
+//			delete 공통
+//			있으면 crete_n, 자르기,
+//			공통 calc, term
+			
+			//BASE, FIXOT 데이터만 삭제
+			logger.debug("inoutPostProcess2 " + unplanned);
+
 			if(unplanned.equals("Y")) {
 				if(results != null && results.size() > 0) {
 					for(WtmWorkDayResult r : results) {
-						if(r.getTimeTypeCd().equals("BASE") || r.getTimeTypeCd().equals("FIXOT")) {
+//						if(r.getTimeTypeCd().equals("BASE") || r.getTimeTypeCd().equals("FIXOT") || r.getTimeTypeCd().equals("EXCEPT")) {
 							logger.debug("퇴근타각, BASE, FIXOT 삭제 " + r.toString());
-							wtmWorkDayResultRepo.deleteById(r.getWorkDayResultId());
+
+							flexEmpMapper.deleteResult(paramMap);
+							
+//							wtmWorkDayResultRepo.deleteById(r.getWorkDayResultId());
+
+							logger.debug("inoutPostProcess3 delete " + r.toString());
+//						} else 
+						if (r.getTimeTypeCd().equals("GOBACK")) {
+							gobacks.add(r);
 						}
 					}
 				}
 				
-				WtmWorkCalendar cal = calendarRepository.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()),
-						paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
-				
-				WtmWorkDayResult base = new WtmWorkDayResult();
-				base.setTimeTypeCd("BASE");
-				base.setTenantId(cal.getTenantId());
-				base.setEnterCd(cal.getEnterCd());
-				base.setSabun(cal.getSabun());
-				base.setYmd(cal.getSabun());
-				base.setPlanEdate(cal.getEntrySdate());
-				base.setPlanEdate(cal.getEntryEdate());
-				base.setUpdateId(cal.getSabun());
-				wtmWorkDayResultRepo.save(base);
-				
-				//외출에 대해서 다시 호출
-				List<WtmWorkDayResult> excepts = 
-						wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(Long.parseLong(paramMap.get("tenantId").toString()), 
-								paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), "EXCEPT", paramMap.get("stdYmd").toString(), paramMap.get("stdYmd").toString());
-				logger.debug("계산해야 하는 외출/복귀 : " + excepts.toString());
-				for(WtmWorkDayResult except : excepts) {
-					empService.addWtmDayResultInBaseTimeType(except.getTenantId(),
-							except.getEnterCd(), 
-							except.getYmd(),
-							except.getSabun(),
-							except.getTimeTypeCd(),
-							"",
-							except.getApprSdate(),
-							except.getApprEdate(),
-							null,
-							"0",
-							false);
+				if(gobacks != null && gobacks.size() > 0) {
+
+					logger.debug("inoutPostProcess4 외출복귀몇개 " + gobacks.size());
+
+					List<WtmFlexibleEmp> emps = flexEmpRepo.findAllTypeFixotByTenantIdAndEnterCdAndSabunAndSymdAndEymdAnd(
+							Long.parseLong(paramMap.get("tenantId").toString()), 
+							paramMap.get("enterCd").toString(), 
+							paramMap.get("sabun").toString(), 
+							paramMap.get("stdYmd").toString(), 
+							paramMap.get("stdYmd").toString());
+					
+					if(emps == null || emps.size() == 0) {
+						throw new Exception("WtmFlexibleEmp 없음. 계산불가");
+					}
+					
+					logger.debug("inoutPostProcess5 CREATE_N 시작 " + emps.get(0).getFlexibleEmpId());
+
+					paramMap.put("flexibleEmpId", emps.get(0).getFlexibleEmpId());
+					paramMap.put("sYmd", paramMap.get("stdYmd").toString());
+					paramMap.put("eYmd", paramMap.get("stdYmd").toString());
+					paramMap.put("userId", paramMap.get("sabun").toString());
+					flexEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(paramMap);
+					
+					logger.debug("inoutPostProcess6 CREATE_N 끗 " + paramMap.toString());
+
+					for(WtmWorkDayResult except : gobacks) {
+						empService.addWtmDayResultInBaseTimeType(except.getTenantId(),
+								except.getEnterCd(), 
+								except.getYmd(),
+								except.getSabun(),
+								except.getTimeTypeCd(),
+								"",
+								except.getApprSdate(),
+								except.getApprEdate(),
+								null,
+								"0",
+								false);
+
+						logger.debug("inoutPostProcess6 외출복귀나누기 " + except.toString());
+					}
+
+					flexEmpMapper.updateResultAppr(paramMap);
+					logger.debug("inoutPostProcess6 result에 appr비우기" + paramMap.toString());
+//					List<WtmWorkDayResult> results2 = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()),
+//							paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
+//	
+//					int cnt = 0;
+//					for(WtmWorkDayResult r : results2) {
+//						if(r.getTimeTypeCd().equals("GOBACK")) 
+//							continue;
+//						r.setApprSdate(null);
+//						r.setApprEdate(null);
+//						r.setApprMinute(null);
+//						wtmWorkDayResultRepo.save(r);
+//						cnt++;
+//					}
+//					logger.debug("inoutPostProcess6 result에 appr비우기 끗 " + cnt);
 				}
 			}
+			
+			logger.debug("inoutPostProcess7 calc 시작 " + paramMap.get("sabun").toString());
 			empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
 					paramMap.get("enterCd").toString(), paramMap.get("stdYmd").toString(),
 					paramMap.get("stdYmd").toString(), paramMap.get("sabun").toString());
-			System.out.println("inoutPostProcess4");
+			
+			logger.debug("inoutPostProcess8 calc 종료 " + paramMap.get("sabun").toString());
+			
 			Map<String, Object> tempTimeMap = new HashMap();
 			tempTimeMap.put("tenantId", Long.parseLong(paramMap.get("tenantId").toString()));
 			tempTimeMap.put("enterCd", paramMap.get("enterCd").toString());
@@ -761,8 +836,10 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			tempTimeMap.put("symd", paramMap.get("stdYmd").toString());
 			tempTimeMap.put("eymd", paramMap.get("stdYmd").toString());
 			tempTimeMap.put("pId", paramMap.get("sabun").toString());
+
 			wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(tempTimeMap);
-			
+			logger.debug("inoutPostProcess9 워크텀 끗 " + tempTimeMap.toString());
+
 		} catch(Exception e) {
 			logger.debug("****인정시간 계산 중 오류가 발생했습니다. " + paramMap.toString() + ", " + e.getMessage());
 		}
@@ -881,7 +958,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				except.setEnterCd(paramMap.get("enterCd").toString());
 				except.setSabun(paramMap.get("sabun").toString());
 				except.setYmd(paramMap.get("stdYmd").toString());
-				except.setTimeTypeCd("EXCEPT");
+				except.setTimeTypeCd("GOBACK");
 				except.setEnterCd(paramMap.get("enterCd").toString());
 				except.setPlanSdate(dt.parse(paramMap.get("exceptSYmd").toString()));
 				except.setPlanEdate(dt.parse(paramMap.get("inoutDateTime").toString()));

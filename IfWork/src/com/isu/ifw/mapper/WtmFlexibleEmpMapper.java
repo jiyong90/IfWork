@@ -432,4 +432,11 @@ public interface WtmFlexibleEmpMapper {
 	public Map<String, Object> calcMinute(Map<String, Object> paramMap);
 	
 	public Map<String, Object> calcTimeBreakMinute(Map<String, Object> paramMap);
+
+	//퇴근 타각 시 unplanned일 경우 base, fixot, except 삭제
+	public void deleteResult(Map<String, Object> paramMap);
+
+	//인정시간을 다시 계산하기 위해 appr~ null로 없데이트
+	public void updateResultAppr(Map<String, Object> paramMap);
+	
 }
