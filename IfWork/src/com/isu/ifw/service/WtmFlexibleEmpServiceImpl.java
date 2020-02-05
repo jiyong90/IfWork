@@ -1520,7 +1520,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				addR.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+""));
 				addR.setTimeTypeCd(r.getTimeTypeCd());
 				addR.setUpdateId(userId);
-				
+
+				addR.setApprSdate(null);
+				addR.setApprEdate(null);
+				addR.setApprMinute(null);
 				workDayResultRepo.save(addR);
 				
 			}
@@ -1530,7 +1533,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				pMap.put("shm", shm);
 				pMap.put("ehm", ehm);
 				Map<String, Object> planMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId);
-				r.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+"")); 
+				r.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
+				
+				r.setApprSdate(null);
+				r.setApprEdate(null);
+				r.setApprMinute(null);
+				
 				workDayResultRepo.save(r);
 			}else {
 				workDayResultRepo.delete(r);
@@ -1547,6 +1555,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			addDayResult.setSabun(sabun);
 			addDayResult.setPlanSdate(addSdate);
 			addDayResult.setPlanEdate(addEdate);
+			
 			Map<String, Object> addMap = new HashMap<>();
 			addMap.putAll(pMap);
 			
@@ -1560,6 +1569,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			addDayResult.setTaaCd(addTaaCd);
 			addDayResult.setUpdateId(userId);
 			
+			addDayResult.setApprSdate(null);
+			addDayResult.setApprEdate(null);
+			addDayResult.setApprMinute(null);
 			workDayResultRepo.save(addDayResult); 
 		}
 		
