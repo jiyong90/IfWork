@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.isu.ifw.vo.WtmDayWorkVO;
+import com.isu.ifw.entity.WtmOtAppl;
 import com.isu.ifw.vo.ReturnParam;
 
 /**
@@ -310,4 +311,14 @@ public interface WtmFlexibleEmpService {
 	 * @return
 	 */
 	public ReturnParam getOtMinute(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId);
+	
+	/**
+	 * 휴일연장근무신청의 대체휴일 반영
+	 * @param tenantId
+	 * @param enterCd
+	 * @param otApplList
+	 * @param isCalcAppr
+	 * @param userId
+	 */
+	//public void applyOtSubs(Long tenantId, String enterCd, List<WtmOtAppl> otApplList, boolean isCalcAppr, String userId);
 }

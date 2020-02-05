@@ -3,6 +3,8 @@ package com.isu.ifw.mapper;
 import java.util.List;
 import java.util.Map;
 
+import com.isu.ifw.vo.WtmOtApplVO;
+
 public interface WtmOtApplMapper {
 	
 	/**
@@ -57,5 +59,12 @@ public interface WtmOtApplMapper {
 	 * @return
 	 */
 	public List<Map<String, Object>> getRestOtMinute(Map<String, Object> paramMap);
+	
+	/**
+	 * 대체휴가를 생성해야 할 연장근무신청서
+	 * @param paramMap
+	 * @return
+	 */
+	public List<Map<String, Object>> subsCreateTarget(Map<String, Object> paramMap);
 	
 }

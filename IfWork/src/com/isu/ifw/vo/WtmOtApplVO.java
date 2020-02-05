@@ -9,6 +9,7 @@ public class WtmOtApplVO {
 	private Long otApplId;
 	private Long applId;
 	private String ymd;
+	private String sabun;
 	private String holidayYn;
 	private String otSdate;
 	private String otEdate;
@@ -40,6 +41,12 @@ public class WtmOtApplVO {
 	}
 	public void setYmd(String ymd) {
 		this.ymd = ymd;
+	}
+	public String getSabun() {
+		return sabun;
+	}
+	public void setSabun(String sabun) {
+		this.sabun = sabun;
 	}
 	public String getHolidayYn() {
 		return holidayYn;
