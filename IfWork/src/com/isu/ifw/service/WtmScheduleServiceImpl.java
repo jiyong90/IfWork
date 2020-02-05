@@ -149,7 +149,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 					//기준에 맞는 대상자 리스트 가져오기
 					List<Map<String, Object>> pushEmps = schedulerMapper.getInoutCheckList(param);
 					if(pushEmps != null && pushEmps.size() > 0) {
-						//logger.debug("======pushEmps=====" + pushEmps.toString());
+						logger.debug("******************출퇴근미타각 : " + pushEmps.toString());
 						//System.out.println(pushEmps.toString());
 						List<String> target = new ArrayList();
 						for(Map<String, Object> pushEmp : pushEmps) {

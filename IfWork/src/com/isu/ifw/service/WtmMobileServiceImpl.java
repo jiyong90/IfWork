@@ -16,6 +16,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.isu.ifw.common.service.TenantConfigManagerService;
 import com.isu.ifw.mapper.WtmApplMapper;
+import com.isu.ifw.mapper.WtmCalendarMapper;
 import com.isu.ifw.mapper.WtmEntryApplMapper;
 import com.isu.ifw.mapper.WtmInoutHisMapper;
 import com.isu.ifw.mapper.WtmOtApplMapper;
@@ -57,12 +58,21 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 	@Autowired
 	TenantConfigManagerService tcms;
 		
+	@Autowired
+	WtmCalendarMapper calendarMapper;
+
 	@Override
 	public List<Map<String, Object>> getTermList(Map<String, Object> paramMap) throws Exception  {
 		//겸직 하위 조직 조회
 		paramMap.put("orgList", empService.getLowLevelOrgList(Long.parseLong(paramMap.get("tenantId").toString()), paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("month").toString() + "01"));
 		
 		return timeMapper.getTermList(paramMap);	
+	}
+	
+	@Override
+	public List<Map<String, Object>> getPlan(Map<String, Object> paramMap) throws Exception  {
+
+		return calendarMapper.getEmpWorkDayResult(paramMap);	
 	}
 
 	//기간 내에 포함된 부서원 조회
