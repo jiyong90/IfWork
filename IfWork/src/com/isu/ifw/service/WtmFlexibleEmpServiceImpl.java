@@ -357,14 +357,14 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					//if(sDate==null || eDate==null)
 					//	continue;
 					
+					//휴게시간
+					//breakTypeCd가 TIME이나 TIMEFIX 인 경우엔 유급 휴게는 0
+					Float break01 = 0f;
+					Float break02 = 0f;
+					
 					if(sDate!=null && eDate!=null) {
 						Date sd = WtmUtil.toDate(sDate, "yyyyMMddHHmm");
 						Date ed = WtmUtil.toDate(eDate, "yyyyMMddHHmm");
-						
-						//휴게시간
-						//breakTypeCd가 TIME이나 TIMEFIX 인 경우엔 유급 휴게는 0
-						Float break01 = 0f;
-						Float break02 = 0f;
 						
 						SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
 						paramMap.put("shm", sdf.format(sd));
@@ -386,10 +386,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					//System.out.println("break01: " + break01);
 					//System.out.println("break02: " + break02);
 					
-					System.out.println("timeTypeCd : " + timeTypeCd);
-					
 					if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE)) {
-						workMin += min;
+						if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME))
+							workMin += (min-break01);
+						else
+							workMin += min;
 					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_FIXOT)) {
 						otMin += min;
 					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT)) {
