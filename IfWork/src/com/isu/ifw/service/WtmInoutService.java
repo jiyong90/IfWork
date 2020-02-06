@@ -20,8 +20,6 @@ public interface WtmInoutService {
 	public Map<String, Object> getMenuContextWeb(Long tenantId, String enterCd, String sabun);
 	//출퇴근정보 업데이트
 	public void updateTimecardUnplanned(Map<String, Object> paramMap) throws Exception;
-	//delet를 이쪽으로 옮김. calc에서 갱신되지 않은 dayresult로 계산해서..
-	public void updateTimecardUnplanned2(Map<String, Object> paramMap) throws Exception;
 	//퇴근취소 업데이트
 	public void updateTimecardCancel(Map<String, Object> paramMap, String unplanned) throws Exception;
 	//휴게정보 업데이트
@@ -36,8 +34,6 @@ public interface WtmInoutService {
 
 	//타각 후처리 로직
 	public void inoutPostProcess(Map<String, Object> paramMap, String unplanned);
-	//delte빼고calc만
-	public void inoutPostProcess2(Map<String, Object> paramMap, String unplanned);
 	//타각데이터 저장
 	public boolean insertTimeStamp(Map<String, Object> paramMap) throws Exception;
 	//타각데이터 업데이트

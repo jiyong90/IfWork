@@ -440,6 +440,7 @@ public interface WtmFlexibleEmpMapper {
 	public void updateResultAppr(Map<String, Object> paramMap);
 	
 	/**
+	 * 해당일의 정해진 시간블럭의 result 조회
 	 * @param paramMap
 	 * tenantId
 	 * enterCd
@@ -448,5 +449,17 @@ public interface WtmFlexibleEmpMapper {
 	 * @return
 	 */
 	public List<Map<String, Object>> getResultBySabunAndYmdAndTimeTypeCds(Map<String, Object> paramMap);
+	
+	/**
+	 * 해당일의 정해진 시간블럭의 시간의 합
+	 * @param paramMap
+	 * tenantId
+	 * enterCd
+	 * symd
+	 * eymd
+	 * timeTypeCd
+	 * @return
+	 */
+	public Map<String, Object> sumResultMinuteByTimeTypeCd(Map<String, Object> paramMap);
 	
 }

@@ -14,7 +14,6 @@ import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
 import com.isu.ifw.entity.WtmEntryAppl;
-import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmCalendarMapper;
 import com.isu.ifw.mapper.WtmEntryApplMapper;
@@ -25,9 +24,8 @@ import com.isu.ifw.repository.WtmApplRepository;
 import com.isu.ifw.repository.WtmEntryApplRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.WtmApplLineVO;
-import com.sun.media.jfxmedia.logging.Logger;
 import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.vo.WtmApplLineVO;
 
 @Service("wtmEntryApplService")
 public class WtmEntryApplServiceImpl implements WtmApplService {
