@@ -149,12 +149,13 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 					//기준에 맞는 대상자 리스트 가져오기
 					List<Map<String, Object>> pushEmps = schedulerMapper.getInoutCheckList(param);
 					if(pushEmps != null && pushEmps.size() > 0) {
-						logger.debug("******************출퇴근미타각 : " + pushEmps.toString());
+						logger.debug("3333333333333333333출퇴근미타각 : " + pushEmps.toString());
 						//System.out.println(pushEmps.toString());
 						List<String> target = new ArrayList();
 						for(Map<String, Object> pushEmp : pushEmps) {
 							target.add(pushEmp.get("EMP_KEY").toString());
 						}
+						logger.debug("3333333333333333333대상자 : " + target.toString());
 						
 						//일단 db 먼저 넣고 나중에 db 내역 보여주는 메뉴 추가하면...
 						WtmPushSendHis pushSendHis = new WtmPushSendHis();
@@ -167,7 +168,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 						pushSendHis.setSendMsg(push.getPushMsg());
 						pushSendHis.setUpdateId("SYSTEM");
 						pushHisRepository.save(pushSendHis);
-						logger.debug("******************출퇴근미타각 알림 저장 : " + pushSendHis.toString());
+						logger.debug("3333333333333333333출퇴근미타각 알림 저장 : " + pushSendHis.toString());
 						
 						inboxService.sendPushMessage(push.getTenantId(), push.getEnterCd(), "INFO", target, push.getTitle(), push.getPushMsg());
 					}
