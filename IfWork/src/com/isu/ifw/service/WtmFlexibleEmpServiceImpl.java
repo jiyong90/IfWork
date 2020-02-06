@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.common.service.TenantConfigManagerService;
 import com.isu.ifw.entity.WtmEmpHis;
@@ -1908,12 +1909,37 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	
 	@Override
 	public Map<String, Object> calcMinuteExceptBreaktime(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("sabun", sabun);
+		
 		WtmWorkCalendar calendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, paramMap.get("ymd").toString());
 		
 		Map<String, Object> result = null;
 		if(calendar!=null && calendar.getTimeCdMgrId()!=null) {
 			Long timeCdMgrId = Long.valueOf(calendar.getTimeCdMgrId());
 			result = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, userId);
+			
+			String breakTypeCd = null;
+			WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(timeCdMgrId).get();
+			if(timeCdMgr!=null && timeCdMgr.getBreakTypeCd()!=null)
+				breakTypeCd = timeCdMgr.getBreakTypeCd();
+			
+			if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
+				int calcMinute = 0;
+				int breakMinute = 0;result.get("breakMinute");
+				
+				if(result.get("calcMinute")!=null && !"".equals(result.get("calcMinute")))
+					calcMinute = Integer.parseInt(result.get("calcMinute").toString());
+				if(result.get("breakMinute")!=null && !"".equals(result.get("breakMinute")))
+					breakMinute = Integer.parseInt(result.get("breakMinute").toString());
+				
+				if(calcMinute!=0)
+					calcMinute = calcMinute - breakMinute;
+				
+				result.put("calcMinute", calcMinute);
+			} 
+			
 		}
 		
 		return result;

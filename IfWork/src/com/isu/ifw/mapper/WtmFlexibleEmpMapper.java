@@ -110,7 +110,7 @@ public interface WtmFlexibleEmpMapper {
 	
 	public Map<String, Object> checkBaseWorktimeMgr(Map<String, Object> paramMap);
 	
-	public List<Map<String, Object>> getWorktimePlan(@Param("flexibleEmpId") Long flexibleEmpId);
+	public List<Map<String, Object>> getWorktimePlan(Map<String, Object> paramMap);
 	
 	public List<Map<String, Object>> getWorktimePlanByYmdBetween(Map<String, Object> paramMap);
 	
