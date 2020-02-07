@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmInoutHisMapper;
@@ -192,23 +193,27 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 				//수당지급대상자인지
 				dataMap.put("payTargetYn", temp.get("payTargetYn"));
 				
-				if(dataMap.get("subsYn").equals("Y") && (dataMap.get("holidayYn").equals("Y") || dataMap.get("payTargetYn").equals("Y"))) {
+				if(dataMap.get("holidayYn").equals("Y") && (dataMap.get("subsYn").equals("Y")  || dataMap.get("payTargetYn").equals("Y"))) {
 					propertiesMap.put("disabled", "false");
 					propertiesMap.put("mandatory", "true");
 					
 					List<Map<String,Object>> itemCollection = new ArrayList<Map<String,Object>>();
 					Map<String,Object> item = new HashMap<String,Object>();
-					item = new HashMap<String,Object>();
-					item.put("text", "위로금/시급지급");
-					item.put("value", "N");
-					itemCollection.add(item);
-	
-					item = new HashMap<String,Object>();
+ 					item = new HashMap<String,Object>();
 					item.put("text", "휴일대체");
 					item.put("value", "Y");
 					itemCollection.add(item);
+					if(dataMap.get("payTargetYn").equals("Y")) {
+						item = new HashMap<String,Object>();
+						item.put("text", "위로금/시급지급");
+						item.put("value", "N");
+						itemCollection.add(item);
+					}
 					propertiesMap.put("collection", itemCollection);
-	
+					
+					itemPropertiesMap.put("subsSymd", propertiesMap);
+					itemPropertiesMap.put("subsShm", propertiesMap);
+					itemPropertiesMap.put("subsEhm", propertiesMap);
 					itemPropertiesMap.put("subYn", propertiesMap);
 				} else {
 					propertiesMap.put("disabled", "true");
