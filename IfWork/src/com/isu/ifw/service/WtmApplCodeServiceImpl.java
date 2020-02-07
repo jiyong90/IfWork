@@ -50,7 +50,7 @@ public class WtmApplCodeServiceImpl implements WtmApplCodeService{
 				code.put("applCd", l.getApplCd());
 				code.put("applNm", l.getApplNm());
 				code.put("applLevelCd", l.getApplLevelCd());
-				code.put("recLevelCd", l.getRecLevelCd());
+				//code.put("recLevelCd", l.getRecLevelCd());
 				code.put("timeUnit", l.getTimeUnit());
 				code.put("useMinutes", l.getUseMinutes());
 				code.put("inShm", l.getInShm());
@@ -96,7 +96,7 @@ public class WtmApplCodeServiceImpl implements WtmApplCodeService{
 						code.setApplCd(l.get("applCd").toString());
 						code.setApplNm(l.get("applNm").toString());
 						code.setApplLevelCd(l.get("applLevelCd").toString());
-						code.setRecLevelCd(l.get("recLevelCd").toString());
+						//code.setRecLevelCd(l.get("recLevelCd").toString());
 						code.setTimeUnit(l.get("timeUnit").toString());
 						code.setUseMinutes(l.get("useMinutes").toString());
 						code.setInShm(l.get("inShm").toString());
