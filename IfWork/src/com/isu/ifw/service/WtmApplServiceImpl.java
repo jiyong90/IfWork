@@ -6,11 +6,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
@@ -30,6 +34,8 @@ import com.isu.ifw.vo.WtmApplLineVO;
 @Service("wtmApplService")
 public class WtmApplServiceImpl implements WtmApplService {
 
+	private static final Logger logger = LoggerFactory.getLogger("ifwFileLog");
+	
 	@Autowired
 	WtmValidatorService validatorService;
 	
@@ -99,13 +105,14 @@ public class WtmApplServiceImpl implements WtmApplService {
 		else if(applType.equals(APPL_TYPE_COMPLETE))
 			apprList = applMapper.getApprList03(paramMap);
 		
-		/*ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = new ObjectMapper();
 		try {
 			System.out.println("apprList : " + mapper.writeValueAsString(apprList));
-		} catch (JsonProcessingException e) {
+			logger.debug(">>>>>>>>>>>>>>>>approvalList result: "+ mapper.writeValueAsString(apprList));
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}*/
+		}
 		
 		if(apprList!=null && apprList.size()>0) {
 			for(Map<String, Object> appr : apprList) {

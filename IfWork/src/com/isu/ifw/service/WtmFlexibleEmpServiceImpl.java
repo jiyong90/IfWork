@@ -913,8 +913,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						if(shm!=null && ehm!=null) {
 							paramMap.put("shm", shm);
 							paramMap.put("ehm", ehm);
+							
 							Map<String, Object> planMinuteMap = calcMinuteExceptBreaktimeForElas(false, flexibleApplId, paramMap, userId);
-							applDet.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
+							applDet.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute").toString()));
 						} else {
 							applDet.setPlanMinute(null);
 						}
@@ -1972,7 +1973,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		}
 		
 		if(timeCdMgrId!=null) {
-			result = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, userId);
+			result = calcMinuteExceptBreaktimeForElas(timeCdMgrId, paramMap, userId);
 		}
 		
 		return result;
@@ -2004,11 +2005,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			String otSdate = otMinuteMap.get("sDate").toString();
 			String otEdate = otMinuteMap.get("eDate").toString();
 			
-			Map<String, Object> paramMap = new HashMap<String, Object>();
-			paramMap.put("shm", WtmUtil.parseDateStr(WtmUtil.toDate(otSdate, "yyyyMMddHHmmss"), "HHmm"));
-			paramMap.put("ehm", WtmUtil.parseDateStr(WtmUtil.toDate(otEdate, "yyyyMMddHHmmss"), "HHmm"));
+			//Map<String, Object> paramMap = new HashMap<String, Object>();
+			//paramMap.put("shm", WtmUtil.parseDateStr(WtmUtil.toDate(otSdate, "yyyyMMddHHmmss"), "HHmm"));
+			//paramMap.put("ehm", WtmUtil.parseDateStr(WtmUtil.toDate(otEdate, "yyyyMMddHHmmss"), "HHmm"));
+			otParamMap.put("shm", WtmUtil.parseDateStr(WtmUtil.toDate(otSdate, "yyyyMMddHHmmss"), "HHmm"));
+			otParamMap.put("ehm", WtmUtil.parseDateStr(WtmUtil.toDate(otEdate, "yyyyMMddHHmmss"), "HHmm"));
 			
-			result = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, userId);
+			result = calcMinuteExceptBreaktimeForElas(timeCdMgrId, otParamMap, userId);
 			result.put("sDate", otSdate);
 			result.put("eDate", otEdate);
 		}
@@ -2051,6 +2054,67 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			breakMinuteMap = flexEmpMapper.calcTimeBreakMinute(paramMap);
 			if(breakMinuteMap!=null)
 				result.putAll(breakMinuteMap);
+		} else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
+			
+		}
+		
+		if(breakMinuteMap!=null)
+			result.putAll(breakMinuteMap);
+		
+		return result;
+		
+	}
+	
+	protected Map<String, Object> calcMinuteExceptBreaktimeForElas(Long timeCdMgrId, Map<String, Object> paramMap, String userId) {
+		//break_type_cd
+		String breakTypeCd = "";
+		
+		paramMap.put("timeCdMgrId", timeCdMgrId);
+		
+		WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(timeCdMgrId).get();
+		if(timeCdMgr!=null && timeCdMgr.getBreakTypeCd()!=null)
+			breakTypeCd = timeCdMgr.getBreakTypeCd();
+		
+		Map<String, Object> result = null;
+		if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
+			result = flexEmpMapper.calcMinuteExceptBreaktime(paramMap);
+			
+		/**
+		 * BREAK_TYPE_TIME / BREAK_TYPE_TIMEFIX는 
+		 * 휴게시간 없이 전체 인정시간으로 본다 이 메서드를 호출 할 경우 추가적으로 except 데이터를 만들어 주는것을 태워야함. 
+		 * 타임블럭단위로 넘어오기때문에 여기서 할 수 없다.. 전체 데이터 합산 기준으로 except 데이터 생성이 필요 
+		 */
+		} else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
+			//result = flexEmpMapper.calcTimeTypeApprMinuteExceptBreaktime(paramMap);
+			result = flexEmpMapper.calcMinute(paramMap);
+		} else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
+			//result = flexEmpMapper.calcTimeTypeFixMinuteExceptBreaktime(paramMap);
+			result = flexEmpMapper.calcMinute(paramMap);
+		}
+		
+		
+		paramMap.put("breakTypeCd", breakTypeCd);
+		Map<String, Object> breakMinuteMap = null;
+		if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
+			breakMinuteMap = flexEmpMapper.calcTimeBreakMinuteForElas(paramMap);
+			if(breakMinuteMap!=null) {
+				
+				int calcMinute = 0;
+				int breakMinute = 0;
+				
+				if(result.get("calcMinute")!=null && !"".equals(result.get("calcMinute")))
+					calcMinute = Integer.parseInt(result.get("calcMinute")+"");
+				if(breakMinuteMap.get("breakMinute")!=null && !"".equals(breakMinuteMap.get("breakMinute")))
+					breakMinute = Integer.parseInt(breakMinuteMap.get("breakMinute")+"");
+				
+				if(calcMinute!=0)
+					breakMinuteMap.put("calcMinute", (calcMinute - breakMinute));
+				else
+					breakMinuteMap.put("calcMinute", calcMinute);
+				
+
+				result.putAll(breakMinuteMap);
+			}
 		} else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
 			
 		}

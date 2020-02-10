@@ -735,27 +735,44 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		List<WtmFlexibleApplDetVO> patterns = flexApplMapper.getWorkPattern(paramMap);
 		
 		if(patterns!=null && patterns.size()>0) {
+			
+			System.out.println("sYmd ::: " + sYmd);
+			System.out.println("eYmd ::: " + eYmd);
+			
+			//지정한 날짜 이외의 데이터는 삭제
+			wtmFlexibleApplDetRepo.deleteByFlexibleApplIdAndYmdNotBetween(flexibleApplId, sYmd, eYmd);
+			
 			for(WtmFlexibleApplDetVO p : patterns) {
-				WtmFlexibleApplDet fd = new WtmFlexibleApplDet();
+				WtmFlexibleApplDet fd = wtmFlexibleApplDetRepo.findByFlexibleApplIdAndYmd(flexibleApplId, p.getYmd());
+				
+				if(fd==null) {
+					fd = new WtmFlexibleApplDet();
+				}
+				
 				fd.setFlexibleApplId(flexibleApplId);
 				fd.setYmd(p.getYmd());
 				fd.setTimeCdMgrId(p.getTimeCdMgrId());
 				fd.setHolidayYn(p.getHolidayYn());
 				
+				//임시저장된 근무계획의 timeCdMgrId와 패턴의 timeCdMgrId이 다를 경우엔 
+				//계획된 시간은 두고 패턴의 timeCdMgrId를 보도록 함.
 				Date planSdate = null;
-				if(p.getPlanSdate()!=null && !"".equals(p.getPlanSdate())) {
+				if(fd.getPlanSdate()==null && p.getPlanSdate()!=null && !"".equals(p.getPlanSdate())) {
 					planSdate = WtmUtil.toDate(p.getPlanSdate(), "yyyyMMddHHmm");
 					fd.setPlanSdate(planSdate);
 				}
 				
 				Date planEdate = null;
-				if(p.getPlanEdate()!=null && !"".equals(p.getPlanEdate())) {
+				if(fd.getPlanEdate()==null && p.getPlanEdate()!=null && !"".equals(p.getPlanEdate())) {
 					planEdate = WtmUtil.toDate(p.getPlanEdate(), "yyyyMMddHHmm");
 					fd.setPlanEdate(planEdate);
 				}
 				
-				fd.setOtbMinute(p.getOtbMinute());
-				fd.setOtaMinute(p.getOtaMinute());
+				if((fd.getOtbMinute()==null || fd.getOtbMinute()==0) && p.getOtbMinute()!=0)
+					fd.setOtbMinute(p.getOtbMinute());
+				
+				if((fd.getOtaMinute()==null || fd.getOtaMinute()==0) && p.getOtaMinute()!=0)
+					fd.setOtaMinute(p.getOtaMinute());
 				
 				fd.setUpdateDate(new Date());
 				fd.setUpdateId(userId);
@@ -787,7 +804,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 					Map<String, Object> planMinuteMap = flexibleEmpService.calcMinuteExceptBreaktimeForElas(false, d.getFlexibleApplId(), paramMap, userId);
 					d.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
 					
-					if(d.getOtbMinute()!=0) {
+					if(d.getOtbSdate()==null && d.getOtbEdate()==null && d.getOtbMinute()!=null && d.getOtbMinute()!=0) {
 						Map<String, Object> otbMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(false, d.getFlexibleApplId(), d.getYmd(), pSdate, pEdate, "OTB", d.getOtbMinute(), userId);
 						
 						if(otbMinuteMap!=null) {
@@ -800,7 +817,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 						}	
 					}
 					
-					if(d.getOtaMinute()!=0) {
+					if(d.getOtaSdate()==null && d.getOtaEdate()==null && d.getOtaMinute()!=null && d.getOtaMinute()!=0) {
 						Map<String, Object> otaMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(false, d.getFlexibleApplId(), d.getYmd(), pSdate, pEdate, "OTA", d.getOtaMinute(), userId);
 						
 						if(otaMinuteMap!=null) {
