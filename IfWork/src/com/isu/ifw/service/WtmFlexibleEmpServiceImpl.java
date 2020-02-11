@@ -28,6 +28,7 @@ import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmOrgConc;
 import com.isu.ifw.entity.WtmOtAppl;
+import com.isu.ifw.entity.WtmOtSubsAppl;
 import com.isu.ifw.entity.WtmTaaCode;
 import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
@@ -1259,11 +1260,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				otAppls.add(otAppl);
 			}
 			
-			asyncService.applyOtSubs(tenantId, enterCd, otAppls, false, "SYSTEM");
+			applyOtSubs(tenantId, enterCd, otAppls, false, "SYSTEM");
 		}
 		
 	}
-
+	
 	@Override
 	public void workClosed(Long tenantId, String enterCd, String sabun, String ymd, String userId) {
 		// TODO Auto-generated method stub
@@ -2266,15 +2267,17 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		return rp;
 	}
 	
-	/*@Override
+	@Override
 	public void applyOtSubs(Long tenantId, String enterCd, List<WtmOtAppl> otApplList, boolean isCalcAppr, String userId) {
+		
 		for(WtmOtAppl otAppl : otApplList) {
-			logger.debug("소급 [" + otAppl.getSabun() + "] start >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+			logger.debug("휴일 대체 생성 [" + tenantId + "@" + enterCd + "@" + otAppl.getSabun() + "] start >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+			logger.debug("연장근무신청서 : " + otAppl.getOtApplId());
 			
 			//소급의 경우 인정시간과 연장근로시간을 비교하여 다른 경우 대체휴일 정보를 생성하지 않는다.
 			//미래의 연장근로시간의 경우 일마감에서 대체휴일 정보를 생성한다.
 			//1. 인정근무시간이 있거나 연장근무일이 오늘 이전이면
-			if(isCalcAppr || (!isCalcAppr && otAppl.getOtSdate().compareTo(new Date()) < 0)) {
+			if(!isCalcAppr || (isCalcAppr && otAppl.getOtSdate().compareTo(new Date()) < 0)) {
 				
 				Map<String, Object> resultParam = new HashMap<String, Object>();
 				resultParam.put("tenantId", tenantId);
@@ -2290,6 +2293,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				if(results!=null && results.size()>0) {
 					String sYmd = WtmUtil.parseDateStr(otAppl.getOtSdate(), "yyyyMMdd");
 					String eYmd = WtmUtil.parseDateStr(otAppl.getOtEdate(), "yyyyMMdd");
+					
+					resultParam.put("sYmd", sYmd);
+					resultParam.put("eYmd", eYmd);
+					resultParam.put("userId", userId);
 					
 					logger.debug("연장근무시간 : " + WtmUtil.parseDateStr(otAppl.getOtSdate(), "yyyyMMddHHmmss") + "~" + WtmUtil.parseDateStr(otAppl.getOtEdate(), "yyyyMMddHHmmss"));
 					
@@ -2316,9 +2323,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						
 						//외출/복귀 데이터가 있으면 result 다시 생성
 						if(unplannedYn!=null && "Y".equals(unplannedYn) && result.get("timeTypeCd")!=null && !"".equals(result.get("timeTypeCd"))) {
-							resultParam.put("sYmd", sYmd);
-							resultParam.put("eYmd", eYmd);
-							resultParam.put("userId", userId);
 							
 							logger.debug("resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt start >>>");
 							
@@ -2398,10 +2402,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							
 				}
 				
-				logger.debug("소급 end >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+				logger.debug("휴일 대체 생성 end >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 			}
 		}
 			
 	}
-	*/
 }
