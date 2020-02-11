@@ -135,7 +135,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 				}
 			}
 		}
-		inbox.setInbox(tenantId, enterCd, emps, applId, "APPR", "결재요청 : 연장근무신청", "", "Y");
+		inbox.setInbox(tenantId, enterCd, emps, applId, "APPR", "결재요청 : 근태사유서", "", "Y");
 	}
 	
 	//모바일용 동기처리
@@ -174,7 +174,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 			}
 		}
 		
-		inbox.setInbox(tenantId, enterCd, emps, applId, "APPR", "결재요청 : 연장근무신청", "", "Y");
+		inbox.setInbox(tenantId, enterCd, emps, applId, "APPR", "결재요청 : 근태사유서", "", "Y");
 
 		return rp;
 		//push전송 추가
