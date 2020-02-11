@@ -201,6 +201,21 @@ public interface WtmInterfaceMapper {
 	public void setWorkTimeCloseIf(Map<String, Object> paramMap);
 	
 	/**
+	 * 근무마감 건별루프용 사원리스트조회
+	 **/
+	public List<Map<String, Object>> getCloseEmp(Map<String, Object> paramMap);
+	
+	/**
+	 * 근무마감 건별루프용 사원-일별 day 마감
+	 **/
+	public void setCloseDay(Map<String, Object> paramMap);
+	
+	/**
+	 * 근무마감 건별루프용 사원-월  마감
+	 **/
+	public void setCloseMonth(Map<String, Object> paramMap);
+	
+	/**
 	 * 타각자료 갱신
 	 **/
 	public List<Map<String, Object>> setCalcDay(Long tenantId);
