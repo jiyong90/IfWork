@@ -15,6 +15,8 @@ import javax.persistence.TemporalType;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
+import com.isu.ifw.util.WtmUtil;
+
 @Entity
 @Table(name="WTM_APPL_LINE")
 public class WtmApplLine {
@@ -29,8 +31,12 @@ public class WtmApplLine {
 	private int apprSeq;
 	@Column(name="APPR_SABUN")
 	private String apprSabun;
-	@Column(name="APPR_DATE")
-	private String apprDate;
+	
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name="APPR_DATE", columnDefinition="DATETIME") 
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private Date apprDate;
+	
 	@Column(name="APPR_STATUS_CD")
 	private String apprStatusCd;
 	@Column(name="APPR_TYPE_CD")
@@ -67,10 +73,10 @@ public class WtmApplLine {
 	public void setApprSabun(String apprSabun) {
 		this.apprSabun = apprSabun;
 	}
-	public String getApprDate() {
+	public Date getApprDate() {
 		return apprDate;
 	}
-	public void setApprDate(String apprDate) {
+	public void setApprDate(Date apprDate) {
 		this.apprDate = apprDate;
 	}
 	public String getApprStatusCd() {
@@ -107,13 +113,13 @@ public class WtmApplLine {
 	@PrePersist
     protected void onCreate() {
 		this.updateDate = new Date();
+		this.apprDate = new Date();
     }
 
     @PreUpdate
     protected void onUpdate() {
     	this.updateDate = new Date();
+    	this.apprDate = new Date();
     }
-	 
-	
 	
 }

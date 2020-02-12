@@ -30,7 +30,7 @@ public class WtmInbox {
 	@Column(name="SABUN")
 	private String sabun;
 	@Column(name="APPL_CODE_ID")
-	private String applCodeId;
+	private Long applCodeId;
 	@Column(name="TYPE")
 	private String type;
 	@Column(name="TITLE")
@@ -78,11 +78,11 @@ public class WtmInbox {
 		this.sabun = sabun;
 	}
 
-	public String getApplCodeId() {
+	public Long getApplCodeId() {
 		return applCodeId;
 	}
 
-	public void setApplCodeId(String applCodeId) {
+	public void setApplCodeId(Long applCodeId) {
 		this.applCodeId = applCodeId;
 	}
 

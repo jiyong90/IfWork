@@ -151,6 +151,14 @@ public interface WtmInterfaceService {
 	public void setWorkTimeCloseIf(HashMap reqMap) throws Exception;
 	
 	/**
+	 * 근태마감 수정본
+	 * @param reqMap - 파라메터 맵
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void setCloseWorkIf(HashMap reqMap) throws Exception;
+	
+	/**
 	 * 근태 타각 미갱신자료 정산
 	 * @param tenantId - 테넌트 아이디
 	 * @return 

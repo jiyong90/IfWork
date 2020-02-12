@@ -262,7 +262,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 					if(APPL_LINE_I.equals(line.getApprTypeCd())) { //기안
 						//첫번째 결재자의 상태만 변경 후 스탑
 						line.setApprStatusCd(APPR_STATUS_APPLY);
-						line.setApprDate(WtmUtil.parseDateStr(new Date(), "yyyyMMddHHmmss"));
+						line.setApprDate(new Date());
 						line = wtmApplLineRepo.save(line);
 					} else if(APPL_LINE_S.equals(line.getApprTypeCd())) { //결재
 						//첫번째 결재자의 상태만 변경 후 스탑
@@ -323,7 +323,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			for(WtmApplLine line : lines) {
 				if(line.getApprSeq() == apprSeq && line.getApprSabun().equals(sabun)) {
 					line.setApprStatusCd(APPR_STATUS_APPLY);
-					line.setApprDate(WtmUtil.parseDateStr(new Date(), null));
+					line.setApprDate(new Date());
 					//결재의견
 					if(paramMap != null && paramMap.containsKey("apprOpinion")) {
 						line.setApprOpinion(paramMap.get("apprOpinion").toString());
@@ -577,7 +577,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				if(line.getApprSeq() <= apprSeq) {
 					line.setApprStatusCd(APPR_STATUS_REJECT);
 					//반려일때는 date가 안들어가도 되는건지?? 확인해보기
-					line.setApprDate(WtmUtil.parseDateStr(new Date(), null));
+					line.setApprDate(new Date());
 					if(line.getApprSeq() == apprSeq) {
 						line.setApprOpinion(apprOpinion);
 					}
@@ -775,6 +775,9 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		String eHm = WtmUtil.parseDateStr(ed, "HHmm");
 		paramMap.put("shm", sHm);
 		paramMap.put("ehm", eHm);
+		
+		paramMap.put("symd", WtmUtil.parseDateStr(sd, "yyyyMMdd"));
+		paramMap.put("eymd", WtmUtil.parseDateStr(ed, "yyyyMMdd"));
 		
 		//현재 신청할 연장근무 시간 계산
 		resultMap.putAll(wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun));
@@ -1466,7 +1469,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 					if(APPL_LINE_I.equals(line.getApprTypeCd())) { //기안
 						//첫번째 결재자의 상태만 변경 후 스탑
 						line.setApprStatusCd(APPR_STATUS_APPLY);
-						line.setApprDate(WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
+						line.setApprDate(new Date());
 						line = wtmApplLineRepo.save(line);
 					} else if(APPL_LINE_S.equals(line.getApprTypeCd())) { //결재
 						//첫번째 결재자의 상태만 변경 후 스탑
