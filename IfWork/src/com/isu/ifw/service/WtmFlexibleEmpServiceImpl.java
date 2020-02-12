@@ -1279,12 +1279,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				WtmOtAppl otAppl = otApplRepo.findById(Long.valueOf(t.get("otApplId").toString())).get();
 				otAppls.add(otAppl);
 			}
-<<<<<<< HEAD
 
-			try { logger.debug("18. subsCreateTarget ","otAppls : " + mapper.writeValueAsString(otAppls), "applyOtSubs"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-=======
-			
->>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
+			try { logger.debug("18. applyOtSubs ","otAppls : " + mapper.writeValueAsString(otAppls), "applyOtSubs"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 			applyOtSubs(tenantId, enterCd, otAppls, false, "SYSTEM");
 		}
 		
