@@ -231,7 +231,7 @@ public class WtmApplServiceImpl implements WtmApplService {
 				}
 				if(line.getApprSeq() <= apprSeq) {
 					line.setApprStatusCd(APPR_STATUS_REJECT);
-					line.setApprDate(WtmUtil.parseDateStr(new Date(), "yyyyMMddHHmmss"));
+					line.setApprDate(new Date());
 					if(line.getApprSeq() == apprSeq) {
 						line.setApprOpinion(apprOpinion);
 					}

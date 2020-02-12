@@ -258,7 +258,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 				if(APPL_LINE_I.equals(line.getApprTypeCd())) { //기안
 					//첫번째 결재자의 상태만 변경 후 스탑
 					line.setApprStatusCd(APPR_STATUS_APPLY);
-					line.setApprDate(WtmUtil.parseDateStr(new Date(), "yyyyMMddHHmmss"));
+					line.setApprDate(new Date());
 					line = wtmApplLineRepo.save(line);
 				} else if(APPL_LINE_S.equals(line.getApprTypeCd())) { //결재
 					//첫번째 결재자의 상태만 변경 후 스탑
@@ -320,7 +320,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			for(WtmApplLine line : lines) {
 				if(line.getApprSeq() == apprSeq && line.getApprSabun().equals(sabun)) {
 					line.setApprStatusCd(APPR_STATUS_APPLY);
-					line.setApprDate(WtmUtil.parseDateStr(new Date(), "yyyyMMddHHmmss"));
+					line.setApprDate(new Date());
 					//결재의견
 					if(paramMap != null && paramMap.containsKey("apprOpinion")) {
 						line.setApprOpinion(paramMap.get("apprOpinion").toString());
