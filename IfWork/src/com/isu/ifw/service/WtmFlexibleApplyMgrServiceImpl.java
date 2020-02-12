@@ -486,6 +486,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				calendarMap.put("symd", searchList.get(i).get("useSymd"));
 				calendarMap.put("eymd", searchList.get(i).get("useEymd"));
 				calendarMap.put("userId", userId);
+				calendarMap.put("pId", userId);
 				for ( String key : calendarMap.keySet() ) {
 	    		    System.out.println("key : " + key +" / value : " + calendarMap.get(key));
 	    		}
