@@ -210,15 +210,15 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 					param.put("ymd", today);
 					otList = schedulerMapper.getOtList(param);
 					
+					System.out.println("3333333333333333333근로시간 초과자 리스트 : " + otList.toString());
 					logger.debug("3333333333333333333근로시간 초과자 리스트 : " + otList.toString());
 //					Map<String, Object> toMail  = new HashMap();
-					List<String> empKeys = new ArrayList();
+//					List<String> empKeys = new ArrayList();
 					String toObj = !push.getPushObj().equals("EMP")?"LEADER":"EMP"; //LEADER, EMAIL
 					
 					Map<String, Object> toPush  = new HashMap();
 					
 					for(Map<String, Object> otMap : otList) {
-						empKeys.add(push.getEnterCd()+"@"+otMap.get(toObj));
 						String names = "";
 						if(otMap.get(toObj) != null && !otMap.get(toObj).equals("")) {
 							String empNames = "";
@@ -239,6 +239,8 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 						if(contents.contains("[[NAME]]")) {
 							contents = contents.replace("[[NAME]]", "[" + data.getValue() + "]");
 						}
+						System.out.println("3333333333333333333근로시간 초과자 리스트 : " + toPush.toString()+contents);
+						
 						logger.debug("3333333333333333333대상자 : " + toPush.toString());
 						//일단 db 먼저 넣고 나중에 db 내역 보여주는 메뉴 추가하면...
 						WtmPushSendHis pushSendHis = new WtmPushSendHis();
@@ -255,6 +257,8 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 						logger.debug("3333333333333333333 " + data.getKey());
 						logger.debug("3333333333333333333 " + contents);
 						if(push.getMobileYn().equals("Y")) {
+							System.out.println("1111" + data.getKey());
+							System.out.println("1111" + contents);
 							inboxService.sendPushMessage(push.getTenantId(), push.getEnterCd(), "INFO", data.getKey(), title, contents);
 						}
 					}
