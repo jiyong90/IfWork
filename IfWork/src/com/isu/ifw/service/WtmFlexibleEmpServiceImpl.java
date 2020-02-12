@@ -2292,6 +2292,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	
 	@Override
 	public void applyOtSubs(Long tenantId, String enterCd, List<WtmOtAppl> otApplList, boolean isCalcAppr, String userId) {
+		logger.debug("applyOtSubs --------------------------------------");
 		
 		for(WtmOtAppl otAppl : otApplList) {
 			logger.debug("휴일 대체 생성 [" + tenantId + "@" + enterCd + "@" + otAppl.getSabun() + "] start >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
@@ -2386,6 +2387,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						
 						resultParam.put("symd", sYmd);
 						resultParam.put("eymd", eYmd);
+						resultParam.put("pId", userId);
 						
 						logger.debug("createWorkTerm start >>>");
 						flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(resultParam);
@@ -2409,14 +2411,21 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						logger.debug("otPlanMinute : " + otPlanMinute + "/otApprMinute : " + otApprMinute);
 						
 						if(otPlanMinute == otApprMinute) {
-							//대체휴일
-							List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplId(otAppl.getApplId());
-							if(subs!=null && subs.size()>0) {
-								logger.debug("save subs start >>> ");
-								for(WtmOtSubsAppl sub : subs) { 
-									addWtmDayResultInBaseTimeType(tenantId, enterCd, sub.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, "", sub.getSubsSdate(), sub.getSubsEdate(), otAppl.getApplId(), userId);
+							resultParam.put("otApplId", otAppl.getOtApplId());
+							
+							List<Map<String, Object>> subsCreateTarget = otApplMapper.subsCreateTarget(resultParam);
+
+							if(subsCreateTarget!=null && subsCreateTarget.size()>0) {
+							
+								//대체휴일
+								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplId(otAppl.getApplId());
+								if(subs!=null && subs.size()>0) {
+									logger.debug("save subs start >>> ");
+									for(WtmOtSubsAppl sub : subs) { 
+										addWtmDayResultInBaseTimeType(tenantId, enterCd, sub.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, "", sub.getSubsSdate(), sub.getSubsEdate(), otAppl.getApplId(), userId);
+									}
+									logger.debug("save subs end >>> ");
 								}
-								logger.debug("save subs end >>> ");
 							}
 						}
 						
