@@ -320,5 +320,5 @@ public interface WtmFlexibleEmpService {
 	 * @param isCalcAppr
 	 * @param userId
 	 */
-	//public void applyOtSubs(Long tenantId, String enterCd, List<WtmOtAppl> otApplList, boolean isCalcAppr, String userId);
+	public void applyOtSubs(Long tenantId, String enterCd, List<WtmOtAppl> otApplList, boolean isCalcAppr, String userId);
 }

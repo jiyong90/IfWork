@@ -69,7 +69,7 @@ public class WtmInboxServiceImpl implements WtmInboxService{
 			data.setType(type);
 			data.setTitle(title);
 			data.setContents(contents);
-			data.setApplCodeId(String.valueOf(applCodeId));
+			data.setApplCodeId(applCodeId);
 			data.setCheckYn(checkYn);
 			
 			try {

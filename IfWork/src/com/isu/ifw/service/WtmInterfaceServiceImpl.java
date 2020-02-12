@@ -2116,6 +2116,127 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		return;
 	}
 	
+	/*
+	 * 근무시간 마감 - JAVA 루프용
+	 */
+	@Override
+	@Transactional
+	public void setCloseWorkIf(HashMap reqMap) throws Exception {
+		// TODO Auto-generated method stub
+		System.out.println("WtmInterfaceServiceImpl setCloseWorkIf");
+		// 인터페이스 결과 저장용
+    	String retMsg = "";
+    	int resultCnt = 0;
+    	String ifType = "WORKTIME_CLOSE";
+    	Map<String, Object> ifHisMap = new HashMap<>();
+    	ifHisMap.put("tenantId", reqMap.get("tenantId"));
+    	ifHisMap.put("ifItem", ifType);
+    	
+    	// 인터페이스용 변수
+    	String lastDataTime = null;
+    	String nowDataTime = null;
+    	HashMap<String, Object> getDateMap = null;
+    	HashMap<String, Object> getIfMap = null;
+    	List<Map<String, Object>> getIfList = null;
+    	
+    	// 최종 자료 if 시간 조회
+    	try {
+    		getDateMap = (HashMap<String, Object>) getIfLastDate((Long) reqMap.get("tenantId"), ifType);
+    		lastDataTime = getDateMap.get("nowDate").toString();
+    		nowDataTime = getDateMap.get("nowDate").toString();
+    	} catch(Exception e) {
+    		retMsg = "WORKTIME_CLOSE get : 최종갱신일 조회오류";
+    	}
+
+		try {
+			// 대상자를 가져와야함.
+			List<Map<String, Object>> empList = null;
+			empList = wtmInterfaceMapper.getCloseEmp(reqMap);
+			
+			if(empList != null && empList.size() > 0) {
+				// 일마감처리로 지각조퇴결근, 근무시간계산처리를 완료한다
+				for(Map<String, Object> l : empList) {
+					// 사원별 기간을 반복해야함
+					String sYmd = reqMap.get("sYmd").toString();
+					String eYmd = reqMap.get("eYmd").toString();
+					
+					SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
+					SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+			        Date sDate = formatter.parse(sYmd);
+			        Date eDate = formatter.parse(eYmd);
+			         
+			        // 시간차이를 시간,분,초를 곱한 값으로 나누면 하루 단위가 나옴
+			        long diff = eDate.getTime() - sDate.getTime();
+			        long diffDays = (diff / (24 * 60 * 60 * 1000)) +1;
+					for(int i=0; i<diffDays; i++) {
+						Calendar cal = Calendar.getInstance();
+						cal.setTime(sDate);
+						cal.add(Calendar.DATE, i);
+						String ymd = formatter.format(cal.getTime());
+						
+						Map<String, Object> dayMap = reqMap;
+						dayMap.put("retCode", "");
+						dayMap.put("retMsg", "");
+						dayMap.put("sabun", l.get("sabun").toString());
+						dayMap.put("ymd", ymd);
+						
+						System.out.println("******************************* dayMap");
+						System.out.println(dayMap.toString());
+						
+						wtmInterfaceMapper.setCloseDay(dayMap);
+						String retCode = dayMap.get("retCode").toString();
+						if("FAIL".equals(retCode)) {
+							ifHisMap.put("ifStatus", "ERR");
+							retMsg = dayMap.get("retMsg").toString();
+							System.out.println("******************************* SP CALL DAY FAIL" + retMsg);
+							break;
+						}
+					}
+					System.out.println("******************************* start month chk" + retMsg);
+					if("".equals(retMsg)) {
+						// 기간반복이 종료되었으니깐 월마감을 돌려야함...
+						Map<String, Object> monMap = reqMap;
+						monMap.put("retCode", "");
+						monMap.put("retMsg", "");
+						monMap.put("sabun", l.get("sabun").toString());
+						System.out.println("******************************* monMap");
+						System.out.println(monMap.toString());
+						
+						wtmInterfaceMapper.setCloseMonth(monMap);
+						String retCodeMon = monMap.get("retCode").toString();
+						if("FAIL".equals(retCodeMon)) {
+							ifHisMap.put("ifStatus", "ERR");
+							retMsg = monMap.get("retMsg").toString();
+							System.out.println("******************************* SP CALL MONTH FAIL" + retMsg);
+							break;
+						}
+						
+						// 월마감에서 근태마감시키고.....
+					}
+				}
+			}
+			
+			// 마감이 다 돌았는으면 보상휴가생성으로 넘어가자
+		} catch(Exception e){
+			ifHisMap.put("ifStatus", "ERR");
+			retMsg = "근무마감오류";
+            e.printStackTrace();
+        }
+		
+    	// 3. 처리결과 저장
+		try {
+			// WTM_IF_HIS 테이블에 결과저장
+			ifHisMap.put("updateDate", nowDataTime);
+   			ifHisMap.put("ifEndDate", lastDataTime);
+			ifHisMap.put("ifMsg", retMsg);
+			wtmInterfaceMapper.insertIfHis(ifHisMap);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+        System.out.println("WtmInterfaceServiceImpl setTaaApplIf end");
+		return;
+	}
+	
 	@Override
 	@Transactional
 	@Async("threadPoolTaskExecutor")
@@ -2258,7 +2379,6 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
         				}
         			}
         		}
-				
 				/*
 				l.put("shm", l.get("planSdate").toString().substring(8,12));
 				l.put("ehm", l.get("planEdate").toString().substring(8,12));
