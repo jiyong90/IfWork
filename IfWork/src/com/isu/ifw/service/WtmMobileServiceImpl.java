@@ -78,6 +78,8 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 	//기간 내에 포함된 부서원 조회
 	@Override
 	public List<Map<String, Object>> getTeamList(Map<String, Object> paramMap) throws Exception  {
+		//겸직 하위 조직 조회
+		paramMap.put("orgList", empService.getLowLevelOrgList(Long.parseLong(paramMap.get("tenantId").toString()), paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("month").toString() + "01"));
 
 		return timeMapper.getTeamList(paramMap);	
 	}
