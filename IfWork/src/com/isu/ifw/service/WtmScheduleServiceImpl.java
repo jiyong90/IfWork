@@ -253,12 +253,9 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 						pushSendHis.setSendMsg(contents);
 						pushSendHis.setUpdateId("SYSTEM");
 						pushHisRepository.save(pushSendHis);
-						logger.debug("3333333333333333333근로시간 초과자 알림 저장 : " + pushSendHis.toString());
-						logger.debug("3333333333333333333 " + data.getKey());
-						logger.debug("3333333333333333333 " + contents);
 						if(push.getMobileYn().equals("Y")) {
-							System.out.println("1111" + data.getKey());
-							System.out.println("1111" + contents);
+							logger.debug("3333333333333333333근로시간 초과자 알림 저장 : " + data.getKey());
+							logger.debug("3333333333333333333근로시간 초과자 알림 저장 : " + contents);
 							inboxService.sendPushMessage(push.getTenantId(), push.getEnterCd(), "INFO", data.getKey(), title, contents);
 						}
 					}
