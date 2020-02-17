@@ -924,6 +924,15 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	}
 	
 	@Override
+	public List<Map<String, Object>> getTeamInoutList(Map<String, Object> paramMap) throws Exception {
+	
+		//겸직 하위 조직 조회
+		paramMap.put("orgList", empService.getLowLevelOrgList(Long.parseLong(paramMap.get("tenantId").toString()), paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("ymd").toString()));
+
+		return inoutHisMapper.getTeamInoutList(paramMap);
+	}
+		
+	@Override
 	public List<Map<String, Object>> getMyInoutHistory(Map<String, Object> paramMap) throws Exception {
 	
 		return inoutHisMapper.getMyInoutHistory(paramMap);
