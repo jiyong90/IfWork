@@ -235,9 +235,9 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 					//메일전송, db 저장
 					String title = "근무시간 관리 알림 서비스";
 					String fromEmail = "SYSTEM";
-					String contents = push.getPushMsg();
 					
 					for( Map.Entry<String, Object> data : toPush.entrySet() ) { 
+						String contents = push.getPushMsg();
 						if(contents.contains("[[NAME]]")) {
 							contents = contents.replace("[[NAME]]", "[" + data.getValue() + "]");
 						}
