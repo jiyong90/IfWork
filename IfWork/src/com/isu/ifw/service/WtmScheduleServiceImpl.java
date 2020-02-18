@@ -242,7 +242,9 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 							contents = contents.replace("[[NAME]]", "[" + data.getValue() + "]");
 						}
 						System.out.println("3333333333333333333근로시간 초과자 리스트 : " + toPush.toString()+contents);
-						
+						logger.debug("3333333333333333333근로시간 초과자 알림 저장 : " + data.getKey());
+						logger.debug("3333333333333333333근로시간 초과자 알림 저장 : " + contents);
+
 						logger.debug("3333333333333333333대상자 : " + toPush.toString());
 						//일단 db 먼저 넣고 나중에 db 내역 보여주는 메뉴 추가하면...
 						WtmPushSendHis pushSendHis = new WtmPushSendHis();
