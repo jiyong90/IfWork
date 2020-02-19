@@ -485,10 +485,9 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		String entrySdate = null;
 		String entryEdate = null;
 		
-		for(Map<String, Object> time : list) {
-			if(!time.containsKey("pSymd") ||  !time.containsKey("pEymd"))
-				continue;
-			
+		for(int i = 0; i < list.size(); i++) {
+			Map<String, Object> time = list.get(i);
+
 			entrySdate = time.get("entrySdate")!=null?time.get("entrySdate").toString():null;
 			entryEdate = time.get("entryEdate")!=null?time.get("entryEdate").toString():null;
 
@@ -497,11 +496,24 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				throw new Exception("휴일 근무계획이 없습니다.");
 			}
 			
-			if(time.get("pSymd").equals(today) && time.get("entrySdate") == null) {
+			if(time.get("pSymd").equals(today) && time.get("entrySdate") != null && paramMap.get("inoutType").equals("IN")) {
+				logger.debug("출근 타각시간이 존재하므로 반영하지 않습니다." + paramMap.toString());
+				return;
+			}else if(time.get("pSymd").equals(today) && time.get("entrySdate") == null) {
 				stdYmd = time.get("ymd").toString();
 				inoutType = "IN";
 				break;
-			} else if(time.get("pEymd").equals(today) && time.get("entryEdate") == null) {
+			} else if(time.get("pEymd").equals(today)) {
+				if(paramMap.get("inoutType").equals("IN")) 
+					continue;
+				if(time.get("entrySdate") == null)
+					continue;
+				if(list.size() > i+1) { //야간조인데 전날 퇴근을 안찍고 오늘 출근을 찍은 경우, 다음 출근이 있는지 확인...
+					Map<String, Object> temp = list.get(i+1);
+					if(time.get("pSymd").equals(today) || time.get("pEymd").equals(today)) {
+						continue;
+					}
+				}
 				stdYmd = time.get("ymd").toString();
 				inoutType = "OUT";
 				break;
@@ -531,7 +543,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			tempMap.put("entryTypeCd", "API");
 			tempMap.put("inoutType", gobackType);
 			logger.debug("퇴근할때 강제 복귀 생성 " + paramMap.toString());
-			updateTimecardExcept(tempMap);
+			updateTimecardExcept(tempMap, "N");
 		}
 		paramMap.put("stdYmd", stdYmd);
 		//6.캘린더 업데이트
@@ -542,7 +554,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	}
 	
 	@Override
-	public void updateTimecardExcept(Map<String, Object> paramMap) throws Exception {
+	public void updateTimecardExcept(Map<String, Object> paramMap, String unplanned) throws Exception {
 
 		//캘린더에 초가 들어가면 안된...
 		paramMap.put("inoutDateTime", paramMap.get("inoutDate").toString().substring(0,12)+"00");
@@ -556,25 +568,20 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		String inoutType = "NONE";
 		
 		for(Map<String, Object> time : list) {
-			
-			if(time.get("unplanedYn").toString().equals("N")) {
-				if(!time.containsKey("pSymd") ||  !time.containsKey("pEymd"))
-					continue;
-				
-				if(time.get("pSymd").toString().equals(today) && 
-						time.get("holydayYn").toString().equals("Y") && time.get("pSdate") == null && time.get("pEdate") == null) {
-					break;
-				}
-				
-				if(time.get("pSymd").equals(today) && time.get("entrySdate") == null) {
-					stdYmd = time.get("ymd").toString();
-					inoutType = "IN";
-					break;
-				} else if(time.get("pEymd").equals(today) && time.get("entryEdate") == null) {
-					stdYmd = time.get("ymd").toString();
-					inoutType = "OUT";
-					break;
-				} 
+			if(unplanned.equals("N")) {
+				if(time.get("pSymd").equals(today) || time.get("pEymd").equals(today)) {
+					if(time.get("entrySdate") == null && time.get("entryEdate") == null) {
+						continue;
+					}else if(time.get("entrySdate") == null && time.get("entryEdate") == null) {
+						stdYmd = time.get("ymd").toString();
+						inoutType = "IN";
+						break;
+					} else if(time.get("entrySdate") != null &&time.get("entryEdate") == null) {
+						stdYmd = time.get("ymd").toString();
+						inoutType = "OUT";
+						break;
+					}
+				}  
 			} else {
 				if(today.equals(time.get("ymd").toString())) {
 					if(time.get("entrySdate") == null) {
@@ -600,14 +607,12 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			paramMap.put("exceptSYmd", goback.get("exceptSYmd"));
 		}
 
-		if("EXCEPT".equals(paramMap.get("inoutType").toString())) {
-			if(inoutType.equals("IN")) {
-				throw new Exception("출근 전에는 외출/복귀 메뉴를 사용할 수 없습니다.");
-			} else if(inoutType.equals("NONE")) {
-				throw new Exception("출근 전, 퇴근 후에는 외출/복귀 메뉴를 사용할 수 없습니다.");
-			}
-			paramMap.put("inoutType", gobackType);
+		if(inoutType.equals("IN")) {
+			throw new Exception("출근 전에는 외출/복귀 메뉴를 사용할 수 없습니다.");
+		} else if(inoutType.equals("NONE")) {
+			throw new Exception("퇴근 후에는 외출/복귀 메뉴를 사용할 수 없습니다.");
 		}
+		paramMap.put("inoutType", gobackType);
 		
 		//2.일단 타각 데이터만 저장
 		try {
@@ -624,7 +629,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		
 		paramMap.put("ymd", stdYmd);
 		//3.복귀인 경우 day result 생성
-		if(paramMap.get("inoutType").equals("BACK")) {
+		if(gobackType.equals("BACK")) {
 			// 외출복귀 시간을 조회한다.
 			try {
 				SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -735,7 +740,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			tempMap.put("entryTypeCd", "API");
 			tempMap.put("inoutType", gobackType);
 			logger.debug("퇴근할때 강제 복귀 생성 " + paramMap.toString());
-			updateTimecardExcept(tempMap);
+			updateTimecardExcept(tempMap, "Y");
 		}
 		paramMap.put("stdYmd", stdYmd);
 
