@@ -164,5 +164,13 @@ public class WtmPushSendHis {
     protected void onUpdate() {
     	this.updateDate = new Date();
     }
+
+	@Override
+	public String toString() {
+		return "WtmPushSendHis [pushSendHisId=" + pushSendHisId + ", tenantId=" + tenantId + ", enterCd=" + enterCd
+				+ ", unitTypeNm=" + unitTypeNm + ", stdType=" + stdType + ", sendType=" + sendType + ", sendSabun="
+				+ sendSabun + ", receiveSabun=" + receiveSabun + ", receiveMail=" + receiveMail + ", sendMsg=" + sendMsg
+				+ ", note=" + note + ", updateDate=" + updateDate + ", updateId=" + updateId + "]";
+	}
 	
 }
