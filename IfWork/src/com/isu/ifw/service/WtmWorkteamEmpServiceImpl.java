@@ -110,6 +110,7 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 						paramMap.put("workteamEmpId", l.get("workteamEmpId").toString());
 						paramMap.put("sYmd", l.get("symd").toString());
 						paramMap.put("eYmd", l.get("eymd").toString());
+						
 						List<Map<String, Object>> dup = workteamEmpMapper.dupCheckByYmd(paramMap);
 						if(dup != null && dup.size() > 0) {
 							rp.setFail("중복된 기간이 존재합니다. (sabun : " + l.get("sabun").toString() + ")");
@@ -118,12 +119,13 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 						//saveList.add(workteam);
 						workteam = workteamRepository.save(workteam);
 						
-						paramMap = new HashMap();
-						paramMap.put("workteamMgrId", workteam.getWorkteamMgrId());
+						paramMap.put("symd", l.get("symd").toString());
+						paramMap.put("eymd", l.get("eymd").toString());
 						paramMap.put("sabun", workteam.getSabun());
-						paramMap.put("pId", userId);
+						paramMap.put("userId", userId);
+						System.out.println("save::::::::: " + paramMap);
 						
-						flexEmpMapper.resetWtmWorkteamOfWtmWorkDayResult(paramMap);
+						flexEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(paramMap);
 						cnt++;
 					}
 					//saveList = workteamRepository.saveAll(saveList);
