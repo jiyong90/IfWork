@@ -63,6 +63,8 @@ public interface WtmApplService {
 	//외출
 	final static String TIME_TYPE_GOBACK = "GOBACK";
 	
+	final static String TIME_TYPE_EXCEPT = "EXCEPT";
+	
 	//결재
 	final static String APPL_TYPE_REQUEST = "01"; //신청
 	final static String APPL_TYPE_PENDING = "02"; //미결
@@ -74,7 +76,6 @@ public interface WtmApplService {
 	final static String BREAK_TYPE_TIME = "TIME";
 	//휴게시간
 	final static String BREAK_TYPE_TIMEFIX = "TIMEFIX";
-	
 	
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId);
 	

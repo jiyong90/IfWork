@@ -325,7 +325,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					if(r.get("taaNm")!=null)
 						taaNm = r.get("taaNm").toString().replaceAll("\\p{Z}", "");
 					
-					//System.out.println("timeTypeCd : " + timeTypeCd);
+					System.out.println("timeTypeCd : " + timeTypeCd);
+					System.out.println("breakTypeCd : " + breakTypeCd);
 					//System.out.println("taaNm : " + taaNm);
 					
 					String sDate = null;
@@ -360,7 +361,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					//	continue;
 					
 					//휴게시간
-					//breakTypeCd가 TIME이나 TIMEFIX 인 경우엔 유급 휴게는 0
+					//MGR일 때는 그대로
+					//breakTypeCd가 TIME이나 TIMEFIX 인 경우엔 유급 휴게는 0, Except 만 합치면 됨
 					Float break01 = 0f;
 					Float break02 = 0f;
 					
@@ -371,22 +373,29 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
 						paramMap.put("shm", sdf.format(sd));
 						paramMap.put("ehm", sdf.format(ed));
-						Map<String, Object> breakMap = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, sabun);
-						if(breakMap!=null && breakMap.get("breakMinute")!=null) {
-							if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
+						
+						if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
+							Map<String, Object> breakMap = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, sabun);
+							if(breakMap!=null && breakMap.get("breakMinute")!=null) {
 								break01 =  Float.valueOf(breakMap.get("breakMinuteNoPay").toString());
 								break02 = Float.valueOf(breakMap.get("breakMinutePaid").toString());
-							} else {
-								break01 = Float.valueOf(breakMap.get("breakMinute").toString());
-							} 
+							}
 							
 							noPayBreakMin += break01;
 							paidBreakMin += break02;
-						}
+							
+							System.out.println("break01: " + break01);
+							System.out.println("break02: " + break02);
+						} 
 					}
 					
-					//System.out.println("break01: " + break01);
-					//System.out.println("break02: " + break02);
+					if((breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME) || breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIMEFIX))
+							&& timeTypeCd.equals(WtmApplService.TIME_TYPE_EXCEPT)) {
+						noPayBreakMin += min;
+					}
+					
+					System.out.println("noPayBreakMin: " + noPayBreakMin);
+					System.out.println("paidBreakMin: " + paidBreakMin);
 					
 					if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE)) {
 						if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME))
