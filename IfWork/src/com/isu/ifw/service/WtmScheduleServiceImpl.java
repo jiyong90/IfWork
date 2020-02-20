@@ -142,7 +142,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 					//기준가져오기
 					Map<String, Object> param = new HashMap();
 					param.put("stdType", stdType);
-					
+					param.put("businessPlaceCd", push.getBusinessPlaceCd());
 					param.put("enterCd", push.getEnterCd());
 					param.put("stdMinute", push.getStdMinute());
 					
