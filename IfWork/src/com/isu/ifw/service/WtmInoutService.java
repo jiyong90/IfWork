@@ -23,7 +23,7 @@ public interface WtmInoutService {
 	//퇴근취소 업데이트
 	public void updateTimecardCancel(Map<String, Object> paramMap, String unplanned) throws Exception;
 	//휴게정보 업데이트
-	public void updateTimecardExcept(Map<String, Object> paramMap) throws Exception;
+	public void updateTimecardExcept(Map<String, Object> paramMap, String unplanned) throws Exception;
 
 	//출퇴근정보 업데이트
 	public void updateTimecardCancelWeb(Map<String, Object> paramMap) throws Exception;
@@ -38,7 +38,12 @@ public interface WtmInoutService {
 	public boolean insertTimeStamp(Map<String, Object> paramMap) throws Exception;
 	//타각데이터 업데이트
 	public boolean updateTimeStamp(Map<String, Object> paramMap) throws Exception;
+	
+	//출퇴극 이력(달)
 	public List<Map<String, Object>> getMyInoutList(Map<String, Object> paramMap) throws Exception;
+	//팀원의 출퇴근 이력(일)
+	public List<Map<String, Object>> getTeamInoutList(Map<String, Object> paramMap) throws Exception;
+
 	public List<Map<String, Object>> getMyInoutHistory(Map<String, Object> paramMap) throws Exception;
 	public Map<String, Object> getMyInoutDetail(Map<String, Object> paramMap) throws Exception;
 	public ReturnParam cancel(Map<String, Object> paramMap) throws Exception;

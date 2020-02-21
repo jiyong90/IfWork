@@ -118,6 +118,14 @@ public interface WtmInterfaceService {
 	public void setTaaApplIf(HashMap reqMap) throws Exception;
 	
 	/**
+	 * 근태정보 이관 수기처리
+	 * @param reqMap - 파라메터 맵
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void setTaaApplParam(HashMap reqMap) throws Exception;
+	
+	/**
 	 * 근태정보(배열) 이관
 	 * @param reqMap - 파라메터 맵
 	 * @return Map<String,Object>

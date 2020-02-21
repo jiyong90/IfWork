@@ -199,6 +199,11 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 					
 					List<Map<String,Object>> itemCollection = new ArrayList<Map<String,Object>>();
 					Map<String,Object> item = new HashMap<String,Object>();
+					item = new HashMap<String,Object>();
+					item.put("text", "선택");
+					item.put("value", "");
+					itemCollection.add(item);
+
  					item = new HashMap<String,Object>();
 					item.put("text", "휴일대체");
 					item.put("value", "Y");
@@ -274,6 +279,7 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 			}
 	
 			dataMap.put("calcMinute", otWorkTime != null ? otWorkTime.get("calcMinute").toString(): "0");
+			dataMap.put("subYn", dataMap.containsKey("subYn") ? dataMap.get("subYn").toString():"");
 			
 			Map<String, Object> val = applMapper.getApplValidation(dataMap);
 			logger.debug("applValidationCheck : " + dataMap.toString() + " , " + val.toString());

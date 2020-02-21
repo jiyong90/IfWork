@@ -62,6 +62,17 @@ public class MobileUtil {
 		//[{applId=15153, applKey=ISU_ST@ENTRY_CHG@15153@01@18014@WTM, empNm=김수정, applStatNm=결재처리중, applCd=ENTRY_CHG, applEmpNm=김수정, applStatusCd=21, applNm=근태사유서신청, applInSabun=18014, applStatusNm=결재처리중, applYmd=2020.01.09, applSabun=18014, rowSeq=0, urlLink=view://W04View}, {applId=15152, applKey=ISU_ST@ENTRY_CHG@15152@01@18014@WTM, empNm=김수정, applStatNm=처리완료, applCd=ENTRY_CHG, applEmpNm=김수정, applStatusCd=99, applNm=근태사유서신청, applInSabun=18014, applStatusNm=처리완료, applYmd=2020.01.09, applSabun=18014, rowSeq=1, urlLink=view://W04View}, {applId=15151, applKey=ISU_ST@ENTRY_CHG@15151@01@18014@WTM, empNm=김수정, applStatNm=결재처리중, applCd=ENTRY_CHG, applEmpNm=김수정, applStatusCd=21, applNm=근태사유서신청, applInSabun=18014, applStatusNm=결재처리중, applYmd=2020.01.09, applSabun=18014, rowSeq=2, urlLink=view://W04View}, {applId=15150, applKey=ISU_ST@ENTRY_CHG@15150@01@18014@WTM, empNm=김수정, applStatNm=결재처리중, applCd=ENTRY_CHG, applEmpNm=김수정, applStatusCd=21, applNm=근태사유서신청, applInSabun=18014, applStatusNm=결재처리중, applYmd=2020.01.09, applSabun=18014, rowSeq=3, urlLink=view://W04View}, {applId=15148, applKey=ISU_ST@ENTRY_CHG@15148@01@18014@WTM, empNm=김수정, applStatNm=결재처리중, applCd=ENTRY_CHG, applEmpNm=김수정, applStatusCd=21, applNm=근태사유서신청, applInSabun=18014, applStatusNm=결재처리중, applYmd=2020.01.09, applSabun=18014, rowSeq=4, urlLink=view://W04View}, {applId=934, applKey=ISU_ST@OT@934@01@18014@WTM, empNm=김수정, applStatNm=결재처리중, applCd=OT, applEmpNm=김수정, applStatusCd=21, applNm=연장/휴일근로신청, applInSabun=18014, applStatusNm=결재처리중, applYmd=2020.01.09, applSabun=18014, rowSeq=5, urlLink=view://W02View}, {applId=933, applKey=ISU_ST@OT@933@01@18014@WTM, empNm=김수정, applStatNm=처리완료, applCd=OT, applEmpNm=김수정, applStatusCd=99, applNm=연장/휴일근로신청, applInSabun=18014, applStatusNm=처리완료, applYmd=2020.01.09, applSabun=18014, rowSeq=6, urlLink=view://W02View}, {applId=932, applKey=ISU_ST@OT@932@01@18014@WTM, empNm=김수정, applStatNm=결재처리중, applCd=OT, applEmpNm=김수정, applStatusCd=21, applNm=연장/휴일근로신청, applInSabun=18014, applStatusNm=결재처리중, applYmd=2020.01.09, applSabun=18014, rowSeq=7, urlLink=view://W02View}, {applId=931, applKey=ISU_ST@OT@931@01@18014@WTM, empNm=김수정, applStatNm=결재처리중, applCd=OT, applEmpNm=김수정, applStatusCd=21, applNm=연장/휴일근로신청, applInSabun=18014, applStatusNm=결재처리중, applYmd=2020.01.09, applSabun=18014, rowSeq=8, urlLink=view://W02View}, {applId=929, applKey=ISU_ST@OT@929@01@18014@WTM, empNm=김수정, applStatNm=결재처리중, applCd=OT, applEmpNm=김수정, applStatusCd=21, applNm=연장/휴일근로신청, applInSabun=18014, applStatusNm=결재처리중, applYmd=2020.01.09, applSabun=18014, rowSeq=9, urlLink=view://W02View}, {applId=927, applKey=ISU_ST@OT@927@01@18014@WTM, empNm=김수정, applStatNm=결재처리중, applCd=OT, applEmpNm=김수정, applStatusCd=21, applNm=연장/휴일근로신청, applInSabun=18014, applStatusNm=결재처리중, applYmd=2020.01.09, applSabun=18014, rowSeq=10, urlLink=view://W02View}]
 	}
 	
+	public static Map<String,Object> getStatusMap(String icon, String title, String value, String total, String unit, String link){
+		Map<String,Object>m = new HashMap<String,Object>();
+		m.put("icon", icon);
+		m.put("title", title);
+		m.put("value", value);
+		m.put("total",total);
+		m.put("unit",unit);
+		m.put("link",link);
+		return m;
+	}
+	
 	public static Map<String,Object> getStatusMap(String icon, String title, String value, String total, String unit){
 		Map<String,Object>m = new HashMap<String,Object>();
 		m.put("icon", icon);
