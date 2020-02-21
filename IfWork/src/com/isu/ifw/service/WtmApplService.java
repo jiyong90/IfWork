@@ -79,8 +79,6 @@ public interface WtmApplService {
 	
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId);
 	
-	public List<WtmApplLineVO> getApplLine(Long tenantId, String enterCd, String sabun, String applCd, String userId);
-	
 	public List<Map<String, Object>> getPrevApplList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId);
 	
 	public Map<String, Object> getLastAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId);

@@ -321,4 +321,14 @@ public interface WtmFlexibleEmpService {
 	 * @param userId
 	 */
 	public void applyOtSubs(Long tenantId, String enterCd, List<WtmOtAppl> otApplList, boolean isCalcAppr, String userId);
+
+	/**
+	 * 대상자인지 판단
+	 * @param tenantId
+	 * @param enterCd
+	 * @param sabun
+	 * @param ruleMap
+	 * @return
+	 */
+	public boolean isRuleTarget(Long tenantId, String enterCd, String sabun, Map<String, Object> ruleMap);
 }

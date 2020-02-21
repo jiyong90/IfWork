@@ -49,7 +49,7 @@ import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.common.repository.CommTenantModuleRepository;
 import com.isu.ifw.util.WtmUtil;
 
-@Service
+@Service("wtmInterfaceService")
 public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		
 	@Autowired
