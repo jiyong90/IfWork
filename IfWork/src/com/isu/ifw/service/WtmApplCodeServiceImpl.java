@@ -199,7 +199,7 @@ public class WtmApplCodeServiceImpl implements WtmApplCodeService{
 				List<WtmApplRecLine> recLines = new ArrayList();
 				if(iList != null && iList.size() > 0) {
 					for(Map<String, Object> l : iList) {
-						WtmApplRecLine recLine = applRecLineRepo.findByApplCodeIdAndSabun(Long.parseLong(l.get("applCodeId").toString()), l.get("sabun").toString());
+						WtmApplRecLine recLine = applRecLineRepo.findByApplCodeIdAndSabunAndSeq(Long.parseLong(l.get("applCodeId").toString()), l.get("sabun").toString(), Integer.parseInt(l.get("seq").toString()));
 						
 						if(recLine!=null)
 							recLines.add(recLine);
