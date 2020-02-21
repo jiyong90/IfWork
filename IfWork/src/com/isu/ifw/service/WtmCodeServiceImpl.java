@@ -156,6 +156,24 @@ public class WtmCodeServiceImpl implements WtmCodeService{
 	public int setCodeGrpList(Long tenantId, String enterCd,String userId, Map<String, Object> convertMap) {
 		int cnt = 0;
 		try {
+			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {
+				
+				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("deleteRows");
+				List<WtmCodeGrp> delList = new ArrayList();
+				if(iList != null && iList.size() > 0) {
+					for(Map<String, Object> l : iList) {
+						WtmCodeGrp codeGrp = new WtmCodeGrp();
+						codeGrp.setTenantId(tenantId);
+						codeGrp.setEnterCd(enterCd);
+						codeGrp.setCodeGrpId(Long.parseLong(l.get("codeGrpId").toString()));
+						delList.add(codeGrp);
+					}
+					codeGrpRepository.deleteAll(delList);
+				}
+				MDC.put("delete cnt", "" + iList.size());
+				cnt += iList.size();
+			}
+			
 			if(convertMap.containsKey("mergeRows") && ((List)convertMap.get("mergeRows")).size() > 0) {
 				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("mergeRows");
 				List<WtmCodeGrp> saveList = new ArrayList();
@@ -180,23 +198,7 @@ public class WtmCodeServiceImpl implements WtmCodeService{
 				MDC.put("insert cnt", "" + cnt);
 			}
 		
-			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {
-				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("deleteRows");
-				List<WtmCodeGrp> delList = new ArrayList();
-				if(iList != null && iList.size() > 0) {
-					for(Map<String, Object> l : iList) {
-						WtmCodeGrp codeGrp = new WtmCodeGrp();
-						codeGrp.setTenantId(tenantId);
-						codeGrp.setEnterCd(enterCd);
-						codeGrp.setGrpCodeCd(l.get("grpCodeCd").toString());
-						delList.add(codeGrp);
-					}
-					codeGrpRepository.deleteAll(delList);
-				}
-				
-				MDC.put("delete cnt", "" + iList.size());
-				cnt += iList.size();
-			}
+			
 			
 		} catch(Exception e) {
 			e.printStackTrace();
