@@ -131,9 +131,6 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 				pushList = pushMgrRepository.findBySymdAndEymd(today);
 			}
 
-//			logger.debug("pushlist : " + pushList.toString());
-//			System.out.println("pushlist : " + pushList.toString());
-			
 			for(WtmPushMgr push : pushList) {
 				List<String> empKeys =  new ArrayList();
 				
@@ -149,13 +146,11 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 					//기준에 맞는 대상자 리스트 가져오기
 					List<Map<String, Object>> pushEmps = schedulerMapper.getInoutCheckList(param);
 					if(pushEmps != null && pushEmps.size() > 0) {
-						logger.debug("3333333333333333333출퇴근미타각 : " + pushEmps.toString());
 						//System.out.println(pushEmps.toString());
 						List<String> target = new ArrayList();
 						for(Map<String, Object> pushEmp : pushEmps) {
 							target.add(pushEmp.get("EMP_KEY").toString());
 						}
-						logger.debug("3333333333333333333대상자 : " + target.toString());
 						
 						//일단 db 먼저 넣고 나중에 db 내역 보여주는 메뉴 추가하면...
 						WtmPushSendHis pushSendHis = new WtmPushSendHis();
@@ -163,12 +158,12 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 						pushSendHis.setTenantId(push.getTenantId());
 						pushSendHis.setStdType(stdType);
 						pushSendHis.setSendType("PUSH");
-						pushSendHis.setReceiveSabun(target.toString());
-						pushSendHis.setReceiveMail(target.toString());
+						pushSendHis.setReceiveSabun(""); //너무 길어질 수 있어서 뺌
+						pushSendHis.setReceiveMail(""); //너무 길어질 수 있어서 뺌
 						pushSendHis.setSendMsg(push.getPushMsg());
 						pushSendHis.setUpdateId("SYSTEM");
 						pushHisRepository.save(pushSendHis);
-						logger.debug("3333333333333333333출퇴근미타각 알림 저장 : " + pushSendHis.toString());
+						logger.debug("[출퇴근미타각 알림 저장] " + pushSendHis.toString());
 						
 						inboxService.sendPushMessage(push.getTenantId(), push.getEnterCd(), "INFO", target, push.getTitle(), push.getPushMsg());
 					}
@@ -209,18 +204,15 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 					param.put("businessPlaceCd", push.getBusinessPlaceCd());
 					param.put("ymd", today);
 					
-					System.out.println("3333333333333333333 : " + param.toString());
 					otList = schedulerMapper.getOtList(param);
-					
-					System.out.println("3333333333333333333근로시간 초과자 리스트 : " + otList.toString());
-					logger.debug("3333333333333333333근로시간 초과자 리스트 : " + otList.toString());
-//					Map<String, Object> toMail  = new HashMap();
-//					List<String> empKeys = new ArrayList();
+
 					String toObj = !push.getPushObj().equals("EMP")?"LEADER":"EMP"; //LEADER, EMAIL
 					
 					Map<String, Object> toPush  = new HashMap();
 					
 					for(Map<String, Object> otMap : otList) {
+						logger.debug("[근로시간 초과자 리스트] " + otMap.toString());
+
 						String names = "";
 						if(otMap.get(toObj) != null && !otMap.get(toObj).equals("")) {
 							String empNames = "";
@@ -241,11 +233,6 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 						if(contents.contains("[[NAME]]")) {
 							contents = contents.replace("[[NAME]]", "[" + data.getValue() + "]");
 						}
-						System.out.println("3333333333333333333근로시간 초과자 리스트 : " + toPush.toString()+contents);
-						logger.debug("3333333333333333333근로시간 초과자 알림 저장 : " + data.getKey());
-						logger.debug("3333333333333333333근로시간 초과자 알림 저장 : " + contents);
-
-						logger.debug("3333333333333333333대상자 : " + toPush.toString());
 						//일단 db 먼저 넣고 나중에 db 내역 보여주는 메뉴 추가하면...
 						WtmPushSendHis pushSendHis = new WtmPushSendHis();
 						pushSendHis.setEnterCd(push.getEnterCd());
@@ -258,8 +245,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 						pushSendHis.setUpdateId("SYSTEM");
 						pushHisRepository.save(pushSendHis);
 						if(push.getMobileYn().equals("Y")) {
-							logger.debug("3333333333333333333근로시간 초과자 알림 저장 : " + data.getKey());
-							logger.debug("3333333333333333333근로시간 초과자 알림 저장 : " + contents);
+							logger.debug("[근로시간 초과자 리스트] " + pushSendHis.toString());
 							inboxService.sendPushMessage(push.getTenantId(), push.getEnterCd(), "INFO", data.getKey(), title, contents);
 						}
 					}
