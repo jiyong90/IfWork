@@ -174,7 +174,7 @@ public interface WtmFlexibleEmpService {
 	 * @param userId
 	 * @throws Exception
 	 */
-	public void saveEmpDayResults(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) throws Exception;
+	public int saveEmpDayResults(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) throws Exception;
 
 	/**
 	 * 개인별 근무제도조회 관리자 화면
@@ -321,4 +321,14 @@ public interface WtmFlexibleEmpService {
 	 * @param userId
 	 */
 	public void applyOtSubs(Long tenantId, String enterCd, List<WtmOtAppl> otApplList, boolean isCalcAppr, String userId);
+
+	/**
+	 * 대상자인지 판단
+	 * @param tenantId
+	 * @param enterCd
+	 * @param sabun
+	 * @param ruleMap
+	 * @return
+	 */
+	public boolean isRuleTarget(Long tenantId, String enterCd, String sabun, Map<String, Object> ruleMap);
 }
