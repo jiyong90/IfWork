@@ -55,4 +55,12 @@ public interface WtmFlexibleStdMapper {
 	 * @return
 	 */
 	public Map<String, Object> getWeekday(String weekday);
+	
+	/**
+	 * 근무제 패턴 저장및 수정시 패턴에 해당하는 요일을미리 만들어주기 위함. 프로시저에서 하기에 너무 느리다.  
+	 * @param paramMap
+	 * @return
+	 */
+	public void mergeWtmDayPattByFlexibleStdMgrId(Map<String, Object> paramMap);
+	
 }
