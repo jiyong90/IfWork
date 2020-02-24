@@ -80,32 +80,7 @@ public class WtmCodeServiceImpl implements WtmCodeService{
 	public int setCodeList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) {
 		int cnt = 0;
 		try {
-			if(convertMap.containsKey("mergeRows") && ((List)convertMap.get("mergeRows")).size() > 0) {
-				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("mergeRows");
-				List<WtmCode> saveList = new ArrayList();
-				if(iList != null && iList.size() > 0) {
-					for(Map<String, Object> l : iList) {
-						WtmCode code = new WtmCode();
-						code.setCodeId(l.get("codeId").toString().equals("") ? null : Long.parseLong(l.get("codeId").toString()));
-						code.setTenantId(tenantId);
-						code.setEnterCd(enterCd);
-						code.setGrpCodeCd(l.get("grpCodeCd").toString());
-						code.setCodeCd(l.get("codeCd").toString());
-						code.setCodeNm(l.get("codeNm").toString());
-						code.setSymd(l.get("symd").toString());
-						code.setEymd(l.get("eymd").toString());
-						code.setSeq(Integer.parseInt(l.get("seq").toString()));
-						code.setNote(l.get("note").toString());
-						code.setUpdateId(userId);
-						saveList.add(code);
-					}
-					saveList = codeRepository.saveAll(saveList);
-					cnt += saveList.size();
-				}
-				
-				MDC.put("insert cnt", "" + cnt);
-			}
-		
+			// System.out.println("convertMap : " + convertMap);
 			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {
 				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("deleteRows");
 				List<WtmCode> delList = new ArrayList();
@@ -121,6 +96,33 @@ public class WtmCodeServiceImpl implements WtmCodeService{
 				MDC.put("delete cnt", "" + iList.size());
 				cnt += iList.size();
 			}
+			if(convertMap.containsKey("mergeRows") && ((List)convertMap.get("mergeRows")).size() > 0) {
+				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("mergeRows");
+				List<WtmCode> saveList = new ArrayList();
+				if(iList != null && iList.size() > 0) {
+					for(Map<String, Object> l : iList) {
+						WtmCode code = new WtmCode();
+						code.setCodeId(l.get("codeId").toString().equals("") ? null : Long.parseLong(l.get("codeId").toString()));
+						code.setTenantId(tenantId);
+						code.setEnterCd(enterCd);
+						code.setGrpCodeCd(l.get("grpCodeCd").toString());
+						code.setCodeCd(l.get("codeCd").toString());
+						code.setCodeNm(l.get("codeNm").toString());
+						code.setSymd(l.get("symd").toString());
+						code.setEymd(l.get("eymd").toString());
+						code.setSeq(l.get("seq").toString().equals("") ? null : Integer.parseInt(l.get("seq").toString()));
+						code.setNote(l.get("note").toString());
+						code.setUpdateId(userId);
+						saveList.add(code);
+					}
+					saveList = codeRepository.saveAll(saveList);
+					cnt += saveList.size();
+				}
+				
+				MDC.put("insert cnt", "" + cnt);
+			}
+		
+			
 			
 		} catch(Exception e) {
 			e.printStackTrace();
