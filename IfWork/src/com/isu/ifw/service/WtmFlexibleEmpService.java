@@ -331,4 +331,7 @@ public interface WtmFlexibleEmpService {
 	 * @return
 	 */
 	public boolean isRuleTarget(Long tenantId, String enterCd, String sabun, Map<String, Object> ruleMap);
+
+	//확정처리
+	public int setApplyForOne(Map<String, Object> searchSabun, List<Map<String, Object>> ymdList) ;
 }

@@ -16,8 +16,11 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmFlexibleApplyDet;
@@ -219,9 +222,118 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		
 		return searchList;
 	}
+
+	@Override
+	public List<Map<String, Object>> getApplyYmdList(Map<String, Object> paramMap) throws Exception {
+		int repeatCnt = 1;
+		// 반복기준 조회
+		List<Map<String, Object>> repeatList = wtmFlexibleApplyMgrMapper.getApplyRepeatList(paramMap);
+		List<Map<String, Object>> repeatForList = wtmFlexibleApplyMgrMapper.getApplyRepeatList(paramMap);
+
+		List<Map<String, Object>> result = new ArrayList();
+
+		if(repeatList != null && repeatList.get(0).get("repeatCnt") != null) {
+			repeatCnt = Integer.parseInt(repeatList.get(0).get("repeatCnt").toString());
+		}
+		String repeatTypeCd = repeatList.get(0).get("repeatTypeCd").toString();
+		paramMap.put("repeatTypeCd", repeatTypeCd);
+//		paramMap.put("repeatCnt", repeatCnt);
+
+		String symd = "";
+		String eymd = "";
+		
+		for(int i = 0; i < repeatCnt; i++) {
+			System.out.println("repeat : " + i);
+			
+			Map<String, Object> listMap = new HashMap();
+			
+			if(i == 0) {
+				symd = repeatList.get(0).get("useSymd").toString();
+			} else {
+				// 직전종료일 +1일을 해줘야함
+				DateFormat df = new SimpleDateFormat("yyyyMMdd");
+				Date date = df.parse(eymd);
+		         
+		        // 날짜 더하기
+		        Calendar cal = Calendar.getInstance();
+		        cal.setTime(date);
+		        cal.add(Calendar.DATE, 1);
+		        symd = df.format(cal.getTime());
+			}
+			paramMap.put("symd", symd);
+			paramMap.put("repeatCnt", 1);
+			
+			if("NO".equals(repeatTypeCd)) {
+				eymd = repeatList.get(0).get("useEymd").toString();
+			} else {
+				Map<String, Object> eymdMap = wtmFlexibleApplyMgrMapper.getEymd(paramMap);
+				eymd = eymdMap.get("eymd").toString();
+			}
+			
+			listMap.put("symd", symd);
+			listMap.put("eymd", eymd);
+		
+			result.add(listMap);
+		}
+		return result;
+	}
 	
 	@Override
-	public ReturnParam setApply(Map<String, Object> paramMap) {
+	@Async("threadPoolTaskExecutor")
+	public void setApplyAsync(List<Map<String, Object>> searchList, List<Map<String, Object>> ymdList) {
+	
+		int cnt = 0;
+		long flexibleApplyId = 0L;
+		// 오류검증이 없으면 저장하고 갱신해야함.
+		// 검증 오류가 없으면 flexible_emp에 저장하고 갱신용로직을 불러야함
+		for(int i=0; i< searchList.size(); i++) {
+			int rs = flexibleEmpService.setApplyForOne(searchList.get(i), ymdList);
+			if(rs == 1) {
+				//이사람 성공하면 Y
+				long flexibleApplyTempId = Long.parseLong(searchList.get(i).get("flexibleApplyTempId").toString());
+				flexibleApplyId = Long.parseLong(searchList.get(i).get("flexibleApplyId").toString());
+				wtmFlexibleApplyMgrMapper.updateFlexibleEmpTemp(flexibleApplyTempId);
+				logger.debug("[setApply] 확정성공 대상" + searchList.get(i).toString());
+				 
+				cnt++;
+			}
+		}
+		
+		//전체성공
+		if(cnt == searchList.size()) {
+			wtmFlexibleApplyMgrMapper.updateFlexibleApplyAll(flexibleApplyId);
+		}
+	}
+	
+	@Override
+	public int setApply(List<Map<String, Object>> searchList, List<Map<String, Object>> ymdList) {
+	
+		int cnt = 0;
+		long flexibleApplyId = 0L;
+		// 오류검증이 없으면 저장하고 갱신해야함.
+		// 검증 오류가 없으면 flexible_emp에 저장하고 갱신용로직을 불러야함
+		for(int i=0; i< searchList.size(); i++) {
+			int rs = flexibleEmpService.setApplyForOne(searchList.get(i), ymdList);
+			if(rs == 1) {
+				//이사람 성공하면 Y
+				long flexibleApplyTempId = Long.parseLong(searchList.get(i).get("flexibleApplyTempId").toString());
+				flexibleApplyId = Long.parseLong(searchList.get(i).get("flexibleApplyId").toString());
+				wtmFlexibleApplyMgrMapper.updateFlexibleEmpTemp(flexibleApplyTempId);
+				logger.debug("[setApply] 확정성공 대상" + searchList.get(i).toString());
+				 
+				cnt++;
+			}
+		}
+		
+		//전체성공
+		if(cnt == searchList.size()) {
+			wtmFlexibleApplyMgrMapper.updateFlexibleApplyAll(flexibleApplyId);
+			
+		}
+		return cnt;
+	}
+	
+	public ReturnParam setApply_backup(Map<String, Object> paramMap) {
 		ReturnParam rp = new ReturnParam();
 		List<Map<String, Object>> searchList = new ArrayList(); // 확정대상자 조회
 		List<Map<String, Object>> repeatList = new ArrayList();	// 반복기준조회

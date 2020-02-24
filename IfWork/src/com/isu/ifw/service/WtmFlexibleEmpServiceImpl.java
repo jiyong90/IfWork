@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +38,7 @@ import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmAuthMgrMapper;
 import com.isu.ifw.mapper.WtmEmpHisMapper;
 import com.isu.ifw.mapper.WtmFlexibleApplMapper;
+import com.isu.ifw.mapper.WtmFlexibleApplyMgrMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmFlexibleStdMapper;
 import com.isu.ifw.mapper.WtmOrgChartMapper;
@@ -138,6 +140,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	
 	@Autowired
 	WtmAsyncService asyncService;
+	
+	@Autowired
+	WtmFlexibleApplyMgrMapper wtmFlexibleApplyMgrMapper;
+
 	
 	@Override
 	public List<Map<String, Object>> getFlexibleEmpList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
@@ -2566,5 +2572,201 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		}
 		
 		return isTarget;
+	}
+	
+	
+	public Date parseStringToDate(String date) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+		Date result = null;
+		try {
+			result = sdf.parse(date);
+		} catch (Exception e) {
+			logger.debug(e.getMessage());
+		}
+		
+		return result;
+	}
+	
+	@Override
+	@Transactional
+	public int setApplyForOne(Map<String, Object> searchSabun, List<Map<String, Object>> ymdList) {
+		try {
+		Long tenantId =  Long.parseLong(searchSabun.get("tenantId").toString());
+		String enterCd = searchSabun.get("enterCd").toString();
+		String sabun = searchSabun.get("sabun").toString();
+		String workTypeCd = searchSabun.get("workTypeCd").toString();
+		Long flexibleApplyId = Long.parseLong(searchSabun.get("flexibleApplyId").toString());
+				
+		for(int i = 0; i < ymdList.size(); i++) {
+			String sYmd = ymdList.get(i).get("symd").toString();
+			String eYmd = ymdList.get(i).get("eymd").toString();
+			
+			searchSabun.put("symd", sYmd);
+			searchSabun.put("eymd", eYmd);
+
+			WtmFlexibleEmp flexibleEmp = new WtmFlexibleEmp();
+			flexibleEmp.setEnterCd(searchSabun.get("enterCd").toString());
+			flexibleEmp.setEymd(searchSabun.get("eymd").toString());
+			flexibleEmp.setFlexibleStdMgrId(Long.parseLong(searchSabun.get("flexibleStdMgrId").toString()));
+			flexibleEmp.setSabun(searchSabun.get("sabun").toString());
+			flexibleEmp.setSymd(searchSabun.get("symd").toString());
+			flexibleEmp.setTenantId(Long.parseLong(searchSabun.get("tenantId").toString()));
+			flexibleEmp.setUpdateId(searchSabun.get("sabun").toString());
+			flexibleEmp.setWorkTypeCd(searchSabun.get("workTypeCd").toString());
+			flexibleEmp.setFlexibleNm(searchSabun.get("flexibleNm").toString());
+			flexibleEmp.setNote(searchSabun.get("note").toString());
+			System.out.println(flexibleEmp.toString());
+			flexEmpRepo.save(flexibleEmp);
+//			int cnt = wtmFlexibleApplyMgrMapper.insertApplyEmp(searchSabun);
+			Map<String, Object> searchMap = wtmFlexibleApplyMgrMapper.setApplyEmpId(searchSabun);
+			searchSabun.put("flexibleEmpId", Long.parseLong(searchMap.get("flexibleEmpId").toString()));
+			
+			WtmFlexibleEmp emp = new WtmFlexibleEmp();
+			List<WtmFlexibleEmp> empList = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCd(tenantId, enterCd, sabun, sYmd, eYmd, "BASE");
+			if(empList != null) {
+				for(WtmFlexibleEmp e : empList) {
+					//신청기간내에 시작 종료가 포함되어있을 경우
+					if(Integer.parseInt(sYmd) <= Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) >= Integer.parseInt(e.getEymd())) {
+						flexEmpRepo.delete(e);
+					//신청 시작일과 종료일이 기존 근무정보 내에 있을 경우 
+					} else if(Integer.parseInt(sYmd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(e.getEymd())) {
+						String meymd = e.getEymd();
+						
+						e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
+						flexEmpRepo.save(e);
+						WtmFlexibleEmp newEmp = new WtmFlexibleEmp();
+						newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
+						newEmp.setTenantId(e.getTenantId());
+						newEmp.setEnterCd(e.getEnterCd());
+						newEmp.setSabun(e.getSabun());
+						newEmp.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(eYmd, ""), 1),null));
+						newEmp.setEymd(meymd);
+						newEmp.setUpdateId(sabun);
+						newEmp.setWorkTypeCd(e.getWorkTypeCd());
+						newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
+						flexEmpRepo.save(newEmp);
+
+					//시작일만 포함되어있을 경우 
+					}else if(Integer.parseInt(sYmd) >= Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(e.getEymd())) {
+						//시작일을 신청종료일 다음날로 업데이트 해주자
+						e.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(eYmd, ""), 1),null));
+						flexEmpRepo.save(e);
+					//종료일만 포함되어있을 경우
+					}else if(Integer.parseInt(sYmd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) <= Integer.parseInt(e.getEymd())) {
+						//종료일을 신청시작일 전날로 업데이트 해주자
+						e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
+						flexEmpRepo.save(e);
+						
+					}
+				}
+				
+				//탄근제의 경우 근무 계획까지 작성하여 신청을 하기 때문에 calendar, result 만들어준다.
+				if(workTypeCd.equals("ELAS")) {
+					//calendar 있으면 삭제하고 다시 만들어주자.
+					//initWtmFlexibleEmpOfWtmWorkDayResult 프로시저에서 calendar 만들어주기 때문에 생략
+					/*List<WtmWorkCalendar> calendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, sd, ed);
+					
+					if(calendar!=null && calendar.size()>0) {
+						workCalendarRepo.deleteAll(calendar);
+						workCalendarRepo.flush();
+					}
+					flexEmpMapper.createWorkCalendarOfElasApply(flexibleApplyId, sabun, userId);*/
+					
+					//List<WtmWorkCalendar> calendar2 = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, appl.getApplSabun(), flexibleAppl.getSymd(), flexibleAppl.getEymd());
+					
+					//result 만들어주자.
+					List<WtmWorkDayResult> result = new ArrayList<WtmWorkDayResult>();
+					Map<String, Object> pMap = new HashMap<String, Object>();
+					pMap.put("tableName", "WTM_FLEXIBLE_APPLY_DET");
+					pMap.put("key", "FLEXIBLE_APPLY_ID");
+					pMap.put("value", flexibleApplyId);
+					List<Map<String, Object>> dets = flexEmpMapper.getElasWorkDayResult(pMap);
+					if(dets!=null && dets.size()>0) {
+//						SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+						
+						//result 에 base와 ot, fixot 있으면 삭제하고 다시 만들어주자.
+						List<String> timeTypCds = new ArrayList<String>();
+						timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
+						timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
+						timeTypCds.add(WtmApplService.TIME_TYPE_OT);
+						
+						List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypCds, sYmd, eYmd);
+						if(results!=null && results.size()>0) {
+							workDayResultRepo.deleteAll(results);
+							workDayResultRepo.flush();
+						}
+						
+						for(Map<String, Object> det : dets) {
+							Date s = null;
+							Date e = null;
+							
+							WtmWorkDayResult r = new WtmWorkDayResult();
+							r.setTenantId(tenantId);
+							r.setEnterCd(enterCd);
+							r.setYmd(det.get("ymd").toString());
+							r.setSabun(sabun);
+							//r.setApplId(applId);
+							r.setTimeTypeCd(det.get("timeTypeCd").toString());
+							r.setTaaCd(null);
+							if(det.get("planSdate")!=null && !"".equals(det.get("planSdate"))) {
+								s = parseStringToDate(det.get("planSdate").toString());
+								r.setPlanSdate(s);
+							}
+								
+							if(det.get("planEdate")!=null && !"".equals(det.get("planEdate"))) {
+								e = parseStringToDate(det.get("planEdate").toString());
+								r.setPlanEdate(e);
+							}
+							
+							if(det.get("planMinute")!=null && !"".equals(det.get("planMinute"))) {
+								r.setPlanMinute(Integer.parseInt(det.get("planMinute").toString()));
+							}
+							r.setUpdateDate(new Date());
+							r.setUpdateId(sabun);
+							
+							result.add(r);
+						}
+						
+						if(result.size()>0)
+							workDayResultRepo.saveAll(result);
+					}
+					
+				} else {
+					// 근무제도 시행시 시행할 기간의 근무제도가 기본근무의 정보는 지워야함.
+					//유연근무 승인 시 해당 구간 내의 result는 지워야 한다. //리셋 프로시져에서 지우지 않음.  
+					//result 에 base와 ot, fixot 있으면 삭제
+					List<String> timeTypCds = new ArrayList<String>();
+					timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
+					timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
+					timeTypCds.add(WtmApplService.TIME_TYPE_OT);
+					
+					List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypCds, sYmd, eYmd);
+					if(results!=null && results.size()>0) {
+						workDayResultRepo.deleteAll(results);
+						workDayResultRepo.flush();
+					}
+				}
+			}
+		}
+		logger.debug("[setApply] updateWorkMinuteOfWtmFlexibleEmp " +tenantId+enterCd+sabun);
+		
+		searchSabun.put("symd", searchSabun.get("useSymd"));
+		searchSabun.put("eymd", searchSabun.get("useEymd"));
+		searchSabun.put("pId", searchSabun.get("pId"));
+
+		logger.debug("[setApply] updateStart " +searchSabun.toString());
+
+		flexEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(searchSabun);
+		logger.debug("[setApply] initWtmFlexibleEmpOfWtmWorkDayResult ");
+		flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(searchSabun);
+		logger.debug("[setApply] createWorkTermBySabunAndSymdAndEymd ");
+//			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//		wtmFlexibleApplyMgrMapper.updateApplyEmp(searchSabun);
+//		logger.debug("[setApply] updateApplyEmp ");
+		} catch(Exception e) {
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+			return 0;
+		}
+		return 1;
 	}
 }

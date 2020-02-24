@@ -37,6 +37,8 @@ public class WtmFlexibleEmp {
 	private String eymd;
 	@Column(name="WORK_TYPE_CD")
 	private String workTypeCd;
+	@Column(name="FLEXIBLE_NM")
+	private String flexibleNm;
 	
 	@Column(name="WORK_MINUTE")
 	private Integer workMinute;
@@ -69,6 +71,13 @@ public class WtmFlexibleEmp {
 	}
 	public void setSymd(String symd) {
 		this.symd = symd;
+	}
+	
+	public String getFlexibleNm() {
+		return flexibleNm;
+	}
+	public void setFlexibleNm(String flexibleNm) {
+		this.flexibleNm = flexibleNm;
 	}
 	public String getEymd() {
 		return eymd;
@@ -142,6 +151,14 @@ public class WtmFlexibleEmp {
     protected void onUpdate() {
     	this.updateDate = new Date();
     }
+	@Override
+	public String toString() {
+		return "WtmFlexibleEmp [flexibleEmpId=" + flexibleEmpId + ", tenantId=" + tenantId + ", enterCd=" + enterCd
+				+ ", flexibleStdMgrId=" + flexibleStdMgrId + ", sabun=" + sabun + ", symd=" + symd + ", eymd=" + eymd
+				+ ", workTypeCd=" + workTypeCd + ", flexibleNm=" + flexibleNm + ", workMinute=" + workMinute
+				+ ", otMinute=" + otMinute + ", note=" + note + ", updateDate=" + updateDate + ", updateId=" + updateId
+				+ "]";
+	}
 	
 	
 	

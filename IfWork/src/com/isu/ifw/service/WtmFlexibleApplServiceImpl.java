@@ -536,6 +536,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 
 	
 	@Override
+	@Transactional
 	public ReturnParam validate(Long tenantId, String enterCd, String sabun, String workTypeCd, Map<String, Object> paramMap) {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");

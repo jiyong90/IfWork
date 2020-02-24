@@ -3,6 +3,8 @@ package com.isu.ifw.mapper;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ibatis.annotations.Param;
+
 public interface WtmFlexibleApplyMgrMapper {
 	
 	public List<Map<String, Object>> getApplyList(Map<String, Object> paramMap);
@@ -42,4 +44,8 @@ public interface WtmFlexibleApplyMgrMapper {
 	public int insertApplyEmpTemp(Map<String, Object> paramMap);
 	
 	public List<Map<String, Object>> getApplyEmpPopList(Map<String, Object> paramMap);
+	//확정 시 개인별 성공여부 업데이트
+	public void updateFlexibleEmpTemp(@Param("flexibleApplyTempId") Long flexibleApplyTempId);
+	//확정 시 전체 성공여부 업데이트
+	public void updateFlexibleApplyAll(@Param("flexibleApplyId") Long flexibleApplyId);
 }
