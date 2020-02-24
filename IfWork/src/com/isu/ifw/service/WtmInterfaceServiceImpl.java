@@ -49,7 +49,7 @@ import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.common.repository.CommTenantModuleRepository;
 import com.isu.ifw.util.WtmUtil;
 
-@Service
+@Service("wtmInterfaceService")
 public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		
 	@Autowired
@@ -1477,6 +1477,133 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		return;
 	}
 	
+	
+	@Override
+	public void setTaaApplParam(HashMap reqMap) throws Exception {
+		// TODO Auto-generated method stub
+		System.out.println("WtmInterfaceServiceImpl setTaaApplParam");
+		// 인터페이스 결과 저장용
+    	String retMsg = null;
+    	int resultCnt = 0;
+    	String ifType = "TAA_APPL";
+    	Map<String, Object> ifHisMap = new HashMap<>();
+    	ifHisMap.put("tenantId", reqMap.get("tenantId"));
+    	ifHisMap.put("ifItem", ifType);
+    	
+    	// 인터페이스용 변수
+    	HashMap<String, Object> getDateMap = null;
+    	HashMap<String, Object> getIfMap = null;
+    	List<Map<String, Object>> getIfList = null;
+    	
+		// 2. 인터페이스 data 처리
+		try {
+			//String applStatusCd = reqMap.get("status").toString();
+			// 호출이되면 근태신청 데이터를 저장하거나 결재상태를 갱신한다
+			getIfList = wtmInterfaceMapper.getTaaApplList(reqMap);
+			
+			if(getIfList != null || getIfList.size() > 0) {
+				for(Map<String, Object> taaMap : getIfList) {
+					System.out.println("taaMap : " + taaMap.toString());
+					//기간 루프
+					String sYmd = taaMap.get("sYmd").toString();
+					String eYmd = taaMap.get("eYmd").toString();
+					
+					SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
+					
+					SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+			        Date sDate = formatter.parse(sYmd);
+			        Date eDate = formatter.parse(eYmd);
+			         
+			        // 시간차이를 시간,분,초를 곱한 값으로 나누면 하루 단위가 나옴
+			        long diff = eDate.getTime() - sDate.getTime();
+			        long diffDays = (diff / (24 * 60 * 60 * 1000)) +1;
+					for(int i=0; i<diffDays; i++) {
+						Calendar cal = Calendar.getInstance();
+						cal.setTime(sDate);
+						cal.add(Calendar.DATE, i);
+						String ymd = formatter.format(cal.getTime());
+						HashMap<String, Object> reqDayMap = (HashMap<String, Object>) taaMap;
+						reqDayMap.put("ymd", ymd);
+						reqDayMap.put("retCode", "");
+						reqDayMap.put("retMsg", "");
+						reqDayMap.put("timeTypeCd", "");
+						reqDayMap.put("taaSetYn", "");
+						reqDayMap.put("taaSdate", "");
+						reqDayMap.put("taaEdate", "");
+						System.out.println("reqDayMap : " + reqDayMap.toString());
+						wtmInterfaceMapper.setTaaApplDayIf(reqDayMap);
+						String retDayCode = reqDayMap.get("retCode").toString();
+						if("FAIL".equals(retDayCode)) {
+							// 오류다 ㅠㅠ
+							ifHisMap.put("ifStatus", "ERR");
+							retMsg = "근태정보 이관중 오류. 오류로그 확인";
+							break;
+						} else {
+							// 오류가 아니면.. 근태시간을 생성체크하자
+							String taaSetYn = reqDayMap.get("taaSetYn").toString();
+							System.out.println("taaSetYn : " + taaSetYn);
+							if("I".equals(taaSetYn)) {
+								// 근태생성
+								WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
+										  Long.parseLong(reqDayMap.get("tenantId").toString())
+										, reqDayMap.get("enterCd").toString()
+										, ymd
+										, reqDayMap.get("sabun").toString()
+										, reqDayMap.get("timeTypeCd").toString()
+										, reqDayMap.get("taaCd").toString()
+										, dt.parse(reqDayMap.get("taaSdate").toString())
+										, dt.parse(reqDayMap.get("taaEdate").toString())
+										, Long.parseLong(reqDayMap.get("applId").toString())
+										, "0");
+								// timeTypeCd = "REGA" & ymd <= 오늘 그러면 타각갱신해야함.
+							} else if ("D".equals(taaSetYn)) {
+								// 근태삭제
+								WtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
+										  Long.parseLong(reqDayMap.get("tenantId").toString())
+										, reqDayMap.get("enterCd").toString()
+										, ymd
+										, reqDayMap.get("sabun").toString()
+										, reqDayMap.get("timeTypeCd").toString()
+										, reqDayMap.get("taaCd").toString()
+										, dt.parse(reqDayMap.get("taaSdate").toString())
+										, dt.parse(reqDayMap.get("taaEdate").toString())
+										, Long.parseLong(reqDayMap.get("applId").toString())
+										, "0");
+							}
+							
+							String chkYmd = "20200211";
+							String enterCd = reqDayMap.get("enterCd").toString();
+			        		String sabun = reqDayMap.get("sabun").toString();
+			        		
+			        		// 오늘 이전이면 근무마감을 다시 돌려야함.
+							if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd) && ("D".equals(taaSetYn) || "I".equals(taaSetYn))) {
+				        		WtmFlexibleEmpService.calcApprDayInfo(Long.parseLong(reqMap.get("tenantId").toString()), enterCd, ymd, ymd, sabun);
+							}
+							// 근무시간합산은 재정산한다
+			        		HashMap<String, Object> setTermMap = new HashMap();
+			        		setTermMap.put("tenantId", reqMap.get("tenantId"));
+			        		setTermMap.put("enterCd", enterCd);
+			        		setTermMap.put("sabun", sabun);
+			        		setTermMap.put("symd", ymd);
+			        		setTermMap.put("eymd", ymd);
+			        		setTermMap.put("pId", "TAAIF");
+			        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
+						}
+					}
+					
+					ifHisMap.put("ifStatus", "OK");
+					retMsg = "근태신청서 처리완료";
+				}
+			}
+		} catch(Exception e){
+			retMsg = "TAA_RESULT set : 근태 이관오류";
+            e.printStackTrace();
+        }
+		
+        System.out.println("WtmInterfaceServiceImpl setTaaApplIf end");
+		return;
+	}
+	
 	@Override
 	@Transactional
 	public Map<String,Object> setTaaApplArrIf(Map reqMap) throws Exception {
@@ -2121,6 +2248,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	 */
 	@Override
 	@Transactional
+	@Async("threadPoolTaskExecutor")
 	public void setCloseWorkIf(HashMap reqMap) throws Exception {
 		// TODO Auto-generated method stub
 		System.out.println("WtmInterfaceServiceImpl setCloseWorkIf");
@@ -2267,6 +2395,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				// wtmFlexibleEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(l);
 				
         		// 브로제 외출복귀 있으면 create result 호출하고 마감돌려야함.
+				/*
         		if(gooutCnt > 0) {
         			// create result 호출
         			wtmFlexibleEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(l);
@@ -2293,7 +2422,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
         				}
         			}
         		}
-				
+				*/
 				/*
 				l.put("shm", l.get("planSdate").toString().substring(8,12));
 				l.put("ehm", l.get("planEdate").toString().substring(8,12));
@@ -2305,7 +2434,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				// wtmInterfaceMapper.updateDayResult2(l);
         		
         		// 일마감생성
-        		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
+        		// WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
         		
         		// 문제가 없으면 근무계획시간 합산
 				wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(l);
@@ -2580,7 +2709,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     	}
     	
     	getDateMap = new HashMap();
-    	ymd = "20200203";
+    	// ymd = "20200203";
     	getDateMap.put("tenantId", tenantId);
     	getDateMap.put("ymd", ymd);
     	getDateMap.put("closeType", closeType);

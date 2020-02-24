@@ -23,7 +23,7 @@ public interface WtmInoutService {
 	//퇴근취소 업데이트
 	public void updateTimecardCancel(Map<String, Object> paramMap, String unplanned) throws Exception;
 	//휴게정보 업데이트
-	public void updateTimecardExcept(Map<String, Object> paramMap) throws Exception;
+	public void updateTimecardExcept(Map<String, Object> paramMap, String unplanned) throws Exception;
 
 	//출퇴근정보 업데이트
 	public void updateTimecardCancelWeb(Map<String, Object> paramMap) throws Exception;

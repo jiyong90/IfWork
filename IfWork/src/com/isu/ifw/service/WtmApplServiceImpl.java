@@ -154,36 +154,6 @@ public class WtmApplServiceImpl implements WtmApplService {
 	}
 
 	@Override
-	public List<WtmApplLineVO> getApplLine(Long tenantId, String enterCd, String sabun, String applCd, String userId) {
-		Map<String, Object> paramMap = new HashMap<String, Object>();
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("applCd", applCd);
-		paramMap.put("d", WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
-		
-		List<WtmApplLineVO> result = new ArrayList<WtmApplLineVO>();
-		List<WtmApplLineVO> applLines = applMapper.getWtmApplLine(paramMap);
-		
-		WtmApplCode applCode = applCodeRepo.findByTenantIdAndEnterCdAndApplCd(tenantId, enterCd, applCd);
-		if(applCode!=null && applCode.getApplLevelCd()!=null && !"".equals(applCode.getApplLevelCd())) {
-			int applLevel = Integer.parseInt(applCode.getApplLevelCd());
-			
-			int lineCnt = 0; 
-			for(WtmApplLineVO applLine : applLines) {
-				if(!APPL_LINE_S.equals(applLine.getApprTypeCd()) || (APPL_LINE_S.equals(applLine.getApprTypeCd()) && lineCnt < applLevel)) {
-					result.add(applLine);
-				}
-				
-				if(APPL_LINE_S.equals(applLine.getApprTypeCd()))
-					lineCnt++;
-			}
-		}
-		
-		return result;
-	}
-
-	@Override
 	public List<Map<String, Object>> getPrevApplList(Long tenantId, String enterCd, String sabun,
 			Map<String, Object> paramMap, String userId) {
 		// TODO Auto-generated method stub

@@ -92,6 +92,9 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 	
 	@Autowired
 	WtmOtApplMapper wtmOtApplMapper;
+	
+	@Autowired
+	WtmApplLineService applLineService;
 
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
@@ -165,12 +168,6 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 	}
 
 	@Override
-	public List<WtmApplLineVO> getApplLine(Long tenantId, String enterCd, String sabun, String applCd,
-			String userId) {
-		return null;
-	}
-
-	@Override
 	public List<Map<String, Object>> getPrevApplList(Long tenantId, String enterCd, String sabun,
 			Map<String, Object> paramMap, String userId) {
 		// TODO Auto-generated method stub
@@ -213,7 +210,7 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 						line.setApprStatusCd(APPR_STATUS_APPLY);
 						line.setApprDate(new Date());
 						line = wtmApplLineRepo.save(line);
-					} else if(APPL_LINE_S.equals(line.getApprTypeCd())) { //결재
+					} else if(APPL_LINE_S.equals(line.getApprTypeCd()) || APPL_LINE_R.equals(line.getApprTypeCd())) { //결재
 						//첫번째 결재자의 상태만 변경 후 스탑
 						apprSabun.add(line.getApprSabun());
 						line.setApprStatusCd(APPR_STATUS_REQUEST);
@@ -426,7 +423,7 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 //			subYn = paramMap.get("subYn")+"";
 //		}
 				
-		saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, workTypeCd, sabun, userId);
+		applLineService.saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, workTypeCd, sabun, userId);
 		paramMap.put("applId", appl.getApplId());
 		//rp.put("flexibleApplId", flexibleAppl.getFlexibleApplId());
 		rp.put("applId", appl.getApplId());
@@ -502,78 +499,6 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 		//appl.
 		
 		return wtmApplRepo.save(appl);
-	}
-
-	protected void saveWtmApplLine(Long tenantId, String enterCd, int apprLvl, Long applId, String applCd, String sabun, String userId) {
-		
-		//결재라인 저장
-		Map<String, Object> paramMap = new HashMap<String, Object>();
-		List<WtmApplLine> applLines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("d", WtmUtil.parseDateStr(new Date(), null));
-		paramMap.put("applCd", applCd);
-		//결재라인 조회 기본으로 3단계까지 가져와서 뽑아  쓰자
-		List<WtmApplLineVO> applLineVOs = applMapper.getWtmApplLine(paramMap);
-		//기본 결재라인이 없으면 저장도 안됨.
-		if(applLineVOs != null && applLineVOs.size() > 0){
-
-			//결재라인 코드는 1,2,3으로 되어있다 이렇게 써야한다!!!! 1:1단계, 2:2단계, 3:3단계
-			int applCnt = apprLvl; 
-			
-			//기 저장된 결재라인과 비교
-			if(applLines != null && applLines.size() > 0) {
-				int i=1; // apprSeq
-				int whileLoop = 0;
-				int lineCnt = 0;
-				for(WtmApplLine applLine : applLines) {
-					
-					WtmApplLineVO applLineVO = applLineVOs.get(whileLoop);
-					
-					if(whileLoop < applLineVOs.size()) {
-						
-						if(!APPL_LINE_S.equals(applLineVO.getApprTypeCd()) || (APPL_LINE_S.equals(applLineVO.getApprTypeCd()) && lineCnt < applCnt)) {
-							applLine.setApplId(applId);
-							applLine.setApprSeq(i);
-							applLine.setApprSabun(applLineVO.getSabun());
-							applLine.setApprTypeCd(applLineVO.getApprTypeCd());
-							applLine.setUpdateId(userId);
-							wtmApplLineRepo.save(applLine);
-							i++;
-						}
-						if(APPL_LINE_S.equals(applLineVO.getApprTypeCd()))
-							lineCnt++;
-						
-					}else {
-						//기존 결재라인이 더 많으면 지운다. 임시저장이니.. 바뀔수도 있을 것 같아서..
-						wtmApplLineRepo.delete(applLine);
-					}
-					whileLoop++;
-				} 
-			}else {
-				//신규생성
-				int i=1; // apprSeq
-				int lineCnt = 0; 
-				for(WtmApplLineVO applLineVO : applLineVOs) {
-					//발신결재 결재레벨 체크
-					if(!APPL_LINE_S.equals(applLineVO.getApprTypeCd()) || (APPL_LINE_S.equals(applLineVO.getApprTypeCd()) && lineCnt < applCnt)) {
-						WtmApplLine applLine = new WtmApplLine();
-						applLine.setApplId(applId);
-						applLine.setApprSeq(i);
-						applLine.setApprSabun(applLineVO.getSabun());
-						applLine.setApprTypeCd(applLineVO.getApprTypeCd());
-						applLine.setUpdateId(userId);
-						wtmApplLineRepo.save(applLine);
-						i++;
-					}
-					
-					if(APPL_LINE_S.equals(applLineVO.getApprTypeCd()))
-						lineCnt++;
-				}
-			}
-		}
-		//결재라인 저장 끝
 	}
 
 	@Override

@@ -35,6 +35,7 @@ import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmAuthMgrMapper;
+import com.isu.ifw.mapper.WtmEmpHisMapper;
 import com.isu.ifw.mapper.WtmFlexibleApplMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmFlexibleStdMapper;
@@ -60,7 +61,6 @@ import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
 import com.isu.ifw.vo.WtmDayPlanVO;
 import com.isu.ifw.vo.WtmDayWorkVO;
-import com.isu.ifw.vo.WtmOtApplVO;
 
 @Service("flexibleEmpService")
 public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
@@ -325,7 +325,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					if(r.get("taaNm")!=null)
 						taaNm = r.get("taaNm").toString().replaceAll("\\p{Z}", "");
 					
-					//System.out.println("timeTypeCd : " + timeTypeCd);
+					System.out.println("timeTypeCd : " + timeTypeCd);
+					System.out.println("breakTypeCd : " + breakTypeCd);
 					//System.out.println("taaNm : " + taaNm);
 					
 					String sDate = null;
@@ -360,7 +361,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					//	continue;
 					
 					//휴게시간
-					//breakTypeCd가 TIME이나 TIMEFIX 인 경우엔 유급 휴게는 0
+					//MGR일 때는 그대로
+					//breakTypeCd가 TIME이나 TIMEFIX 인 경우엔 유급 휴게는 0, Except 만 합치면 됨
 					Float break01 = 0f;
 					Float break02 = 0f;
 					
@@ -371,22 +373,29 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
 						paramMap.put("shm", sdf.format(sd));
 						paramMap.put("ehm", sdf.format(ed));
-						Map<String, Object> breakMap = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, sabun);
-						if(breakMap!=null && breakMap.get("breakMinute")!=null) {
-							if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
+						
+						if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
+							Map<String, Object> breakMap = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, sabun);
+							if(breakMap!=null && breakMap.get("breakMinute")!=null) {
 								break01 =  Float.valueOf(breakMap.get("breakMinuteNoPay").toString());
 								break02 = Float.valueOf(breakMap.get("breakMinutePaid").toString());
-							} else {
-								break01 = Float.valueOf(breakMap.get("breakMinute").toString());
-							} 
+							}
 							
 							noPayBreakMin += break01;
 							paidBreakMin += break02;
-						}
+							
+							System.out.println("break01: " + break01);
+							System.out.println("break02: " + break02);
+						} 
 					}
 					
-					//System.out.println("break01: " + break01);
-					//System.out.println("break02: " + break02);
+					if((breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME) || breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIMEFIX))
+							&& timeTypeCd.equals(WtmApplService.TIME_TYPE_EXCEPT)) {
+						noPayBreakMin += min;
+					}
+					
+					System.out.println("noPayBreakMin: " + noPayBreakMin);
+					System.out.println("paidBreakMin: " + paidBreakMin);
 					
 					if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE)) {
 						if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME))
@@ -1402,11 +1411,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	 * @return
 	 */
 	@Override
-	public void saveEmpDayResults(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) throws Exception {
+	public int saveEmpDayResults(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) throws Exception {
+		int cnt = 0;
 		if(convertMap.containsKey("mergeRows") && ((List)convertMap.get("mergeRows")).size() > 0) {
 			List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("mergeRows");
 			List<Map<String, Object>> day = new ArrayList();
 			String retMsg = "";
+																
 			if(iList != null && iList.size() > 0) {
 				for(Map<String, Object> l : iList) {
 					
@@ -1420,27 +1431,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					l.put("tenantId", tenantId);
 					l.put("enterCd", enterCd);
 					
-					WtmWorkDayResult result = new WtmWorkDayResult();
-					if(l.get("workDayResultId") != "") {
-						result = workDayResultRepo.findByWorkDayResultId(Long.parseLong(l.get("workDayResultId").toString()));
-					} else {
-						result.setEnterCd(enterCd);
-						result.setSabun(l.get("sabun").toString());
-						result.setTenantId(tenantId);
-						result.setTimeTypeCd(l.get("timeTypeCd").toString());
-						result.setYmd(l.get("ymd").toString());
-					}
-					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmm");
 					
-					result.setPlanSdate(sdf.parse(l.get("planSdate").toString()));
-					result.setPlanEdate(sdf.parse(l.get("planEdate").toString()));
-					result.setPlanMinute(Integer.parseInt(l.get("planMinute").toString()));
-					result.setUpdateId(userId);	
-				
-					
-					workDayResultRepo.save(result);
-
-					// 근무검증
+					// 근무검증 start
 					String timeTypeCd = l.get("timeTypeCd").toString();
 					ReturnParam rp = new ReturnParam();
 					Map<String, Object> chkMap = new HashMap();
@@ -1460,24 +1452,51 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							retMsg = l.get("sabun").toString() + "," + l.get("ymd").toString() + ", "+ rp.get("message").toString();
 						}
 					}
+					// 근무검증 end
+					
+					
 					if(!"".equals(retMsg)) {
 						// 오류내용 저장하기
 						throw new RuntimeException(retMsg);
+					} else {
+										
+						WtmWorkDayResult result = new WtmWorkDayResult();
+						if(l.get("workDayResultId") != "") {
+							result = workDayResultRepo.findByWorkDayResultId(Long.parseLong(l.get("workDayResultId").toString()));
+						} else {
+							result.setEnterCd(enterCd);
+							result.setSabun(l.get("sabun").toString());
+							result.setTenantId(tenantId);
+							result.setTimeTypeCd(l.get("timeTypeCd").toString());
+							result.setYmd(l.get("ymd").toString());
+						}
+						SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmm");
+						
+						result.setPlanSdate(sdf.parse(l.get("planSdate").toString()));
+						result.setPlanEdate(sdf.parse(l.get("planEdate").toString()));
+						result.setPlanMinute(Integer.parseInt(l.get("planMinute").toString()));
+						result.setUpdateId(userId);	
+											
+						workDayResultRepo.save(result);	
+						
+						// 근무검증
+						// 원래 있던 자리
+															
+						// 문제가 없으면 근무계획시간 합산
+						chkMap.put("tenantId", tenantId);
+						chkMap.put("enterCd", enterCd);
+						chkMap.put("sabun", l.get("sabun").toString());
+						chkMap.put("symd", l.get("ymd").toString());
+						chkMap.put("eymd", l.get("ymd").toString());
+						chkMap.put("pId", userId);
+						flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(chkMap);
+						cnt++;
+						retMsg = ""; // 메시지초기화
 					}
-					
-					// 문제가 없으면 근무계획시간 합산
-					chkMap.put("tenantId", tenantId);
-					chkMap.put("enterCd", enterCd);
-					chkMap.put("sabun", l.get("sabun").toString());
-					chkMap.put("symd", l.get("ymd").toString());
-					chkMap.put("eymd", l.get("ymd").toString());
-					chkMap.put("pId", userId);
-					flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(chkMap);
-					
-					retMsg = ""; // 메시지초기화
 				}
 			}
 		}
+		return cnt;
 	}	
 	
 	@Override
@@ -2438,5 +2457,114 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			}
 		}
 			
+	}
+	
+	@Override
+	public boolean isRuleTarget(Long tenantId, String enterCd, String sabun, Map<String, Object> ruleMap) {
+		
+		boolean isTarget = false;
+		
+		if(ruleMap != null){ 
+			WtmEmpHis e = empHisRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, WtmUtil.parseDateStr(new Date(), null));
+			if(ruleMap.containsKey("INCLUDE") && ruleMap.get("INCLUDE")!=null && !"".equals(ruleMap.get("INCLUDE"))) {
+				boolean isEmpty = true;
+				Map<String, Object> inMap = (Map<String, Object>) ruleMap.get("INCLUDE");
+				if(inMap!=null) {
+					if(inMap.containsKey("EMP") && inMap.get("EMP")!=null && !"".equals(inMap.get("EMP"))) {
+						List<Map<String, Object>> empList = (List<Map<String, Object>>) inMap.get("EMP");
+						if(empList != null && empList.size() > 0) {
+							isEmpty = false;
+							for(Map<String, Object> empMap : empList) {
+								if(empMap.get("k")!=null && sabun.equals(empMap.get("k"))) {
+									isTarget = true;
+								}
+							}
+						}
+					}
+					if(inMap.containsKey("ORG") && inMap.get("ORG")!=null && !"".equals(inMap.get("ORG"))) { 
+						List<Map<String, Object>> orgList = (List<Map<String, Object>>) inMap.get("ORG");
+						if(orgList != null && orgList.size() > 0) {
+							isEmpty = false;
+							for(Map<String, Object> orgMap : orgList) {
+								if(e.getOrgCd()!=null && orgMap.get("k")!=null && e.getOrgCd().equals(orgMap.get("k"))) {
+									isTarget = true;
+									break;
+								}
+							}
+						}
+						
+					}
+					/*
+					if(inMap.containsKey("JIKWEE")) {
+						List<Map<String, Object>> jikweeList = (List<Map<String, Object>>) exMap.get("JIKWEE");
+						if(jikweeList != null && jikweeList.size() > 0) {
+							for(Map<String, Object> jikweeMap : jikweeList) {
+								if(e.get().equals(jikweeMap.get("k"))) {
+									isTarget = true;
+									break;
+								}
+							}
+						}
+						
+					}
+					if(inMap.containsKey("JIKGUB")) {
+						
+					}
+					*/
+					if(inMap.containsKey("JIKCHAK") && inMap.get("JIKCHAK")!=null && !"".equals(inMap.get("JIKCHAK"))) {
+						List<Map<String, Object>> jikchakList = (List<Map<String, Object>>) inMap.get("JIKCHAK");
+						if(jikchakList != null && jikchakList.size() > 0) {
+							isEmpty = false;
+							for(Map<String, Object> jikchakMap : jikchakList) {
+								if(e.getDutyCd()!=null && jikchakMap.get("k")!=null && e.getDutyCd().equals(jikchakMap.get("k"))) {
+									isTarget = true;
+									break;
+								}
+							}
+						}
+					}
+					if(inMap.containsKey("JOB") && inMap.get("JOB")!=null && !"".equals(inMap.get("JOB"))) {
+
+						List<Map<String, Object>> jobList = (List<Map<String, Object>>) inMap.get("JIKCHAK");
+						if(jobList != null && jobList.size() > 0) {
+							isEmpty = false;
+							for(Map<String, Object> jobMap : jobList) {
+								if(e.getJobCd()!=null && jobMap.get("k")!=null && e.getJobCd().equals(jobMap.get("k"))) {
+									isTarget = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+				
+				if(!isEmpty) 
+					isTarget = true;
+				
+			} else {
+				//INCLUDE 가 아예 등록되지 않으면 모든 사람이 대상자
+				isTarget = true;
+			}
+			
+			Map<String, Object> exMap = null;
+			if(isTarget && ruleMap.containsKey("EXCLUDE") && ruleMap.get("EXCLUDE")!=null && !"".equals(ruleMap.get("EXCLUDE"))) {
+				//여기에등록되어 있으면 포함이 되었더도 안됨 이놈이 우선 
+				exMap = (Map<String, Object>) ruleMap.get("EXCLUDE");
+				if(exMap!=null && exMap.containsKey("EMP")) {
+					List<Map<String, Object>> empList = (List<Map<String, Object>>) exMap.get("EMP");
+					if(empList != null && empList.size() > 0) {
+						for(Map<String, Object> empMap : empList) {
+							if(sabun.equals(empMap.get("k"))) {
+								isTarget = false;
+								return isTarget;
+							}
+						}
+					}
+				}
+			}
+			
+		}
+		
+		return isTarget;
 	}
 }

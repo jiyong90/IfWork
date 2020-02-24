@@ -48,8 +48,11 @@ public interface WtmFlexibleEmpRepository extends JpaRepository<WtmFlexibleEmp, 
 	@Query("SELECT E FROM WtmFlexibleEmp E JOIN WtmFlexibleStdMgr M ON E.flexibleStdMgrId = M.flexibleStdMgrId WHERE E.tenantId = ?1 AND E.enterCd = ?2 AND E.sabun = ?3 AND ?4 <= E.eymd AND  ?5 >= E.symd AND M.defaultWorkUseYn = 'Y' AND M.fixotUseType = 'ALL' ")
 	public List<WtmFlexibleEmp> findAllTypeFixotByTenantIdAndEnterCdAndSabunAndSymdAndEymdAnd(Long tenantId, String enterCd, String sabun, String symd, String eymd);
 	
+<<<<<<< HEAD
 	public List<WtmFlexibleEmp> findByFlexibleStdMgrId(Long flexibleStdMgrId);
 	
+=======
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 	@Query("SELECT E FROM WtmFlexibleEmp E WHERE E.flexibleEmpId IN ?1")
 	public List<WtmFlexibleEmp> findByFlexibleEmpIds(List<Long> flexibleEmpIds);
 }

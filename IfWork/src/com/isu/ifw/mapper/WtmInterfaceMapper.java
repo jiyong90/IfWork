@@ -191,6 +191,11 @@ public interface WtmInterfaceMapper {
 	public Map<String, Object> getWtmTaaApplId(Map<String, Object> paramMap);
 	
 	/**
+	 * 근태오류 루프용
+	 **/
+	public List<Map<String, Object>> getTaaApplList(Map<String, Object> paramMap);
+	
+	/**
 	 * 신청서유무 ID조회
 	 **/
 	public void setTaaApplDayIf(Map<String, Object> paramMap);

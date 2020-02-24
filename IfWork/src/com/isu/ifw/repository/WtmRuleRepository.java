@@ -21,6 +21,8 @@ public interface WtmRuleRepository extends JpaRepository<WtmRule, Long> {
 	
 	public List<WtmRule> findByTenantIdAndEnterCd(Long tenantId, String enterCd);
 	
+	public WtmRule findByTenantIdAndEnterCdAndRuleNm(Long tenantId, String enterCd, String ruleNm);
+	
 	@Modifying
 	@Transactional
 	@Query("DELETE FROM WtmRule r WHERE r.ruleId IN :ruleIds ")
