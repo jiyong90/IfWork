@@ -1411,11 +1411,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	 * @return
 	 */
 	@Override
-	public void saveEmpDayResults(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) throws Exception {
+	public int saveEmpDayResults(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) throws Exception {
+		int cnt = 0;
 		if(convertMap.containsKey("mergeRows") && ((List)convertMap.get("mergeRows")).size() > 0) {
 			List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("mergeRows");
 			List<Map<String, Object>> day = new ArrayList();
 			String retMsg = "";
+																
 			if(iList != null && iList.size() > 0) {
 				for(Map<String, Object> l : iList) {
 					
@@ -1429,27 +1431,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					l.put("tenantId", tenantId);
 					l.put("enterCd", enterCd);
 					
-					WtmWorkDayResult result = new WtmWorkDayResult();
-					if(l.get("workDayResultId") != "") {
-						result = workDayResultRepo.findByWorkDayResultId(Long.parseLong(l.get("workDayResultId").toString()));
-					} else {
-						result.setEnterCd(enterCd);
-						result.setSabun(l.get("sabun").toString());
-						result.setTenantId(tenantId);
-						result.setTimeTypeCd(l.get("timeTypeCd").toString());
-						result.setYmd(l.get("ymd").toString());
-					}
-					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmm");
 					
-					result.setPlanSdate(sdf.parse(l.get("planSdate").toString()));
-					result.setPlanEdate(sdf.parse(l.get("planEdate").toString()));
-					result.setPlanMinute(Integer.parseInt(l.get("planMinute").toString()));
-					result.setUpdateId(userId);	
-				
-					
-					workDayResultRepo.save(result);
-
-					// 근무검증
+					// 근무검증 start
 					String timeTypeCd = l.get("timeTypeCd").toString();
 					ReturnParam rp = new ReturnParam();
 					Map<String, Object> chkMap = new HashMap();
@@ -1469,24 +1452,51 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							retMsg = l.get("sabun").toString() + "," + l.get("ymd").toString() + ", "+ rp.get("message").toString();
 						}
 					}
+					// 근무검증 end
+					
+					
 					if(!"".equals(retMsg)) {
 						// 오류내용 저장하기
 						throw new RuntimeException(retMsg);
+					} else {
+										
+						WtmWorkDayResult result = new WtmWorkDayResult();
+						if(l.get("workDayResultId") != "") {
+							result = workDayResultRepo.findByWorkDayResultId(Long.parseLong(l.get("workDayResultId").toString()));
+						} else {
+							result.setEnterCd(enterCd);
+							result.setSabun(l.get("sabun").toString());
+							result.setTenantId(tenantId);
+							result.setTimeTypeCd(l.get("timeTypeCd").toString());
+							result.setYmd(l.get("ymd").toString());
+						}
+						SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmm");
+						
+						result.setPlanSdate(sdf.parse(l.get("planSdate").toString()));
+						result.setPlanEdate(sdf.parse(l.get("planEdate").toString()));
+						result.setPlanMinute(Integer.parseInt(l.get("planMinute").toString()));
+						result.setUpdateId(userId);	
+											
+						workDayResultRepo.save(result);	
+						
+						// 근무검증
+						// 원래 있던 자리
+															
+						// 문제가 없으면 근무계획시간 합산
+						chkMap.put("tenantId", tenantId);
+						chkMap.put("enterCd", enterCd);
+						chkMap.put("sabun", l.get("sabun").toString());
+						chkMap.put("symd", l.get("ymd").toString());
+						chkMap.put("eymd", l.get("ymd").toString());
+						chkMap.put("pId", userId);
+						flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(chkMap);
+						cnt++;
+						retMsg = ""; // 메시지초기화
 					}
-					
-					// 문제가 없으면 근무계획시간 합산
-					chkMap.put("tenantId", tenantId);
-					chkMap.put("enterCd", enterCd);
-					chkMap.put("sabun", l.get("sabun").toString());
-					chkMap.put("symd", l.get("ymd").toString());
-					chkMap.put("eymd", l.get("ymd").toString());
-					chkMap.put("pId", userId);
-					flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(chkMap);
-					
-					retMsg = ""; // 메시지초기화
 				}
 			}
 		}
+		return cnt;
 	}	
 	
 	@Override

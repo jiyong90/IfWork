@@ -174,7 +174,7 @@ public interface WtmFlexibleEmpService {
 	 * @param userId
 	 * @throws Exception
 	 */
-	public void saveEmpDayResults(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) throws Exception;
+	public int saveEmpDayResults(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) throws Exception;
 
 	/**
 	 * 개인별 근무제도조회 관리자 화면
