@@ -77,7 +77,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 	
 	@Transactional
 	@Override
-	public void applyIntf(Long tenantId, String gubun) {
+	public void applyIntf(Long tenantId, String type) {
 		
 		String ymdhis = null;
 		
@@ -85,7 +85,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		System.out.println("tenantId : " + tenantId);
 		
 		//최종 인터페이스된 날짜(lastDate) 조회
-		Map<String, Object> dateMap = getIfLastDate(tenantId, gubun);
+		Map<String, Object> dateMap = getIfLastDate(tenantId, type);
 		if(dateMap!=null && dateMap.containsKey("lastDate") && dateMap.get("lastDate")!=null) {
 			ymdhis = dateMap.get("lastDate").toString();
 		}
@@ -106,21 +106,21 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		paramMap.put("updateId", "INTF");
 		
 		ReturnParam rp = new ReturnParam();
-		if(gubun.equals(IF_IUERP_WTM_CODE)) { //공통코드
+		if(type.equalsIgnoreCase("CODE")) { //공통코드
 			rp = saveWtmCode(paramMap);
 		//} else if(gubun.equals(IF_IUERP_WTM_HOLIDAY_MGR)) { //공휴일
 		//	rp = saveWtmHolidayMgr(paramMap);
-		} else if(gubun.equals(IF_IUERP_WTM_TAA_CODE)) { //근태코드
+		} else if(type.equalsIgnoreCase("GNT")) { //근태코드
 			rp = saveWtmTaaCode(paramMap);
-		} else if(gubun.equals(IF_IUERP_WTM_ORG_CODE)) { //조직코드
-			rp = saveWtmOrgCode(paramMap);
-		} else if(gubun.equals(IF_IUERP_WTM_EMP_HIS)) { //직원정보
+		} else if(type.equalsIgnoreCase("EMP")) { //직원정보
 			rp = saveWtmEmpHis(paramMap);
-		} else if(gubun.equals(IF_IUERP_WTM_ORG_CONC)) { //겸직정보
-			
-		} else if(gubun.equals(IF_IUERP_WTM_EMP_ADDR)) { //직원 연락처
+		} else if(type.equalsIgnoreCase("EMPADDR")) { //직원 연락처
 			rp = saveWtmEmpAddr(paramMap);
-		} else if(gubun.equals(IF_IUERP_WTM_TAA_APPL)) { //근태 신청
+		} else if(type.equalsIgnoreCase("ORG")) { //조직코드
+			rp = saveWtmOrgCode(paramMap);
+		} else if(type.equalsIgnoreCase("ORGCONC")) { //겸직정보
+			
+		} else if(type.equalsIgnoreCase("TAAAPPL")) { //근태 신청
 			rp = saveWtmTaaAppl(paramMap);
 		}
 		
@@ -128,16 +128,16 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		Map<String, Object> ifHisMap = new HashMap<String, Object>();
 		ifHisMap.put("tenantId", tenantId);
 		ifHisMap.put("ifStatus", rp.getStatus());
-		ifHisMap.put("ifItem", gubun);
+		ifHisMap.put("ifItem", type);
 		ifHisMap.put("ifEndDate", ymdhis);
 		ifHisMap.put("updateDate", WtmUtil.parseDateStr(new Date(), "yyyyMMddHHmmss"));
 		
-		logger.debug(">"+gubun+"status : " + rp.getStatus());
-		System.out.println(">"+gubun+" status : " + rp.getStatus());
+		logger.debug(">"+type+"status : " + rp.getStatus());
+		System.out.println(">"+type+" status : " + rp.getStatus());
 		if(rp!=null && rp.containsKey("message") && rp.get("message")!=null) {
 			ifHisMap.put("ifMsg", rp.get("message").toString());
-			logger.debug(">"+gubun+" message : " + rp.get("message").toString());
-			System.out.println(">"+gubun+" message : " + rp.get("message").toString());
+			logger.debug(">"+type+" message : " + rp.get("message").toString());
+			System.out.println(">"+type+" message : " + rp.get("message").toString());
 		}
 			
 		interfaceMapper.insertIfHis(ifHisMap);
@@ -225,14 +225,15 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 			logger.debug("WtmCode delete "+deleteCnt+" end");
 			System.out.println("WtmCode delete "+deleteCnt+" end");
 			
+			//인터페이스된 데이터가 중도에 잘려서 오면 종료됐다고 판단하여 주석처리
 			//3. insert wtm_code
 			//기존 시작/종료일이 신규 시작/종료일(인터페이스 될 데이터)을 포함할 경우 
 			//인터페이스 데이터 2019.01.01~2019.12.31
 			//기존 데이터 1900.01.01~2999.12.31
 			//2020.01.01(인터페이스 종료일+1) ~ 2999.12.31(기존 종료일) 데이터 삽입
-			insertCnt = iuerpInterfaceMapper.insertWtmCodeForBetween(paramMap);
-			logger.debug("WtmCode insert1 "+insertCnt+" end");
-			System.out.println("WtmCode insert1 "+insertCnt+" end");
+			//insertCnt = iuerpInterfaceMapper.insertWtmCodeForBetween(paramMap);
+			//logger.debug("WtmCode insert1 "+insertCnt+" end");
+			//System.out.println("WtmCode insert1 "+insertCnt+" end");
 			
 			//4. update wtm_code
 			//기존 데이터 시작/종료일 수정
@@ -243,8 +244,8 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 			//5. insert wtm_code
 			//기존 시작/종료일과 신규 시작/종료일이 다른 데이터 삽입
 			insertCnt += iuerpInterfaceMapper.insertWtmCode(paramMap);
-			logger.debug("WtmCode insert2 "+insertCnt+" end");
-			System.out.println("WtmCode insert2 "+insertCnt+" end");
+			logger.debug("WtmCode insert "+insertCnt+" end");
+			System.out.println("WtmCode insert "+insertCnt+" end");
 			
 			
 			
@@ -361,10 +362,11 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 			logger.debug("WtmOrgCode delete "+deleteCnt+" end");
 			System.out.println("WtmOrgCode delete "+deleteCnt+" end");
 			
+			//인터페이스된 데이터가 중도에 잘려서 오면 종료됐다고 판단하여 주석처리
 			//3. insert wtm_org_code
-			insertCnt = iuerpInterfaceMapper.insertWtmOrgCodeForBetween(paramMap);
-			logger.debug("WtmOrgCode insert1 "+insertCnt+" end");
-			System.out.println("WtmOrgCode insert1 "+insertCnt+" end");
+			//insertCnt = iuerpInterfaceMapper.insertWtmOrgCodeForBetween(paramMap);
+			//logger.debug("WtmOrgCode insert1 "+insertCnt+" end");
+			//System.out.println("WtmOrgCode insert1 "+insertCnt+" end");
 			
 			//4. update wtm_org_code
 			updateCnt = iuerpInterfaceMapper.updateWtmOrgCode(paramMap);
@@ -374,8 +376,8 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 			//5. insert wtm_code
 			//기존 시작/종료일과 신규 시작/종료일이 다른 데이터 삽입
 			insertCnt += iuerpInterfaceMapper.insertWtmOrgCode(paramMap);
-			logger.debug("WtmOrgCode insert2 "+insertCnt+" end");
-			System.out.println("WtmOrgCode insert2 "+insertCnt+" end");
+			logger.debug("WtmOrgCode insert "+insertCnt+" end");
+			System.out.println("WtmOrgCode insert "+insertCnt+" end");
 			
 			//chart
 			if(insertCnt+updateCnt > 0) {
@@ -626,10 +628,13 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 					taaApplMap.put("eYmd", a.getEymd());
 					taaApplMap.put("sHm", a.getShm());
 					taaApplMap.put("eHm", a.getEhm());
-					taaApplMap.put("ifApplNo", a.getApplSeq());
 					taaApplMap.put("status", a.getApplStatusCd());
 					
-					wtmInterfaceService.setTaaApplIf(taaApplMap);
+					if(a.getApplSeq()!=null && !"".equals(a.getApplSeq())) {
+						taaApplMap.put("ifApplNo", Integer.parseInt(a.getApplSeq()));
+						wtmInterfaceService.setTaaApplIf(taaApplMap);
+					}
+						
 				}
 			}
 			
