@@ -31,14 +31,6 @@ public interface WtmIuerpInterfaceMapper {
 	 */
 	public int insertWtmCodeForBetween(Map<String, Object> paramMap);
 	/**
-	 * 신규 추가된 데이터 삽입
-	 * @param paramMap
-	 * tenantId
-	 * ymdhis
-	 * updateId
-	 */
-	public int insertWtmCode(Map<String, Object> paramMap);
-	/**
 	 * 시작/종료일 수정
 	 * @param paramMap
 	 * tenantId
@@ -46,6 +38,14 @@ public interface WtmIuerpInterfaceMapper {
 	 * updateId
 	 */
 	public int updateWtmCode(Map<String, Object> paramMap);
+	/**
+	 * 신규 추가된 데이터 삽입
+	 * @param paramMap
+	 * tenantId
+	 * ymdhis
+	 * updateId
+	 */
+	public int insertWtmCode(Map<String, Object> paramMap);
 	
 	
 	public int expireWtmHolidayMgr(Map<String, Object> paramMap);
@@ -75,4 +75,15 @@ public interface WtmIuerpInterfaceMapper {
 	public int expireWtmEmpAddr(Map<String, Object> paramMap);
 	public int updateWtmEmpAddr(Map<String, Object> paramMap);
 	public int insertWtmEmpAddr(Map<String, Object> paramMap);
+	
+	public List<Map<String, Object>> getExpireWtmOrgCode(Map<String, Object> paramMap);
+	public int expireWtmOrgCode(Map<String, Object> paramMap);
+	public List<Map<String, Object>> getDeleteWtmOrgCode(Map<String, Object> paramMap);
+	public int deleteWtmOrgCode(Map<String, Object> paramMap);
+	public int insertWtmOrgCodeForBetween(Map<String, Object> paramMap);
+	public int insertWtmOrgCode(Map<String, Object> paramMap);
+	public int updateWtmOrgCode(Map<String, Object> paramMap);
+	public int updateWtmOrgChartDet(Map<String, Object> paramMap);
+	public int insertWtmOrgChartDet(Map<String, Object> paramMap);
+	
 }

@@ -13,4 +13,7 @@ public interface WtmOrgChartMapper {
 	 */
 	public List<Map<String, Object>> getLowLevelOrg(Map<String, Object> paramMap) throws Exception;
 	
+	public int updateOrgChartEymd(Map<String, Object> paramMap) throws Exception;
+	public int insertOrgChart(Map<String, Object> paramMap) throws Exception;
+	
 }

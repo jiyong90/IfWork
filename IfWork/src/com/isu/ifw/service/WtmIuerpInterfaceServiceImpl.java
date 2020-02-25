@@ -15,12 +15,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.common.service.TenantConfigManagerService;
+import com.isu.ifw.entity.WtmIntfTaaAppl;
+import com.isu.ifw.entity.WtmOrgChart;
 import com.isu.ifw.entity.WtmPropertie;
 import com.isu.ifw.entity.WtmRule;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmInterfaceMapper;
 import com.isu.ifw.mapper.WtmIuerpInterfaceMapper;
+import com.isu.ifw.mapper.WtmOrgChartMapper;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
+import com.isu.ifw.repository.WtmIntfTaaApplRepository;
+import com.isu.ifw.repository.WtmOrgChartRepository;
 import com.isu.ifw.repository.WtmPropertieRepository;
 import com.isu.ifw.repository.WtmRuleRepository;
 import com.isu.ifw.util.WtmUtil;
@@ -34,6 +39,10 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 	@Autowired
 	@Qualifier("WtmTenantConfigManagerService")
 	private TenantConfigManagerService tcms;
+	
+	@Autowired
+	@Qualifier("wtmInterfaceService")
+	private WtmInterfaceService wtmInterfaceService;
 	
 	@Autowired
 	WtmInterfaceMapper interfaceMapper;
@@ -57,6 +66,14 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 	@Autowired
 	WtmRuleRepository ruleRepo;
 	
+	@Autowired
+	WtmIntfTaaApplRepository intfTaaApplRepo;
+	
+	@Autowired
+	WtmOrgChartMapper orgChartMapper;
+	
+	@Autowired
+	WtmOrgChartRepository orgChartRepo;
 	
 	@Transactional
 	@Override
@@ -96,7 +113,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		} else if(gubun.equals(IF_IUERP_WTM_TAA_CODE)) { //근태코드
 			rp = saveWtmTaaCode(paramMap);
 		} else if(gubun.equals(IF_IUERP_WTM_ORG_CODE)) { //조직코드
-			
+			rp = saveWtmOrgCode(paramMap);
 		} else if(gubun.equals(IF_IUERP_WTM_EMP_HIS)) { //직원정보
 			rp = saveWtmEmpHis(paramMap);
 		} else if(gubun.equals(IF_IUERP_WTM_ORG_CONC)) { //겸직정보
@@ -104,7 +121,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		} else if(gubun.equals(IF_IUERP_WTM_EMP_ADDR)) { //직원 연락처
 			rp = saveWtmEmpAddr(paramMap);
 		} else if(gubun.equals(IF_IUERP_WTM_TAA_APPL)) { //근태 신청
-			
+			rp = saveWtmTaaAppl(paramMap);
 		}
 		
 		// WTM_IF_HIS 테이블에 결과저장
@@ -217,17 +234,19 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 			logger.debug("WtmCode insert1 "+insertCnt+" end");
 			System.out.println("WtmCode insert1 "+insertCnt+" end");
 			
-			//4. insert wtm_code
+			//4. update wtm_code
+			//기존 데이터 시작/종료일 수정
+			updateCnt = iuerpInterfaceMapper.updateWtmCode(paramMap);
+			logger.debug("WtmCode update "+updateCnt+" end");
+			System.out.println("WtmCode update "+updateCnt+" end");
+			
+			//5. insert wtm_code
 			//기존 시작/종료일과 신규 시작/종료일이 다른 데이터 삽입
 			insertCnt += iuerpInterfaceMapper.insertWtmCode(paramMap);
 			logger.debug("WtmCode insert2 "+insertCnt+" end");
 			System.out.println("WtmCode insert2 "+insertCnt+" end");
 			
-			//5. update wtm_code
-			//기존 데이터 시작/종료일 수정
-			updateCnt = iuerpInterfaceMapper.updateWtmCode(paramMap);
-			logger.debug("WtmCode update "+updateCnt+" end");
-			System.out.println("WtmCode update "+updateCnt+" end");
+			
 			
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -314,6 +333,111 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		return rp;
 	}
 	
+	protected ReturnParam saveWtmOrgCode(Map<String, Object> paramMap) {
+		ReturnParam rp = new ReturnParam();
+		
+		int expireCnt = 0;
+		int deleteCnt = 0;
+		int updateCnt = 0;
+		int insertCnt = 0;
+		
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			//1. expire wtm_org_code
+			List<Map<String, Object>> expireList = iuerpInterfaceMapper.getExpireWtmOrgCode(paramMap);
+			logger.debug("expireList : "+mapper.writeValueAsString(expireList));
+			System.out.println("expireList : "+mapper.writeValueAsString(expireList));
+			
+			expireCnt = iuerpInterfaceMapper.expireWtmOrgCode(paramMap);
+			logger.debug("WtmOrgCode expire "+expireCnt+" end");
+			System.out.println("WtmOrgCode expire "+expireCnt+" end");
+			
+			//2. delete wtm_org_code
+			List<Map<String, Object>> deleteList = iuerpInterfaceMapper.getDeleteWtmOrgCode(paramMap);
+			logger.debug("deleteList : "+mapper.writeValueAsString(deleteList));
+			System.out.println("deleteList : "+mapper.writeValueAsString(deleteList));
+			
+			deleteCnt = iuerpInterfaceMapper.deleteWtmOrgCode(paramMap);
+			logger.debug("WtmOrgCode delete "+deleteCnt+" end");
+			System.out.println("WtmOrgCode delete "+deleteCnt+" end");
+			
+			//3. insert wtm_org_code
+			insertCnt = iuerpInterfaceMapper.insertWtmOrgCodeForBetween(paramMap);
+			logger.debug("WtmOrgCode insert1 "+insertCnt+" end");
+			System.out.println("WtmOrgCode insert1 "+insertCnt+" end");
+			
+			//4. update wtm_org_code
+			updateCnt = iuerpInterfaceMapper.updateWtmOrgCode(paramMap);
+			logger.debug("WtmOrgCode update "+updateCnt+" end");
+			System.out.println("WtmOrgCode update "+updateCnt+" end");
+			
+			//5. insert wtm_code
+			//기존 시작/종료일과 신규 시작/종료일이 다른 데이터 삽입
+			insertCnt += iuerpInterfaceMapper.insertWtmOrgCode(paramMap);
+			logger.debug("WtmOrgCode insert2 "+insertCnt+" end");
+			System.out.println("WtmOrgCode insert2 "+insertCnt+" end");
+			
+			//chart
+			if(insertCnt+updateCnt > 0) {
+				Long tenantId = Long.valueOf(paramMap.get("tenantId").toString());
+				String companyList = tcms.getConfigValue(tenantId, "WTMS.LOGIN.COMPANY_LIST", true, "");
+				String ymd = paramMap.get("ymd").toString();
+				
+				if(companyList!=null && !"".equals(companyList)) {
+					List<Map<String, Object>> enterCds = mapper.readValue(companyList, new ArrayList<Map<String, Object>>().getClass());
+					
+					if(enterCds!=null && enterCds.size()>0) {
+						for(Map<String, Object> m : enterCds) {
+							for(String enterCd : m.keySet()) {
+								Map<String, Object> cMap = new HashMap<String, Object>();
+								cMap.put("tenantId", tenantId);
+								cMap.put("enterCd", enterCd);
+								cMap.put("ymd", WtmUtil.parseDateStr(WtmUtil.addDate(new Date(), -1) , "yyyyMMdd"));
+								cMap.put("symd", ymd);
+								cMap.put("eymd", "29991231");
+								cMap.put("updateId", "INTF");
+								cMap.put("orgChartNm", "조직도");
+								int uCnt = orgChartMapper.updateOrgChartEymd(cMap);
+								logger.debug("WtmOrgChart update "+uCnt+" end");
+								System.out.println("WtmOrgChart update "+uCnt+" end");
+								int iCnt = orgChartMapper.insertOrgChart(cMap);
+								logger.debug("WtmOrgChart insert "+iCnt+" end");
+								System.out.println("WtmOrgChart insert "+iCnt+" end");
+							
+								
+								WtmOrgChart orgChart = orgChartRepo.findByTenantIdAndEnterCdAndBetweenSymdAndEymd(tenantId, enterCd, ymd);
+								//chart det
+								if(orgChart!=null) {
+									cMap.put("orgChartId", orgChart.getOrgChartId());
+									 uCnt = iuerpInterfaceMapper.updateWtmOrgChartDet(cMap);
+									 logger.debug("WtmOrgChartDet update "+uCnt+" end");
+									 System.out.println("WtmOrgChartDet update "+uCnt+" end");
+									 iCnt = iuerpInterfaceMapper.insertWtmOrgChartDet(cMap);
+									 logger.debug("WtmOrgChartDet insert "+iCnt+" end");
+									 System.out.println("WtmOrgChartDet insert "+iCnt+" end");
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+			rp.setFail("WtmOrgCode 데이터 이관 오류");
+			return rp;
+		}
+		
+		int applyCnt = expireCnt+deleteCnt+updateCnt+insertCnt;
+		if(applyCnt!=0)
+			rp.setSuccess(applyCnt+"건(expire:"+expireCnt+",delete:"+deleteCnt+",update:"+updateCnt+",insert:"+insertCnt+") 반영완료");
+		else
+			rp.setSuccess("반영완료");
+		
+		return rp;
+	}
+	
 	//직원정보
 	protected ReturnParam saveWtmEmpHis(Map<String, Object> paramMap) {
 		ReturnParam rp = new ReturnParam();
@@ -376,12 +500,13 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 								}
 									
 								for(Map<String, Object> emp : insertTargets) {
-									
 									boolean isNotTarget = false;
 									if(ruleValue!=null) 
 										isNotTarget = flexibleEmpService.isRuleTarget(Long.valueOf(emp.get("tenantId").toString()), emp.get("enterCd").toString(), emp.get("sabun").toString(), ruleValue);
 									
 								    if(!isNotTarget) {
+								    	System.out.println("tenantId : " + Long.valueOf(emp.get("tenantId").toString()) + " / enterCd : " + emp.get("enterCd").toString() + " / sabun : " + emp.get("sabun").toString());
+								    	
 								    	flexibleEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(emp);
 										flexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(emp);
 								    }
@@ -480,5 +605,43 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		
 		return rp;
 	}
+	
+	//근태 신청서
+	protected ReturnParam saveWtmTaaAppl(Map<String, Object> paramMap) {
+		ReturnParam rp = new ReturnParam();
+		
+		try {
+			
+			List<WtmIntfTaaAppl> taaAppls = intfTaaApplRepo.findByYyyymmddhhmissGreaterThanAndTenantId(paramMap.get("ymdhis").toString(), Long.valueOf(paramMap.get("tenantId").toString()));
+			
+			if(taaAppls!=null && taaAppls.size()>0) {
+				
+				for(WtmIntfTaaAppl a : taaAppls) {
+					HashMap<String, Object> taaApplMap = new HashMap<>();
+					taaApplMap.put("tenantId", a.getTenantId());
+					taaApplMap.put("enterCd", a.getEnterCd());
+					taaApplMap.put("sabun", a.getSabun());
+					taaApplMap.put("taaCd", a.getGntCd());
+					taaApplMap.put("sYmd", a.getSymd());
+					taaApplMap.put("eYmd", a.getEymd());
+					taaApplMap.put("sHm", a.getShm());
+					taaApplMap.put("eHm", a.getEhm());
+					taaApplMap.put("ifApplNo", a.getApplSeq());
+					taaApplMap.put("status", a.getApplStatusCd());
+					
+					wtmInterfaceService.setTaaApplIf(taaApplMap);
+				}
+			}
+			
+			rp.setSuccess("WtmTaaAppl 반영완료");
+		} catch(Exception e) {
+			e.printStackTrace();
+			rp.setFail("WtmTaaAppl 데이터 이관 오류");
+			return rp;
+		}
+		
+		return rp;
+	}
+	
 	
 }
