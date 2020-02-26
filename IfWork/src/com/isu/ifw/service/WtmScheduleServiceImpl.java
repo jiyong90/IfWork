@@ -135,7 +135,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 				List<String> empKeys =  new ArrayList();
 				
 				String stdType = push.getStdType();
-				if("B_IN".equals(stdType) || "A_OUT".equals(stdType)) {
+				if("B_IN".equals(stdType) || "A_OUT".equals(stdType) || "B_OUT".equals(stdType)) {
 					//기준가져오기
 					Map<String, Object> param = new HashMap();
 					param.put("stdType", stdType);
