@@ -497,23 +497,36 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			}
 			
 			if(time.get("pSymd").equals(today) && time.get("entrySdate") != null && paramMap.get("inoutType").equals("IN")) {
+				//출근이 있는데 한번 더
 				logger.debug("출근 타각시간이 존재하므로 반영하지 않습니다." + paramMap.toString());
 				return;
 			}else if(time.get("pSymd").equals(today) && time.get("entrySdate") == null) {
+				//정상출근
 				stdYmd = time.get("ymd").toString();
 				inoutType = "IN";
 				break;
-			} else if(time.get("pEymd").equals(today)) {
-				if(paramMap.get("inoutType").equals("IN")) 
-					continue;
-				if(time.get("entrySdate") == null)
-					continue;
-				if(list.size() > i+1) { //야간조인데 전날 퇴근을 안찍고 오늘 출근을 찍은 경우, 다음 출근이 있는지 확인...
-					Map<String, Object> temp = list.get(i+1);
-					if(time.get("pSymd").equals(today) || time.get("pEymd").equals(today)) {
-						continue;
-					}
-				}
+			}else if(time.get("pSymd").equals(today) && time.get("entrySdate") != null && time.get("entryEdate") == null && paramMap.get("inoutType").equals("OUT")) {
+				//토글이라 가정하고, 퇴근이 중복해서 들어오지 않는다고 생각하자...
+				//내일 퇴근인데 오늘 그냥 일찍 퇴근
+				stdYmd = time.get("ymd").toString();
+				inoutType = "OUT";
+				break;
+			} else if(time.get("pEymd").equals(today) && time.get("entrySdate") == null && paramMap.get("inoutType").equals("IN")) {
+				//어제 출근인데 오늘 까먹고 오늘 출근 찍을때 
+				stdYmd = time.get("ymd").toString();
+				inoutType = "IN";
+				break;
+			} else if(time.get("pEymd").equals(today) && time.get("entrySdate") != null && paramMap.get("inoutType").equals("OUT")) {
+//				if(paramMap.get("inoutType").equals("IN")) 
+//					continue;
+//				if(time.get("entrySdate") == null)
+//					continue;
+//				if(list.size() > i+1) { //야간조인데 전날 퇴근을 안찍고 오늘 출근을 찍은 경우, 다음 출근이 있는지 확인...
+//					Map<String, Object> temp = list.get(i+1);
+//					if(time.get("pSymd").equals(today) || time.get("pEymd").equals(today)) {
+//						continue;
+//					}
+//				}
 				stdYmd = time.get("ymd").toString();
 				inoutType = "OUT";
 				break;
