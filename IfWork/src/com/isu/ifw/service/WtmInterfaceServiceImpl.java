@@ -1581,7 +1581,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										, "0");
 							}
 							
-							String chkYmd = "20200211";
+							// String chkYmd = "20200211";
+							String chkYmd = WtmUtil.parseDateStr(new Date(), null);
 							String enterCd = reqDayMap.get("enterCd").toString();
 			        		String sabun = reqDayMap.get("sabun").toString();
 			        		
