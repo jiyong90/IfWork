@@ -8,4 +8,6 @@ public interface WtmValidatorMapper {
 	public Map<String, Object> checkDuplicateTaaByTaaTypeH(Map<String, Object> paramMap);
 
 	public int getWorkCnt(Map<String, Object> paramMap);
+	
+	public Map<String, Object> checkDuplicateTaaAppl(Map<String, Object> paramMap);
 }

@@ -483,6 +483,11 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 			
 			//근무제 제외 대상자를 제외하고 입사자 reset 호출하여 base 생성
 			if(insertTargets!=null && insertTargets.size()>0) {
+				
+				//comm_user 생성
+				iuerpInterfaceMapper.insertCommUser(paramMap);
+				System.out.println("CommUser insert "+insertCnt+" end");
+				
 				Long tenantId = Long.valueOf(paramMap.get("tenantId").toString());
 				String companyList = tcms.getConfigValue(tenantId, "WTMS.LOGIN.COMPANY_LIST", true, "");
 				
@@ -631,8 +636,13 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 					taaApplMap.put("status", a.getApplStatusCd());
 					
 					if(a.getApplSeq()!=null && !"".equals(a.getApplSeq())) {
-						taaApplMap.put("ifApplNo", Integer.parseInt(a.getApplSeq()));
-						wtmInterfaceService.setTaaApplIf(taaApplMap);
+						taaApplMap.put("ifApplNo", Long.valueOf(a.getApplSeq()));
+						rp = wtmInterfaceService.setTaaApplIf(taaApplMap);
+						
+						if(rp.getStatus()!=null && !"OK".equals(rp.getStatus())) {
+							return rp;
+						}
+						
 					}
 						
 				}

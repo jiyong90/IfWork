@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.isu.ifw.vo.ReturnParam;
+
 /**
  * 인사자료 이관용 인터페이스
  * @author lhj
@@ -115,7 +117,7 @@ public interface WtmInterfaceService {
 	 * @return 
 	 * @throws Exception 
 	 */
-	public void setTaaApplIf(HashMap reqMap) throws Exception;
+	public ReturnParam setTaaApplIf(HashMap reqMap) throws Exception;
 	
 	/**
 	 * 근태정보 이관 수기처리

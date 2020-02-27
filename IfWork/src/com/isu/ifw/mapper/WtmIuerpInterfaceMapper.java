@@ -64,6 +64,7 @@ public interface WtmIuerpInterfaceMapper {
 	public int updateWtmEmpHis(Map<String, Object> paramMap);
 	public List<Map<String, Object>> getInsertWtmEmpHis(Map<String, Object> paramMap);
 	public int insertWtmEmpHis(Map<String, Object> paramMap);
+	public int insertCommUser(Map<String, Object> paramMap);
 	public List<Map<String, Object>> getExpireFlexibleEmp(Map<String, Object> paramMap);
 	
 	
