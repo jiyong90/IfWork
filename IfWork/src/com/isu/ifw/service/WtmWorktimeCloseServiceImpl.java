@@ -56,5 +56,24 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 		
 		return searchList;
 	}
-	
+	/*+
+	@Override
+	public int setWorktimeCloseConfirm(Long tenantId, String enterCd, String userId, Map<String, Object> paramMap) {
+		List<Map<String, Object>> searchList = new ArrayList();	
+		try {
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+			searchList =  wtmWorktimeCloseMapper.getMonList(paramMap);
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+			logger.warn(e.toString(), e);
+		} finally {
+			logger.debug("getMonList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
+			MDC.clear();
+		}
+		
+		return 0;
+	}
+	*/
 }

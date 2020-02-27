@@ -27,6 +27,8 @@ public class WtmToken {
 	private Long tenantId;
 	@Column(name="ENTER_CD")
 	private String enterCd;
+	@Column(name="CHG_SABUN")
+	private String chgSabun;
 	@Column(name="SABUN")
 	private String sabun;
 	@Column(name="USER_ID")
@@ -83,6 +85,14 @@ public class WtmToken {
 
 	public void setSabun(String sabun) {
 		this.sabun = sabun;
+	}
+	
+	public String getChgSabun() {
+		return chgSabun;
+	}
+
+	public void setChgSabun(String chgSabun) {
+		this.chgSabun = chgSabun;
 	}
 
 	public String getAccessToken() {

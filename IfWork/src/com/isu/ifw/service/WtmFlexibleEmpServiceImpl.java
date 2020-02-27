@@ -1687,6 +1687,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							if(workDayResults.size() == (cnt+1) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) ) {
 								//뒤에 데이터가 없으면
 								res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
+								res.setTaaCd("");	// base 수정시 근태코드 클리어
 								//res.setApplId(applId);
 								workDayResultRepo.save(res);
 								break;
