@@ -567,6 +567,103 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	}
 	
 	@Override
+	public void updateCalendar(Map<String, Object> paramMap) throws Exception {
+
+		//캘린더에 초가 들어가면 안된...
+		paramMap.put("inoutDateTime", paramMap.get("inoutDate").toString().substring(0,12)+"00");
+		
+		//2.근무일과 타각상태 가져오기
+		List<Map<String, Object>> list = inoutHisMapper.getInoutStatus(paramMap);
+		logger.debug("inoutStatus : " + list.toString());
+		
+		String today = paramMap.get("inoutDate").toString().substring(0, 8);
+		String stdYmd = today;
+		String inoutType = "NONE";
+		String entrySdate = null;
+		String entryEdate = null;
+		
+		for(int i = 0; i < list.size(); i++) {
+			Map<String, Object> time = list.get(i);
+
+			entrySdate = time.get("entrySdate")!=null?time.get("entrySdate").toString():null;
+			entryEdate = time.get("entryEdate")!=null?time.get("entryEdate").toString():null;
+
+			if(time.get("pSymd").toString().equals(today) && 
+					time.get("holydayYn").toString().equals("Y") && time.get("pSdate") == null && time.get("pEdate") == null) {
+				throw new Exception("휴일 근무계획이 없습니다.");
+			}
+			
+			if(time.get("pSymd").equals(today) && time.get("entrySdate") != null && paramMap.get("inoutType").equals("IN")) {
+				//출근이 있는데 한번 더
+				logger.debug("출근 타각시간이 존재하므로 반영하지 않습니다." + paramMap.toString());
+				return;
+			}else if(time.get("pSymd").equals(today) && time.get("entrySdate") == null) {
+				//정상출근
+				stdYmd = time.get("ymd").toString();
+				inoutType = "IN";
+				break;
+			}else if(time.get("pSymd").equals(today) && time.get("entrySdate") != null && time.get("entryEdate") == null && paramMap.get("inoutType").equals("OUT")) {
+				//토글이라 가정하고, 퇴근이 중복해서 들어오지 않는다고 생각하자...
+				//내일 퇴근인데 오늘 그냥 일찍 퇴근
+				stdYmd = time.get("ymd").toString();
+				inoutType = "OUT";
+				break;
+			} else if(time.get("pEymd").equals(today) && time.get("entrySdate") == null && paramMap.get("inoutType").equals("IN")) {
+				//어제 출근인데 오늘 까먹고 오늘 출근 찍을때 
+				stdYmd = time.get("ymd").toString();
+				inoutType = "IN";
+				break;
+			} else if(time.get("pEymd").equals(today) && time.get("entrySdate") != null && paramMap.get("inoutType").equals("OUT")) {
+//				if(paramMap.get("inoutType").equals("IN")) 
+//					continue;
+//				if(time.get("entrySdate") == null)
+//					continue;
+//				if(list.size() > i+1) { //야간조인데 전날 퇴근을 안찍고 오늘 출근을 찍은 경우, 다음 출근이 있는지 확인...
+//					Map<String, Object> temp = list.get(i+1);
+//					if(time.get("pSymd").equals(today) || time.get("pEymd").equals(today)) {
+//						continue;
+//					}
+//				}
+				stdYmd = time.get("ymd").toString();
+				inoutType = "OUT";
+				break;
+			} 
+		}
+		
+		//3.출근타각이 있으면 반영안됨(삼화 인터페이스 두번 들어올 수 있음)
+		if("IN".equals(paramMap.get("inoutType").toString()) && entrySdate !=null) {
+			logger.debug("출근 타각시간이 존재하므로 반영하지 않습니다." + paramMap.toString());
+			return;
+		}
+		
+		String gobackType = "GO";
+		//3.외출 복귀 마지막 상태 가져오기
+		Map<String, Object> goback = inoutHisMapper.getGoBackStatus(paramMap);
+		if(goback == null || "GO".equals(goback.get("inoutType").toString())) {
+			gobackType = "GO";
+		} else {
+			gobackType = "BACK";
+			paramMap.put("exceptSYmd", goback.get("exceptSYmd"));
+		}
+
+		//4.퇴근일때 복귀도 강제로 생성
+		if("OUT".equals(paramMap.get("inoutType").toString()) && gobackType.equals("BACK")) {
+			Map<String, Object> tempMap = new HashMap();
+			tempMap.putAll(paramMap);
+			tempMap.put("entryTypeCd", "API");
+			tempMap.put("inoutType", gobackType);
+			logger.debug("퇴근할때 강제 복귀 생성 " + paramMap.toString());
+			updateTimecardExcept(tempMap, "N");
+		}
+		paramMap.put("stdYmd", stdYmd);
+		//6.캘린더 업데이트
+		int cnt = wtmCalendarMapper.updateEntryDateCalendar(paramMap);
+		if(cnt <= 0) {
+			throw new Exception("캘린더 정보 업데이트에 실패하였습니다.");
+		}
+	}
+	
+	@Override
 	public void updateTimecardExcept(Map<String, Object> paramMap, String unplanned) throws Exception {
 
 		//캘린더에 초가 들어가면 안된...

@@ -31,6 +31,8 @@ public interface WtmInoutService {
 	public void updateTimecard(Map<String, Object> paramMap) throws Exception;
 	//외출복귀정보 업데이트
 	public ReturnParam updateGoBack(Map<String, Object> paramMap) throws Exception;
+	//타각은 들어온 경우 캘린더 업뎃부터 테스트
+	public void updateCalendar(Map<String, Object> paramMap) throws Exception ;
 
 	//타각 후처리 로직
 	public void inoutPostProcess(Map<String, Object> paramMap, String unplanned);
