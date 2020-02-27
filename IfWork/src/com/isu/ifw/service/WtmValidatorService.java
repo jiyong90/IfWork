@@ -1,8 +1,7 @@
 package com.isu.ifw.service;
 
-import java.util.Date;
-
-import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Map;
 
 import com.isu.ifw.vo.ReturnParam;
  
@@ -36,5 +35,16 @@ public interface WtmValidatorService {
 			String symd, String shm, String eymd, String ehm, Long applId, String locale);
 	
 	public ReturnParam checkDuplicateEntryAppl(Long tenantId, String enterCd, String sabun, String ymd, Long applId);
+	
+	/**
+	 * 근태 신청(인터페이스) 시 validation
+	 * @param tenantId
+	 * @param enterCd
+	 * @param sabun
+	 * @param workList [{"sabun":"11014", "works" : [{"code":"170","sdate":"20200226","edate":"20200226","shm":"","ehm":""}]}]
+	 * @param applId
+	 * @return
+	 */
+	public ReturnParam worktimeValid(Long tenantId, String enterCd, List<Map<String, Object>> workList, Long applId);
 	
 }

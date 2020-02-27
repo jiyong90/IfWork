@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
@@ -17,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import com.isu.ifw.common.entity.CommTenantModule;
+import com.isu.ifw.common.repository.CommTenantModuleRepository;
 import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmIntfCode;
 import com.isu.ifw.entity.WtmIntfEmp;
@@ -26,9 +26,9 @@ import com.isu.ifw.entity.WtmIntfHoliday;
 import com.isu.ifw.entity.WtmIntfOrg;
 import com.isu.ifw.entity.WtmIntfOrgConc;
 import com.isu.ifw.entity.WtmIntfTaaAppl;
-import com.isu.ifw.entity.WtmTaaCode;
 import com.isu.ifw.entity.WtmTaaAppl;
 import com.isu.ifw.entity.WtmTaaApplDet;
+import com.isu.ifw.entity.WtmTaaCode;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmInterfaceMapper;
@@ -45,9 +45,8 @@ import com.isu.ifw.repository.WtmTaaApplDetRepository;
 import com.isu.ifw.repository.WtmTaaApplRepository;
 import com.isu.ifw.repository.WtmTaaCodeRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
-
-import com.isu.ifw.common.repository.CommTenantModuleRepository;
 import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
 
 @Service("wtmInterfaceService")
 public class WtmInterfaceServiceImpl implements WtmInterfaceService {
@@ -1315,7 +1314,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	}
 	
 	@Override
-	public void setTaaApplIf(HashMap reqMap) throws Exception {
+	public ReturnParam setTaaApplIf(HashMap reqMap) throws Exception {
+		ReturnParam rp = new ReturnParam();
 		// TODO Auto-generated method stub
 		System.out.println("WtmInterfaceServiceImpl setTaaApplIf");
 		// 인터페이스 결과 저장용
@@ -1341,6 +1341,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
         	
     	} catch(Exception e) {
     		retMsg = "TAA_RESULT get : 최종갱신일 조회오류";
+    		rp.setFail(retMsg);
+    		return rp;
     	}
     	
 		// 2. 인터페이스 data 처리
@@ -1356,6 +1358,13 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			
 			String retCode = reqMap.get("retCode").toString();
 			System.out.println("CALL setTaaApplIf retCode : " + retCode);
+			
+			if("FAIL".equals(retCode)) {
+				retMsg = reqMap.get("retMsg").toString();
+				rp.setFail(retMsg);
+	    		return rp;
+			}
+			
 			String oldStatusCd = "";
 			if(reqMap.get("oldStatus") != null) { oldStatusCd = reqMap.get("oldStatus").toString();}
 			
@@ -1403,7 +1412,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						ifHisMap.put("ifStatus", "ERR");
 						retMsg = "근태정보 이관중 오류. 오류로그 확인";
 						System.err.println("**TaaAppl reqDayErr " + reqDayMap.get("sabun").toString() + "/" + reqDayMap.get("sYmd").toString() + "~" + reqDayMap.get("eYmd").toString() + reqDayMap.get("retCode").toString());
-						break;
+						rp.setFail(retMsg);
+			    		return rp;
 					} else {
 						// 오류가 아니면.. 근태시간을 생성체크하자
 						String taaSetYn = reqDayMap.get("taaSetYn").toString();
@@ -1480,11 +1490,14 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
    			ifHisMap.put("ifEndDate", lastDataTime);
 			ifHisMap.put("ifMsg", retMsg);
 			wtmInterfaceMapper.insertIfHis(ifHisMap);
+			
+			rp.setSuccess(retMsg);
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
         System.out.println("WtmInterfaceServiceImpl setTaaApplIf end");
-		return;
+		return rp;
 	}
 	
 	
@@ -1581,7 +1594,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										, "0");
 							}
 							
-							String chkYmd = "20200211";
+							// String chkYmd = "20200211";
+							String chkYmd = WtmUtil.parseDateStr(new Date(), null);
 							String enterCd = reqDayMap.get("enterCd").toString();
 			        		String sabun = reqDayMap.get("sabun").toString();
 			        		
