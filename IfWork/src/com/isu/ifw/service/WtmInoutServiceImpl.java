@@ -175,6 +175,10 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		Map <String,Object> menuInOut = new HashMap();
 		Map <String,Object> menuGoback = new HashMap();
 
+		SimpleDateFormat format1 = new SimpleDateFormat ( "yyyyMMddHHmmss");
+		Date now1 = new Date();
+		String inoutDate = format1.format(now1);
+		
 		Map <String,Object> returnMap = new HashMap();
 		returnMap.put("D01", menuInOut);
 		returnMap.put("D03", menuGoback);
@@ -182,6 +186,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
 		paramMap.put("sabun", sabun);
+		paramMap.put("inoutDate", inoutDate);
 			
 		String ymd = null; //기준일 
 		String md = null; // 기준일에서 월/일만 뺀 값  
@@ -193,9 +198,9 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			List<Map<String, Object>> list = inoutHisMapper.getInoutStatus(paramMap);
 			logger.debug("inoutStatus : " + list.toString());
 			
-			SimpleDateFormat format1 = new SimpleDateFormat ( "yyyyMMdd");
+			SimpleDateFormat format = new SimpleDateFormat ( "yyyyMMdd");
 			Date now = new Date();
-			String today = format1.format(now);
+			String today = format.format(now);
 			
 			for(Map<String, Object> time : list) {
 				if(!time.containsKey("pSymd") ||  !time.containsKey("pEymd"))
@@ -305,11 +310,16 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	@Override
 	public Map<String, Object> getMenuContextWeb(Long tenantId, String enterCd, String sabun) {
 
+		SimpleDateFormat format = new SimpleDateFormat ( "yyyyMMddHHmmss");
+		Date now = new Date();
+		String inoutDate = format.format(now);
+		
 		Map <String,Object> paramMap = new HashMap<String, Object>();
 		Map <String,Object> returnMap = new HashMap();
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
 		paramMap.put("sabun", sabun);
+		paramMap.put("inoutDate", inoutDate);
 
 		String ymd = null;
 		Date entrySdate = null;
@@ -327,7 +337,6 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			SimpleDateFormat format2 = new SimpleDateFormat ("yyyy-MM-dd");
 			SimpleDateFormat format3 = new SimpleDateFormat ("HH:mm");
 
-			Date now = new Date();
 			String today = format1.format(now);
 			
 			for(Map<String, Object> time : list) {
