@@ -1,6 +1,7 @@
 package com.isu.ifw.service;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -9,8 +10,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.WtmPropertie;
 import com.isu.ifw.entity.WtmTaaCode;
 import com.isu.ifw.mapper.WtmEntryApplMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
@@ -18,6 +18,7 @@ import com.isu.ifw.mapper.WtmFlexibleStdMapper;
 import com.isu.ifw.mapper.WtmValidatorMapper;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
+import com.isu.ifw.repository.WtmPropertieRepository;
 import com.isu.ifw.repository.WtmTaaCodeRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
@@ -45,6 +46,9 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 	
 	@Autowired
 	WtmEntryApplMapper entryApplMapper;
+	
+	@Autowired
+	WtmPropertieRepository propertieRepo;
 	
 	@Override
 	public ReturnParam validTaa(Long tenantId, String enterCd, String sabun,
@@ -216,7 +220,7 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 							if(work.get("shm")!=null && !"".equals(work.get("shm"))) 
 								shm = work.get("shm").toString();
 							if(work.get("ehm")!=null && !"".equals(work.get("ehm"))) 
-								shm = work.get("ehm").toString();
+								ehm = work.get("ehm").toString();
 							
 							//신청서 중복 체크
 							rp = checkDuplicateTaaAppl(tenantId, enterCd, sabun, symd, eymd, shm, ehm, applId);
@@ -224,9 +228,16 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 							if(rp.getStatus()!=null && !"OK".equals(rp.getStatus()))
 								return rp;
 							
-							//근무시간 체크
-							rp = checkWorktimeTaaAppl(tenantId, enterCd, sabun, symd, eymd, shm, ehm, applId);
+							if(work.get("code")==null || "".equals(work.get("code"))) {
+								rp.setFail("신청서 코드가 없습니다.");
+								return rp;
+							}
+							
 						}
+						
+						//근무시간 체크
+						return checkWorktimeTaaAppl(tenantId, enterCd, sabun, works);
+						
 					}
 				}
 				
@@ -256,7 +267,7 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		if(m!=null && m.get("cnt")!=null) {
 			int cnt = Integer.parseInt(m.get("cnt").toString());
 			if(cnt > 0) {
-				rp.setFail(m.get("empNm").toString()+"("+m.get("sabun").toString()+")의 신청중인 또는 이미 적용된 근무정보가 있습니다.");
+				rp.setFail(m.get("empNm").toString()+"("+sabun+")의 신청중인 또는 이미 적용된 근무정보가 있습니다.");
 				return rp;
 			}
 		}
@@ -264,13 +275,128 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		return rp;
 	}
 	
-	protected ReturnParam checkWorktimeTaaAppl(Long tenantId, String enterCd, String sabun, String symd, String eymd, String shm, String ehm, Long applId) {
+	protected ReturnParam checkWorktimeTaaAppl(Long tenantId, String enterCd, String sabun, List<Map<String, Object>> works) {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
 		
-		//1.근무 계획 시간보다 근태 신청 시간이 더 큰지 체크
+		String sDate = null;
+		String eDate = null;
+		int i = 0;
+		for(Map<String, Object> work : works) {
+			String symd = work.get("symd").toString();
+			String eymd = work.get("eymd").toString();
+			
+			if(i==0) {
+				sDate = symd;
+				eDate = eymd;
+			} else {
+				if(symd.compareTo(sDate) == -1)
+					sDate = symd;
+				if(eymd.compareTo(eDate) == 1)
+					eDate = eymd;
+			}
+			i++;
+		}
 		
-		//2.근로시간 넘는지 체크
+		Map<String, Object> paramMap = null;
+		List<Map<String, Object>> applMinutes = new ArrayList<Map<String, Object>>();
+		for(Map<String, Object> work : works) {
+			String code = work.get("code").toString();
+			String symd = work.get("symd").toString();
+			String eymd = work.get("eymd").toString();
+			String shm = work.get("shm").toString();
+			String ehm = work.get("ehm").toString();
+			
+			int applMinute = 0;
+			
+			if((shm==null || "".equals(shm)) && (ehm==null || "".equals(ehm))) {
+				//간주근무시간
+				WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, code);
+				if(taaCode!=null && taaCode.getWorkApprHour()!=null && !"".equals(taaCode.getWorkApprHour())) {
+					applMinute = taaCode.getWorkApprHour() * 60;
+				} else {
+					//일 기본근무시간
+					applMinute = 8 * 60;
+					WtmPropertie propertie = propertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_DEFAULT_WORKTIME");
+					if(propertie!=null && propertie.getInfoValue()!=null && !"".equals(propertie.getInfoValue()) && !"0".equals(propertie.getInfoValue())) {
+						applMinute = Integer.parseInt(propertie.getInfoValue()) * 60;
+					}
+				}
+			} else {
+				
+				//시간이 들어오는 경우는 symd == eymd 
+				
+				Date sd = WtmUtil.toDate(symd + shm, "yyyyMMddHHmm");
+				Date ed = WtmUtil.toDate(symd + ehm, "yyyyMMddHHmm");
+				
+				applMinute = (int)(ed.getTime() - sd.getTime()) / (60*1000);
+			}
+			
+			System.out.println("applMinute : " + applMinute);
+			
+			paramMap = new HashMap<>();
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+			paramMap.put("sabun", sabun);
+			paramMap.put("symd", symd);
+			paramMap.put("eymd", eymd);
+			
+			paramMap.put("applMinute", applMinute);
+			
+			Date s = WtmUtil.toDate(symd, "yyyyMMdd");
+			Date e = WtmUtil.toDate(eymd, "yyyyMMdd");
+			
+			String empNm = "";
+			do {
+				String ymd = WtmUtil.parseDateStr(s, "yyyyMMdd");
+				paramMap.put("ymd", ymd);
+	
+				//1.근무 계획 시간보다 근태 신청 시간이 더 큰지 체크
+				Map<String, Object> m = validatorMapper.checkApplMinute(paramMap);
+				
+				if(m==null) {
+					rp.setFail("근무 시간 정보가 존재하지 않습니다.");
+					return rp;
+				} 
+				
+				if("N".equals(m.get("isValid").toString())) {
+					rp.setFail(m.get("empNm").toString()+"("+sabun+") "+ WtmUtil.parseDateStr(s, "yyyy-MM-dd") +"의 신청 시간이 근무 시간을 초과할 수 없습니다.");
+					return rp;
+				}
+				
+				Map<String, Object> applMinMap = new HashMap<String, Object>();
+				applMinMap.put("ymd", ymd);
+				applMinMap.put("applMinute", applMinute);
+				applMinutes.add(applMinMap);
+				
+				// 날짜 더하기
+		        Calendar cal = Calendar.getInstance();
+		        cal.setTime(s);
+		        cal.add(Calendar.DATE, 1);
+		        s = cal.getTime();
+				
+			} while(s.compareTo(e) == 0);
+			
+		}
+		
+		//2.선근제의 경우에는 해당 선근제 근무 기간 내의 소정근로시간을 넘지 않는지 체크
+		paramMap = new HashMap<>();
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("sabun", sabun);
+		paramMap.put("symd", sDate);
+		paramMap.put("eymd", eDate);
+		paramMap.put("applMinutes", applMinutes);
+		List<Map<String, Object>> results = validatorMapper.checkTotalWorkMinuteForSele(paramMap);
+		if(results!=null && results.size()>0) {
+			for(Map<String, Object> r : results) {
+				if(r.get("isValid")!=null && "N".equals(r.get("isValid"))) {
+					rp.setFail("선택근무제 총 근무 시간을 초과할 수 없습니다.");
+					return rp;
+				}
+			}
+			
+		}
 		
 		return rp;
 	}

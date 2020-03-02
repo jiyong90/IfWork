@@ -485,8 +485,8 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 			if(insertTargets!=null && insertTargets.size()>0) {
 				
 				//comm_user 생성
-				iuerpInterfaceMapper.insertCommUser(paramMap);
-				System.out.println("CommUser insert "+insertCnt+" end");
+				//iuerpInterfaceMapper.insertCommUser(paramMap);
+				//System.out.println("CommUser insert "+insertCnt+" end");
 				
 				Long tenantId = Long.valueOf(paramMap.get("tenantId").toString());
 				String companyList = tcms.getConfigValue(tenantId, "WTMS.LOGIN.COMPANY_LIST", true, "");
@@ -512,7 +512,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 										isNotTarget = flexibleEmpService.isRuleTarget(Long.valueOf(emp.get("tenantId").toString()), emp.get("enterCd").toString(), emp.get("sabun").toString(), ruleValue);
 									
 								    if(!isNotTarget) {
-								    	System.out.println("tenantId : " + Long.valueOf(emp.get("tenantId").toString()) + " / enterCd : " + emp.get("enterCd").toString() + " / sabun : " + emp.get("sabun").toString());
+								    	System.out.println("tenantId : " + Long.valueOf(emp.get("tenantId").toString()) + " / enterCd : " + emp.get("enterCd").toString() + " / sabun : " + emp.get("sabun").toString()  + " / symd : " + emp.get("symd").toString()  + " / eymd : " + emp.get("eymd").toString());
 								    	
 								    	flexibleEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(emp);
 										flexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(emp);
