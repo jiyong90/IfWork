@@ -10,6 +10,8 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmPropertie;
 import com.isu.ifw.entity.WtmTaaCode;
 import com.isu.ifw.mapper.WtmEntryApplMapper;
@@ -267,7 +269,7 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		if(m!=null && m.get("cnt")!=null) {
 			int cnt = Integer.parseInt(m.get("cnt").toString());
 			if(cnt > 0) {
-				rp.setFail(m.get("empNm").toString()+"("+sabun+")의 신청중인 또는 이미 적용된 근무정보가 있습니다.");
+				rp.setFail(m.get("empNm").toString()+"("+sabun+") " + WtmUtil.parseDateStr(WtmUtil.toDate(symd,"yyyyMMdd"), "yyyy-MM-dd") + "~" +  WtmUtil.parseDateStr(WtmUtil.toDate(eymd,"yyyyMMdd"), "yyyy-MM-dd") +"의 신청중인 또는 이미 적용된 근무정보가 있습니다.");
 				return rp;
 			}
 		}
@@ -346,7 +348,6 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 			Date s = WtmUtil.toDate(symd, "yyyyMMdd");
 			Date e = WtmUtil.toDate(eymd, "yyyyMMdd");
 			
-			String empNm = "";
 			do {
 				String ymd = WtmUtil.parseDateStr(s, "yyyyMMdd");
 				paramMap.put("ymd", ymd);
@@ -355,7 +356,7 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 				Map<String, Object> m = validatorMapper.checkApplMinute(paramMap);
 				
 				if(m==null) {
-					rp.setFail("근무 시간 정보가 존재하지 않습니다.");
+					rp.setFail( WtmUtil.parseDateStr(s, "yyyy-MM-dd") +"의 근무 시간 정보가 존재하지 않습니다.");
 					return rp;
 				} 
 				
@@ -388,10 +389,29 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		paramMap.put("eymd", eDate);
 		paramMap.put("applMinutes", applMinutes);
 		List<Map<String, Object>> results = validatorMapper.checkTotalWorkMinuteForSele(paramMap);
+		
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			System.out.println("results : " + mapper.writeValueAsString(results));
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		if(results!=null && results.size()>0) {
 			for(Map<String, Object> r : results) {
 				if(r.get("isValid")!=null && "N".equals(r.get("isValid"))) {
-					rp.setFail("선택근무제 총 근무 시간을 초과할 수 없습니다.");
+					System.out.println("workMinute: " + r.get("workMinute").toString());
+					System.out.println("totalWorkMinute: " + r.get("totalWorkMinute").toString());
+					
+					Double h = 0d;
+					Double m = 0d;
+					
+					h = Double.parseDouble(r.get("workMinute").toString())/60;
+					h = Math.ceil(h*100)/100.0;
+					m = (h - h.intValue()) * 60;
+					
+					rp.setFail("선택근무제 총 근무 시간("+((h.intValue()>0)?String.format("%02d", h.intValue()):"00")+"시간"+((m.intValue()>0)?String.format("%02d", m.intValue())+"분":"")+")을 초과할 수 없습니다.");
 					return rp;
 				}
 			}
