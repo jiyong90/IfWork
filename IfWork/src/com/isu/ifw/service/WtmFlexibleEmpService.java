@@ -254,6 +254,7 @@ public interface WtmFlexibleEmpService {
 	 */
 	public Map<String, Object> calcMinuteExceptBreaktime(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId);
 	public Map<String, Object> calcMinuteExceptBreaktime(Long timeCdMgrId, Map<String, Object> paramMap, String userId);
+	public Map<String, Object> calcMinuteExceptBreaktimeForElas(Long timeCdMgrId, Map<String, Object> paramMap, String userId);
 	
 	/**
 	 * 탄근제 근무시간 계산

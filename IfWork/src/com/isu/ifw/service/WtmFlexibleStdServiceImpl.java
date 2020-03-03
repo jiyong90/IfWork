@@ -266,20 +266,23 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 							code.setPlanEhm(planEhm);
 						}
 							
-						Map<String, Object> paramMap = new HashMap<String, Object>();
-						paramMap.put("shm", planShm);
-						paramMap.put("ehm", planEhm);
-						Map<String, Object> cMap = flexibleEmpService.calcMinuteExceptBreaktime(Long.parseLong(l.get("timeCdMgrId").toString()), paramMap, userId);
-						if(cMap!=null && cMap.get("calcMinute")!=null) {
-							code.setPlanMinute(Integer.parseInt(cMap.get("calcMinute").toString()));
-						}
-						
-						if(l.get("otbMinute")!=null && !"".equals(l.get("otbMinute"))) {
-							code.setOtbMinute(Integer.parseInt(l.get("otbMinute").toString()));
-						}
-						
-						if(l.get("otaMinute")!=null && !"".equals(l.get("otaMinute"))) {
-							code.setOtaMinute(Integer.parseInt(l.get("otaMinute").toString()));
+					
+						if(!"".equals(planShm) || !"".equals(planShm)) {
+							Map<String, Object> paramMap = new HashMap<String, Object>();
+							paramMap.put("shm", planShm);
+							paramMap.put("ehm", planEhm);
+							Map<String, Object> cMap = flexibleEmpService.calcMinuteExceptBreaktime(Long.parseLong(l.get("timeCdMgrId").toString()), paramMap, userId);
+							if(cMap!=null && cMap.get("calcMinute")!=null) {
+								code.setPlanMinute(Integer.parseInt(cMap.get("calcMinute").toString()));
+							}
+							
+							if(l.get("otbMinute")!=null && !"".equals(l.get("otbMinute"))) {
+								code.setOtbMinute(Integer.parseInt(l.get("otbMinute").toString()));
+							}
+							
+							if(l.get("otaMinute")!=null && !"".equals(l.get("otaMinute"))) {
+								code.setOtaMinute(Integer.parseInt(l.get("otaMinute").toString()));
+							}
 						}
 						
 						code.setNote(l.get("note").toString());

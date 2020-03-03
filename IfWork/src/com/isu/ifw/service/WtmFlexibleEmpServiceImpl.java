@@ -2115,7 +2115,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 	}
 	
-	protected Map<String, Object> calcMinuteExceptBreaktimeForElas(Long timeCdMgrId, Map<String, Object> paramMap, String userId) {
+	@Override
+	public Map<String, Object> calcMinuteExceptBreaktimeForElas(Long timeCdMgrId, Map<String, Object> paramMap, String userId) {
 		//break_type_cd
 		String breakTypeCd = "";
 		
