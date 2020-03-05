@@ -745,28 +745,37 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		paramMap.put("sdate", sd);
 		paramMap.put("edate", ed);
 		
+		
 		Long applId = null;
 		if(paramMap.containsKey("applId") && paramMap.get("applId") != null && !paramMap.get("applId").equals("")) {
 			applId = Long.parseLong(paramMap.get("applId")+"");
 		}
-		Map<String, Object> resultMap = validatorService.checkDuplicateWorktime(tenantId, enterCd, sabun, otSdate, otEdate, applId); 
-		/*
-		//wtmFlexibleEmpMapper.checkDuplicateWorktime(paramMap);
-		//Long timeCdMgrId = Long.parseLong(paramMap.get("timeCdMgrId").toString());
 		
-
-		int workCnt = 0;
-		if(resultMap != null && resultMap.get("workCnt")!=null && !"".equals(resultMap.get("workCnt"))) {
-			workCnt = Integer.parseInt(resultMap.get("workCnt").toString());
-		}
-		if(workCnt > 0) {
-			rp.setFail("이미 근무정보(신청중인 근무 포함)가 존재합니다.");
-			return rp;
-		}*/
+		Map<String, Object> resultMap = null;
+		if(!"SUBS_CHG".equals(workTypeCd)) {
 		
-		if(resultMap!=null && resultMap.get("status")!=null && "FAIL".equals(resultMap.get("status").toString())) {
-			rp.setFail(resultMap.get("message").toString());
-			return rp;
+			resultMap = validatorService.checkDuplicateWorktime(tenantId, enterCd, sabun, otSdate, otEdate, applId); 
+			/*
+			//wtmFlexibleEmpMapper.checkDuplicateWorktime(paramMap);
+			//Long timeCdMgrId = Long.parseLong(paramMap.get("timeCdMgrId").toString());
+			
+	
+			int workCnt = 0;
+			if(resultMap != null && resultMap.get("workCnt")!=null && !"".equals(resultMap.get("workCnt"))) {
+				workCnt = Integer.parseInt(resultMap.get("workCnt").toString());
+			}
+			if(workCnt > 0) {
+				rp.setFail("이미 근무정보(신청중인 근무 포함)가 존재합니다.");
+				return rp;
+			}*/
+			
+			if(resultMap!=null && resultMap.get("status")!=null && "FAIL".equals(resultMap.get("status").toString())) {
+				rp.setFail(resultMap.get("message").toString());
+				return rp;
+			}
+		
+		} else {
+			resultMap = new HashMap<String, Object>();
 		}
 		
 		String sHm = WtmUtil.parseDateStr(sd, "HHmm");
@@ -1084,6 +1093,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			
 			String symd = rMap.get("symd").toString();
 			String eymd = rMap.get("eymd").toString();
+			paramMap.put("symd",symd);
+			paramMap.put("eymd",eymd);
 			
 			boolean weekOtCheck = true;
 			

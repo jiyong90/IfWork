@@ -108,8 +108,8 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		ReturnParam rp = new ReturnParam();
 		if(type.equalsIgnoreCase("CODE")) { //공통코드
 			rp = saveWtmCode(paramMap);
-		//} else if(gubun.equals(IF_IUERP_WTM_HOLIDAY_MGR)) { //공휴일
-		//	rp = saveWtmHolidayMgr(paramMap);
+		} else if(type.equalsIgnoreCase("HOLIDAY")) { //공휴일
+			rp = saveWtmHolidayMgr(paramMap);
 		} else if(type.equalsIgnoreCase("GNT")) { //근태코드
 			rp = saveWtmTaaCode(paramMap);
 		} else if(type.equalsIgnoreCase("EMP")) { //직원정보
