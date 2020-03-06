@@ -46,7 +46,7 @@ import com.isu.ifw.vo.WtmFlexibleApplDetVO;
 @Service("flexibleApplyMgrService")
 public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrService{
 	
-	private final Logger logger = LoggerFactory.getLogger("ifwDBLog");
+	private final Logger logger = LoggerFactory.getLogger("ifwFileLog");
 	
 	@Resource
 	WtmFlexibleApplyMgrRepository flexibleApplyRepository;
