@@ -2,7 +2,6 @@ package com.isu.ifw.service;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,10 +12,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
-import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmOtApplMapper;
@@ -29,7 +26,6 @@ import com.isu.ifw.repository.WtmFlexibleApplRepository;
 import com.isu.ifw.repository.WtmOtSubsApplRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
-import com.isu.ifw.vo.WtmApplLineVO;
 
 @Service("wtmApplService")
 public class WtmApplServiceImpl implements WtmApplService {
@@ -80,6 +76,10 @@ public class WtmApplServiceImpl implements WtmApplService {
 	WtmApplService entryApplService;
 	
 	@Autowired
+	@Qualifier("wtmOtSubsChgApplService")
+	WtmApplService wtmOtSubsChgApplService;
+	
+	@Autowired
 	WtmApplCodeRepository applCodeRepo;
 	
 	@Autowired
@@ -127,8 +127,8 @@ public class WtmApplServiceImpl implements WtmApplService {
 						appl = wtmOtApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
 					} else if("OT_CAN".equals(applCd)) { //연장 취소
 						appl = wtmOtCanApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
-					} else if("SUBS_CHG".equals(applCd)) { //대체휴가 취소
-						
+					} else if("SUBS_CHG".equals(applCd)) { //대체휴가 정정
+						appl = wtmOtSubsChgApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
 					} else if("ENTRY_CHG".equals(applCd)) { //근태사유서
 						appl = entryApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
 					} else {

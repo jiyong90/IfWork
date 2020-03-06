@@ -202,6 +202,42 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 	
 	@Override
+	public Map<String, Object> getDayWorkHm(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
+		
+		WtmWorkCalendar calendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, paramMap.get("ymd").toString());
+		
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("sabun", sabun);
+		
+		Map<String, Object> result = null;
+		if(calendar!=null && calendar.getTimeCdMgrId()!=null) {
+			Long timeCdMgrId = Long.valueOf(calendar.getTimeCdMgrId());
+			result = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, userId);
+			
+			String breakTypeCd = null;
+			WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(timeCdMgrId).get();
+			if(timeCdMgr!=null && timeCdMgr.getBreakTypeCd()!=null)
+				breakTypeCd = timeCdMgr.getBreakTypeCd();
+			
+			if("TIME".equals(breakTypeCd)) {
+				int calcMinute = 0;
+				int breakMinute = 0;
+				
+				if(result.get("calcMinute")!=null && !"".equals(result.get("calcMinute")))
+					calcMinute = Integer.parseInt(result.get("calcMinute")+"");
+				if(result.get("breakMinute")!=null && !"".equals(result.get("breakMinute")))
+					breakMinute = Integer.parseInt(result.get("breakMinute")+"");
+				
+				if(calcMinute!=0)
+					result.put("calcMinute", (calcMinute - breakMinute));
+			}
+		}
+		
+		return result;
+	}
+	
+	@Override
 	public Map<String, Object> getWorkDayResult(Long tenantId, String enterCd, String sabun, String ymd, String userId) {
 		
 		Map<String, Object> result = new HashMap<String, Object>();
@@ -326,7 +362,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				
 				for(Map<String, Object> r : dayResult) {
 					String timeTypeCd = r.get("timeTypeCd").toString();
+					String taaCd = null;
 					String taaNm = null;
+					
+					if(r.get("taaCd")!=null)
+						taaCd = r.get("taaCd").toString();
 					
 					if(r.get("taaNm")!=null)
 						taaNm = r.get("taaNm").toString().replaceAll("\\p{Z}", "");
@@ -355,7 +395,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}
 					}
 					
-					if(r.get("apprMinute")!=null && !"".equals(r.get("apprMinute"))) {
+					if(r.get("apprSdate")!=null && !"".equals(r.get("apprSdate"))
+							&& r.get("apprEdate")!=null && !"".equals(r.get("apprEdate")) 
+							&& r.get("apprMinute")!=null && !"".equals(r.get("apprMinute"))) {
 						min = Float.valueOf(r.get("apprMinute").toString());
 					} else {
 						if(r.get("planMinute")!=null && !"".equals(r.get("planMinute"))) {
@@ -398,16 +440,20 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					if((breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME) || breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIMEFIX))
 							&& timeTypeCd.equals(WtmApplService.TIME_TYPE_EXCEPT)) {
 						noPayBreakMin += min;
+						
+						if(taaCd.equals("BREAK"))
+							workMin -= min;
+						else if(taaCd.equals("BREAK_OT"))
+							otMin -= min;
+						else if(taaCd.equals("BREAK_NIGHT"))
+							otNightMin -= min;
 					}
 					
 					System.out.println("noPayBreakMin: " + noPayBreakMin);
 					System.out.println("paidBreakMin: " + paidBreakMin);
 					
 					if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE)) {
-						if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME))
-							workMin += (min-break01);
-						else
-							workMin += min;
+						workMin += min;
 					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_FIXOT)) {
 						otMin += min;
 					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT)) {
@@ -435,7 +481,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						
 					}
 				}
-			
+				
 				dayInfo.put("workHour", minToHHmmStr(workMin+""));
 				dayInfo.put("otHour", minToHHmmStr((otMin+otNightMin)+""));
 				dayInfo.put("otBasicHour", minToHHmmStr(otMin+""));
@@ -1971,27 +2017,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		if(calendar!=null && calendar.getTimeCdMgrId()!=null) {
 			Long timeCdMgrId = Long.valueOf(calendar.getTimeCdMgrId());
 			result = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, userId);
-			
-			String breakTypeCd = null;
-			WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(timeCdMgrId).get();
-			if(timeCdMgr!=null && timeCdMgr.getBreakTypeCd()!=null)
-				breakTypeCd = timeCdMgr.getBreakTypeCd();
-			
-			if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
-				int calcMinute = 0;
-				int breakMinute = 0;result.get("breakMinute");
-				
-				if(result.get("calcMinute")!=null && !"".equals(result.get("calcMinute")))
-					calcMinute = Integer.parseInt(result.get("calcMinute").toString());
-				if(result.get("breakMinute")!=null && !"".equals(result.get("breakMinute")))
-					breakMinute = Integer.parseInt(result.get("breakMinute").toString());
-				
-				if(calcMinute!=0)
-					calcMinute = calcMinute - breakMinute;
-				
-				result.put("calcMinute", calcMinute);
-			} 
-			
 		}
 		
 		return result;
@@ -2102,8 +2127,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		Map<String, Object> breakMinuteMap = null;
 		if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
 			breakMinuteMap = flexEmpMapper.calcTimeBreakMinute(paramMap);
-			if(breakMinuteMap!=null)
-				result.putAll(breakMinuteMap);
 		} else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
 			
 		}
@@ -2148,24 +2171,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		Map<String, Object> breakMinuteMap = null;
 		if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
 			breakMinuteMap = flexEmpMapper.calcTimeBreakMinuteForElas(paramMap);
-			if(breakMinuteMap!=null) {
-				
-				int calcMinute = 0;
-				int breakMinute = 0;
-				
-				if(result.get("calcMinute")!=null && !"".equals(result.get("calcMinute")))
-					calcMinute = Integer.parseInt(result.get("calcMinute")+"");
-				if(breakMinuteMap.get("breakMinute")!=null && !"".equals(breakMinuteMap.get("breakMinute")))
-					breakMinute = Integer.parseInt(breakMinuteMap.get("breakMinute")+"");
-				
-				if(calcMinute!=0)
-					breakMinuteMap.put("calcMinute", (calcMinute - breakMinute));
-				else
-					breakMinuteMap.put("calcMinute", calcMinute);
-				
-
-				result.putAll(breakMinuteMap);
-			}
 		} else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
 			
 		}
@@ -2635,7 +2640,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						String meymd = e.getEymd();
 						
 						e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
+						// System.out.println("save 1 : " + e.toString());
 						flexEmpRepo.save(e);
+						flexEmpRepo.flush();
+						
 						WtmFlexibleEmp newEmp = new WtmFlexibleEmp();
 						newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
 						newEmp.setTenantId(e.getTenantId());
@@ -2646,17 +2654,23 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						newEmp.setUpdateId(sabun);
 						newEmp.setWorkTypeCd(e.getWorkTypeCd());
 						newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
+						// System.out.println("save 2 : " + newEmp.toString());
 						flexEmpRepo.save(newEmp);
+						flexEmpRepo.flush();
+						
 
 					//시작일만 포함되어있을 경우 
 					}else if(Integer.parseInt(sYmd) >= Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(e.getEymd())) {
 						//시작일을 신청종료일 다음날로 업데이트 해주자
 						e.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(eYmd, ""), 1),null));
+						// System.out.println("save 3 : " + e.toString());
 						flexEmpRepo.save(e);
+						
 					//종료일만 포함되어있을 경우
 					}else if(Integer.parseInt(sYmd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) <= Integer.parseInt(e.getEymd())) {
 						//종료일을 신청시작일 전날로 업데이트 해주자
 						e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
+						// System.out.println("save 4 : " + e.toString());
 						flexEmpRepo.save(e);
 						
 					}

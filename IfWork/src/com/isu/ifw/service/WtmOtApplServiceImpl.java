@@ -26,6 +26,7 @@ import com.isu.ifw.entity.WtmOtAppl;
 import com.isu.ifw.entity.WtmOtSubsAppl;
 import com.isu.ifw.entity.WtmPropertie;
 import com.isu.ifw.entity.WtmRule;
+import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmApplMapper;
@@ -524,7 +525,20 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 						dayResult.setSabun(otAppl.getSabun());
 						dayResult.setPlanSdate(otAppl.getOtSdate());
 						dayResult.setPlanEdate(otAppl.getOtEdate());
-						dayResult.setPlanMinute(Integer.parseInt(otAppl.getOtMinute()));
+						
+						//dayResult.setPlanMinute(Integer.parseInt(otAppl.getOtMinute()));
+						Map<String, Object> reCalc = new HashMap<>();
+						reCalc.put("tenentId", tenantId);
+						reCalc.put("enterCd", enterCd);
+						reCalc.put("sabun", otAppl.getSabun());
+						reCalc.put("ymd", otAppl.getYmd());
+						reCalc.put("shm", sdf.format(otAppl.getOtSdate()));
+						reCalc.put("ehm", sdf.format(otAppl.getOtEdate()));
+						//Map<String, Object> addPlanMinuteMap = wtmFlexibleEmpMapper.calcMinuteExceptBreaktime(reCalc);
+						Map<String, Object> addPlanMinuteMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, otAppl.getSabun(), reCalc, userId);
+						
+						dayResult.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+""));
+						
 						dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_OT);
 						dayResult.setUpdateId(userId);
 						
@@ -697,7 +711,27 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				
 				Map<String, Object> calcOtMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, userId);
 				if(calcOtMap!=null && calcOtMap.containsKey("calcMinute") && calcOtMap.get("calcMinute")!=null) {
-					otAppl.setOtMinute(calcOtMap.get("calcMinute").toString());
+					if(calendar!=null && calendar.getTimeCdMgrId()!=null) {
+						Long timeCdMgrId = Long.valueOf(calendar.getTimeCdMgrId());
+						
+						String breakTypeCd = null;
+						WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(timeCdMgrId).get();
+						if(timeCdMgr!=null && timeCdMgr.getBreakTypeCd()!=null)
+							breakTypeCd = timeCdMgr.getBreakTypeCd();
+						
+						if("TIME".equals(breakTypeCd)) {
+							int calcMinute = Integer.parseInt(calcOtMap.get("calcMinute")+"");
+							int breakMinute = 0;
+							
+							if(calcOtMap.get("breakMinute")!=null && !"".equals(calcOtMap.get("breakMinute")))
+								breakMinute = Integer.parseInt(calcOtMap.get("breakMinute")+"");
+							
+							otAppl.setOtMinute((calcMinute-breakMinute) + "");
+						} else {
+							otAppl.setOtMinute(calcOtMap.get("calcMinute").toString());
+						}
+					}
+					
 					wtmOtApplRepo.save(otAppl);
 				}
 				//wtmOtApplMapper.calcOtMinute(paramMap);
@@ -1276,8 +1310,29 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		paramMap.put("ehm", otEhm);
 		
 		Map<String, Object> calcOtMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, userId);
-		if(calcOtMap!=null && calcOtMap.containsKey("calcMinute") && calcOtMap.get("calcMinute")!=null) {
-			otAppl.setOtMinute(calcOtMap.get("calcMinute").toString());
+		if(calcOtMap!=null && calcOtMap.containsKey("calcMinute") && calcOtMap.get("calcMinute")!=null && !"".equals(calcOtMap.get("calcMinute"))) {
+			
+			if(calendar!=null && calendar.getTimeCdMgrId()!=null) {
+				Long timeCdMgrId = Long.valueOf(calendar.getTimeCdMgrId());
+				
+				String breakTypeCd = null;
+				WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(timeCdMgrId).get();
+				if(timeCdMgr!=null && timeCdMgr.getBreakTypeCd()!=null)
+					breakTypeCd = timeCdMgr.getBreakTypeCd();
+				
+				if("TIME".equals(breakTypeCd)) {
+					int calcMinute = Integer.parseInt(calcOtMap.get("calcMinute")+"");
+					int breakMinute = 0;
+					
+					if(calcOtMap.get("breakMinute")!=null && !"".equals(calcOtMap.get("breakMinute")))
+						breakMinute = Integer.parseInt(calcOtMap.get("breakMinute")+"");
+					
+					otAppl.setOtMinute((calcMinute-breakMinute) + "");
+				} else {
+					otAppl.setOtMinute(calcOtMap.get("calcMinute").toString());
+				}
+			}
+			
 			wtmOtApplRepo.save(otAppl);
 		}
 

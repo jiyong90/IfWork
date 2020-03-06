@@ -67,4 +67,18 @@ public interface WtmOtApplMapper {
 	 */
 	public List<Map<String, Object>> subsCreateTarget(Map<String, Object> paramMap);
 	
+	/**
+	 * 대체휴가 정정 연장근무 신청서 조회
+	 * @param applId
+	 * @return
+	 */
+	public List<Map<String, Object>> otApplfindBySubsChgApplId(Map<String, Object> paramMap);
+	
+	/**
+	 * 대체휴가 정정 신청서 조회
+	 * @param applId
+	 * @return
+	 */
+	public List<Map<String, Object>> otSubsChgApplfindByApplId(Long applId);
+	
 }

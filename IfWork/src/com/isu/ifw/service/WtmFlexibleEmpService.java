@@ -86,6 +86,8 @@ public interface WtmFlexibleEmpService {
 	 */
 	public List<Map<String, Object>> getFlexibleEmpListForPlan(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId);
 	
+	public Map<String, Object> getDayWorkHm(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId);
+	
 	/**
 	 * 해당 일의 근무 시간 조회
 	 * @param tenantId

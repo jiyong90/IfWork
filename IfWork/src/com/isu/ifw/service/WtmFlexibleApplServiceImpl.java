@@ -303,7 +303,9 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		ReturnParam rp = new ReturnParam();
 
 		WtmFlexibleAppl flexibleAppl = wtmFlexibleApplRepo.findByApplId(applId);
-		rp = validatorService.checkDuplicateFlexibleWork(tenantId, enterCd, sabun, flexibleAppl.getSymd(), flexibleAppl.getEymd(), applId);
+		WtmAppl appl = wtmApplRepo.findById(applId).get();
+		
+		rp = validatorService.checkDuplicateFlexibleWork(tenantId, enterCd, appl.getApplSabun(), flexibleAppl.getSymd(), flexibleAppl.getEymd(), applId);
 		//rp = checkRequestDate(applId);
 		if(rp.getStatus().equals("FAIL")) {
 			throw new Exception(rp.get("message")+"");
@@ -337,7 +339,6 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		}
 		
 		//신청서 메인 상태값 업데이트
-		WtmAppl appl = wtmApplRepo.findById(applId).get();
 		appl.setApplStatusCd((lastAppr)?APPL_STATUS_APPR:APPL_STATUS_APPLY_ING);
 		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
 		appl.setUpdateId(userId);
