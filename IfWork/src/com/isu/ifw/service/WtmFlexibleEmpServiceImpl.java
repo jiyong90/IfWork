@@ -2635,7 +2635,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						String meymd = e.getEymd();
 						
 						e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
+						// System.out.println("save 1 : " + e.toString());
 						flexEmpRepo.save(e);
+						flexEmpRepo.flush();
+						
 						WtmFlexibleEmp newEmp = new WtmFlexibleEmp();
 						newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
 						newEmp.setTenantId(e.getTenantId());
@@ -2646,17 +2649,23 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						newEmp.setUpdateId(sabun);
 						newEmp.setWorkTypeCd(e.getWorkTypeCd());
 						newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
+						// System.out.println("save 2 : " + newEmp.toString());
 						flexEmpRepo.save(newEmp);
+						flexEmpRepo.flush();
+						
 
 					//시작일만 포함되어있을 경우 
 					}else if(Integer.parseInt(sYmd) >= Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(e.getEymd())) {
 						//시작일을 신청종료일 다음날로 업데이트 해주자
 						e.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(eYmd, ""), 1),null));
+						// System.out.println("save 3 : " + e.toString());
 						flexEmpRepo.save(e);
+						
 					//종료일만 포함되어있을 경우
 					}else if(Integer.parseInt(sYmd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) <= Integer.parseInt(e.getEymd())) {
 						//종료일을 신청시작일 전날로 업데이트 해주자
 						e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
+						// System.out.println("save 4 : " + e.toString());
 						flexEmpRepo.save(e);
 						
 					}
