@@ -511,7 +511,12 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 									if(ruleValue!=null) 
 										isNotTarget = flexibleEmpService.isRuleTarget(Long.valueOf(emp.get("tenantId").toString()), emp.get("enterCd").toString(), emp.get("sabun").toString(), ruleValue);
 									
-								    if(!isNotTarget) {
+									String statusCd = "";
+									if(emp.get("statusCd")!=null && !"".equals(emp.get("statusCd"))) {
+										statusCd = emp.get("statusCd").toString();
+									}
+									
+								    if(!isNotTarget && !"CA".equals(statusCd) && !"EA".equals(statusCd) && !"RA".equals(statusCd)) {
 								    	System.out.println("tenantId : " + Long.valueOf(emp.get("tenantId").toString()) + " / enterCd : " + emp.get("enterCd").toString() + " / sabun : " + emp.get("sabun").toString()  + " / symd : " + emp.get("symd").toString()  + " / eymd : " + emp.get("eymd").toString());
 								    	
 								    	flexibleEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(emp);
