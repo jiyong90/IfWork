@@ -12,16 +12,20 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmPropertie;
 import com.isu.ifw.entity.WtmTaaCode;
+import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.mapper.WtmEntryApplMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmFlexibleStdMapper;
 import com.isu.ifw.mapper.WtmValidatorMapper;
+import com.isu.ifw.repository.WtmApplRepository;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmPropertieRepository;
 import com.isu.ifw.repository.WtmTaaCodeRepository;
+import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
 
@@ -51,6 +55,12 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 	
 	@Autowired
 	WtmPropertieRepository propertieRepo;
+	
+	@Autowired
+	WtmWorkCalendarRepository workCalendarRepo;
+	
+	@Autowired
+	WtmApplRepository applRepo;
 	
 	@Override
 	public ReturnParam validTaa(Long tenantId, String enterCd, String sabun,
@@ -179,22 +189,29 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 	}
 	
 	@Override
-	public ReturnParam worktimeValid(Long tenantId, String enterCd, List<Map<String, Object>> workList, Long applId) {
+	public ReturnParam worktimeValid(Long tenantId, String enterCd, String applNo, List<Map<String, Object>> works, String applSabun) {
 		ReturnParam rp = new ReturnParam();
 		
-		if(workList!=null && workList.size()>0) {
-			for(Map<String, Object> workMap : workList) {
+		if(works!=null && works.size()>0) {
+			for(Map<String, Object> w : works) {
 				
-				if(workMap.get("sabun")!=null && !"".equals(workMap.get("sabun")) && workMap.get("works")!=null && !"".equals(workMap.get("works"))) {
-					String sabun = workMap.get("sabun").toString();
-					List<Map<String, Object>> works = (List<Map<String, Object>>)workMap.get("works");
+				if(w.get("sabun")!=null && !"".equals(w.get("sabun")) && w.get("worksDet")!=null && !"".equals(w.get("worksDet"))) {
+					String sabun = w.get("sabun").toString();
+					List<Map<String, Object>> worksDet = (List<Map<String, Object>>)w.get("worksDet");
 					
-					if(works!=null && works.size()>0) {
-						for(Map<String, Object> work : works) {
+					if(worksDet!=null && worksDet.size()>0) {
+						for(Map<String, Object> work : worksDet) {
 							if(work.get("symd")==null || "".equals(work.get("symd")) ||work.get("eymd")==null || "".equals(work.get("eymd"))) {
 								rp.setFail(sabun+"의 일자 정보가 없습니다.");
 								return rp;
 							}
+							
+							if(work.get("workTimeCode")==null || "".equals(work.get("workTimeCode"))) {
+								rp.setFail(sabun+"의 근태 코드 정보가 없습니다.");
+								return rp;
+							}
+							
+							String workTimeCode = work.get("workTimeCode").toString();
 							
 							String symd = work.get("symd").toString();
 							String eymd = work.get("eymd").toString();
@@ -224,21 +241,23 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 							if(work.get("ehm")!=null && !"".equals(work.get("ehm"))) 
 								ehm = work.get("ehm").toString();
 							
+							Long applId = null;
+							if(applNo!=null && !"".equals(applNo)) {
+								WtmAppl wtmAppl = applRepo.findByIfApplNo(Long.valueOf(applNo));
+								if(wtmAppl!=null)
+									applId = wtmAppl.getApplId();
+							}
+							
 							//신청서 중복 체크
-							rp = checkDuplicateTaaAppl(tenantId, enterCd, sabun, symd, eymd, shm, ehm, applId);
+							rp = checkDuplicateTaaAppl(tenantId, enterCd, sabun, workTimeCode, symd, eymd, shm, ehm, applId);
 							
 							if(rp.getStatus()!=null && !"OK".equals(rp.getStatus()))
 								return rp;
 							
-							if(work.get("code")==null || "".equals(work.get("code"))) {
-								rp.setFail("신청서 코드가 없습니다.");
-								return rp;
-							}
-							
 						}
 						
 						//근무시간 체크
-						return checkWorktimeTaaAppl(tenantId, enterCd, sabun, works);
+						return checkWorktimeTaaAppl(tenantId, enterCd, sabun, worksDet);
 						
 					}
 				}
@@ -249,7 +268,7 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		return rp;
 	}
 	
-	protected ReturnParam checkDuplicateTaaAppl(Long tenantId, String enterCd, String sabun, String symd, String eymd, String shm, String ehm, Long applId) {
+	protected ReturnParam checkDuplicateTaaAppl(Long tenantId, String enterCd, String sabun, String workTimeCode, String symd, String eymd, String shm, String ehm, Long applId) {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
 		
@@ -257,6 +276,7 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
 		paramMap.put("sabun", sabun);
+		paramMap.put("taaCd", workTimeCode);
 		paramMap.put("applId", applId);
 		
 		paramMap.put("symd", symd);
@@ -277,16 +297,16 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		return rp;
 	}
 	
-	protected ReturnParam checkWorktimeTaaAppl(Long tenantId, String enterCd, String sabun, List<Map<String, Object>> works) {
+	protected ReturnParam checkWorktimeTaaAppl(Long tenantId, String enterCd, String sabun, List<Map<String, Object>> appl) {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
 		
 		String sDate = null;
 		String eDate = null;
 		int i = 0;
-		for(Map<String, Object> work : works) {
-			String symd = work.get("symd").toString();
-			String eymd = work.get("eymd").toString();
+		for(Map<String, Object> a : appl) {
+			String symd = a.get("symd").toString();
+			String eymd = a.get("eymd").toString();
 			
 			if(i==0) {
 				sDate = symd;
@@ -302,19 +322,24 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		
 		Map<String, Object> paramMap = null;
 		List<Map<String, Object>> applMinutes = new ArrayList<Map<String, Object>>();
-		for(Map<String, Object> work : works) {
-			String code = work.get("code").toString();
-			String symd = work.get("symd").toString();
-			String eymd = work.get("eymd").toString();
-			String shm = work.get("shm").toString();
-			String ehm = work.get("ehm").toString();
+		for(Map<String, Object> a : appl) {
+			String workTimeCode = a.get("workTimeCode").toString();
+			String symd = a.get("symd").toString();
+			String eymd = a.get("eymd").toString();
+			String shm = a.get("shm").toString();
+			String ehm = a.get("ehm").toString();
+			
+			WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, workTimeCode);
+			if(taaCode==null) {
+				rp.setFail("근태 코드 정보가 없습니다.");
+				return rp;
+			}
 			
 			int applMinute = 0;
 			
 			if((shm==null || "".equals(shm)) && (ehm==null || "".equals(ehm))) {
 				//간주근무시간
-				WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, code);
-				if(taaCode!=null && taaCode.getWorkApprHour()!=null && !"".equals(taaCode.getWorkApprHour())) {
+				if(taaCode.getWorkApprHour()!=null && !"".equals(taaCode.getWorkApprHour())) {
 					applMinute = taaCode.getWorkApprHour() * 60;
 				} else {
 					//일 기본근무시간
@@ -351,30 +376,35 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 			do {
 				String ymd = WtmUtil.parseDateStr(s, "yyyyMMdd");
 				paramMap.put("ymd", ymd);
-	
-				//1.근무 계획 시간보다 근태 신청 시간이 더 큰지 체크
-				Map<String, Object> m = validatorMapper.checkApplMinute(paramMap);
 				
-				if(m==null) {
-					rp.setFail( WtmUtil.parseDateStr(s, "yyyy-MM-dd") +"의 근무 시간 정보가 존재하지 않습니다.");
-					return rp;
-				} 
-				
-				if("N".equals(m.get("isValid").toString())) {
-					rp.setFail(m.get("empNm").toString()+"("+sabun+") "+ WtmUtil.parseDateStr(s, "yyyy-MM-dd") +"의 신청 시간이 근무 시간을 초과할 수 없습니다.");
-					return rp;
+				WtmWorkCalendar workCalendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
+				if("Y".equals(taaCode.getHolInclYn()) || ("N".equals(taaCode.getHolInclYn()) && "N".equals(workCalendar.getHolidayYn()) )) {
+					
+					//1.근무 계획 시간보다 근태 신청 시간이 더 큰지 체크
+					Map<String, Object> m = validatorMapper.checkApplMinute(paramMap);
+					
+					if(m==null) {
+						rp.setFail( WtmUtil.parseDateStr(s, "yyyy-MM-dd") +"의 근무 시간 정보가 존재하지 않습니다.");
+						return rp;
+					} 
+					
+					if("N".equals(m.get("isValid").toString())) {
+						rp.setFail(m.get("empNm").toString()+"("+sabun+") "+ WtmUtil.parseDateStr(s, "yyyy-MM-dd") +"의 신청 시간이 근무 시간을 초과할 수 없습니다.");
+						return rp;
+					}
+					
+					Map<String, Object> applMinMap = new HashMap<String, Object>();
+					applMinMap.put("ymd", ymd);
+					applMinMap.put("applMinute", applMinute);
+					applMinutes.add(applMinMap);
+					
+					// 날짜 더하기
+			        Calendar cal = Calendar.getInstance();
+			        cal.setTime(s);
+			        cal.add(Calendar.DATE, 1);
+			        s = cal.getTime();
+		        
 				}
-				
-				Map<String, Object> applMinMap = new HashMap<String, Object>();
-				applMinMap.put("ymd", ymd);
-				applMinMap.put("applMinute", applMinute);
-				applMinutes.add(applMinMap);
-				
-				// 날짜 더하기
-		        Calendar cal = Calendar.getInstance();
-		        cal.setTime(s);
-		        cal.add(Calendar.DATE, 1);
-		        s = cal.getTime();
 				
 			} while(s.compareTo(e) == 0);
 			

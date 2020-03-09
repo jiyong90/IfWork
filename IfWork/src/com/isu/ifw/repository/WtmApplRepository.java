@@ -7,5 +7,7 @@ import com.isu.ifw.entity.WtmAppl;
 
 @Repository
 public interface WtmApplRepository extends JpaRepository<WtmAppl, Long> {
+	
+	public WtmAppl findByIfApplNo(Long ifApplNo);
 
 }

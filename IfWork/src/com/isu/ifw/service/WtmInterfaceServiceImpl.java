@@ -1726,7 +1726,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					appl.setApplCd("TAA");
 					appl.setApplSabun(reqMap.get("applSabun").toString());
 					appl.setApplInSabun(reqMap.get("applSabun").toString());
-					appl.setIfApplNo(reqMap.get("applNo").toString());
+					appl.setIfApplNo(Long.valueOf(reqMap.get("applNo").toString()));
 					appl.setApplStatusCd(nowApplStatusCd);
 					appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
 					appl.setUpdateId("TAAIF");
@@ -1740,7 +1740,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				appl.setApplCd("TAA");
 				appl.setApplSabun(reqMap.get("applSabun").toString());
 				appl.setApplInSabun(reqMap.get("applSabun").toString());
-				appl.setIfApplNo(reqMap.get("applNo").toString());
+				appl.setIfApplNo(Long.valueOf(reqMap.get("applNo").toString()));
 				appl.setApplStatusCd(reqMap.get("status").toString());
 				appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
 				appl.setUpdateId("TAAIF");	
@@ -1767,7 +1767,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					taaAppl.setEnterCd(reqMap.get("enterCd").toString());
 					taaAppl.setApplId(applId);
 					taaAppl.setSabun(empMap.get("sabun").toString());
-					taaAppl.setIfApplNo(reqMap.get("applNo").toString());
+					taaAppl.setIfApplNo(Long.valueOf(reqMap.get("applNo").toString()));
 					taaAppl.setUpdateId("TAAIF");
 					wtmTaaApplRepo.save(taaAppl);
 					taaApplId = taaAppl.getTaaApplId();

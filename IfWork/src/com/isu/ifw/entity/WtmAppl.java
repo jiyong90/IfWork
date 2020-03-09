@@ -34,7 +34,7 @@ public class WtmAppl {
 	@Column(name="APPL_YMD")
 	private String applYmd;
 	@Column(name="IF_APPL_NO")
-	private String ifApplNo;
+	private Long ifApplNo;
 	@Column(name="APPL_IN_SABUN")
 	private String applInSabun;
 	@Column(name="APPL_STATUS_CD")
@@ -82,10 +82,10 @@ public class WtmAppl {
 	public void setApplYmd(String applYmd) {
 		this.applYmd = applYmd;
 	}
-	public String getIfApplNo() {
+	public Long getIfApplNo() {
 		return ifApplNo;
 	}
-	public void setIfApplNo(String ifApplNo) {
+	public void setIfApplNo(Long ifApplNo) {
 		this.ifApplNo = ifApplNo;
 	}
 	public String getApplInSabun() {
