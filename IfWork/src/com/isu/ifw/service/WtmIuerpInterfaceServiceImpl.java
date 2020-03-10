@@ -395,7 +395,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 								cMap.put("tenantId", tenantId);
 								cMap.put("enterCd", enterCd);
 								cMap.put("ymd", WtmUtil.parseDateStr(WtmUtil.addDate(new Date(), -1) , "yyyyMMdd"));
-								cMap.put("symd", ymd);
+								cMap.put("symd",  WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
 								cMap.put("eymd", "29991231");
 								cMap.put("updateId", "INTF");
 								cMap.put("orgChartNm", "조직도");
@@ -407,14 +407,21 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 								System.out.println("WtmOrgChart insert "+iCnt+" end");
 							
 								
-								WtmOrgChart orgChart = orgChartRepo.findByTenantIdAndEnterCdAndBetweenSymdAndEymd(tenantId, enterCd, ymd);
+								WtmOrgChart orgChart = orgChartRepo.findByTenantIdAndEnterCdAndBetweenSymdAndEymd(tenantId, enterCd, WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
 								//chart det
 								if(orgChart!=null) {
-									cMap.put("orgChartId", orgChart.getOrgChartId());
-									 uCnt = iuerpInterfaceMapper.updateWtmOrgChartDet(cMap);
+									System.out.println("orgChartId : " + orgChart.getOrgChartId());
+									
+									Map<String, Object> dMap = new HashMap<String, Object>();
+									dMap.put("orgChartId", orgChart.getOrgChartId());
+									dMap.put("ymd", WtmUtil.parseDateStr(WtmUtil.addDate(new Date(), -1) , "yyyyMMdd"));
+									dMap.put("ymdhis", paramMap.get("ymdhis"));
+									dMap.put("updateId", "INTF");
+									
+									 uCnt = iuerpInterfaceMapper.updateWtmOrgChartDet(dMap);
 									 logger.debug("WtmOrgChartDet update "+uCnt+" end");
 									 System.out.println("WtmOrgChartDet update "+uCnt+" end");
-									 iCnt = iuerpInterfaceMapper.insertWtmOrgChartDet(cMap);
+									 iCnt = iuerpInterfaceMapper.insertWtmOrgChartDet(dMap);
 									 logger.debug("WtmOrgChartDet insert "+iCnt+" end");
 									 System.out.println("WtmOrgChartDet insert "+iCnt+" end");
 								}
