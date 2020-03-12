@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
+import com.isu.ifw.entity.WtmOtAppl;
 import com.isu.ifw.entity.WtmOtSubsAppl;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmOtApplMapper;
@@ -87,12 +88,12 @@ public class WtmOtSubsChgApplServiceImpl implements WtmApplService {
 				//대체휴일
 				if(otAppl.get("holidayYn")!=null && "Y".equals(otAppl.get("holidayYn")) && otAppl.get("subYn")!=null && "Y".equals(otAppl.get("subYn"))) {
 					//이전 대체휴일
-					List<Map<String, Object>> otSubsAppls = wtmOtApplMapper.otSubsApplfindByOtApplId(Long.valueOf(otAppl.get("otApplId").toString()));
+					List<Map<String, Object>> otSubsAppls = wtmOtApplMapper.prvOtSubsApplFindByApplId(applId);
 					if(otSubsAppls!=null && otSubsAppls.size()>0)
 						otAppl.put("oldSubs", otSubsAppls);
 					
 					//정정하고자 하는 데이터
-					List<Map<String, Object>> otSubsChgAppls = wtmOtApplMapper.otSubsChgApplfindByApplId(Long.valueOf(otAppl.get("applId").toString()));
+					List<Map<String, Object>> otSubsChgAppls = wtmOtApplMapper.otSubsChgApplfindByApplId(applId);
 					if(otSubsChgAppls!=null && otSubsChgAppls.size()>0)
 						otAppl.put("subs", otSubsChgAppls);
 				}
@@ -192,6 +193,98 @@ public class WtmOtSubsChgApplServiceImpl implements WtmApplService {
 			String sabun, String userId) throws Exception {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("결재가 완료되었습니다.");
+		
+		List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);
+
+		String apprSabun = null;
+		//마지막 결재자인지 확인하자
+		boolean lastAppr = false;
+		if(lines != null && lines.size() > 0) {
+			for(WtmApplLine line : lines) {
+				if(line.getApprSeq() == apprSeq && line.getApprSabun().equals(sabun)) {
+					line.setApprStatusCd(APPR_STATUS_APPLY);
+					line.setApprDate(new Date());
+					//결재의견
+					if(paramMap != null && paramMap.containsKey("apprOpinion")) {
+						line.setApprOpinion(paramMap.get("apprOpinion").toString());
+						line.setUpdateId(userId);
+					}
+					apprSabun = line.getApprSabun();
+					line = wtmApplLineRepo.save(line);
+					lastAppr = true;
+				}else {
+					if(lastAppr) {
+						line.setApprStatusCd(APPR_STATUS_REQUEST);
+						line = wtmApplLineRepo.save(line);
+					}
+					apprSabun = line.getApprSabun();
+					lastAppr = false;
+				}
+			}
+		}
+		
+		if(lastAppr) {
+			List<WtmOtAppl> otApplList = new ArrayList<WtmOtAppl>();
+			List<WtmOtSubsAppl> otSubs = wtmOtSubsApplRepo.findByApplId(applId);
+			
+			System.out.println("applId : " + applId);
+			
+			if(otSubs==null || otSubs.size()==0) {
+				rp.setFail("대체휴일 정보가 없습니다.");
+				return rp;
+			}
+			
+			for(WtmOtSubsAppl sub : otSubs) {
+				if(sub.getOldSubsApplId()!=null) {
+					
+					System.out.println("otApplId : " + sub.getOtApplId());
+					
+					WtmOtAppl otAppl = wtmOtApplRepo.findById(sub.getOtApplId()).get();
+					
+					//변경 전 대체휴일
+					WtmOtSubsAppl oldSubs = wtmOtSubsApplRepo.findById(sub.getOldSubsApplId()).get();
+					if(oldSubs==null) {
+						rp.setFail("변경할 대체휴일이 없습니다.");
+						return rp;
+					}
+					
+					System.out.println("result 삭제 > ");
+					System.out.println("chg subsSdate : " + WtmUtil.parseDateStr(oldSubs.getSubsSdate(), "yyyy-MM-dd HH:mm") + "/ subsEdate : " + WtmUtil.parseDateStr(oldSubs.getSubsEdate(), "yyyy-MM-dd HH:mm"));
+					
+					//변경 전 대체휴일 result 에서 삭제
+					wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(tenantId, enterCd, oldSubs.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, "", oldSubs.getSubsSdate(), oldSubs.getSubsEdate(), oldSubs.getApplId(), userId);
+					
+					//cancelYn 변경
+					oldSubs.setCancelYn("Y");
+					wtmOtSubsApplRepo.save(oldSubs);
+					
+					//대체휴가 정정을 위한 연장근무 신청서 데이터
+					WtmOtAppl newOtAppl = new WtmOtAppl();
+					newOtAppl.setApplId(applId);
+					newOtAppl.setOtApplId(otAppl.getOtApplId());
+					newOtAppl.setYmd(otAppl.getYmd());
+					newOtAppl.setSabun(otAppl.getSabun());
+					newOtAppl.setOtSdate(otAppl.getOtSdate());
+					newOtAppl.setOtEdate(otAppl.getOtEdate());
+					otApplList.add(newOtAppl);
+					
+				}
+			}
+			
+			if(otApplList.size()>0) {
+				rp.put("otApplList", otApplList);
+				ObjectMapper mapper = new ObjectMapper();
+				System.out.println("otApplList : " + mapper.writeValueAsString(otApplList));
+			}
+		}
+		
+		//신청서 메인 상태값 업데이트
+		WtmAppl appl = wtmApplRepo.findById(applId).get();
+		appl.setApplStatusCd((lastAppr)?APPL_STATUS_APPR:APPL_STATUS_APPLY_ING);
+		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
+		appl.setUpdateId(userId);
+		
+		appl = wtmApplRepo.save(appl);
 		
 		return rp;
 

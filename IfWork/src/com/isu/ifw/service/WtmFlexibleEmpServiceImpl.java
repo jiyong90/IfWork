@@ -2345,6 +2345,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	@Override
 	public void applyOtSubs(Long tenantId, String enterCd, List<WtmOtAppl> otApplList, boolean isCalcAppr, String userId) {
 		logger.debug("applyOtSubs --------------------------------------");
+		System.out.println("applyOtSubs --------------------------------------");
 		
 		for(WtmOtAppl otAppl : otApplList) {
 			logger.debug("휴일 대체 생성 [" + tenantId + "@" + enterCd + "@" + otAppl.getSabun() + "] start >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
