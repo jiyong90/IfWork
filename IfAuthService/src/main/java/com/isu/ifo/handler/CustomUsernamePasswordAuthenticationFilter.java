@@ -158,6 +158,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
 			}
         }
         
+        
         /*
         String username = request.getParameter("username");
         String enterCd = request.getParameter("enterCd");
@@ -167,19 +168,37 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
         String urls = "http://203.231.40.60/MobileLogin.do?loginEnterCd="+enterCd+"&loginUserId="+loginId+"&loginPassword="+password+"&localeCd=ko_KR";
         */
         
-
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         
+        /** 2020.02.28 JYP
+         *  더존은 로그인 정보와 사번이 다를수 있다. 
+         *  우리 시스템은 username 이 테넌트@회사코드@사번이다 
+         *  근태서버 필터에 jwt token에 생성된 username 정보로 sessionData를만들고 그 세션데이터로 각 controller에서 유저정보를 조회한다. 
+         *  유저 정보를 담은 WTM_EMP_HIS 테이블에는 사번! 이 있다 로그인 정보 없음. 
+         *  그래서 resultMap에서 username를 체크하여 있을 경우 덮어 쓴다. 
+         */
+        if(resultMap != null && resultMap.containsKey("username")) {
+        	username = resultMap.get("username") + "";
+        }
+        
+
         try {
 			System.out.println("resultMap : " + mapper.writeValueAsString(resultMap));
 		} catch (JsonProcessingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-         
+        
+        System.out.println("username : " + username);
         try {
-        	UserDetails details = userDetailsService.loadUserByUsername(username);
+        	UserDetailsImpl details = (UserDetailsImpl) userDetailsService.loadUserByUsername(username);
+        	// loginUrl 에서의 검증 후 
+        	//현재 UserDetail의 패스워드는 무의미 하다. 계정관리를 커스터 마이징해야한다. 
+        	//넘어온 패스워드로 변경하자.
+        	details.setPassword(encoder.encode(password));
+    		userDetailsService.save(details);
+        	
         }catch(UsernameNotFoundException ne) {
         	//System.out.println(encoder.encode(password));
         	UserDetailsImpl newDetails = new UserDetailsImpl();
@@ -224,6 +243,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
 
         List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
         authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+       
         UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(username, password, authorities);
         System.out.println("authRequest.getName() : " + authRequest.getName());
         System.out.println(this.getFilterName());
