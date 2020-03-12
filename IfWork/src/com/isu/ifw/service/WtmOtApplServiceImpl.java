@@ -126,6 +126,9 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 	@Autowired
 	WtmApplLineService applLineService;
 	
+	@Autowired
+	WtmOtSubsApplRepository otSubsApplRepo;
+	
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
 		try {
@@ -170,6 +173,11 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				
 				//대체휴일
 				if(otAppl.get("holidayYn")!=null && "Y".equals(otAppl.get("holidayYn")) && otAppl.get("subYn")!=null && "Y".equals(otAppl.get("subYn"))) {
+					//이전 대체휴일
+					List<WtmOtSubsAppl> oldOtSubsAppls = otSubsApplRepo.findByApplIdAndCancelYn(applId, "Y");
+					if(oldOtSubsAppls!=null && oldOtSubsAppls.size()>0)
+						otAppl.put("oldSubs", oldOtSubsAppls);
+					
 					List<Map<String, Object>> otSubsAppls = wtmOtApplMapper.otSubsApplfindByOtApplId(Long.valueOf(otAppl.get("otApplId").toString()));
 					if(otSubsAppls!=null && otSubsAppls.size()>0)
 						otAppl.put("subs", otSubsAppls);

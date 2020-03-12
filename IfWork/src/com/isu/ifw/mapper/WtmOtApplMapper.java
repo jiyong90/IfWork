@@ -27,6 +27,13 @@ public interface WtmOtApplMapper {
 	 * @return
 	 */
 	public List<Map<String, Object>> otSubsApplfindByOtApplId(Long otApplId);
+	
+	/**
+	 * 대체휴가 정정 전 휴일연장근무 신청서 조회
+	 * @param applId
+	 * @return
+	 */
+	public List<Map<String, Object>> prvOtSubsApplFindByApplId(Long applId);
 	 	
 	/**
 	 * 이전에 신청한 휴일신청서 조회
