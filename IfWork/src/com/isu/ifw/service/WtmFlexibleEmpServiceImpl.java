@@ -2800,7 +2800,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		searchSabun.put("symd", searchSabun.get("useSymd"));
 		searchSabun.put("eymd", searchSabun.get("useEymd"));
-		searchSabun.put("pId", searchSabun.get("pId"));
+		searchSabun.put("pId", searchSabun.get("userId"));
 
 		logger.debug("[setApply] updateStart " +searchSabun.toString());
 
