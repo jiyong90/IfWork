@@ -1822,6 +1822,26 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					}
 					cnt++;
 				}
+				
+				//base minute 다시 계산
+				List<WtmWorkDayResult> updatedResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCd, ymd, ymd);
+				if(updatedResults!=null && updatedResults.size()>0) {
+					SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+					
+					for(WtmWorkDayResult r : updatedResults) {
+						Map<String, Object> reCalc = new HashMap<>();
+						reCalc.put("tenentId", tenantId);
+						reCalc.put("enterCd", enterCd);
+						reCalc.put("sabun", sabun);
+						reCalc.put("ymd", r.getYmd());
+						reCalc.put("shm", sdf.format(r.getPlanSdate()));
+						reCalc.put("ehm", sdf.format(r.getPlanEdate()));
+						Map<String, Object> planMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, reCalc, userId);
+						
+						r.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
+						workDayResultRepo.save(r);
+					}
+				}
 				 
 			//}  		
 				
@@ -2329,6 +2349,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		for(WtmOtAppl otAppl : otApplList) {
 			logger.debug("휴일 대체 생성 [" + tenantId + "@" + enterCd + "@" + otAppl.getSabun() + "] start >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 			logger.debug("연장근무신청서 : " + otAppl.getOtApplId());
+			System.out.println("휴일 대체 생성 [" + tenantId + "@" + enterCd + "@" + otAppl.getSabun() + "] start >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+			System.out.println("연장근무신청서 : " + otAppl.getOtApplId());
 			
 			//소급의 경우 인정시간과 연장근로시간을 비교하여 다른 경우 대체휴일 정보를 생성하지 않는다.
 			//미래의 연장근로시간의 경우 일마감에서 대체휴일 정보를 생성한다.
@@ -2355,6 +2377,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					resultParam.put("userId", userId);
 					
 					logger.debug("연장근무시간 : " + WtmUtil.parseDateStr(otAppl.getOtSdate(), "yyyyMMddHHmmss") + "~" + WtmUtil.parseDateStr(otAppl.getOtEdate(), "yyyyMMddHHmmss"));
+					System.out.println("연장근무시간 : " + WtmUtil.parseDateStr(otAppl.getOtSdate(), "yyyyMMddHHmmss") + "~" + WtmUtil.parseDateStr(otAppl.getOtEdate(), "yyyyMMddHHmmss"));
 					
 					String entrySdate = null;
 					String entryEdate = null;
@@ -2441,6 +2464,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						int otApprMinute = Integer.parseInt(otMinute.get("apprMinute").toString());
 						
 						logger.debug("otPlanMinute : " + otPlanMinute + "/otApprMinute : " + otApprMinute);
+						System.out.println("otPlanMinute : " + otPlanMinute + "/otApprMinute : " + otApprMinute);
 						
 						if(otPlanMinute == otApprMinute) {
 							resultParam.put("otApplId", otAppl.getOtApplId());
@@ -2453,10 +2477,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplId(otAppl.getApplId());
 								if(subs!=null && subs.size()>0) {
 									logger.debug("save subs start >>> ");
+									System.out.println("save subs start >>> ");
 									for(WtmOtSubsAppl sub : subs) { 
 										addWtmDayResultInBaseTimeType(tenantId, enterCd, sub.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, "", sub.getSubsSdate(), sub.getSubsEdate(), otAppl.getApplId(), userId);
 									}
 									logger.debug("save subs end >>> ");
+									System.out.println("save subs end >>> ");
 								}
 							}
 						}
@@ -2624,6 +2650,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			flexibleEmp.setNote(searchSabun.get("note").toString());
 			System.out.println(flexibleEmp.toString());
 			flexEmpRepo.save(flexibleEmp);
+			flexEmpRepo.flush();
 //			int cnt = wtmFlexibleApplyMgrMapper.insertApplyEmp(searchSabun);
 			Map<String, Object> searchMap = wtmFlexibleApplyMgrMapper.setApplyEmpId(searchSabun);
 			searchSabun.put("flexibleEmpId", Long.parseLong(searchMap.get("flexibleEmpId").toString()));
@@ -2635,6 +2662,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					//신청기간내에 시작 종료가 포함되어있을 경우
 					if(Integer.parseInt(sYmd) <= Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) >= Integer.parseInt(e.getEymd())) {
 						flexEmpRepo.delete(e);
+						flexEmpRepo.flush();
 					//신청 시작일과 종료일이 기존 근무정보 내에 있을 경우 
 					} else if(Integer.parseInt(sYmd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(e.getEymd())) {
 						String meymd = e.getEymd();
@@ -2665,6 +2693,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						e.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(eYmd, ""), 1),null));
 						// System.out.println("save 3 : " + e.toString());
 						flexEmpRepo.save(e);
+						flexEmpRepo.flush();
 						
 					//종료일만 포함되어있을 경우
 					}else if(Integer.parseInt(sYmd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) <= Integer.parseInt(e.getEymd())) {
@@ -2672,6 +2701,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
 						// System.out.println("save 4 : " + e.toString());
 						flexEmpRepo.save(e);
+						flexEmpRepo.flush();
 						
 					}
 				}
@@ -2745,6 +2775,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						
 						if(result.size()>0)
 							workDayResultRepo.saveAll(result);
+							workDayResultRepo.flush();
 					}
 					
 				} else {
