@@ -216,6 +216,16 @@ public interface WtmInterfaceService {
 	 */
 	public void setCloseDay(Long tenantId) throws Exception;
 	
+	/**
+	 * 보상휴가 hr전송
+	 * @param reqMap - 파라메터 맵
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void sendCompCnt(HashMap reqMap) throws Exception;
+	
+	
+	
 
 	public void saveCodeIntf(Long tenantId, List<Map<String, Object>> dataList);
 	public void saveEmpIntf(Long tenantId, List<Map<String, Object>> dataList);

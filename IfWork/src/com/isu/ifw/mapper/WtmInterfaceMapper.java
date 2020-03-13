@@ -287,4 +287,7 @@ public interface WtmInterfaceMapper {
 	public void deleteResult(Map<String, Object> paramMap);
 	public Map<String, Object> getTaaPlanTimeList(Map<String, Object> paramMap);
 	
+	public List<Map<String, Object>> getCompList(Map<String, Object> paramMap);
+	
+	
 }

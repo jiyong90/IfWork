@@ -85,7 +85,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
     	System.out.println("********** closeType : " + closeType);
     	
     	getDateMap = new HashMap();
-    	// beforeYmd = "20200106";
+    	// beforeYmd = "20200306";
     	getDateMap.put("tenantId", tenantId);
     	getDateMap.put("ymd", beforeYmd);	// 마감은 전일임으로 계산된 전일을 셋팅해야함
     	getDateMap.put("closeType", closeType);
