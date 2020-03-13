@@ -1716,7 +1716,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				List<String> timeTypeCd = new ArrayList<>();
 				timeTypeCd.add(WtmApplService.TIME_TYPE_BASE);
 				timeTypeCd.add(WtmApplService.TIME_TYPE_SUBS); 
-				timeTypeCd.add(WtmApplService.TIME_TYPE_TAA); 
+				timeTypeCd.add(WtmApplService.TIME_TYPE_TAA);
+				timeTypeCd.add(WtmApplService.TIME_TYPE_REGA); 
 				
 				List<WtmWorkDayResult> workDayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCd, ymd, ymd);
 				 
@@ -1727,10 +1728,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				Boolean isPrev = null;
 				for(WtmWorkDayResult res : workDayResults) {
 					 
-					if(( res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) ) && res.getPlanSdate().compareTo(removeSdate) == 0 && res.getPlanEdate().compareTo(removeEdate) == 0) {
+					if(( res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) ) && res.getPlanSdate().compareTo(removeSdate) == 0 && res.getPlanEdate().compareTo(removeEdate) == 0) {
 						if(cnt == 0) {
 							//시작시간이 대체휴일이면 다음 데이터 여부를 판단하고 다음데이터가 SUBS BASE로 변경하자
-							if(workDayResults.size() == (cnt+1) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) ) {
+							if(workDayResults.size() == (cnt+1) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) ) {
 								//뒤에 데이터가 없으면
 								res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
 								res.setTaaCd("");	// base 수정시 근태코드 클리어
@@ -1748,7 +1749,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							}
 						}else {
 							// 삭제하려는 데이터면 이전 데이터가 SUBS 인지를 체크 한다.
-							if(workDayResults.get(cnt-1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) || workDayResults.get(cnt-1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA)) {
+							if(workDayResults.get(cnt-1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) || workDayResults.get(cnt-1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) || workDayResults.get(cnt-1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA)) {
 								isPrev = false;
 							}else {
 								isPrev = true;
@@ -1774,7 +1775,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								}
 							}else {
 								//마지막 데이터가 아니면 다음 데이터의 timeTypeCd를 확인하자
-								if(workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA)) {
+								if(workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA)) {
 									if(isPrev) { 
 										//이전 데이터로 지우려는 데이터의 종료일로 바꿔주면 땡
 										WtmWorkDayResult modiResult = workDayResults.get(cnt-1);
