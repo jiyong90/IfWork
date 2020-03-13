@@ -131,6 +131,9 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 	@Autowired
 	WtmApplLineService applLineService;
 	
+	@Autowired
+	WtmInboxService inbox;
+	
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
 		Map<String, Object> appl = flexApplMapper.findByApplId(applId);
@@ -220,7 +223,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 	
 	@Transactional
 	@Override
-	public void request(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap, String sabun, String userId) throws Exception {
+	public ReturnParam request(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap, String sabun, String userId) throws Exception {
 		WtmApplCode applCode = getApplInfo(tenantId, enterCd, workTypeCd);
 		
 		
@@ -249,7 +252,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		//결재라인 상태값 업데이트
 		//WtmApplLine line = wtmApplLineRepo.findByApplIdAndApprSeq(applId, apprSeq);
 		List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprTypeCdAscApprSeqAsc(applId);
-		 
+		List<String> apprSabun = new ArrayList();
 		if(lines != null && lines.size() > 0) {
 			for(WtmApplLine line : lines) {
 				
@@ -260,6 +263,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 					line = wtmApplLineRepo.save(line);
 				} else if(APPL_LINE_S.equals(line.getApprTypeCd()) || APPL_LINE_R.equals(line.getApprTypeCd())) { //결재
 					//첫번째 결재자의 상태만 변경 후 스탑
+					apprSabun.add(line.getApprSabun());
 					line.setApprStatusCd(APPR_STATUS_REQUEST);
 					line = wtmApplLineRepo.save(line);
 					break;
@@ -268,8 +272,13 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			}
 		}
 		
-		
+		//inbox.setInbox(tenantId, enterCd, apprSabun, applId, "APPR", "결재요청 : 근무제신청", "", "Y");
 		 
+		//메일 전송을 위한 파라미터
+		rp.put("from", sabun);
+		rp.put("to", apprSabun);
+		
+		return rp;
 	}
 
 	protected WtmAppl saveWtmAppl(Long tenantId, String enterCd, Long applId, String workTypeCd, String applStatusCd, String sabun, String userId) {
@@ -314,6 +323,8 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		//결재라인 상태값 업데이트
 		//WtmApplLine line = wtmApplLineRepo.findByApplIdAndApprSeq(applId, apprSeq);
 		List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);
+		
+		String apprSabun = null;
 		//마지막 결재자인지 확인하자
 		boolean lastAppr = false;
 		if(lines != null && lines.size() > 0) {
@@ -326,6 +337,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 						line.setApprOpinion(paramMap.get("apprOpinion").toString());
 						line.setUpdateId(userId);
 					}
+					apprSabun = line.getApprSabun();
 					line = wtmApplLineRepo.save(line);
 					lastAppr = true;
 				}else {
@@ -333,6 +345,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 						line.setApprStatusCd(APPR_STATUS_REQUEST);
 						line = wtmApplLineRepo.save(line);
 					}
+					apprSabun = line.getApprSabun();
 					lastAppr = false;
 				}
 			}
@@ -524,6 +537,23 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			
 		}
 		
+		List<String> pushSabun = new ArrayList();
+		if(lastAppr) {
+			pushSabun.add(appl.getApplSabun());
+			//inbox.setInbox(tenantId, enterCd, pushSabun, applId, "APPLY", "결재완료", "유연근무제 신청서가  승인되었습니다.", "N");
+		
+			rp.put("msgType", "APPLY");
+		} else {
+			pushSabun.add(apprSabun);
+			//inbox.setInbox(tenantId, enterCd, pushSabun, applId, "APPR", "결재요청 : 유연근무제신청", "", "N");
+		
+			rp.put("msgType", "APPR");
+		}
+		
+		//메일 전송을 위한 파라미터
+		rp.put("from", sabun);
+		rp.put("to", pushSabun);
+		
 		return rp;
 		
 	}
@@ -531,8 +561,9 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 	 
 	
 	@Override
-	public void reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap, String sabun, String userId)  throws Exception {
+	public ReturnParam reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap, String sabun, String userId)  throws Exception {
 		// TODO Auto-generated method stub
+		return null;
 	}
 
 	

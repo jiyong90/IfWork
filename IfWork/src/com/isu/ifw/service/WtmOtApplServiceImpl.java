@@ -14,12 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
-import com.isu.ifw.entity.WtmEmpHis;
 import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmOtAppl;
@@ -236,7 +234,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 
 	@Transactional
 	@Override
-	public void request(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap,
+	public ReturnParam request(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap,
 			String sabun, String userId) throws Exception { 
 		
 		ReturnParam rp = new ReturnParam();
@@ -284,6 +282,12 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		}
 		
 		inbox.setInbox(tenantId, enterCd, apprSabun, applId, "APPR", "결재요청 : 연장근무신청", "", "Y");
+		
+		//메일 전송을 위한 파라미터
+		rp.put("from", sabun);
+		rp.put("to", apprSabun);
+		
+		return rp;
 	}
 
 	@Transactional
@@ -568,21 +572,34 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		
 		List<String> pushSabun = new ArrayList();
 		if(lastAppr) {
-			pushSabun.add(sabun);
+			pushSabun.addAll(applSabuns);
 			inbox.setInbox(tenantId, enterCd, pushSabun, applId, "APPLY", "결재완료", "연장근무 신청서가  승인되었습니다.", "N");
+			
+			rp.put("msgType", "APPLY");
 		} else {
 			pushSabun.add(apprSabun);
 			inbox.setInbox(tenantId, enterCd, pushSabun, applId, "APPR", "결재요청 : 연장근무신청", "", "N");
+			
+			rp.put("msgType", "APPR");
 		}
+		
+		//메일 전송을 위한 파라미터
+		rp.put("from", sabun);
+		rp.put("to", pushSabun);
+		
 		return rp;
 
 	}
 
 	@Transactional
 	@Override
-	public void reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap,
+	public ReturnParam reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap,
 			String sabun, String userId) throws Exception {
+		
+		ReturnParam rp = new ReturnParam();
+		
 		if(paramMap == null || !paramMap.containsKey("apprOpinion") && paramMap.get("apprOpinion").equals("")) {
+			rp.setFail("사유를 입력하세요.");
 			throw new Exception("사유를 입력하세요."); 
 		}
 		
@@ -616,6 +633,13 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		wtmApplRepo.save(appl);
 		
 		inbox.setInbox(tenantId, enterCd, applSabun, applId, "APPLY", "결재완료", "연장근무 신청서가  반려되었습니다.", "N");
+		
+		//메일 전송을 위한 파라미터
+		rp.put("from", sabun);
+		rp.put("to", applSabun);
+		
+		return rp;
+		
 	}
 
 	@Transactional

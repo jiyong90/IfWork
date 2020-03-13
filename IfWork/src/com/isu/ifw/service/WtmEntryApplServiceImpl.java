@@ -101,7 +101,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 
 	@Transactional
 	@Override
-	public void request(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap,
+	public ReturnParam request(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap,
 			String sabun, String userId) throws Exception {
 		ReturnParam rp = new ReturnParam();
 		
@@ -132,6 +132,12 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 			}
 		}
 		inbox.setInbox(tenantId, enterCd, emps, applId, "APPR", "결재요청 : 근태사유서", "", "Y");
+		
+		//메일 전송을 위한 파라미터
+		rp.put("from", sabun);
+		rp.put("to", emps);
+		
+		return rp;
 	}
 	
 	//모바일용 동기처리
@@ -256,20 +262,28 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 			emps.add(applSabun);
 			System.out.println("1111111111111111111 1" + emps.toString());
 			inbox.setInbox(tenantId, enterCd, emps, applId, "APPLY", "결재완료", "근태사유서가  승인되었습니다.", "N");
+			
+			rp.put("msgType", "APPLY");
 		} else {
 			emps.add(apprSabun);
 			System.out.println("1111111111111111111 2" + emps.toString());
 			inbox.setInbox(tenantId, enterCd, emps, applId, "APPR", "결재요청 : 근태사유서", "", "N");
+			
+			rp.put("msgType", "APPR");
 		}
+		
+		//메일 전송을 위한 파라미터
+		rp.put("from", sabun);
+		rp.put("to", emps);
 
 		return rp;
 	}
 
 	@Override
-	public void reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap,
+	public ReturnParam reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap,
 			String sabun, String userId) throws Exception {
 		// TODO Auto-generated method stub
-		
+		return null;
 	}
 
 	@Override

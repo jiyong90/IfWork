@@ -168,10 +168,10 @@ public class WtmApplServiceImpl implements WtmApplService {
 	}
 
 	@Override
-	public void request(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap,
+	public ReturnParam request(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap,
 			String sabun, String userId) throws Exception {
 		// TODO Auto-generated method stub
-		
+		return null;
 	}
 
 	@Override
@@ -183,10 +183,13 @@ public class WtmApplServiceImpl implements WtmApplService {
 
 	@Transactional
 	@Override
-	public void reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap,
+	public ReturnParam reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap,
 			String sabun, String userId) throws Exception {
 		
+		ReturnParam rp = new ReturnParam();
+		
 		if(paramMap == null || !paramMap.containsKey("apprOpinion") && paramMap.get("apprOpinion").equals("")) {
+			rp.setFail("사유를 입력하세요.");
 			throw new Exception("사유를 입력하세요.");
 		}
 		String apprOpinion = paramMap.get("apprOpinion").toString();
@@ -221,6 +224,12 @@ public class WtmApplServiceImpl implements WtmApplService {
 		
 		System.out.println("1111111111111111111 3" + emps.toString());
 		inbox.setInbox(tenantId, enterCd, emps, applId, "APPLY", "결재완료", "신청서가  반려되었습니다.", "N");
+		
+		//메일 전송을 위한 파라미터
+		rp.put("from", sabun);
+		rp.put("to", emps);
+		
+		return rp;
 	}
 
 	@Override

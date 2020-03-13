@@ -29,7 +29,8 @@ public class WtmPushMgrServiceImpl implements WtmPushMgrService{
 	public List<Map<String, Object>> getPushMgrList(Long tenantId, String enterCd) {
 		List<Map<String, Object>> codeList = new ArrayList();	
 		try {
-			List<WtmPushMgr> list = pushMgrRepository.findByTenantIdAndEnterCd(tenantId, enterCd);
+			//List<WtmPushMgr> list = pushMgrRepository.findByTenantIdAndEnterCd(tenantId, enterCd);
+			List<WtmPushMgr> list = pushMgrRepository.findByTenantIdAndEnterCdAndPushObjNot(tenantId, enterCd, "COMM");
 			
 			for(WtmPushMgr l : list) {
 				Map<String, Object> code = new HashMap();
