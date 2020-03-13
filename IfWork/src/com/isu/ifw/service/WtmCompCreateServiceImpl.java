@@ -48,4 +48,20 @@ public class WtmCompCreateServiceImpl implements WtmCompCreateService{
 		}
 		return searchList;
 	}
+	
+	@Override
+	public List<Map<String, Object>> getCompCreateHRList(Map<String, Object> paramMap) {
+		List<Map<String, Object>> searchList = null;
+		try {
+			System.out.println("getCompCreateHRList >>> "+paramMap.toString());
+			searchList =  wtmCompCreateMapper.getCompCreateHRList(paramMap);			
+		} catch(Exception e) {
+			e.printStackTrace();
+			logger.warn(e.toString(), e);
+		} finally {
+			logger.debug("getCompMgrList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
+			MDC.clear();
+		}
+		return searchList;
+	}
 }

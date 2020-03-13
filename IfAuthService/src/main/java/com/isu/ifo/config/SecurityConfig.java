@@ -107,6 +107,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
         CustomAuthenticationSuccessHandler successHandler = new CustomAuthenticationSuccessHandler();
         //successHandler.setDefaultTargetUrl("/index");
+        successHandler.setUseReferer(false);
+        successHandler.setTargetUrlParameter("loginRedirect");
         return successHandler;
     }
     

@@ -8,6 +8,7 @@ public class WtmMessageVO {
 	private Long tenantId;
 	private String enterCd;
 	private String stdType; 
+	private String from; 
 	private List<Map<String, Object>> targets;
 	private String title;
 	private String content;
@@ -33,6 +34,12 @@ public class WtmMessageVO {
 	}
 	public void setStdType(String stdType) {
 		this.stdType = stdType;
+	}
+	public String getFrom() {
+		return from;
+	}
+	public void setFrom(String from) {
+		this.from = from;
 	}
 	public List<Map<String, Object>> getTargets() {
 		return targets;

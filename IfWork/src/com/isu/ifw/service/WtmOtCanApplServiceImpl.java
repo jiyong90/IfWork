@@ -189,7 +189,7 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 	}
 
 	@Override
-	public void request(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap,
+	public ReturnParam request(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap,
 			String sabun, String userId) throws Exception {
 		ReturnParam rp = imsi(tenantId, enterCd, applId, workTypeCd, paramMap, this.APPL_STATUS_APPLY_ING, sabun, userId);
 		
@@ -222,6 +222,12 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 			}
 		}
 		inbox.setInbox(tenantId, enterCd, apprSabun, applId, "APPR", "결재요청 : 연장근무취소신청", "", "Y");
+		
+		//메일 전송을 위한 파라미터
+		rp.put("from", sabun);
+		rp.put("to", apprSabun);
+		
+		return rp;
 	}
 
 	@Transactional
@@ -342,52 +348,28 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 		
 		List<String> pushSabun = new ArrayList();
 		if(lastAppr) {
-			pushSabun.add(sabun);
+			pushSabun.addAll(applSabuns);
 			inbox.setInbox(tenantId, enterCd, pushSabun, applId, "APPLY", "결재완료", "연장근무취소 신청서가  승인되었습니다.", "N");
+		
+			rp.put("msgType", "APPLY");
 		} else {
 			pushSabun.add(apprSabun);
 			inbox.setInbox(tenantId, enterCd, pushSabun, applId, "APPR", "결재요청 : 연장근무취소신청", "", "N");
+		
+			rp.put("msgType", "APPR");
 		}
+		
+		//메일 전송을 위한 파라미터
+		rp.put("from", sabun);
+		rp.put("to", pushSabun);
 		
 		return rp;
 	}
 
 	@Override
-	public void reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap,
+	public ReturnParam reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap,
 			String sabun, String userId) throws Exception {
-		if(paramMap == null || !paramMap.containsKey("apprOpinion") && paramMap.get("apprOpinion").equals("")) {
-			throw new Exception("사유를 입력하세요.");
-		}
-
-		List<String> applSabun = new ArrayList();
-		applSabun.add(paramMap.get("applSabun").toString());
-//		String applSabun = paramMap.get("applSabun").toString();
-		String apprOpinion = paramMap.get("apprOpinion").toString();
-		
-		List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);
-		if(lines != null && lines.size() > 0) {
-			for(WtmApplLine line : lines) {
-				if(line.getApprSeq() <= apprSeq) {
-					line.setApprStatusCd(APPR_STATUS_REJECT);
-					line.setApprDate(new Date());
-					if(line.getApprSeq() == apprSeq) {
-						line.setApprOpinion(apprOpinion);
-					}
-				}else {
-					line.setApprStatusCd("");
-				}
-				line.setUpdateId(userId);
-				wtmApplLineRepo.save(line);
-			}
-		}
-		
-		WtmAppl appl = wtmApplRepo.findById(applId).get();
-		appl.setApplStatusCd(APPL_STATUS_APPLY_REJECT);
-		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
-		appl.setUpdateId(userId);	
-		wtmApplRepo.save(appl);
-	
-		inbox.setInbox(tenantId, enterCd, applSabun, applId, "APPLY", "결재완료", "연장근무 신청서가  반려되었습니다.", "N");
+		return null;
 	}
 
 	@Override
