@@ -26,4 +26,9 @@ public interface WtmWorktimeCloseMapper {
 	
 	/* 근무마감리스트 수정  **/
 	public int updateCloseList(Map<String, Object> paramMap);
+	
+	public List<Map<String, Object>> getWorktimeCloseCode(Map<String, Object> paramMap);
+	
+	public void setCompMon(Map<String, Object> paramMap);
+	
 }

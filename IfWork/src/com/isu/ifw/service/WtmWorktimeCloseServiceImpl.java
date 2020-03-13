@@ -1,6 +1,7 @@
 package com.isu.ifw.service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,8 +14,10 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmCodeGrp;
+import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkteamMgr;
 import com.isu.ifw.mapper.WtmWorktimeCloseMapper;
+import com.isu.ifw.util.WtmUtil;
 
 @Service("worktimeCloseService")
 public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
@@ -142,7 +145,7 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 			paramMap.put("userId", userId);
 					
 			cnt = wtmWorktimeCloseMapper.setWorkTimeCloseConfirm(paramMap);
-						
+			
 		} catch(Exception e) {
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
@@ -162,6 +165,26 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 			paramMap.put("enterCd", enterCd);
 			System.out.println("getCloseEmpList >>> "+paramMap.toString());
 			searchList =  wtmWorktimeCloseMapper.getCloseEmpList(paramMap);
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+			logger.warn(e.toString(), e);
+		} finally {
+			logger.debug("getMonList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
+			MDC.clear();
+		}
+		
+		return searchList;
+	}
+	
+	@Override
+	public List<Map<String, Object>> getWorktimeCloseCode(Long tenantId, String enterCd) {
+		List<Map<String, Object>> searchList = new ArrayList();	
+		Map<String, Object> paramMap = new HashMap();
+		try {
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+			searchList =  wtmWorktimeCloseMapper.getWorktimeCloseCode(paramMap);
 			
 		} catch(Exception e) {
 			e.printStackTrace();

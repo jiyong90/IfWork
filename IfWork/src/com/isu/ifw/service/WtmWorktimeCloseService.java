@@ -35,4 +35,9 @@ public interface WtmWorktimeCloseService {
 	 * 월근무마감 확정 저장(관리자용)	 
 	 */
 	public int setWorktimeCloseConfirm(Long tenantId, String enterCd, String userId, Map<String, Object> paramMap) throws Exception;
+	
+	/**
+	 * 근무마감 리스트 조회 코드
+	 */
+	public List<Map<String, Object>> getWorktimeCloseCode(Long tenantId, String enterCd);
 }
