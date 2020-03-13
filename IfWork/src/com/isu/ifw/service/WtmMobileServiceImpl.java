@@ -113,7 +113,7 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 	}
 	
 	//hr에서 데이터 조회 하기 위한 서비스
-	public Map<String, Object> getDataMap(String url, String queryId, String enterCd, String sabun) throws Exception {
+	public Map<String, Object> getDataMap(String url, String queryId, String userToken, String empKey) throws Exception {
 		Map data = new HashMap();
 		RestTemplate restTemplate = new RestTemplate();
 		((org.springframework.http.client.SimpleClientHttpRequestFactory)
@@ -122,13 +122,13 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		ResponseEntity<Map> responseEntity = null;
 		
 		URI uri = UriComponentsBuilder.fromHttpUrl(url) .queryParam("cmd", queryId) 
-				.queryParam("enterCd", enterCd)
-				.queryParam("sabun", sabun)
+				.queryParam("userToken", userToken)
+				.queryParam("empKey", empKey)
 				.build().toUri(); 
 		
 		responseEntity = restTemplate.getForEntity(uri, Map.class);
 		System.out.println("responseEntity  " + responseEntity.getBody());
-		logger.debug("getDataMap " + url + ", " + queryId + ", " + enterCd + ", " + sabun);
+		logger.debug("getDataMap " + url + ", " + queryId + ", " + userToken + ", " + empKey);
 		
 		if(responseEntity.getStatusCodeValue() != 200) {
 			logger.debug("getDataMap " + responseEntity.getStatusCodeValue() + " : " + responseEntity.getBody());

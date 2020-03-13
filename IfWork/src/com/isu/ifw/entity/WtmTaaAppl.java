@@ -30,18 +30,8 @@ public class WtmTaaAppl {
 	private Long applId;
 	@Column(name="SABUN")
 	private String sabun;
-	@Column(name="TAA_CD")
-	private String taaCd;
-	@Column(name="SYMD")
-	private String symd;
-	@Column(name="EYMD")
-	private String eymd;
-	@Column(name="SHM")
-	private String shm;
-	@Column(name="EHM")
-	private String ehm;
 	@Column(name="IF_APPL_NO")
-	private Long ifApplNo;
+	private String ifApplNo;
 	@Column(name="NOTE")
 	private String note;
 	@Temporal(TemporalType.TIMESTAMP)
@@ -100,63 +90,12 @@ public class WtmTaaAppl {
 		this.sabun = sabun;
 	}
 
-
-	public String getTaaCd() {
-		return taaCd;
-	}
-
-
-	public void setTaaCd(String taaCd) {
-		this.taaCd = taaCd;
-	}
-
-
-	public String getSymd() {
-		return symd;
-	}
-
-
-	public void setSymd(String symd) {
-		this.symd = symd;
-	}
-
-
-	public String getEymd() {
-		return eymd;
-	}
-
-
-	public void setEymd(String eymd) {
-		this.eymd = eymd;
-	}
-
-
-	public String getShm() {
-		return shm;
-	}
-
-
-	public void setShm(String shm) {
-		this.shm = shm;
-	}
-
-
-	public String getEhm() {
-		return ehm;
-	}
-
-
-	public void setEhm(String ehm) {
-		this.ehm = ehm;
-	}
-
-
-	public Long getIfApplNo() {
+	public String getIfApplNo() {
 		return ifApplNo;
 	}
 
 
-	public void setIfApplNo(Long ifApplNo) {
+	public void setIfApplNo(String ifApplNo) {
 		this.ifApplNo = ifApplNo;
 	}
 
