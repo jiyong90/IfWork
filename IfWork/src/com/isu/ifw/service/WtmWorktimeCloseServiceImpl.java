@@ -71,7 +71,7 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 		try {
 			paramMap.put("tenantId", tenantId);
 			paramMap.put("enterCd", enterCd);
-			System.out.println("getCloseList >>> "+paramMap.toString());
+			
 			searchList =  wtmWorktimeCloseMapper.getCloseList(paramMap);
 			
 		} catch(Exception e) {
@@ -109,21 +109,13 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 				MDC.put("update cnt", "" + cnt);
 			}
 			
-			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {
+			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {				
 				List<Map<String, Object>> deleteList = (List<Map<String, Object>>) convertMap.get("deleteRows");
 				List<Long> closeIds = new ArrayList<Long>();
 				if(deleteList != null && deleteList.size() > 0) {
-					for(Map<String, Object> d : deleteList) {
-						Long closeId = Long.parseLong(d.get("worktimeCloseId").toString());
-						closeIds.add(closeId);
-					}
-					//WtmWorktimeCloseRepository.deleteByWorktimeCloseIdsIn(closeId);
-					
-					cnt += closeIds.size();
-				}
-				
-				MDC.put("delete cnt", "" + closeIds.size());
-				
+					cnt += wtmWorktimeCloseMapper.deleteCloseList(convertMap);									
+				}				
+				MDC.put("delete cnt", "" + cnt);				
 			}
 			
 		} catch(Exception e) {
@@ -146,6 +138,12 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 					
 			cnt = wtmWorktimeCloseMapper.setWorkTimeCloseConfirm(paramMap);
 			
+			if(cnt>0) {
+				// 월마감 보상휴가기준 및 사용처 확인
+				// 월마감용 보상휴가생성이면
+				wtmWorktimeCloseMapper.setCompMon(paramMap);
+			}			
+			
 		} catch(Exception e) {
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
@@ -163,7 +161,7 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 		try {
 			paramMap.put("tenantId", tenantId);
 			paramMap.put("enterCd", enterCd);
-			System.out.println("getCloseEmpList >>> "+paramMap.toString());
+			
 			searchList =  wtmWorktimeCloseMapper.getCloseEmpList(paramMap);
 			
 		} catch(Exception e) {
