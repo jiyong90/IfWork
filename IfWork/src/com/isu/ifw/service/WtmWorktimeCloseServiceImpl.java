@@ -1,28 +1,22 @@
 package com.isu.ifw.service;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.entity.WtmCodeGrp;
-import com.isu.ifw.entity.WtmTimeCdMgr;
-import com.isu.ifw.entity.WtmWorkteamMgr;
 import com.isu.ifw.mapper.WtmWorktimeCloseMapper;
-import com.isu.ifw.util.WtmUtil;
 
 @Service("worktimeCloseService")
 public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 	
-	private final Logger logger = LoggerFactory.getLogger("ifwDBLog");
+	private final Logger logger = LoggerFactory.getLogger("ifwFileLog");
 	
 	@Autowired
 	WtmWorktimeCloseMapper wtmWorktimeCloseMapper;
@@ -39,8 +33,7 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
 		} finally {
-			logger.debug("getDayList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
+			logger.debug("getDayList Service End");
 		}
 		
 		return searchList;
@@ -57,8 +50,7 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
 		} finally {
-			logger.debug("getMonList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
+			logger.debug("getMonList Service End");
 		}
 		
 		return searchList;
@@ -78,8 +70,7 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
 		} finally {
-			logger.debug("getMonList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
+			logger.debug("getMonList Service End");
 		}
 		
 		return searchList;
@@ -95,8 +86,7 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 				if(insertList != null && insertList.size() > 0) {
 					cnt += wtmWorktimeCloseMapper.insertCloseList(convertMap);
 				}
-				
-				MDC.put("insert cnt", "" + cnt);
+				logger.debug("setWorktimeCloseList insertCnt : " + cnt);
 			}
 			
 			if(convertMap.containsKey("updateRows") && ((List)convertMap.get("updateRows")).size() > 0) {
@@ -106,7 +96,7 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 					cnt += wtmWorktimeCloseMapper.updateCloseList(convertMap);
 				}
 				
-				MDC.put("update cnt", "" + cnt);
+				logger.debug("setWorktimeCloseList updateCnt : " + cnt);
 			}
 			
 			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {				
@@ -114,16 +104,16 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 				List<Long> closeIds = new ArrayList<Long>();
 				if(deleteList != null && deleteList.size() > 0) {
 					cnt += wtmWorktimeCloseMapper.deleteCloseList(convertMap);									
-				}				
-				MDC.put("delete cnt", "" + cnt);				
+				}			
+
+				logger.debug("setWorktimeCloseList deleteCnt : " + cnt);
 			}
 			
 		} catch(Exception e) {
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
 		} finally {
-			logger.debug("saveRule Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
+			logger.debug("setWorktimeCloseList end");
 		}
 		return cnt;
 	}
@@ -148,8 +138,7 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
 		} finally {
-			logger.debug("setWorkTimeCloseConfirm Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
+			logger.debug("setWorkTimeCloseConfirm Service End");
 		}
 		//System.out.println("setWorktimeCloseConfirm UPDATE >>> "+cnt);
 		return cnt;
@@ -168,8 +157,7 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
 		} finally {
-			logger.debug("getMonList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
+			logger.debug("getMonList Service End");
 		}
 		
 		return searchList;
@@ -188,8 +176,7 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
 		} finally {
-			logger.debug("getMonList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
+			logger.debug("getMonList Service End");
 		}
 		
 		return searchList;
