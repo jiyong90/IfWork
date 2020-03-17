@@ -941,6 +941,10 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	        		ifList.add(ifMap);
 	        		// 건별반영
 	        		resultCnt += wtmInterfaceMapper.insertEmpHisTemp(ifList);
+	        		
+	        		if(resultCnt > 0) {
+	        			retMsg = resultCnt + "건 반영완료";
+	        		}
 //	        		resultCnt += wtmInterfaceMapper.insertEmpHisTemp(ifMap);
 //	        		retMsg = resultCnt + "건 반영완료";
 	        	}
@@ -951,7 +955,6 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		    			//System.out.println("insert size : " + ifList.size());
 		    			//resultCnt += wtmInterfaceMapper.insertEmpHisTemp(ifList);
 	    			if(resultCnt > 0) {
-	        			retMsg = resultCnt + "건 반영완료";
 	        			
 	        			// temp 저장후 프로시저 호출
 		    			HashMap<String, Object> setSpRetMap = new HashMap<>();
@@ -972,7 +975,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		    		//}
 	        	}catch(Exception e) {
 	        		ifHisMap.put("ifStatus", "ERR");
-	        		retMsg = "emp set : temp 자료저장 오류";
+	        		retMsg = "setEmpHis DATA 처리중 오류발생";
 		            e.printStackTrace();
 	        	}
 	        }catch(Exception e){
@@ -2311,6 +2314,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		try {
 			// 대상자를 가져와야함.
 			List<Map<String, Object>> empList = null;
+			System.out.println("************************* reqMap ** " + reqMap.toString());
 			empList = wtmInterfaceMapper.getCloseEmp(reqMap);
 			
 			if(empList != null && empList.size() > 0) {
@@ -2340,8 +2344,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						dayMap.put("sabun", l.get("sabun").toString());
 						dayMap.put("ymd", ymd);
 						
-						System.out.println("******************************* dayMap");
-						System.out.println(dayMap.toString());
+						// System.out.println("******************************* dayMap");
+						// System.out.println(dayMap.toString());
 						
 						wtmInterfaceMapper.setCloseDay(dayMap);
 						String retCode = dayMap.get("retCode").toString();
@@ -2359,7 +2363,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						monMap.put("retCode", "");
 						monMap.put("retMsg", "");
 						monMap.put("sabun", l.get("sabun").toString());
-						System.out.println("******************************* monMap");
+						//System.out.println("******************************* monMap");
 						System.out.println(monMap.toString());
 						
 						wtmInterfaceMapper.setCloseMonth(monMap);
@@ -2466,7 +2470,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				// wtmInterfaceMapper.updateDayResult2(l);
         		
         		// 일마감생성
-        		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
+        		//WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
         		
         		// 문제가 없으면 근무계획시간 합산
 				wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(l);
