@@ -331,7 +331,9 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		//마지막 결재자인지 확인하자
 		boolean lastAppr = false;
 		if(lines != null && lines.size() > 0) {
-			for(WtmApplLine line : lines) {
+			for(int i = 0; i < lines.size(); i++) {
+				WtmApplLine line = lines.get(i);
+				
 				if(line.getApprSeq() == apprSeq && line.getApprSabun().equals(sabun)) {
 					line.setApprStatusCd(APPR_STATUS_APPLY);
 					line.setApprDate(new Date());
@@ -347,8 +349,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 					if(lastAppr) {
 						line.setApprStatusCd(APPR_STATUS_REQUEST);
 						line = wtmApplLineRepo.save(line);
+						apprSabun = line.getApprSabun();
 					}
-					apprSabun = line.getApprSabun();
 					lastAppr = false;
 				}
 			}
