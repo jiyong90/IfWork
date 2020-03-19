@@ -67,7 +67,7 @@ import com.isu.ifw.vo.WtmDayWorkVO;
 @Service("flexibleEmpService")
 public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
-	private static final Logger logger = LoggerFactory.getLogger("ifwDbLog");
+	private static final Logger logger = LoggerFactory.getLogger("ifwFileLog");
 
 	@Autowired
 	@Qualifier("WtmTenantConfigManagerService")
