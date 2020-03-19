@@ -82,14 +82,13 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
     	if(tenantId == 52 && "04".equals(ymdh.substring(8, 10))) {
     		// 태평양물산은 새벽4시마감
     		closeType = "B";
-    	}
-    	if(Integer.parseInt(ymdh.substring(8, 10)) >= 10 || Integer.parseInt(ymdh.substring(8, 10)) <= 16) {
+    	} else if(Integer.parseInt(ymdh.substring(8, 10)) >= 10 && Integer.parseInt(ymdh.substring(8, 10)) <= 16) {
     		closeType = "B";
     	}
     	System.out.println("********** closeType : " + closeType);
     	
     	getDateMap = new HashMap();
-    	// beforeYmd = "20200306";
+    	// beforeYmd = "20200316";
     	getDateMap.put("tenantId", tenantId);
     	getDateMap.put("ymd", beforeYmd);	// 마감은 전일임으로 계산된 전일을 셋팅해야함
     	getDateMap.put("closeType", closeType);

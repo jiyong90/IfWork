@@ -55,6 +55,8 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 	
 	@Override
 	public ReturnParam requestEntryChgAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception {
+		ReturnParam rp = new ReturnParam();
+		
 		Long applId = null;
 		if(dataMap.get("applId")!=null && !"".equals(dataMap.get("applId")))
 			applId = Long.valueOf(dataMap.get("applId").toString());
@@ -70,8 +72,24 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		dataMap.put("chgSdate", cSHm);
 		dataMap.put("chgEdate", cEHm);
 		dataMap.put("ymd", ymd);
-		ObjectMapper mapper = new ObjectMapper();
-		ReturnParam rp = entryApplService.validate(tenantId, enterCd, sabun, "ENTRY_CHG", dataMap);
+		dataMap.put("applCd", "ENTRY_CHG");
+		dataMap.put("tenantId", tenantId);
+		dataMap.put("enterCd", enterCd);
+		dataMap.put("sabun", sabun);
+		
+		Map<String, Object> val = applMapper.getApplValidation(dataMap);
+		logger.debug("applValidationCheck : " + dataMap.toString() + " , " + val.toString());
+
+		if(val == null) {
+			rp.setFail("validation check에 실패하였습니다.");
+			return rp;
+		}
+
+		if(val.get("entryYn").equals("N")) {
+			rp.setFail("신청 가능한 기간은 " + val.get("entryDate").toString() + " 입니다.");
+			return rp;
+		}
+		rp = entryApplService.validate(tenantId, enterCd, sabun, "ENTRY_CHG", dataMap);
 			
 		if(rp!=null && rp.getStatus()!=null && "FAIL".equals(rp.getStatus())) {
 			return rp;
