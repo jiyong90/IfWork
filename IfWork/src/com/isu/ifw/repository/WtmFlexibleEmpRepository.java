@@ -52,4 +52,8 @@ public interface WtmFlexibleEmpRepository extends JpaRepository<WtmFlexibleEmp, 
 	
 	@Query("SELECT E FROM WtmFlexibleEmp E WHERE E.flexibleEmpId IN ?1")
 	public List<WtmFlexibleEmp> findByFlexibleEmpIds(List<Long> flexibleEmpIds);
+	
+	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndSabunAndSymdGreaterThan(Long tenantId, String enterCd, String sabun, String ymd);
+	
+	
 }

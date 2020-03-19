@@ -12,7 +12,6 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -36,7 +35,6 @@ import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmAuthMgrMapper;
-import com.isu.ifw.mapper.WtmEmpHisMapper;
 import com.isu.ifw.mapper.WtmFlexibleApplMapper;
 import com.isu.ifw.mapper.WtmFlexibleApplyMgrMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
@@ -67,7 +65,7 @@ import com.isu.ifw.vo.WtmDayWorkVO;
 @Service("flexibleEmpService")
 public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
-	private static final Logger logger = LoggerFactory.getLogger("ifwDbLog");
+	private static final Logger logger = LoggerFactory.getLogger("ifwFileLog");
 
 	@Autowired
 	@Qualifier("WtmTenantConfigManagerService")
@@ -1176,8 +1174,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			MDC.clear();
-			MDC.put("calcApprDayInfo", mapper.writeValueAsString(paramMap));
+			logger.debug("calcApprDayInfo", mapper.writeValueAsString(paramMap));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1344,8 +1341,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			try { logger.debug("18. applyOtSubs ","otAppls : " + mapper.writeValueAsString(otAppls), "applyOtSubs"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 			applyOtSubs(tenantId, enterCd, otAppls, false, "SYSTEM");
 		}
-		
-		MDC.clear();
 		
 	}
 	
@@ -2817,5 +2812,85 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			return 0;
 		}
 		return 1;
+	}
+	
+	@Transactional
+	@Override
+	public ReturnParam retireEmp(Long tenantId, String enterCd, Long flexibleEmpId, String userId) {
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("");
+		
+		ObjectMapper mapper = new ObjectMapper();
+		
+		WtmFlexibleEmp flexibleEmp = flexEmpRepo.findById(flexibleEmpId).get();
+		if(flexibleEmp==null) {
+			rp.setFail("근무 정보가 없습니다.");
+			return rp;
+		}
+		
+		try {
+			System.out.println("flexibleEmp : " + mapper.writeValueAsString(flexibleEmp));
+		} catch (JsonProcessingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		List<String> statusCds = new ArrayList<String>();
+		//statusCds.add("CA"); //휴직
+		//statusCds.add("EA"); //정직
+		statusCds.add("RA"); //퇴직
+		List<WtmEmpHis> empHis = empHisRepo.findByTenantIdAndEnterCdAndSabunAndStatusCdIn(tenantId, enterCd, flexibleEmp.getSabun(), statusCds);
+		if(empHis==null && empHis.size()==0) {
+			rp.setFail("직원의 퇴직 정보가 없습니다.");
+			return rp;
+		}
+		
+		for(WtmEmpHis h : empHis) {
+			//퇴직일
+			String retireYmd = h.getEymd();
+			
+			if("29991231".equals(h.getEymd())) {
+				retireYmd = h.getSymd();
+			} 
+			
+			System.out.println("retireYmd : " + retireYmd);
+			
+			//종료일 퇴직일로 변경
+			flexibleEmp.setEymd(retireYmd);
+			flexEmpRepo.save(flexibleEmp);
+			
+			//result clear
+			List<WtmWorkDayResult> delResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdGreaterThan(tenantId, enterCd, flexibleEmp.getSabun(), retireYmd);
+			if(delResults!=null && delResults.size()>0) {
+				workDayResultRepo.deleteAll(delResults);
+			}
+			
+			//calendar clear
+			List<WtmWorkCalendar> delCalendars = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdGreaterThan(tenantId, enterCd, flexibleEmp.getSabun(), retireYmd);
+			if(delCalendars!=null && delCalendars.size()>0) {
+				workCalendarRepo.deleteAll(delCalendars);
+			}
+			
+			//퇴직일 이후의 flexibleEmp 데이터 삭제
+			List<WtmFlexibleEmp> delEmps = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndSymdGreaterThan(tenantId, enterCd, flexibleEmp.getSabun(), retireYmd);
+			if(delEmps!=null && delEmps.size()>0) {
+				flexEmpRepo.deleteAll(delEmps);
+			}
+			
+			//workterm clear
+			Map<String, Object> paramMap = new HashMap<String, Object>();
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+			paramMap.put("sabun", flexibleEmp.getSabun());
+			paramMap.put("ymd", retireYmd);
+			flexEmpMapper.deleteWorkTermByYmdGreaterThan(paramMap);
+			
+			rp.put("sabun", flexibleEmp.getSabun());
+			rp.put("symd", h.getSymd());
+			rp.put("eymd", h.getEymd());
+			
+		}
+		
+		return rp;
 	}
 }

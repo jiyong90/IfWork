@@ -30,6 +30,9 @@ public interface WtmEmpHisRepository extends JpaRepository<WtmEmpHis, Long> {
 	@Query(value="SELECT H FROM WtmEmpHis H WHERE H.tenantId = :tenantId AND H.enterCd = :enterCd AND :ymd BETWEEN H.symd AND H.eymd ")
 	public List<WtmEmpHis> findByTenantIdAndEnterCdAndYmd(Long tenantId, String enterCd, String ymd);
 
+	@Query(value="SELECT H FROM WtmEmpHis H WHERE H.tenantId = ?1 AND H.enterCd = ?2 AND H.sabun = ?3 AND H.statusCd IN ?4 ")
+	public List<WtmEmpHis> findByTenantIdAndEnterCdAndSabunAndStatusCdIn(Long tenantId, String enterCd, String sabun, List<String> statusCds);
+	
 	@Modifying
 	@Transactional
 	@Query("DELETE FROM WtmEmpHis E WHERE E.empHisId IN :empHisIds ")
