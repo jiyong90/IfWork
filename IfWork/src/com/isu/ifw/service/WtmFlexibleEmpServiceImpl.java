@@ -12,7 +12,6 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -1176,8 +1175,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			MDC.clear();
-			MDC.put("calcApprDayInfo", mapper.writeValueAsString(paramMap));
+			logger.debug("calcApprDayInfo", mapper.writeValueAsString(paramMap));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1344,8 +1342,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			try { logger.debug("18. applyOtSubs ","otAppls : " + mapper.writeValueAsString(otAppls), "applyOtSubs"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 			applyOtSubs(tenantId, enterCd, otAppls, false, "SYSTEM");
 		}
-		
-		MDC.clear();
 		
 	}
 	
