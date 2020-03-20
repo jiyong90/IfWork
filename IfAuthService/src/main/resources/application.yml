@@ -20,11 +20,28 @@ spring:
     generate-ddl: false
     hibernate:
       ddl-auto: none
-      
+#  session:
+#    redis:
+#      flush-mode: on-save
+#      namespace: spring:session
+#    timeout: 3600s
+#    store-type: redis
+  
+#  redis:
+#    lettuce:
+#      pool:
+#        max-active: 10
+#        max-idle: 10
+#        min-idle: 2
+#    host: 192.168.111.12
+#    port: 6379
+#    password: isu!!2019
+    
 security:
   oauth2:
     jwt:
       signkey: 123@#$
+      
       
 logging:
   level:
