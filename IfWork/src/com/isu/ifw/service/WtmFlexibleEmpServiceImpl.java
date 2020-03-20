@@ -2859,30 +2859,22 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			flexibleEmp.setEymd(retireYmd);
 			flexEmpRepo.save(flexibleEmp);
 			
-			//result clear
-			List<WtmWorkDayResult> delResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdGreaterThan(tenantId, enterCd, flexibleEmp.getSabun(), retireYmd);
-			if(delResults!=null && delResults.size()>0) {
-				workDayResultRepo.deleteAll(delResults);
-			}
-			
-			//calendar clear
-			List<WtmWorkCalendar> delCalendars = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdGreaterThan(tenantId, enterCd, flexibleEmp.getSabun(), retireYmd);
-			if(delCalendars!=null && delCalendars.size()>0) {
-				workCalendarRepo.deleteAll(delCalendars);
-			}
-			
-			//퇴직일 이후의 flexibleEmp 데이터 삭제
-			List<WtmFlexibleEmp> delEmps = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndSymdGreaterThan(tenantId, enterCd, flexibleEmp.getSabun(), retireYmd);
-			if(delEmps!=null && delEmps.size()>0) {
-				flexEmpRepo.deleteAll(delEmps);
-			}
-			
-			//workterm clear
 			Map<String, Object> paramMap = new HashMap<String, Object>();
 			paramMap.put("tenantId", tenantId);
 			paramMap.put("enterCd", enterCd);
 			paramMap.put("sabun", flexibleEmp.getSabun());
 			paramMap.put("ymd", retireYmd);
+			
+			//result clear
+			flexEmpMapper.deleteWorkDayResultByYmdGreaterThan(paramMap);
+			
+			//calendar clear
+			flexEmpMapper.deleteWorkCalendarByYmdGreaterThan(paramMap);
+			
+			//퇴직일 이후의 flexibleEmp 데이터 삭제
+			flexEmpMapper.deleteFlexEmpByYmdGreaterThan(paramMap);
+			
+			//workterm clear
 			flexEmpMapper.deleteWorkTermByYmdGreaterThan(paramMap);
 			
 			rp.put("sabun", flexibleEmp.getSabun());

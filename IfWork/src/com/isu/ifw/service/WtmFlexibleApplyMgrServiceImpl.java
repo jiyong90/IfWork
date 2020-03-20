@@ -117,6 +117,8 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		try {
 			if(convertMap.containsKey("mergeRows") && ((List)convertMap.get("mergeRows")).size() > 0) {
 				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("mergeRows");
+				logger.debug("[setApplyList] iList" + iList.size());
+
 				List<WtmFlexibleApplyMgr> codes = new ArrayList();
 				if(iList != null && iList.size() > 0) {
 					for(Map<String, Object> l : iList) {
@@ -156,6 +158,9 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		
 			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {
 				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("deleteRows");
+
+				logger.debug("[setApplyList]2 iList" + iList.size());
+
 				List<WtmFlexibleApplyMgr> codes = new ArrayList();
 				List<WtmFlexibleApplyDet> dets = new ArrayList<WtmFlexibleApplyDet>();
 				if(iList != null && iList.size() > 0) {

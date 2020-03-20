@@ -344,8 +344,8 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 					if(lastAppr) {
 						line.setApprStatusCd(APPR_STATUS_REQUEST);
 						line = wtmApplLineRepo.save(line);
+						apprSabun = line.getApprSabun();
 					}
-					apprSabun = line.getApprSabun();
 					lastAppr = false;
 				}
 			}
