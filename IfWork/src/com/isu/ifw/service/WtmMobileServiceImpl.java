@@ -195,26 +195,39 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		if("OT".equals(applCd)) {
 			
 			List<Map<String, Object>> otDetails = wtmOtApplMapper.otApplDetailByApplId(paramMap);
-			if(otDetails.size() == 1) {
-				data = otDetails.get(0);
-				if(!data.get("subsYmd").equals("-")) {
-					data.put("subsYmd", data.get("subsYmd").toString().replace("@", "\n"));
-				}
-			} else {
-				List<Map<String, Object>> items = new ArrayList();
-				for(int i = 0; i < otDetails.size(); i++) {
-					Map<String, Object> ot = otDetails.get(i);
-					Map<String, Object> item = new HashMap();
-					item.put("itemType", "text");
-					item.put("title", ot.get("empNm") + " " +  ot.get("otStime") + "~" + ot.get("otEtime"));
-					item.put("key", "key"+i);
-					items.add(item);
-					data.put("key"+i, "[" + ot.get("reasonNm") + "] 사유 : " + ot.get("reason") +"");
-				}
-				resultMap.put("items", items);
+			
+			data = otDetails.get(0);
+			if(!data.get("subsYmd").equals("-")) {
+				data.put("subsYmd", data.get("subsYmd").toString().replace("@", "\n"));
+			}
+
+//			if(otDetails.size() > 1) {
+//				String applSabuns = "";
+//				String sabuns = "";
+//				for(int i = 0; i < otDetails.size(); i++) {
+//					
+//					applSabuns += (otDetails.get(index));
+//				}
+//				List<Map<String, Object>> items = new ArrayList();
+//				Map<String, Object> item = new HashMap();
+//				item.put("itemType", "text");
+//				item.put("title", "시작일자");
+//				item.put("key", "otSdate");
+//				items.add(item);
+//				
+//				for(int i = 0; i < otDetails.size(); i++) {
+//					Map<String, Object> ot = otDetails.get(i);
+//					Map<String, Object> item = new HashMap();
+//					item.put("itemType", "text");
+//					item.put("title", "시작일자");
+//					item.put("key", "otSdate");
+//					items.add(item);
+//				}
+//				data.put("key"+i, "[" + ot.get("reasonNm") + "] 사유 : " + ot.get("reason") +"");
+//				resultMap.put("items", items);
 				//resultMap.put("data", data);
 				
-			}
+//			}
 		} else if("ENTRY_CHG".equals(applCd)) {
 		    data = wtmEntryApplMapper.findByApplId(Long.parseLong(applId));
 		}
