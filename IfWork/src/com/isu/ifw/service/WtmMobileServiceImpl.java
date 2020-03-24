@@ -191,7 +191,7 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		paramMap.put("applId", applId);
 		paramMap.put("sabun", applSabun);
 		
-		Map<String, Object> data = null;
+		Map<String, Object> data = new HashMap();
 		if("OT".equals(applCd)) {
 			
 			List<Map<String, Object>> otDetails = wtmOtApplMapper.otApplDetailByApplId(paramMap);
@@ -207,12 +207,12 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 					Map<String, Object> item = new HashMap();
 					item.put("itemType", "text");
 					item.put("title", ot.get("empNm") + " " +  ot.get("otStime") + "~" + ot.get("otEtime"));
-					item.put("key", i);
+					item.put("key", "key"+i);
 					items.add(item);
-					data.put(i+"", ot.get("reason") + " " + ot.get("reasonNm") +"\\n" + ot.get("subYn"));
+					data.put("key"+i, "[" + ot.get("reasonNm") + "] 사유 : " + ot.get("reason") +"");
 				}
 				resultMap.put("items", items);
-				resultMap.put("data", data);
+				//resultMap.put("data", data);
 				
 			}
 		} else if("ENTRY_CHG".equals(applCd)) {
