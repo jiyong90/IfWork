@@ -1,5 +1,6 @@
 package com.isu.ifw.service;
 
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -18,7 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.common.service.TenantConfigManagerService;
 import com.isu.ifw.entity.WtmEmpHis;
@@ -202,34 +205,81 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	@Override
 	public Map<String, Object> getDayWorkHm(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
 		
-		WtmWorkCalendar calendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, paramMap.get("ymd").toString());
-		
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		
 		Map<String, Object> result = null;
-		if(calendar!=null && calendar.getTimeCdMgrId()!=null) {
-			Long timeCdMgrId = Long.valueOf(calendar.getTimeCdMgrId());
-			result = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, userId);
-			
-			String breakTypeCd = null;
-			WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(timeCdMgrId).get();
-			if(timeCdMgr!=null && timeCdMgr.getBreakTypeCd()!=null)
-				breakTypeCd = timeCdMgr.getBreakTypeCd();
-			
-			if("TIME".equals(breakTypeCd)) {
-				int calcMinute = 0;
-				int breakMinute = 0;
+		
+		ObjectMapper mapper = new ObjectMapper();
+		List<String> sabuns = null;
+		if(paramMap.containsKey("sabuns") && paramMap.get("sabuns")!=null && !"".equals(paramMap.get("sabuns"))) {
+			try {
+				sabuns = mapper.readValue(paramMap.get("sabuns").toString(), new ArrayList<String>().getClass());
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+		} else {
+			sabuns = new ArrayList<String>();
+			sabuns.add(sabun);
+		}
+		
+		try {
+			System.out.println("sabuns : " + mapper.writeValueAsString(sabuns));
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		
+		if(sabuns.size()>0) {
+			Long timeCdMgrId = null;
+			int i =0;
+			for(String s : sabuns) {
+				WtmWorkCalendar calendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, s, paramMap.get("ymd").toString());
 				
-				if(result.get("calcMinute")!=null && !"".equals(result.get("calcMinute")))
-					calcMinute = Integer.parseInt(result.get("calcMinute")+"");
-				if(result.get("breakMinute")!=null && !"".equals(result.get("breakMinute")))
-					breakMinute = Integer.parseInt(result.get("breakMinute")+"");
+				if(calendar!=null && calendar.getTimeCdMgrId()!=null) {
+					if(i==0) {
+						timeCdMgrId = Long.valueOf(calendar.getTimeCdMgrId());
+						paramMap.put("tenantId", tenantId);
+						paramMap.put("enterCd", enterCd);
+						paramMap.put("sabun", s);
+					}
+					
+					System.out.println("calendar.getTimeCdMgrId() : " + calendar.getTimeCdMgrId());
+					
+					if(timeCdMgrId != Long.valueOf(calendar.getTimeCdMgrId())) {
+						timeCdMgrId = null;
+						result = new HashMap<String, Object>();
+						result.put("message", "대상자의 근무시간표가 다릅니다.");
+					}
+				}
 				
-				if(calcMinute!=0)
-					result.put("calcMinute", (calcMinute - breakMinute));
+				i++;
 			}
+			
+			
+			System.out.println("timeCdMgrId : " + timeCdMgrId);
+			
+			
+			if(timeCdMgrId!=null) {
+				result = calcMinuteExceptBreaktime(timeCdMgrId, paramMap, userId);
+				
+				String breakTypeCd = null;
+				WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(timeCdMgrId).get();
+				if(timeCdMgr!=null && timeCdMgr.getBreakTypeCd()!=null)
+					breakTypeCd = timeCdMgr.getBreakTypeCd();
+				
+				if("TIME".equals(breakTypeCd)) {
+					int calcMinute = 0;
+					int breakMinute = 0;
+					
+					if(result.get("calcMinute")!=null && !"".equals(result.get("calcMinute")))
+						calcMinute = Integer.parseInt(result.get("calcMinute")+"");
+					if(result.get("breakMinute")!=null && !"".equals(result.get("breakMinute")))
+						breakMinute = Integer.parseInt(result.get("breakMinute")+"");
+					
+					if(calcMinute!=0)
+						result.put("calcMinute", (calcMinute - breakMinute));
+				}
+			}
+			
 		}
 		
 		return result;
