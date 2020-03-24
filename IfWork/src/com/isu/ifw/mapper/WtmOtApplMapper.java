@@ -54,7 +54,7 @@ public interface WtmOtApplMapper {
 	 * @param paramMap
 	 * @return totOtMinute
 	 */
-	public Map<String, Object> otApplDetailByApplId(Map<String, Object> paramMap);
+	public List<Map<String, Object>> otApplDetailByApplId(Map<String, Object> paramMap);
 	
 	/**
 	 * 잔여 연장근로 

@@ -193,9 +193,27 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		
 		Map<String, Object> data = null;
 		if("OT".equals(applCd)) {
-			data = wtmOtApplMapper.otApplDetailByApplId(paramMap);
-			if(!data.get("subsYmd").equals("-")) {
-				data.put("subsYmd", data.get("subsYmd").toString().replace("@", "\n"));
+			
+			List<Map<String, Object>> otDetails = wtmOtApplMapper.otApplDetailByApplId(paramMap);
+			if(otDetails.size() == 1) {
+				data = otDetails.get(0);
+				if(!data.get("subsYmd").equals("-")) {
+					data.put("subsYmd", data.get("subsYmd").toString().replace("@", "\n"));
+				}
+			} else {
+				List<Map<String, Object>> items = new ArrayList();
+				for(int i = 0; i < otDetails.size(); i++) {
+					Map<String, Object> ot = otDetails.get(i);
+					Map<String, Object> item = new HashMap();
+					item.put("itemType", "text");
+					item.put("title", ot.get("empNm") + " " +  ot.get("otStime") + "~" + ot.get("otEtime"));
+					item.put("key", i);
+					items.add(item);
+					data.put(i+"", ot.get("reason") + " " + ot.get("reasonNm") +"\\n" + ot.get("subYn"));
+				}
+				resultMap.put("items", items);
+				resultMap.put("data", data);
+				
 			}
 		} else if("ENTRY_CHG".equals(applCd)) {
 		    data = wtmEntryApplMapper.findByApplId(Long.parseLong(applId));
