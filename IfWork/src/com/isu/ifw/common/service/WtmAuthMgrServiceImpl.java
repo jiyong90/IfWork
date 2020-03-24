@@ -8,7 +8,6 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -25,7 +24,7 @@ import com.isu.ifw.util.WtmUtil;
 @Service
 public class WtmAuthMgrServiceImpl implements WtmAuthMgrService{
 	
-	private final Logger logger = LoggerFactory.getLogger("ifwDBLog");
+	private final Logger logger = LoggerFactory.getLogger("ifwFileLog");
 	
 	@Autowired
 	WtmCommAuthRepository commAuthRepo;
@@ -113,8 +112,6 @@ public class WtmAuthMgrServiceImpl implements WtmAuthMgrService{
 						
 					}
 				}
-				
-				MDC.put("merge cnt", "" + cnt);
 			}
 			
 			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {
@@ -139,15 +136,13 @@ public class WtmAuthMgrServiceImpl implements WtmAuthMgrService{
 					cnt += authIds.size();
 				}
 				
-				MDC.put("delete cnt", "" + authIds.size());
 			}
 			
 		} catch(Exception e) {
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
 		} finally {
-			logger.debug("saveAuthList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
+			logger.debug("saveAuthList Service End");
 		}
 		return cnt;
 	}
@@ -189,8 +184,6 @@ public class WtmAuthMgrServiceImpl implements WtmAuthMgrService{
 					convertMap.put("encKey", encKey);
 					authMgrMapper.saveAuthUser(convertMap);
 				}
-				
-				MDC.put("merge cnt", "" + cnt);
 			}
 			
 			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {
@@ -207,16 +200,13 @@ public class WtmAuthMgrServiceImpl implements WtmAuthMgrService{
 					
 					cnt += userAuthIds.size();
 				}
-				
-				MDC.put("delete cnt", "" + userAuthIds.size());
 			}
 			
 		} catch(Exception e) {
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
 		} finally {
-			logger.debug("saveAuthUserList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
+			logger.debug("saveAuthUserList Service End");
 		}
 		return cnt;
 	}
