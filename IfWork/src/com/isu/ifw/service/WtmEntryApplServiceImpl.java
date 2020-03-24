@@ -391,7 +391,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 			entryAppl.setChgSdate(WtmUtil.toDate(chgSdate, "yyyyMMddHHmm"));
 		if(chgEdate!=null && !"".equals(chgEdate)) {
 			Date edate = WtmUtil.toDate(chgEdate, "yyyyMMddHHmm");
-			Date sdate = WtmUtil.toDate(planSdate, "yyyyMMddHHmm");
+			Date sdate = WtmUtil.toDate(entrySdate, "yyyyMMddHHmm");
 			
 			if(chgSdate!=null && !"".equals(chgSdate)) {
 				sdate = WtmUtil.toDate(chgSdate, "yyyyMMddHHmm");
