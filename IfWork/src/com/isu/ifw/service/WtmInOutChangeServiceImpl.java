@@ -1,6 +1,7 @@
 package com.isu.ifw.service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,12 +12,12 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
-import com.isu.ifw.entity.WtmCode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.mapper.WtmCalendarMapper;
 import com.isu.ifw.mapper.WtmInOutChangeMapper;
 import com.isu.ifw.mapper.WtmInoutHisMapper;
+import com.isu.ifw.util.WtmUtil;
 
 @Service("inOutChangeService")
 public class WtmInOutChangeServiceImpl implements WtmInOutChangeService{
@@ -122,9 +123,24 @@ public class WtmInOutChangeServiceImpl implements WtmInOutChangeService{
 	}
 	
 	@Override
-	public List<Map<String, Object>> getInpoutChangeHis(Map<String, Object> paramMap) {
+	public List<Map<String, Object>> getInpoutChangeHis(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
 		List<Map<String, Object>> list = new ArrayList();
 		try {
+			
+			String ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
+			if(!paramMap.containsKey("sYmd")) {
+				paramMap.put("ymd", "");
+			} else {
+				ymd = paramMap.get("sYmd").toString().replaceAll("-", "");
+				paramMap.put("ymd", ymd);
+			}
+			
+			List<String> auths = empService.getAuth(tenantId, enterCd, sabun);
+			if(auths!=null && !auths.contains("FLEX_SETTING") && auths.contains("FLEX_SUB")) {
+				//하위 조직 조회
+				paramMap.put("orgList", empService.getLowLevelOrgList(tenantId, enterCd, sabun, ymd));
+			}
+			
 			list = inOutChangeMapper.getInOutChangeList(paramMap);
 		} catch(Exception e) {
 			e.printStackTrace();

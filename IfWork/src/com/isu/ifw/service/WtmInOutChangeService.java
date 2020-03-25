@@ -12,7 +12,7 @@ public interface WtmInOutChangeService {
 
 	public int setInOutChangeList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap);
 	
-	public List<Map<String, Object>> getInpoutChangeHis(Map<String, Object> paramMap);
+	public List<Map<String, Object>> getInpoutChangeHis(Long tenantId, String enterCd, String sabun,Map<String, Object> paramMap);
 	
 	public Map<String, Object> setInOutChange(Map<String, Object> paramMap);
 }
