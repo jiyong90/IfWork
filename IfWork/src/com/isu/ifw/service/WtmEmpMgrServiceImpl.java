@@ -24,6 +24,7 @@ import com.isu.ifw.common.service.TenantConfigManagerService;
 import com.isu.ifw.entity.WtmEmpAddr;
 import com.isu.ifw.entity.WtmEmpHis;
 import com.isu.ifw.entity.WtmOtp;
+import com.isu.ifw.entity.WtmPropertie;
 import com.isu.ifw.mapper.EncryptionMapper;
 import com.isu.ifw.mapper.WtmEmpAddrMapper;
 import com.isu.ifw.mapper.WtmEmpHisMapper;
@@ -32,6 +33,7 @@ import com.isu.ifw.repository.WtmEmpAddrRepository;
 import com.isu.ifw.repository.WtmEmpHisRepository;
 import com.isu.ifw.repository.WtmIfEmpMsgRepository;
 import com.isu.ifw.repository.WtmOtpRepository;
+import com.isu.ifw.repository.WtmPropertieRepository;
 import com.isu.ifw.util.Sha256;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
@@ -75,6 +77,9 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 	
 	@Autowired
 	WtmCommUserRepository commUserRepo;
+	
+	@Autowired
+	WtmPropertieRepository propertieRepo;
 
 	@Override
 	public List<Map<String, Object>> getEmpHisList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
@@ -194,12 +199,23 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 	public int saveEmpHis(Long tenantId, String enterCd, Map<String, Object> convertMap, String userId) {
 		int cnt = 0;
 		try {
+			boolean hrInterfaceYn = true;
 			
+			WtmPropertie propertie = propertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_HR_INTERFACE_YN");
+			if(propertie!=null && "N".equalsIgnoreCase(propertie.getInfoValue())) {
+				hrInterfaceYn = false;
+			}
+			
+			String aesKey = tcms.getConfigValue(tenantId, "SECURITY.AES.KEY", true, "");
+			
+			List<String> sabunList = null;
 			if(convertMap.containsKey("mergeRows") && ((List)convertMap.get("mergeRows")).size() > 0) {
 				List<Map<String, Object>> mergeList = (List<Map<String, Object>>) convertMap.get("mergeRows");
 				
 				cnt = mergeList.size();
 				if(mergeList != null && cnt > 0) {
+					sabunList = new ArrayList<String>();
+					
 					List<WtmEmpHis> empHisList = new ArrayList<WtmEmpHis>();
 					for(Map<String, Object> m : mergeList) {
 						WtmEmpHis empHis = new WtmEmpHis();
@@ -297,7 +313,7 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 						
 						Map<String, Object> pMap = new HashMap<String, Object>();
 						pMap.put("encryptStr", tenantId+""+enterCd+""+m.get("sabun").toString());
-						pMap.put("encryptKey", tcms.getConfigValue(tenantId, "SECURITY.AES.KEY", true, ""));
+						pMap.put("encryptKey", aesKey);
 						Map<String, Object> encryptMap = (Map<String, Object>) encryptionMapper.getAesEncrypt(pMap);
 						if(encryptMap!=null) {
 							empHis.setEmpId(encryptMap.get("encryptStr").toString());
@@ -305,21 +321,65 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 						
 						empHis.setUpdateId(userId);
 						empHisList.add(empHis);
+						
+						sabunList.add(sabun);
 					}
 					
 					empHisRepository.saveAll(empHisList);
+				}
+				
+				//comm_user에 넣어줌
+				if(!hrInterfaceYn) {
+					wtmEmpHisMapper.insertCommUser(tenantId);
+					
+					//비밀번호 사번으로 변경
+					List<Map<String, Object>> pwList = new ArrayList<Map<String, Object>>();
+					if(sabunList!=null && sabunList.size()>0) {
+						String encKey = tcms.getConfigValue(tenantId, "SECURITY.SHA.KEY", true, "");
+						String shaRepeat = tcms.getConfigValue(tenantId, "SECURITY.SHA.REPEAT", true, "");
+						int repeatCount = 1;
+						if(shaRepeat!=null && !"".equals(shaRepeat))
+							repeatCount = Integer.parseInt(shaRepeat);
+						
+						for(String sabun : sabunList) {
+							Map<String, Object> pwMap = new HashMap<String, Object>();
+							String password = Sha256.getHash(sabun, encKey, repeatCount);
+							pwMap.put("sabun", sabun);
+							pwMap.put("password", password);
+							pwList.add(pwMap);
+						}
+						
+						if(pwList.size()>0) {
+							Map<String, Object> pMap = new HashMap<String, Object>();
+							pMap.put("tenantId", tenantId);
+							pMap.put("enterCd", enterCd);
+							pMap.put("aesKey", aesKey);
+							pMap.put("pwList", pwList);
+							wtmEmpHisMapper.updateCommUserPw(pMap);
+						}
+						
+					}
 				}
 				
 				MDC.put("merge cnt", "" + cnt);
 			}
 			
 			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {
+				sabunList = new ArrayList<String>();
 				List<Map<String, Object>> deleteList = (List<Map<String, Object>>) convertMap.get("deleteRows");
 				List<Long> empHisIds = new ArrayList<Long>();
 				if(deleteList != null && deleteList.size() > 0) {
 					for(Map<String, Object> d : deleteList) {
 						Long empHisId = Long.valueOf(d.get("empHisId").toString());
 						empHisIds.add(empHisId);
+					}
+					
+					//comm_user삭제
+					if(!hrInterfaceYn) {
+						Map<String, Object> pMap = new HashMap<String, Object>();
+						pMap.put("aesKey", aesKey);
+						pMap.put("empHisIds", empHisIds);
+						wtmEmpHisMapper.updateCommUserPw(pMap);
 					}
 					
 					empHisRepository.deleteByEmpHisIdsIn(empHisIds);

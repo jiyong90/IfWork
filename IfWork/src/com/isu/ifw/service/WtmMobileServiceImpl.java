@@ -1,6 +1,7 @@
 package com.isu.ifw.service;
 
 import java.net.URI;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -113,7 +114,7 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 	}
 	
 	//hr에서 데이터 조회 하기 위한 서비스
-	public Map<String, Object> getDataMap(String url, String queryId, String userToken, String empKey) throws Exception {
+	public Map<String, Object> getDataMap(String url, String queryId, Map<String,Object> user) throws Exception {
 		Map data = new HashMap();
 		RestTemplate restTemplate = new RestTemplate();
 		((org.springframework.http.client.SimpleClientHttpRequestFactory)
@@ -121,14 +122,20 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		
 		ResponseEntity<Map> responseEntity = null;
 		
-		URI uri = UriComponentsBuilder.fromHttpUrl(url) .queryParam("cmd", queryId) 
-				.queryParam("userToken", userToken)
-				.queryParam("empKey", empKey)
-				.build().toUri(); 
 		
+		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url) .queryParam("cmd", queryId) ;
+//				.queryParam("enterCd", )
+//				.queryParam("sabun", sabun)
+		
+        for(String key : user.keySet()) {
+        	builder.queryParam(key, user.get(key));
+        }
+
+        URI uri = builder.build().toUri(); 
+	
 		responseEntity = restTemplate.getForEntity(uri, Map.class);
 		System.out.println("responseEntity  " + responseEntity.getBody());
-		logger.debug("getDataMap " + url + ", " + queryId + ", " + userToken + ", " + empKey);
+		logger.debug("getDataMap " + url + ", " + queryId + ", " + user.toString());
 		
 		if(responseEntity.getStatusCodeValue() != 200) {
 			logger.debug("getDataMap " + responseEntity.getStatusCodeValue() + " : " + responseEntity.getBody());
@@ -184,12 +191,43 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		paramMap.put("applId", applId);
 		paramMap.put("sabun", applSabun);
 		
-		Map<String, Object> data = null;
+		Map<String, Object> data = new HashMap();
 		if("OT".equals(applCd)) {
-			data = wtmOtApplMapper.otApplDetailByApplId(paramMap);
+			
+			List<Map<String, Object>> otDetails = wtmOtApplMapper.otApplDetailByApplId(paramMap);
+			
+			data = otDetails.get(0);
 			if(!data.get("subsYmd").equals("-")) {
 				data.put("subsYmd", data.get("subsYmd").toString().replace("@", "\n"));
 			}
+
+//			if(otDetails.size() > 1) {
+//				String applSabuns = "";
+//				String sabuns = "";
+//				for(int i = 0; i < otDetails.size(); i++) {
+//					
+//					applSabuns += (otDetails.get(index));
+//				}
+//				List<Map<String, Object>> items = new ArrayList();
+//				Map<String, Object> item = new HashMap();
+//				item.put("itemType", "text");
+//				item.put("title", "시작일자");
+//				item.put("key", "otSdate");
+//				items.add(item);
+//				
+//				for(int i = 0; i < otDetails.size(); i++) {
+//					Map<String, Object> ot = otDetails.get(i);
+//					Map<String, Object> item = new HashMap();
+//					item.put("itemType", "text");
+//					item.put("title", "시작일자");
+//					item.put("key", "otSdate");
+//					items.add(item);
+//				}
+//				data.put("key"+i, "[" + ot.get("reasonNm") + "] 사유 : " + ot.get("reason") +"");
+//				resultMap.put("items", items);
+				//resultMap.put("data", data);
+				
+//			}
 		} else if("ENTRY_CHG".equals(applCd)) {
 		    data = wtmEntryApplMapper.findByApplId(Long.parseLong(applId));
 		}

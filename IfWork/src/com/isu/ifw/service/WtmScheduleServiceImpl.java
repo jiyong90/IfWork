@@ -79,13 +79,16 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 		System.out.println("********** beforeYmd : " + beforeYmd);
     	// 마감구분 A:자정(당일퇴근자 마감), B:익일4시(익일심야근무 퇴근자 마감)
     	String closeType = "A";
-    	if("04".equals(ymdh.substring(8, 10))) {
+    	if(tenantId == 52 && "04".equals(ymdh.substring(8, 10))) {
+    		// 태평양물산은 새벽4시마감
+    		closeType = "B";
+    	} else if(Integer.parseInt(ymdh.substring(8, 10)) >= 10 && Integer.parseInt(ymdh.substring(8, 10)) <= 16) {
     		closeType = "B";
     	}
     	System.out.println("********** closeType : " + closeType);
     	
     	getDateMap = new HashMap();
-    	// beforeYmd = "20200306";
+    	// beforeYmd = "20200316";
     	getDateMap.put("tenantId", tenantId);
     	getDateMap.put("ymd", beforeYmd);	// 마감은 전일임으로 계산된 전일을 셋팅해야함
     	getDateMap.put("closeType", closeType);

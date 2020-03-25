@@ -29,6 +29,8 @@ public interface WtmInoutService {
 	public void updateTimecardCancelWeb(Map<String, Object> paramMap) throws Exception;
 	//출퇴근정보 업데이트
 	public void updateTimecard(Map<String, Object> paramMap) throws Exception;
+	//출퇴근정보 업데이트
+	public void updateTimecardIntf(Map<String, Object> paramMap) throws Exception;
 	//외출복귀정보 업데이트
 	public ReturnParam updateGoBack(Map<String, Object> paramMap) throws Exception;
 	//타각은 들어온 경우 캘린더 업뎃부터 테스트

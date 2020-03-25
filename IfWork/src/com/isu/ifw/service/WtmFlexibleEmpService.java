@@ -337,4 +337,14 @@ public interface WtmFlexibleEmpService {
 
 	//확정처리
 	public int setApplyForOne(Map<String, Object> searchSabun, List<Map<String, Object>> ymdList) ;
+	
+	/**
+	 * 퇴직처리 시 근무제 데이터 클리어
+	 * @param tenantId
+	 * @param enterCd
+	 * @param flexibleEmpId
+	 * @param userId
+	 * @return
+	 */
+	public ReturnParam retireEmp(Long tenantId, String enterCd, Long flexibleEmpId, String userId);
 }

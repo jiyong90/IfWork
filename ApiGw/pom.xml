@@ -48,6 +48,29 @@
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-netflix-zuul</artifactId>
 		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/com.github.mthizo247/spring-cloud-netflix-zuul-websocket -->
+		<dependency>
+		    <groupId>com.github.mthizo247</groupId>
+		    <artifactId>spring-cloud-netflix-zuul-websocket</artifactId>
+		    <version>1.0.7.RELEASE</version>
+		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/org.springframework/spring-websocket -->
+		<dependency>
+		    <groupId>org.springframework</groupId>
+		    <artifactId>spring-websocket</artifactId>
+		    <version>5.2.4.RELEASE</version>
+		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/org.springframework/spring-messaging -->
+		<dependency>
+		    <groupId>org.springframework</groupId>
+		    <artifactId>spring-messaging</artifactId>
+		    <version>5.2.4.RELEASE</version>
+		</dependency>
+
+
 		<!-- 
 		 <dependency>
 		     <groupId>org.springframework.cloud</groupId>

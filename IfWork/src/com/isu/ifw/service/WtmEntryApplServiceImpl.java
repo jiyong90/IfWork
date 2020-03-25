@@ -391,16 +391,16 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 			entryAppl.setChgSdate(WtmUtil.toDate(chgSdate, "yyyyMMddHHmm"));
 		if(chgEdate!=null && !"".equals(chgEdate)) {
 			Date edate = WtmUtil.toDate(chgEdate, "yyyyMMddHHmm");
+			Date sdate = WtmUtil.toDate(entrySdate, "yyyyMMddHHmm");
 			
 			if(chgSdate!=null && !"".equals(chgSdate)) {
-				Date sdate = WtmUtil.toDate(chgSdate, "yyyyMMddHHmm");
-				
-				//종료일이 시작일보다 작을 때
-				if(sdate.compareTo(edate)>0) {
-					edate = WtmUtil.addDate(edate,1);
-				}
-			}
+				sdate = WtmUtil.toDate(chgSdate, "yyyyMMddHHmm");
+			} 
 			
+			//종료일이 시작일보다 작을 때
+			if(sdate.compareTo(edate)>0) {
+				edate = WtmUtil.addDate(edate,1);
+			}
 			entryAppl.setChgEdate(edate);
 		}
 		entryAppl.setReason(reason);

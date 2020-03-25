@@ -464,4 +464,9 @@ public interface WtmFlexibleEmpMapper {
 	 */
 	public Map<String, Object> sumResultMinuteByTimeTypeCd(Map<String, Object> paramMap);
 	
+	public void deleteWorkDayResultByYmdGreaterThan(Map<String, Object> paramMap);
+	public void deleteWorkCalendarByYmdGreaterThan(Map<String, Object> paramMap);
+	public void deleteFlexEmpByYmdGreaterThan(Map<String, Object> paramMap);
+	public void deleteWorkTermByYmdGreaterThan(Map<String, Object> paramMap);
+	
 }

@@ -18,38 +18,61 @@ server:
   servlet:
     context-path: /
   use-forward-headers: true
-  
+
+          
 zuul:
+  host:
+    connect-timeout-millis: 60000
+    socket-timeout-millis: 60000
+    max-total-connections: 200
+    max-per-route-connections: 20
+    time-unit: MILLISECONDS
+    time-to-live: 10000
   sensitiveHeaders: #Cookie,Set-Cookie
   routes: 
     auth:
       path: /ifa/**
-      #url: http://10.30.30.188:8380/ifa
-      url: http://192.168.111.13:8180/ifa
+      url: http://10.30.30.188:8380/ifa
+      #url: http://192.168.111.13:8180/ifa
       sensitiveHeaders: #Cookie,Set-Cookie,Authorization
       
+    #worktime-websocket:
+    #  path: /ifw/we/**
+      #url: http://10.62.8.183
+    #  url: http://10.30.30.188
+    #  sensitiveHeaders: #Cookie,Set-Cookie,Authorization
+    #  strip-prefix: false
+        
     worktime:
       path: /ifw/**
-      #url: http://10.30.30.188
-      url: http://192.168.111.15
+      #url : http://10.62.8.183 #load balancer 
+      url: http://10.30.30.188
+      #url: http://192.168.111.15
+      customSensitiveHeaders: true
       sensitiveHeaders: #Cookie,Set-Cookie,Authorization
       strip-prefix: false
       
     wtms-api:
       path: /worktime-api/**
       #url: http://10.30.30.188/ifw
-      url: http://192.168.111.15/ifw
+      #url: http://192.168.111.15/ifw
+      url: http://10.62.8.183/ifw #load balancer
       sensitiveHeaders: #Cookie,Set-Cookie,Authorization
     #static:
     #  path: /static/**
     #  service-id: static
+  ws:
+    brokerages:
+      worktime:
+        end-points: /ifw/we
+        brokers:  /app
+        destination-prefixes: /
+        
   #ignored-services: '*'
   #ignored-headers: Pragma,Cache-Control,X-Frame-Options,X-Content-Type-Options,X-XSS-Protection,Expires
   #ignore-security-headers: false
   #add-proxy-headers: false
   add-host-header: true
-
-  
   
 #eureka:
 #  client:
@@ -70,6 +93,7 @@ zuul:
 logging:
   level:
     root: warn
+    #org.springframework.cloud.netflix: trace
   org.springframework:
     web: warn
     security: info
@@ -77,4 +101,5 @@ logging:
   org.hibernate:
     SQL: warn
   com.isu.ifa: debug
+  
     

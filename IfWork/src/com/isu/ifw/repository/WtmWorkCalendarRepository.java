@@ -24,4 +24,6 @@ public interface WtmWorkCalendarRepository extends JpaRepository<WtmWorkCalendar
 	public WtmWorkCalendar findByTenantIdAndEnterCdAndYmdAndSabun(Long tenantId, String enterCd, String ymd, String sabun);
 
 	public List<WtmWorkCalendar> findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndHolidayYn(Long tenantId, String enterCd, String sabun, String symd, String eymd, String holidayYn);
+
+	public List<WtmWorkCalendar> findByTenantIdAndEnterCdAndSabunAndYmdGreaterThan(Long tenantId, String enterCd, String sabun, String ymd);
 }
