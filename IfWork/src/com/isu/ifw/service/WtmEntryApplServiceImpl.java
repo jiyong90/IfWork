@@ -2,7 +2,6 @@ package com.isu.ifw.service;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +24,6 @@ import com.isu.ifw.repository.WtmEntryApplRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
-import com.isu.ifw.vo.WtmApplLineVO;
 
 @Service("wtmEntryApplService")
 public class WtmEntryApplServiceImpl implements WtmApplService {
@@ -379,19 +377,21 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 		entryAppl.setApplId(applId);
 		entryAppl.setYmd(ymd);
 		
+		Date sdate = null;
 		if(planSdate!=null && !"".equals(planSdate))
 			entryAppl.setPlanSdate(WtmUtil.toDate(planSdate, "yyyyMMddHHmm"));
 		if(planEdate!=null && !"".equals(planEdate))
 			entryAppl.setPlanEdate(WtmUtil.toDate(planEdate, "yyyyMMddHHmm"));
-		if(entrySdate!=null && !"".equals(entrySdate))
+		if(entrySdate!=null && !"".equals(entrySdate)) {
 			entryAppl.setEntrySdate(WtmUtil.toDate(entrySdate, "yyyyMMddHHmm"));
+			sdate = WtmUtil.toDate(entrySdate, "yyyyMMddHHmm");
+		}
 		if(entryEdate!=null && !"".equals(entryEdate))
 			entryAppl.setEntryEdate(WtmUtil.toDate(entryEdate, "yyyyMMddHHmm"));
 		if(chgSdate!=null && !"".equals(chgSdate))
 			entryAppl.setChgSdate(WtmUtil.toDate(chgSdate, "yyyyMMddHHmm"));
 		if(chgEdate!=null && !"".equals(chgEdate)) {
 			Date edate = WtmUtil.toDate(chgEdate, "yyyyMMddHHmm");
-			Date sdate = WtmUtil.toDate(entrySdate, "yyyyMMddHHmm");
 			
 			if(chgSdate!=null && !"".equals(chgSdate)) {
 				sdate = WtmUtil.toDate(chgSdate, "yyyyMMddHHmm");
