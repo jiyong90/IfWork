@@ -201,7 +201,7 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 					
 					if(worksDet!=null && worksDet.size()>0) {
 						for(Map<String, Object> work : worksDet) {
-							if(work.get("symd")==null || "".equals(work.get("symd")) ||work.get("eymd")==null || "".equals(work.get("eymd"))) {
+							if(work.get("startYmd")==null || "".equals(work.get("startYmd")) ||work.get("endYmd")==null || "".equals(work.get("endYmd"))) {
 								rp.setFail(sabun+"의 일자 정보가 없습니다.");
 								return rp;
 							}
@@ -213,8 +213,8 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 							
 							String workTimeCode = work.get("workTimeCode").toString();
 							
-							String symd = work.get("symd").toString();
-							String eymd = work.get("eymd").toString();
+							String symd = work.get("startYmd").toString();
+							String eymd = work.get("endYmd").toString();
 							
 							if(symd.length() != eymd.length()) {
 								rp.setFail("시작일과 종료일의 날짜 포맷이 맞지 않습니다.");
@@ -236,10 +236,10 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 							
 							String shm = "";
 							String ehm = "";
-							if(work.get("shm")!=null && !"".equals(work.get("shm"))) 
-								shm = work.get("shm").toString();
-							if(work.get("ehm")!=null && !"".equals(work.get("ehm"))) 
-								ehm = work.get("ehm").toString();
+							if(work.get("startHm")!=null && !"".equals(work.get("startHm"))) 
+								shm = work.get("startHm").toString();
+							if(work.get("endHm")!=null && !"".equals(work.get("endHm"))) 
+								ehm = work.get("endHm").toString();
 							
 							Long applId = null;
 							if(applNo!=null && !"".equals(applNo)) {
@@ -305,8 +305,8 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		String eDate = null;
 		int i = 0;
 		for(Map<String, Object> a : appl) {
-			String symd = a.get("symd").toString();
-			String eymd = a.get("eymd").toString();
+			String symd = a.get("startYmd").toString();
+			String eymd = a.get("endYmd").toString();
 			
 			if(i==0) {
 				sDate = symd;
@@ -324,10 +324,10 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		List<Map<String, Object>> applMinutes = new ArrayList<Map<String, Object>>();
 		for(Map<String, Object> a : appl) {
 			String workTimeCode = a.get("workTimeCode").toString();
-			String symd = a.get("symd").toString();
-			String eymd = a.get("eymd").toString();
-			String shm = a.get("shm").toString();
-			String ehm = a.get("ehm").toString();
+			String symd = a.get("startYmd").toString();
+			String eymd = a.get("endYmd").toString();
+			String shm = a.get("startHm").toString();
+			String ehm = a.get("endHm").toString();
 			
 			WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, workTimeCode);
 			if(taaCode==null) {
