@@ -244,7 +244,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					
 					System.out.println("calendar.getTimeCdMgrId() : " + calendar.getTimeCdMgrId());
 					
-					if(timeCdMgrId != Long.valueOf(calendar.getTimeCdMgrId())) {
+					if(timeCdMgrId.compareTo(Long.valueOf(calendar.getTimeCdMgrId())) != 0) {
 						timeCdMgrId = null;
 						result = new HashMap<String, Object>();
 						result.put("message", "대상자의 근무시간표가 다릅니다.");
