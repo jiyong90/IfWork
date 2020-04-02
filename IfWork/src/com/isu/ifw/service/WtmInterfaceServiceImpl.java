@@ -3114,5 +3114,139 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			}
 		}
 	}
+	
+	
+	@Override
+	@Transactional
+	public void setCloseWorkIfN(HashMap reqMap) {
+		// TODO Auto-generated method stub
+		System.out.println("WtmInterfaceServiceImpl setCloseWorkIf");
+		// 인터페이스 결과 저장용
+    	String retMsg = "";
+    	int resultCnt = 0;
+    	String ifType = "WORKTIME_CLOSE";
+    	Map<String, Object> ifHisMap = new HashMap<>();
+    	ifHisMap.put("tenantId", reqMap.get("tenantId"));
+    	ifHisMap.put("ifItem", ifType);
+    	
+    	// 인터페이스용 변수
+    	String lastDataTime = null;
+    	String nowDataTime = null;
+    	HashMap<String, Object> getDateMap = null;
+    	HashMap<String, Object> getIfMap = null;
+    	List<Map<String, Object>> getIfList = null;
+    	
+    	// 최종 자료 if 시간 조회
+    	try {
+    		getDateMap = (HashMap<String, Object>) getIfLastDate((Long) reqMap.get("tenantId"), ifType);
+    		lastDataTime = getDateMap.get("nowDate").toString();
+    		nowDataTime = getDateMap.get("nowDate").toString();
+    	} catch(Exception e) {
+    		retMsg = "WORKTIME_CLOSE get : 최종갱신일 조회오류";
+    	}
+
+		try {
+			System.out.println("************************* reqMap ** " + reqMap.toString());
+			
+			// 사원별 기간을 반복해야함
+			String sYmd = reqMap.get("sYmd").toString();
+			String eYmd = reqMap.get("eYmd").toString();
+			
+			Map<String, Object> dayMap = reqMap;
+			dayMap.put("symd", sYmd);
+			dayMap.put("eymd", eYmd);
+			
+			//근무 마감된 자료 있는지 조회
+			Map<String, Object> workCloseCntMap = wtmInterfaceMapper.isWorkClose(dayMap);
+			if(workCloseCntMap!=null && workCloseCntMap.containsKey("workCloseCnt") && workCloseCntMap.get("workCloseCnt")!=null && !"".equals(workCloseCntMap.get("workCloseCnt")) ) {
+				int workCloseCnt = Integer.parseInt(workCloseCntMap.get("workCloseCnt").toString());
+				if(workCloseCnt>0) {
+					ifHisMap.put("ifStatus", "ERR");
+					retMsg = "근무마감된 자료가 있습니다. 마감여부를 확인하세요.";
+					
+					dayMap.put("msg", retMsg);
+					wtmInterfaceMapper.insertErrorLog(dayMap);
+					
+					return;
+				}
+			}
+			
+			//지각조퇴결근 코드 조회
+			Map<String, Object> taaCodeMap = wtmInterfaceMapper.getLateAndLeaveAndAbsenceCode(dayMap);
+			if(taaCodeMap==null 
+					|| !taaCodeMap.containsKey("lateCd") || taaCodeMap.get("lateCd")==null || "".equals(taaCodeMap.get("lateCd"))
+					|| !taaCodeMap.containsKey("leaveCd") || taaCodeMap.get("leaveCd")==null || "".equals(taaCodeMap.get("leaveCd")) 
+					|| !taaCodeMap.containsKey("absenceCd") || taaCodeMap.get("absenceCd")==null || "".equals(taaCodeMap.get("absenceCd")) ) {
+				ifHisMap.put("ifStatus", "ERR");
+				retMsg = "지각/조퇴/결근 코드가 없습니다.";
+				
+				dayMap.put("msg", retMsg);
+				wtmInterfaceMapper.insertErrorLog(dayMap);
+				
+				return;
+			}
+				
+			//생성할 자료 삭제
+			wtmInterfaceMapper.deleteWorktimeDayClose(dayMap);
+			
+			Map<String, Object> emptyWorkTypeCntMap = wtmInterfaceMapper.isWorkType(dayMap);
+			if(emptyWorkTypeCntMap!=null && emptyWorkTypeCntMap.containsKey("emptyWorkTypeCnt") && emptyWorkTypeCntMap.get("emptyWorkTypeCnt")!=null && !"".equals(emptyWorkTypeCntMap.get("emptyWorkTypeCnt")) ) {
+				int emptyWorkTypeCnt = Integer.parseInt(emptyWorkTypeCntMap.get("emptyWorkTypeCnt").toString());
+				if(emptyWorkTypeCnt>0) {
+					ifHisMap.put("ifStatus", "ERR");
+					retMsg = "근무정보가 없는 대상자가 있습니다.";
+					
+					dayMap.put("msg", retMsg);
+					wtmInterfaceMapper.insertErrorLog(dayMap);
+					
+					return;
+				}
+			}
+			
+			//WTM_WORKTIME_DAY_CLOSE 기본값 잆력
+			wtmInterfaceMapper.insertWorktimeDayClose(dayMap);
+			
+			//근무시간 반영
+			dayMap.putAll(taaCodeMap);
+			wtmInterfaceMapper.updateWorktimeDayClose(dayMap);
+			
+			System.out.println("******************************* DAY close end");
+			// System.out.println(dayMap.toString());
+			
+			Map<String, Object> monMap = reqMap;
+			monMap.put("retCode", "");
+			monMap.put("retMsg", "");
+			
+			wtmInterfaceMapper.monthWorkClose(dayMap);
+			String retCodeMon = monMap.get("retCode").toString();
+			if("FAIL".equals(retCodeMon)) {
+				ifHisMap.put("ifStatus", "ERR");
+				retMsg = monMap.get("retMsg").toString();
+				
+				dayMap.put("msg", retMsg);
+				wtmInterfaceMapper.insertErrorLog(dayMap);
+				return;
+			}
+			
+			// 마감이 다 돌았는으면 보상휴가생성으로 넘어가자
+		} catch(Exception e){
+			ifHisMap.put("ifStatus", "ERR");
+			retMsg = "근무마감오류";
+            e.printStackTrace();
+        }
+		
+    	// 3. 처리결과 저장
+		try {
+			// WTM_IF_HIS 테이블에 결과저장
+			ifHisMap.put("updateDate", nowDataTime);
+   			ifHisMap.put("ifEndDate", lastDataTime);
+			ifHisMap.put("ifMsg", retMsg);
+			wtmInterfaceMapper.insertIfHis(ifHisMap);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+        System.out.println("WtmInterfaceServiceImpl setTaaApplIf end");
+		return;
+	}
 
 }
