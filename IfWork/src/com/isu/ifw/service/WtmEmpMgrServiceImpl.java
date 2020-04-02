@@ -80,7 +80,7 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 	
 	@Autowired
 	WtmPropertieRepository propertieRepo;
-
+	
 	@Override
 	public List<Map<String, Object>> getEmpHisList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
 		List<Map<String, Object>> empList = new ArrayList();
