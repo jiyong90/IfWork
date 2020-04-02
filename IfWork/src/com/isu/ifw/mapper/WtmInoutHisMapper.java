@@ -83,4 +83,12 @@ public interface WtmInoutHisMapper {
 	 * @return
 	 */
 	public Map<String, Object> getMyUnplannedYn(Map<String, Object> paramMap) throws Exception;
+	
+	/**
+	 * 모니터링용
+	 * @param paramMap
+	 * @return
+	 */
+	public List<Map<String, Object>> getInoutMonitorList(Map<String, Object> paramMap) throws Exception;
+
 }
