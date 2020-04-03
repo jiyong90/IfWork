@@ -243,4 +243,14 @@ public interface WtmInterfaceService {
 	 * @throws Exception 
 	 */
 	public void setTempHj(HashMap reqMap) throws Exception;
+	
+	
+	/**
+	 * 근태마감
+	 * @param reqMap - 파라메터 맵
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void setCloseWorkIfN(HashMap reqMap);
+	
 }

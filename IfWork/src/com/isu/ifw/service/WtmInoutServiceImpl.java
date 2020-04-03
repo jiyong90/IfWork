@@ -1170,6 +1170,12 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	@Override
+	public List<Map<String, Object>> getInoutMonitorList(Map<String, Object> paramMap) throws Exception {
+	
+		return inoutHisMapper.getInoutMonitorList(paramMap);
+	}
 
 	/*
 	@Override

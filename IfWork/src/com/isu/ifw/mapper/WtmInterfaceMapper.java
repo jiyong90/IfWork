@@ -289,5 +289,54 @@ public interface WtmInterfaceMapper {
 	
 	public List<Map<String, Object>> getCompList(Map<String, Object> paramMap);
 	
+	/**
+	 * 로그 쌓기
+	 * @param paramMap
+	 */
+	public void insertErrorLog(Map<String, Object> paramMap);
+	
+	/**
+	 * 근무 마감된 자료 있는지 조회
+	 * @param paramMap
+	 * @return
+	 */
+	public Map<String, Object> isWorkClose(Map<String, Object> paramMap);
+	
+	/**
+	 * 지각,조퇴,결근 근태 코드 조회
+	 * @param paramMap
+	 * @return
+	 */
+	public Map<String, Object> getLateAndLeaveAndAbsenceCode(Map<String, Object> paramMap);
+	
+	/**
+	 * 생성할 자료 삭제
+	 * @param paramMap
+	 */
+	public void deleteWorktimeDayClose(Map<String, Object> paramMap);
+	
+	/**
+	 * 근무정보 없는지 조회
+	 * @param paramMap
+	 * @return
+	 */
+	public Map<String, Object> isWorkType(Map<String, Object> paramMap);
+	
+	/**
+	 * WTM_WORKTIME_DAY_CLOSE 기본값 잆력
+	 * @param paramMap
+	 */
+	public void insertWorktimeDayClose(Map<String, Object> paramMap);
+	
+	/**
+	 * 일 근무시간 반영
+	 * @param paramMap
+	 */
+	public void updateWorktimeDayClose(Map<String, Object> paramMap);
+	
+	/**
+	 * 월마감
+	 **/
+	public void monthWorkClose(Map<String, Object> paramMap);
 	
 }

@@ -51,4 +51,7 @@ public interface WtmInoutService {
 	public List<Map<String, Object>> getMyInoutHistory(Map<String, Object> paramMap) throws Exception;
 	public Map<String, Object> getMyInoutDetail(Map<String, Object> paramMap) throws Exception;
 	public ReturnParam cancel(Map<String, Object> paramMap) throws Exception;
+	
+	public List<Map<String, Object>> getInoutMonitorList(Map<String, Object> paramMap) throws Exception;
+	
 }

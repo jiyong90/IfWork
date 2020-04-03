@@ -13,4 +13,6 @@ public interface WtmEmpHisMapper {
 	public void insertCommUser(@Param("tenantId") Long tenantId);
 	public void updateCommUserPw(Map<String, Object> paramMap);
 	public void deleteCommUser(Map<String, Object> paramMap);
+	
+	public List<Map<String, Object>> getCreateBaseTarget(Map<String, Object> paramMap);
 }
