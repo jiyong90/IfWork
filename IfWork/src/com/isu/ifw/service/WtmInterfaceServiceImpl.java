@@ -3118,7 +3118,10 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	
 	@Override
 	@Transactional
-	public void setCloseWorkIfN(HashMap reqMap) {
+	public ReturnParam setCloseWorkIfN(HashMap reqMap) {
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("");
+		
 		// TODO Auto-generated method stub
 		System.out.println("WtmInterfaceServiceImpl setCloseWorkIf");
 		// 인터페이스 결과 저장용
@@ -3143,6 +3146,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     		nowDataTime = getDateMap.get("nowDate").toString();
     	} catch(Exception e) {
     		retMsg = "WORKTIME_CLOSE get : 최종갱신일 조회오류";
+    		rp.setFail(retMsg);
+    		return rp;
     	}
 
 		try {
@@ -3167,7 +3172,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					dayMap.put("msg", retMsg);
 					wtmInterfaceMapper.insertErrorLog(dayMap);
 					
-					return;
+					rp.setFail(retMsg);
+		    		return rp;
 				}
 			}
 			
@@ -3183,7 +3189,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				dayMap.put("msg", retMsg);
 				wtmInterfaceMapper.insertErrorLog(dayMap);
 				
-				return;
+				rp.setFail(retMsg);
+	    		return rp;
 			}
 				
 			//생성할 자료 삭제
@@ -3199,7 +3206,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					dayMap.put("msg", retMsg);
 					wtmInterfaceMapper.insertErrorLog(dayMap);
 					
-					return;
+					rp.setFail(retMsg);
+		    		return rp;
 				}
 			}
 			
@@ -3225,7 +3233,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				
 				dayMap.put("msg", retMsg);
 				wtmInterfaceMapper.insertErrorLog(dayMap);
-				return;
+				rp.setFail(retMsg);
+	    		return rp;
 			}
 			
 			// 마감이 다 돌았는으면 보상휴가생성으로 넘어가자
@@ -3233,6 +3242,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			ifHisMap.put("ifStatus", "ERR");
 			retMsg = "근무마감오류";
             e.printStackTrace();
+            
+            rp.setFail(retMsg);
+    		return rp;
         }
 		
     	// 3. 처리결과 저장
@@ -3246,7 +3258,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			e.printStackTrace();
 		}
         System.out.println("WtmInterfaceServiceImpl setTaaApplIf end");
-		return;
+		return rp;
 	}
 
 }
