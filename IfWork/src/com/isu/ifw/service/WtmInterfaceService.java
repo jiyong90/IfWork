@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.isu.ifw.vo.ReturnParam;
 
+
 /**
  * 인사자료 이관용 인터페이스
  * @author lhj
@@ -251,6 +252,6 @@ public interface WtmInterfaceService {
 	 * @return 
 	 * @throws Exception 
 	 */
-	public void setCloseWorkIfN(HashMap reqMap);
+	public ReturnParam setCloseWorkIfN(HashMap reqMap);
 	
 }
