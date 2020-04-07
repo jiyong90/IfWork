@@ -24,6 +24,9 @@ public interface WtmFlexibleStdMapper {
 	//근무제 work_type_cd별 조회
 	public List<Map<String, Object>> getWtmFlexibleStdWorkTypeList(Map<String, Object> paramMap);
 	
+	//근무제 work_type_cd별 조회(유연근무제만)
+	public List<Map<String, Object>> getWtmFlexibleStdFlexList(Map<String, Object> paramMap);
+	
 	/**
 	 * 특정일 기준으로 주의 시작일과 종료일을 가지고 온다. 
 	 * 주의 시작 요일은 WTM_PROPERTIE OPTION_FIRSTDAY_OF_WEEK 

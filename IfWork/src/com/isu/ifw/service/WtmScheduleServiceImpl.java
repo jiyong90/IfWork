@@ -85,10 +85,11 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
     	} else if(Integer.parseInt(ymdh.substring(8, 10)) >= 10 && Integer.parseInt(ymdh.substring(8, 10)) <= 16) {
     		closeType = "B";
     	}
+    	// closeType = "A";
     	System.out.println("********** closeType : " + closeType);
     	
     	getDateMap = new HashMap();
-    	// beforeYmd = "20200316";
+    	// beforeYmd = "20200317";
     	getDateMap.put("tenantId", tenantId);
     	getDateMap.put("ymd", beforeYmd);	// 마감은 전일임으로 계산된 전일을 셋팅해야함
     	getDateMap.put("closeType", closeType);
