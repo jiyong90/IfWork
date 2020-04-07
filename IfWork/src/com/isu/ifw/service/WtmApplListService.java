@@ -11,4 +11,6 @@ import java.util.Map;
 public interface WtmApplListService {
 	
 	public List<Map<String, Object>> getOtList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap);
+	
+	public List<Map<String, Object>> getEntryList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap);
 }
