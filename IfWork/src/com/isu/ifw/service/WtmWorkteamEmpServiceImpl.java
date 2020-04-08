@@ -17,11 +17,13 @@ import org.springframework.stereotype.Service;
 import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.entity.WtmWorkteamEmp;
+import com.isu.ifw.entity.WtmWorkteamMgr;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmWorkteamEmpMapper;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.repository.WtmWorkteamEmpRepository;
+import com.isu.ifw.repository.WtmWorkteamMgrRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
 
@@ -30,6 +32,8 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 	
 	private final Logger logger = LoggerFactory.getLogger("ifwFileLog");
 	
+	@Resource
+	WtmWorkteamMgrRepository workteamMgrRepository;
 	
 	@Resource
 	WtmWorkteamEmpRepository workteamRepository;
@@ -103,17 +107,19 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 						String sabun = l.get("sabun").toString();
 						String sYmd = l.get("symd").toString();
 						String eYmd = l.get("eymd").toString();
+						Long workTeamMgrId =Long.parseLong(l.get("workteamMgrId").toString());
 						
 						logger.debug("setWorkteamList for " + sabun + ", "+sYmd + ", " +eYmd);
 						
+						WtmWorkteamMgr mgr = workteamMgrRepository.findByWorkteamMgrId(workTeamMgrId);
 						WtmWorkteamEmp workteam = new WtmWorkteamEmp();
 						workteam.setUpdateId(userId);
 						workteam.setSabun(sabun);
 						workteam.setWorkteamEmpId(l.get("workteamEmpId").toString().equals("") ? null : Long.parseLong(l.get("workteamEmpId").toString()));
-						workteam.setWorkteamMgrId(Long.parseLong(l.get("workteamMgrId").toString()));
-						workteam.setEymd(sYmd);
+						workteam.setWorkteamMgrId(workTeamMgrId);
+						workteam.setEymd(eYmd);
 						workteam.setNote(l.get("note").toString());
-						workteam.setSymd(eYmd);
+						workteam.setSymd(sYmd);
 						
 						//List<Map<String, Object>> dup = workteamRepository.dupCheckByYmd(tenantId, enterCd, l.get("sabun").toString(), l.get("workteamEmpId").toString(), l.get("symd").toString(), l.get("eymd").toString());
 						
@@ -136,6 +142,20 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 						paramMap.put("userId", userId);
 						logger.debug("setWorkteamList workteamRepository.save " + paramMap.toString());
 						
+						//
+						WtmFlexibleEmp flexibleEmp = new WtmFlexibleEmp();
+						flexibleEmp.setEnterCd(enterCd);
+						flexibleEmp.setEymd(eYmd);
+						flexibleEmp.setFlexibleStdMgrId(mgr.getFlexibleStdMgrId());
+						flexibleEmp.setSabun(sabun);
+						flexibleEmp.setSymd(sYmd);
+						flexibleEmp.setTenantId(tenantId);
+						flexibleEmp.setUpdateId(sabun);
+						flexibleEmp.setWorkTypeCd("WORKTEAM");
+						flexibleEmp.setNote(l.get("note").toString());
+						flexEmpRepo.save(flexibleEmp);
+						flexEmpRepo.flush();
+						//
 						WtmFlexibleEmp emp = new WtmFlexibleEmp();
 						List<WtmFlexibleEmp> empList = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCd(tenantId, enterCd, workteam.getSabun(), l.get("symd").toString(), l.get("eymd").toString(), "BASE");
 						if(empList != null) {
