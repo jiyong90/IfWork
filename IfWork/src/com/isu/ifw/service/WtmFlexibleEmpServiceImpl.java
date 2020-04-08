@@ -145,6 +145,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	@Autowired
 	WtmFlexibleApplyMgrMapper wtmFlexibleApplyMgrMapper;
 
+	@Autowired
+	private WtmFlexibleEmpService empService;
+
 	
 	@Override
 	public List<Map<String, Object>> getFlexibleEmpList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
@@ -1575,6 +1578,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						result.setUpdateId(userId);	
 											
 						workDayResultRepo.save(result);	
+						
+						empService.calcApprDayInfo(tenantId, 
+								enterCd, l.get("ymd").toString(),
+								l.get("ymd").toString(), l.get("sabun").toString());
 						
 						// 근무검증
 						// 원래 있던 자리
