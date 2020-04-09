@@ -187,6 +187,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				//결재요청중일 때 회수 버튼 보여주기
 				if(applLine!=null && applLine.size()>0) {
 					int seq = 1;
+					int rSeq = 1; // 수신처 seq
+					boolean isRecIng = false;
 					for(WtmApplLineVO l : applLine) {
 						if(APPL_LINE_S.equals(l.getApprTypeCd())) {
 							if(seq==1 && APPR_STATUS_REQUEST.equals(l.getApprStatusCd()) && sabuns.indexOf(sabun)!=-1 )
@@ -194,6 +196,18 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 							
 							seq++;
 						}
+						
+						if(APPL_LINE_R.equals(l.getApprTypeCd())) {
+							if(rSeq==1 && APPR_STATUS_REQUEST.equals(l.getApprStatusCd()))
+								isRecIng = true;
+							
+							rSeq++;
+						}
+					}
+					
+					//발신결재가 없는 경우
+					if(seq==1 && isRecIng) {
+						isRecovery = true;
 					}
 				}
 				
