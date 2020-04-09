@@ -13,16 +13,12 @@ import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmFlexibleApplyDet;
 import com.isu.ifw.entity.WtmFlexibleApplyMgr;
 import com.isu.ifw.entity.WtmFlexibleEmp;
@@ -101,12 +97,8 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 			
 		} catch(Exception e) {
 			e.printStackTrace();
-			logger.warn(e.toString(), e);
-		} finally {
-			logger.debug("getApplyList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
+			logger.debug(e.toString());
 		}
-		
 		return searchList;
 	}
 	
@@ -122,6 +114,19 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				List<WtmFlexibleApplyMgr> codes = new ArrayList();
 				if(iList != null && iList.size() > 0) {
 					for(Map<String, Object> l : iList) {
+						WtmFlexibleStdMgr mgr = flexStdMgrRepo.findByFlexibleStdMgrId(Long.parseLong(l.get("flexibleStdMgrId").toString()));
+						String mgrSymd = mgr.getUseSymd();
+						String mgrEymd = mgr.getUseEymd();
+						
+						if(Long.parseLong(l.get("useSymd").toString()) < Long.parseLong(mgrSymd) 
+								|| Long.parseLong(l.get("useSymd").toString()) > Long.parseLong(mgrEymd)
+								|| Long.parseLong(l.get("useEymd").toString()) < Long.parseLong(mgrSymd) 								
+								|| Long.parseLong(l.get("useEymd").toString()) > Long.parseLong(mgrEymd)) {
+							throw new Exception("근무제의 사용기간은" + 
+									mgrSymd.substring(0,4) +"/" + mgrSymd.substring(4,6) +"/"+ mgrSymd.substring(6,8) + " ~ " + 
+									mgrEymd.substring(0,4) +"/" + mgrEymd.substring(4,6) +"/"+ mgrEymd.substring(6,8) + "입니다.");
+						} 
+						
 						WtmFlexibleApplyMgr code = new WtmFlexibleApplyMgr();
 						code.setFlexibleApplyId(l.get("flexibleApplyId").toString().equals("") ? null : Long.parseLong(l.get("flexibleApplyId").toString()));
 						code.setFlexibleStdMgrId(Long.parseLong(l.get("flexibleStdMgrId").toString()));
@@ -152,8 +157,6 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 					codes = flexibleApplyRepository.saveAll(codes);
 					cnt += codes.size();
 				}
-				
-				MDC.put("insert cnt", "" + cnt);
 			}
 		
 			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {
@@ -177,18 +180,15 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 					}
 					flexibleApplyRepository.deleteAll(codes);
 				}
-				
-				MDC.put("delete cnt", "" + iList.size());
 				cnt += iList.size();
 			}
 			
 		} catch(Exception e) {
 			e.printStackTrace();
-			logger.warn(e.toString(), e);
-		} finally {
-			logger.debug("setApplyList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
-		}
+			logger.debug(e.toString());
+			return 0;
+		} 
+		
 		return cnt;
 	}
 	
@@ -197,13 +197,9 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		Map<String, Object> searchMap = new HashMap();	
 		try {
 			searchMap =  wtmFlexibleApplyMgrMapper.getEymd(paramMap);
-			
 		} catch(Exception e) {
 			e.printStackTrace();
-			logger.warn(e.toString(), e);
-		} finally {
-			logger.debug("getEymd Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
+			logger.debug(e.toString());
 		}
 		
 		return searchMap;
@@ -216,14 +212,10 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		paramMap.put("flexibleStdMgrId", flexibleStdMgrId);
 		try {
 			searchList =  wtmFlexibleApplyMgrMapper.getworkTypeList(paramMap);
-			
 		} catch(Exception e) {
 			e.printStackTrace();
-			logger.warn(e.toString(), e);
-		} finally {
-			logger.debug("getworkTypeList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
-		}
+			logger.debug(e.toString());
+		} 
 		
 		return searchList;
 	}
@@ -619,11 +611,9 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 			
 		} catch(Exception e) {
 			e.printStackTrace();
-			logger.warn(e.toString(), e);
-		} finally {
-			logger.debug("setApply Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
-		}
+			logger.debug(e.toString());
+		} 
+		
 		return rp;
 	}
 	
@@ -634,11 +624,9 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 			searchList =  wtmFlexibleApplyMgrMapper.getApplyGrpList(paramMap);
 		} catch(Exception e) {
 			e.printStackTrace();
-			logger.warn(e.toString(), e);
-		} finally {
-			logger.debug("getApplyGrpList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
+			logger.debug(e.toString());
 		}
+		
 		return searchList;
 	}
 	
@@ -668,8 +656,6 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				if(saveList != null && saveList.size() > 0) {
 					cnt += wtmFlexibleApplyMgrMapper.insertGrp(saveList);
 				}
-				
-				MDC.put("insert cnt", "" + cnt); 
 			}
 			if(convertMap.containsKey("updateRows") && ((List)convertMap.get("updateRows")).size() > 0) {
 				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("updateRows");
@@ -695,8 +681,6 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				if(saveList != null && saveList.size() > 0) {
 					cnt += wtmFlexibleApplyMgrMapper.updateGrp(saveList);
 				}
-				
-				MDC.put("insert cnt", "" + cnt);
 			}
 		
 			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {
@@ -713,8 +697,6 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				if(saveList != null && saveList.size() > 0) {
 					cnt += wtmFlexibleApplyMgrMapper.deleteGrp(saveList);
 				}
-				
-				MDC.put("delete cnt", "" + iList.size());
 				cnt += iList.size();
 			}
 			// 임시대상자 재생성하기
@@ -726,11 +708,9 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 			
 		} catch(Exception e) {
 			e.printStackTrace();
-			logger.warn(e.toString(), e);
-		} finally {
-			logger.debug("setApplyGrpList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
-		}
+			logger.debug(e.toString());
+		} 
+		
 		return cnt;
 	}
 	
@@ -741,11 +721,9 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 			searchList =  wtmFlexibleApplyMgrMapper.getApplyEmpList(paramMap);
 		} catch(Exception e) {
 			e.printStackTrace();
-			logger.warn(e.toString(), e);
-		} finally {
-			logger.debug("getApplyGrpList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
-		}
+			logger.debug(e.toString());
+		} 
+		
 		return searchList;
 	}
 	
@@ -770,7 +748,6 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				if(saveList != null && saveList.size() > 0) {
 					cnt += wtmFlexibleApplyMgrMapper.insertEmp(saveList);
 				}
-				MDC.put("insert cnt", "" + cnt);
 			}
 			if(convertMap.containsKey("updateRows") && ((List)convertMap.get("updateRows")).size() > 0) {
 				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("updateRows");
@@ -790,7 +767,6 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				if(saveList != null && saveList.size() > 0) {
 					cnt += wtmFlexibleApplyMgrMapper.updateEmp(saveList);
 				}
-				MDC.put("insert cnt", "" + cnt);
 			}
 			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {
 				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("deleteRows");
@@ -805,7 +781,6 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				if(saveList != null && saveList.size() > 0) {
 					cnt += wtmFlexibleApplyMgrMapper.deleteEmp(saveList);
 				}
-				MDC.put("delete cnt", "" + iList.size());
 				cnt += iList.size();
 			}
 			// 임시대상자 재생성하기
@@ -816,11 +791,9 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 			rtn = wtmFlexibleApplyMgrMapper.insertApplyEmpTemp(saveMap);
 		} catch(Exception e) {
 			e.printStackTrace();
-			logger.warn(e.toString(), e);
-		} finally {
-			logger.debug("setApplyGrpList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
-		}
+			logger.debug(e.toString());
+		} 
+		
 		return cnt;
 	}
 	
@@ -831,11 +804,9 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 			searchList =  wtmFlexibleApplyMgrMapper.getApplyEmpPopList(paramMap);
 		} catch(Exception e) {
 			e.printStackTrace();
-			logger.warn(e.toString(), e);
-		} finally {
-			logger.debug("getApplyGrpList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
-		}
+			logger.debug(e.toString());
+		} 
+		
 		return searchList;
 	}
 	

@@ -112,6 +112,19 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 						logger.debug("setWorkteamList for " + sabun + ", "+sYmd + ", " +eYmd);
 						
 						WtmWorkteamMgr mgr = workteamMgrRepository.findByWorkteamMgrId(workTeamMgrId);
+						//근무조 기간이 신청한 기간 안에 포함 안되면 
+						String tSymd = mgr.getSymd();
+						String tEymd = mgr.getEymd();
+						
+						if(Long.parseLong(sYmd) < Long.parseLong(tSymd) 
+								|| Long.parseLong(sYmd) > Long.parseLong(tEymd) 
+								|| Long.parseLong(eYmd) > Long.parseLong(tEymd)
+								|| Long.parseLong(eYmd) < Long.parseLong(tSymd)) {
+							throw new Exception("근무조의 사용기간은" + 
+									tSymd.substring(0,4) +"/" + tSymd.substring(4,6) +"/"+ tSymd.substring(6,8) + " ~ " + 
+									tEymd.substring(0,4) +"/" + tEymd.substring(4,6) +"/"+ tEymd.substring(6,8) + "입니다.");
+						} 
+						
 						WtmWorkteamEmp workteam = new WtmWorkteamEmp();
 						workteam.setUpdateId(userId);
 						workteam.setSabun(sabun);
@@ -248,7 +261,7 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 		} catch(Exception e) {
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
-			rp.setFail("저장에 실패하였습니다.");
+			rp.setFail(e.toString());
 		} 
 		return rp;
 	}
