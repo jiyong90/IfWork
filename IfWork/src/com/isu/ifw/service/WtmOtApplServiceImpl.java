@@ -979,9 +979,9 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			if(rMap != null && rMap.get("totOtMinute") != null && !rMap.get("totOtMinute").equals("")) {
 				totOtMinute = Integer.parseInt(rMap.get("totOtMinute")+"");
 			}
-			Float f = (float) ((totOtMinute + calcMinute) / 60);
+			Float f = (float) ((totOtMinute + calcMinute) / 60.0f);
 			if(f > 12) {
-				f = (float) ((12 - totOtMinute) / 60);
+				f = (float) (((12*60) - totOtMinute) / 60.0);
 				Float ff = (f - f.intValue()) * 60;
 				rp.setFail("연장근무 신청 가능 시간은 " + f.intValue() + "시간 " + ff.intValue() + "분 입니다.");
 				return rp;
