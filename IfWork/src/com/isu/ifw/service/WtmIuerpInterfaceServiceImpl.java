@@ -504,26 +504,31 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 					if(enterCds!=null && enterCds.size()>0) {
 						for(Map<String, Object> m : enterCds) {
 							for(String enterCd : m.keySet()) {
-								Map<String, Object> ruleValue = null;
+								
 								WtmPropertie propertie = propertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_FLEXIBLE_EMP_EXCEPT_TARGET");
 								
+								String ruleValue = null;
+								String ruleType = null;
 								if(propertie!=null && propertie.getInfoValue()!=null && !"".equals(propertie.getInfoValue())) {
 									WtmRule rule = ruleRepo.findByTenantIdAndEnterCdAndRuleNm(tenantId, enterCd, propertie.getInfoValue());
-									if(rule!=null && rule.getRuleValue()!=null && !"".equals(rule.getRuleValue())) 
-										ruleValue = mapper.readValue(rule.getRuleValue(), new HashMap().getClass());
+									if(rule!=null && rule.getRuleValue()!=null && !"".equals(rule.getRuleValue())) {
+										ruleType = rule.getRuleType();
+										ruleValue = rule.getRuleValue();
+									}
+										
 								}
 									
 								for(Map<String, Object> emp : insertTargets) {
 									boolean isNotTarget = false;
 									if(ruleValue!=null) 
-										isNotTarget = flexibleEmpService.isRuleTarget(Long.valueOf(emp.get("tenantId").toString()), emp.get("enterCd").toString(), emp.get("sabun").toString(), ruleValue);
+										isNotTarget = flexibleEmpService.isRuleTarget(Long.valueOf(emp.get("tenantId").toString()), emp.get("enterCd").toString(), emp.get("sabun").toString(), ruleType, ruleValue);
 									
 									String statusCd = "";
 									if(emp.get("statusCd")!=null && !"".equals(emp.get("statusCd"))) {
 										statusCd = emp.get("statusCd").toString();
 									}
 									
-								    if(!isNotTarget && !"CA".equals(statusCd) && !"EA".equals(statusCd) && !"RA".equals(statusCd)) {
+								    if(isNotTarget && !"CA".equals(statusCd) && !"EA".equals(statusCd) && !"RA".equals(statusCd)) {
 								    	System.out.println("tenantId : " + Long.valueOf(emp.get("tenantId").toString()) + " / enterCd : " + emp.get("enterCd").toString() + " / sabun : " + emp.get("sabun").toString()  + " / symd : " + emp.get("symd").toString()  + " / eymd : " + emp.get("eymd").toString());
 								    	
 								    	flexibleEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(emp);

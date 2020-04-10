@@ -330,10 +330,11 @@ public interface WtmFlexibleEmpService {
 	 * @param tenantId
 	 * @param enterCd
 	 * @param sabun
-	 * @param ruleMap
+	 * @param ruleType rule or sql
+	 * @param ruleValue
 	 * @return
 	 */
-	public boolean isRuleTarget(Long tenantId, String enterCd, String sabun, Map<String, Object> ruleMap);
+	public boolean isRuleTarget(Long tenantId, String enterCd, String sabun, String ruleType, String ruleValue);
 
 	//확정처리
 	public int setApplyForOne(Map<String, Object> searchSabun, List<Map<String, Object>> ymdList) ;
