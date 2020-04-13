@@ -2565,25 +2565,32 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 			if("SQL".equalsIgnoreCase(ruleType)) {
 				
-				String sql = "";
+				String sql = "(";
 				
 				List<Map<String, Object>> ruleList = mapper.readValue(ruleValue, new ArrayList<Map<String, Object>>().getClass());
 				if(ruleList!=null && ruleList.size()>0) {
+					int i = 0;
 					int groupSeq = 0;
 					for(Map<String, Object> r : ruleList) {
 						if(r.containsKey("groupSeq") && r.get("groupSeq")!=null && !"".equals(r.get("groupSeq"))) {
 							int seq = Integer.parseInt(r.get("groupSeq").toString());
 							
-							if(groupSeq != seq) {
-								sql += "or ";
-							} else {
-								sql += "and ";
+							if(i!=0) {
+								if(groupSeq != seq) 
+									sql += ") or (";
+								else 
+									sql += " and ";
 							}
 							
 							sql += r.get("item") + " " + r.get("operator") + " " + r.get("itemValue");
+							
+							groupSeq = seq;
+							i++;
 						}
 						
 					}
+					
+					sql += ")";
 					
 					System.out.println("sql : " + sql);
 					

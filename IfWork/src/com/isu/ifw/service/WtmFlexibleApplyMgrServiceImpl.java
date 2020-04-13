@@ -23,6 +23,8 @@ import com.isu.ifw.entity.WtmFlexibleApplyDet;
 import com.isu.ifw.entity.WtmFlexibleApplyMgr;
 import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
+import com.isu.ifw.entity.WtmPropertie;
+import com.isu.ifw.entity.WtmRule;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.entity.WtmWorkPattDet;
 import com.isu.ifw.mapper.WtmFlexibleApplMapper;
@@ -32,6 +34,8 @@ import com.isu.ifw.repository.WtmFlexibleApplyDetRepository;
 import com.isu.ifw.repository.WtmFlexibleApplyMgrRepository;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
+import com.isu.ifw.repository.WtmPropertieRepository;
+import com.isu.ifw.repository.WtmRuleRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.repository.WtmWorkPattDetRepository;
@@ -85,6 +89,12 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 	@Autowired
 	WtmWorkDayResultRepository wtmWorkDayResultRepo;
 
+	@Autowired
+	WtmPropertieRepository propertieRepo;
+	
+	@Autowired
+	WtmRuleRepository ruleRepo;
+	
 	@Override
 	public List<Map<String, Object>> getApplyList(Long tenantId, String enterCd, String sYmd) {
 		List<Map<String, Object>> searchList = new ArrayList();	
@@ -799,15 +809,47 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 	
 	@Override
 	public List<Map<String, Object>> getApplyEmpPopList(Map<String, Object> paramMap) {
+		List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>> searchList = null;
 		try {
 			searchList =  wtmFlexibleApplyMgrMapper.getApplyEmpPopList(paramMap);
+			
+			if(searchList!=null && searchList.size()>0) {
+				Long tenantId = Long.valueOf(paramMap.get("tenantId").toString());
+				String enterCd = paramMap.get("enterCd").toString();
+				
+				for(Map<String, Object> m : searchList) {
+					String sabun = m.get("sabun").toString();
+					WtmPropertie propertie = propertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_FLEXIBLE_EMP_EXCEPT_TARGET");
+					
+					String ruleValue = null;
+					String ruleType = null;
+					if(propertie!=null && propertie.getInfoValue()!=null && !"".equals(propertie.getInfoValue())) {
+						WtmRule rule = ruleRepo.findByTenantIdAndEnterCdAndRuleNm(tenantId, enterCd, propertie.getInfoValue());
+						if(rule!=null && rule.getRuleValue()!=null && !"".equals(rule.getRuleValue())) {
+							ruleType = rule.getRuleType();
+							ruleValue = rule.getRuleValue();
+						}
+					}
+				
+					boolean isTarget = false;
+					if(ruleValue!=null) 
+						isTarget = flexibleEmpService.isRuleTarget(tenantId, enterCd, sabun, ruleType, ruleValue);
+					
+					System.out.println("sabun : "+ sabun + " / isTarget: " + isTarget);
+					
+					if(!isTarget)
+						result.add(m);
+					
+				}
+			}
+			
 		} catch(Exception e) {
 			e.printStackTrace();
 			logger.debug(e.toString());
 		} 
 		
-		return searchList;
+		return result;
 	}
 	
 	@Override

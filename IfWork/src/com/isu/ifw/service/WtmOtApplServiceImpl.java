@@ -872,6 +872,9 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		resultMap.putAll(wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun));
 		
 		Integer calcMinute = Integer.parseInt(resultMap.get("calcMinute").toString());
+		Integer breakMinute = 0;
+		if(resultMap.containsKey("breakMinute"))
+			breakMinute = Integer.parseInt(resultMap.get("breakMinute").toString());
 		
 		resultMap.putAll(wtmFlexibleEmpMapper.getSumOtMinute(paramMap));
 		Integer sumOtMinute = Integer.parseInt(resultMap.get("otMinute").toString());
@@ -979,7 +982,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			if(rMap != null && rMap.get("totOtMinute") != null && !rMap.get("totOtMinute").equals("")) {
 				totOtMinute = Integer.parseInt(rMap.get("totOtMinute")+"");
 			}
-			Float f = (float) ((totOtMinute + calcMinute) / 60.0f);
+			Float f = (float) ((totOtMinute + (calcMinute-breakMinute)) / 60.0f);
 			if(f > 12) {
 				f = (float) (((12*60) - totOtMinute) / 60.0);
 				Float ff = (f - f.intValue()) * 60;
@@ -1103,20 +1106,15 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 					for(WtmRule rule : rules) {
 						String ruleValue  = rule.getRuleValue();
 						if(ruleValue != null && !ruleValue.equals("")) {
-							ObjectMapper mapper = new ObjectMapper();
 							try {
-								ruleMap = mapper.readValue(ruleValue, new HashMap().getClass());
+								boolean isTarget = wtmFlexibleEmpService.isRuleTarget(tenantId, enterCd, sabun, rule.getRuleType(), ruleValue);
+								System.out.println("isTarget:" + isTarget);
 								
-								if(ruleMap != null){ 
-									boolean isTarget = wtmFlexibleEmpService.isRuleTarget(tenantId, enterCd, sabun, rule.getRuleType(), ruleValue);
-									System.out.println("isTarget:" + isTarget);
-									
-									if(targetRuleId==rule.getRuleId() && !isTarget) { 
-										rp.setFail("연장(휴일)근무 신청 대상자가 아닙니다.");
-										return rp;
-									} 
-									rp.put("payTargetYn", isTarget);
-								}
+								if(targetRuleId==rule.getRuleId() && !isTarget) { 
+									rp.setFail("연장(휴일)근무 신청 대상자가 아닙니다.");
+									return rp;
+								} 
+								rp.put("payTargetYn", isTarget);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
