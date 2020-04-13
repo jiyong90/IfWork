@@ -1111,7 +1111,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 								ruleMap = mapper.readValue(ruleValue, new HashMap().getClass());
 								
 								if(ruleMap != null){ 
-									boolean isTarget = wtmFlexibleEmpService.isRuleTarget(tenantId, enterCd, sabun, ruleMap);
+									boolean isTarget = wtmFlexibleEmpService.isRuleTarget(tenantId, enterCd, sabun, rule.getRuleType(), ruleValue);
 									System.out.println("isTarget:" + isTarget);
 									
 									if(targetRuleId==rule.getRuleId() && !isTarget) { 

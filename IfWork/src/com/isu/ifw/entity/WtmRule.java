@@ -29,6 +29,8 @@ public class WtmRule {
 	private String ruleNm;
 	@Column(name="RULE_VALUE")
 	private String ruleValue;
+	@Column(name="RULE_TYPE")
+	private String ruleType;
 	@Column(name="NOTE")
 	private String note;
 	@Temporal(TemporalType.TIMESTAMP)
@@ -66,6 +68,12 @@ public class WtmRule {
 	}
 	public void setRuleValue(String ruleValue) {
 		this.ruleValue = ruleValue;
+	}
+	public String getRuleType() {
+		return ruleType;
+	}
+	public void setRuleType(String ruleType) {
+		this.ruleType = ruleType;
 	}
 	public String getNote() {
 		return note;

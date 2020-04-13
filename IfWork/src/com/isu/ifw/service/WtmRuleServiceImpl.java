@@ -41,6 +41,7 @@ public class WtmRuleServiceImpl implements WtmRuleService{
 				rule.put("tenantId", m.getTenantId());
 				rule.put("enterCd", m.getEnterCd());
 				rule.put("ruleNm", m.getRuleNm());
+				rule.put("ruleType", m.getRuleType());
 				rule.put("ruleValue", m.getRuleValue());
 				rule.put("note", m.getNote());
 				ruleList.add(rule);
