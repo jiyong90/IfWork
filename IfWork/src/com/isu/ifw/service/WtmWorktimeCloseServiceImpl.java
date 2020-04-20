@@ -125,12 +125,14 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 			paramMap.put("tenantId", tenantId);
 			paramMap.put("enterCd", enterCd);
 			paramMap.put("userId", userId);
-					
+			// System.out.println("Impl setWorktimeCloseConfirm paramMap" + paramMap.toString());
+			
 			cnt = wtmWorktimeCloseMapper.setWorkTimeCloseConfirm(paramMap);
 			
 			if(cnt>0) {
 				// 월마감 보상휴가기준 및 사용처 확인
 				// 월마감용 보상휴가생성이면
+				// System.out.println("Impl setWorktimeCloseConfirm cnt" + cnt);
 				wtmWorktimeCloseMapper.setCompMon(paramMap);
 			}			
 			
@@ -181,5 +183,25 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 		
 		return searchList;
 	}
+	
+	@Override
+	public Map<String, Object> getCloseYn(Long tenantId, String enterCd, Map<String, Object> paramMap) {
+		Map<String, Object> searchMap = new HashMap();
+		try {
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+			searchMap =  wtmWorktimeCloseMapper.getCloseYn(paramMap);
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+			logger.warn(e.toString(), e);
+		} finally {
+			logger.debug("getMonList Service End");
+		}
+		
+		return searchMap;
+	}
+	
+	
 	
 }
