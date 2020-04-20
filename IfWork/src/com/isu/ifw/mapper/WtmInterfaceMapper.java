@@ -335,6 +335,12 @@ public interface WtmInterfaceMapper {
 	public void updateWorktimeDayClose(Map<String, Object> paramMap);
 	
 	/**
+	 * 일 근무시간 반영(기본근무 심야근무시간 갱신)
+	 * @param paramMap
+	 */
+	public void updateWorktimeNight(Map<String, Object> paramMap);
+	
+	/**
 	 * 월마감
 	 **/
 	public void monthWorkClose(Map<String, Object> paramMap);

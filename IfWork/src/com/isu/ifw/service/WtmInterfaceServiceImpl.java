@@ -178,8 +178,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				System.out.println("info_data : " + result.get("infoData").toString());
 				
 				ifUrl = result.get("infoData").toString() + ifaddUrl + param+"&tenantId="+tenantId;
-				
-				System.out.println("ifUrl : " + ifUrl);
+				// System.out.println("ifUrl : " + ifUrl);
 			} catch(Exception e){
 	            e.printStackTrace();
 	        }
@@ -3217,6 +3216,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			//근무시간 반영
 			dayMap.putAll(taaCodeMap);
 			wtmInterfaceMapper.updateWorktimeDayClose(dayMap);
+			
+			// 기본근무시간대 심야근무시간이 있으면, 심야근무시간 가산
+			wtmInterfaceMapper.updateWorktimeNight(dayMap);
 			
 			System.out.println("******************************* DAY close end");
 			// System.out.println(dayMap.toString());
