@@ -21,6 +21,7 @@ public interface WtmWorktimeCloseService {
 	 */
 	public List<Map<String, Object>> getCloseList(Long tenantId, String enterCd, Map<String, Object> paramMap);
 	
+	
 	/**
 	 * 근무마감 대상자 리스트(관리자용)	 
 	 */
@@ -40,4 +41,9 @@ public interface WtmWorktimeCloseService {
 	 * 근무마감 리스트 조회 코드
 	 */
 	public List<Map<String, Object>> getWorktimeCloseCode(Long tenantId, String enterCd);
+	
+	/**
+	 * 근무마감여부	 
+	 */
+	public Map<String, Object> getCloseYn(Long tenantId, String enterCd, Map<String, Object> paramMap);
 }

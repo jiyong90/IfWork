@@ -34,4 +34,6 @@ public interface WtmWorktimeCloseMapper {
 	
 	public void setCompMon(Map<String, Object> paramMap);
 	
+	public Map<String, Object> getCloseYn(Map<String, Object> paramMap);   
+	
 }
