@@ -110,6 +110,10 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 			List<String> sabuns = new ArrayList<String>();
 			
 			String ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
+			
+			if(otCanAppl==null)
+				otCanAppl = otCanApplList.get(0);
+			
 			for(Map<String, Object> o : otCanApplList) {
 				//연장근무신청 관리자 화면에서 신청 시 작성한 내용은 똑같으므로 첫번째 사람의 연장근무 신청서만 가져옴
 				if(otCanApplList.size()==1 || sabun.equals(o.get("sabun").toString())) {

@@ -142,6 +142,10 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				List<String> sabuns = new ArrayList<String>();
 				
 				String ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
+				
+				if(otAppl==null)
+					otAppl = otApplList.get(0);
+				
 				for(Map<String, Object> o : otApplList) {
 					//연장근무신청 관리자 화면에서 신청 시 작성한 내용은 똑같으므로 한 명의 연장근무 신청서만 가져옴
 					if(otApplList.size()==1 || sabun.equals(o.get("sabun").toString())) {
