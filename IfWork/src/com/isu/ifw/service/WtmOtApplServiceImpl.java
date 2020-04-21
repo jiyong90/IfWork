@@ -142,6 +142,10 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				List<String> sabuns = new ArrayList<String>();
 				
 				String ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
+				
+				if(otAppl==null)
+					otAppl = otApplList.get(0);
+				
 				for(Map<String, Object> o : otApplList) {
 					//연장근무신청 관리자 화면에서 신청 시 작성한 내용은 똑같으므로 한 명의 연장근무 신청서만 가져옴
 					if(otApplList.size()==1 || sabun.equals(o.get("sabun").toString())) {
@@ -867,6 +871,46 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		
 		paramMap.put("symd", WtmUtil.parseDateStr(sd, "yyyyMMdd"));
 		paramMap.put("eymd", WtmUtil.parseDateStr(ed, "yyyyMMdd"));
+		
+		//잔여 소정근로시간 체크 
+		//기본근무/시차/근무조 일경우에 
+		//잔여 소정근로시간이 있을 경우 BASE 와 OT를 분리하여 체크 한다. 
+		// To-Do
+		
+		List<String> sabunList = new ArrayList<String>();
+		sabunList.add(sabun);
+		Map<String, Object> empParamMap = new HashMap<>();
+		empParamMap.put("sabun", sabunList);
+		empParamMap.put("ymd", ymd);
+		empParamMap.put("tenantId", tenantId);
+		empParamMap.put("enterCd", enterCd);
+		List<Map<String, Object>> emps = wtmOtApplMapper.getRestOtMinute(empParamMap);
+		int restMin = 0;
+		if(emps!=null && emps.size()>0) {
+			for(Map<String, Object> emp : emps) {
+				//Map<String, Object> restMinuteMap = new HashMap<String, Object>();
+				/*
+				if(emp.get("restOtMinute")!=null && !"".equals(emp.get("restOtMinute"))) {
+					int restMin = Integer.parseInt(emp.get("restOtMinute").toString());
+					restMinuteMap.put("restOtMinute", restMin);
+				}
+				*/
+				//휴일근무이며
+				if(emp.get("holidayYn") != null && "Y".equals(emp.get("holidayYn"))) {
+					//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 소정근로 시간을 사용할 수 잇다. 
+					if(emp.get("workTypeCd") != null && ("BASE".equals(emp.get("workTypeCd")) || "DIFF".equals(emp.get("workTypeCd")) || "WORKTEAM".equals(emp.get("workTypeCd")) ) ) {
+						if(emp.get("restWorkMinute")!=null && !"".equals(emp.get("restWorkMinute"))) {
+							restMin = Integer.parseInt(emp.get("restWorkMinute").toString());
+							//restMinuteMap.put("restWorkMinute", restMin);
+						}
+					}
+				}
+			}
+		}
+		//잔여 소정 근로 시간이 있을 경우 소정근로 시간을 먼저 구한다. 
+		if(restMin > 0) {
+			//
+		}
 		
 		//현재 신청할 연장근무 시간 계산
 		resultMap.putAll(wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun));
