@@ -469,4 +469,16 @@ public interface WtmFlexibleEmpMapper {
 	public void deleteFlexEmpByYmdGreaterThan(Map<String, Object> paramMap);
 	public void deleteWorkTermByYmdGreaterThan(Map<String, Object> paramMap);
 	
+	/**
+	 * BREAK TYPE이 MGR일 경우에만 사용한다. 
+	 * 시작시간으로 부터 분 계산(휴게시간 제외)
+	 * 휴게시간이 18~18:30분까지 설정되어있고 
+	 * 18시 부터 한시간 뒤 종료시간을 구할경우
+	 * 19:30분을 반환한다.  
+	 * @param paramMap { tenantId enterCd sabun ymd(8) datetime addMinute(int), return datetime }
+	 * @return
+	 */
+	public Map<String, Object> addMinuteWithBreakMGR(Map<String, Object> paramMap);
+	
+	
 }
