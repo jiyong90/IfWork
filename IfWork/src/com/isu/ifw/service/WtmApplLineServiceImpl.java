@@ -1,5 +1,6 @@
 package com.isu.ifw.service;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import com.isu.ifw.repository.WtmApplCodeRepository;
 import com.isu.ifw.repository.WtmApplLineRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.WtmApplLineVO;
+
 
 @Service("applLineService")
 public class WtmApplLineServiceImpl implements WtmApplLineService{
@@ -98,6 +100,8 @@ public class WtmApplLineServiceImpl implements WtmApplLineService{
 		paramMap.put("applCd", applCd);
 		//결재라인 조회 기본으로 3단계까지 가져와서 뽑아  쓰자
 		List<WtmApplLineVO> applLineVOs = applMapper.getWtmApplLine(paramMap);
+		
+		// System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& saveWtmApplLine start");
 		//기본 결재라인이 없으면 저장도 안됨.
 		if(applLineVOs != null && applLineVOs.size() > 0){
 
@@ -110,8 +114,8 @@ public class WtmApplLineServiceImpl implements WtmApplLineService{
 				int whileLoop = 0;
 				int lineCnt = 0;
 				for(WtmApplLine applLine : applLines) {
-					
-					WtmApplLineVO applLineVO = applLineVOs.get(whileLoop);
+					//WtmApplLineVO applLineVO = applLineVOs.get(whileLoop);
+					WtmApplLineVO applLineVO = applLineVOs.get(i-1);
 					
 					if(whileLoop < applLineVOs.size()) {
 						
@@ -121,6 +125,26 @@ public class WtmApplLineServiceImpl implements WtmApplLineService{
 							applLine.setApprSabun(applLineVO.getSabun());
 							applLine.setApprTypeCd(applLineVO.getApprTypeCd());
 							applLine.setUpdateId(userId);
+							// System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& saveWtmApplLine UPDATE " + i);
+							/*
+							Object objLine = applLine;
+				            // 반복문을 이용하여 해당 클래스에 정의된 필드를 가져옵니다.
+							for (Field field : objLine.getClass().getDeclaredFields()){
+					            field.setAccessible(true);
+					            Object value;
+								try {
+									value = field.get(objLine);
+									System.out.println(field.getName()+","+value);
+								} catch (IllegalArgumentException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								} catch (IllegalAccessException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+					            
+					        }
+					        */
 							applLineRepo.save(applLine);
 							i++;
 						}
@@ -139,14 +163,38 @@ public class WtmApplLineServiceImpl implements WtmApplLineService{
 				int lineCnt = 0; 
 				
 				for(WtmApplLineVO applLineVO : applLineVOs) {
+					
+
 					//발신결재 결재레벨 체크
 					if(!WtmApplService.APPL_LINE_S.equals(applLineVO.getApprTypeCd()) || (WtmApplService.APPL_LINE_S.equals(applLineVO.getApprTypeCd()) && lineCnt < applCnt)) {
+						
 						WtmApplLine applLine = new WtmApplLine();
 						applLine.setApplId(applId);
 						applLine.setApprSeq(i);
 						applLine.setApprSabun(applLineVO.getSabun());
 						applLine.setApprTypeCd(applLineVO.getApprTypeCd());
 						applLine.setUpdateId(userId);
+						
+						/*
+						System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& saveWtmApplLine INSERT " + i);
+						Object objLine = applLine;
+			            // 반복문을 이용하여 해당 클래스에 정의된 필드를 가져옵니다.
+						for (Field field : objLine.getClass().getDeclaredFields()){
+				            field.setAccessible(true);
+				            Object value;
+							try {
+								value = field.get(objLine);
+								System.out.println(field.getName()+","+value);
+							} catch (IllegalArgumentException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							} catch (IllegalAccessException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+				            
+				        }
+				        */
 						applLineRepo.save(applLine);
 						i++;
 					}
