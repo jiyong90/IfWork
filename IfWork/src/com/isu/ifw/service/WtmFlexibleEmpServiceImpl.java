@@ -1581,21 +1581,28 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 											
 						workDayResultRepo.save(result);	
 						
-						empService.calcApprDayInfo(tenantId, 
-								enterCd, l.get("ymd").toString(),
-								l.get("ymd").toString(), l.get("sabun").toString());
+						//오늘 이전인 경우만 돌려주기, 오늘은 일마감에서
+						SimpleDateFormat format1 = new SimpleDateFormat ( "yyyyMMdd");
+						Date today = format1.parse(format1.format(new Date()));
+						Date edate = format1.parse(l.get("planEdate").toString().substring(0, 8));
 						
-						// 근무검증
-						// 원래 있던 자리
-															
-						// 문제가 없으면 근무계획시간 합산
-						chkMap.put("tenantId", tenantId);
-						chkMap.put("enterCd", enterCd);
-						chkMap.put("sabun", l.get("sabun").toString());
-						chkMap.put("symd", l.get("ymd").toString());
-						chkMap.put("eymd", l.get("ymd").toString());
-						chkMap.put("pId", userId);
-						flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(chkMap);
+						if(today.compareTo(edate) > 0) {
+							empService.calcApprDayInfo(tenantId, 
+									enterCd, l.get("ymd").toString(),
+									l.get("ymd").toString(), l.get("sabun").toString());
+							
+							// 근무검증
+							// 원래 있던 자리
+																
+							// 문제가 없으면 근무계획시간 합산
+							chkMap.put("tenantId", tenantId);
+							chkMap.put("enterCd", enterCd);
+							chkMap.put("sabun", l.get("sabun").toString());
+							chkMap.put("symd", l.get("ymd").toString());
+							chkMap.put("eymd", l.get("ymd").toString());
+							chkMap.put("pId", userId);
+							flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(chkMap);
+						}
 						cnt++;
 						retMsg = ""; // 메시지초기화
 					}
@@ -2377,10 +2384,25 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				List<Map<String, Object>> emps = otApplMapper.getRestOtMinute(paramMap);
 				if(emps!=null && emps.size()>0) {
 					for(Map<String, Object> emp : emps) {
-						int restOtMin = 0;
-						if(emp.get("restOtMinute")!=null && !"".equals(emp.get("restOtMinute")))
-							restOtMin = Integer.parseInt(emp.get("restOtMinute").toString());
-						targetList.put(emp.get("sabun").toString(), restOtMin);
+						Map<String, Object> restMinuteMap = new HashMap<String, Object>();
+						
+						if(emp.get("restOtMinute")!=null && !"".equals(emp.get("restOtMinute"))) {
+							int restMin = Integer.parseInt(emp.get("restOtMinute").toString());
+							restMinuteMap.put("restOtMinute", restMin);
+						}
+						
+						//휴일근무이며
+						if(emp.get("holidayYn") != null && "Y".equals(emp.get("holidayYn"))) {
+							//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 소정근로 시간을 사용할 수 잇다. 
+							if(emp.get("workTypeCd") != null && ("BASE".equals(emp.get("workTypeCd")) || "DIFF".equals(emp.get("workTypeCd")) || "WORKTEAM".equals(emp.get("workTypeCd")) ) ) {
+								if(emp.get("restWorkMinute")!=null && !"".equals(emp.get("restWorkMinute"))) {
+									int restMin = Integer.parseInt(emp.get("restWorkMinute").toString());
+									restMinuteMap.put("restWorkMinute", restMin);
+									restMinuteMap.put("guideMessage", "* 잔여소정근로시간이 먼저 차감됩니다.");
+								}
+							}
+						}
+						targetList.put(emp.get("sabun").toString(), restMinuteMap);
 					}
 				}
 				
@@ -3002,4 +3024,5 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		return rp;
 	}
+	
 }
