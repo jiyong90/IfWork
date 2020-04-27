@@ -1,6 +1,5 @@
 package com.isu.ifw.service;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -11,8 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
@@ -86,7 +85,7 @@ public class WtmApplLineServiceImpl implements WtmApplLineService{
 		return result;
 	}
 
-	
+	@Transactional
 	@Override
 	public void saveWtmApplLine(Long tenantId, String enterCd, int apprLvl, Long applId, String applCd, String sabun, String userId) {
 		
@@ -99,12 +98,77 @@ public class WtmApplLineServiceImpl implements WtmApplLineService{
 		paramMap.put("d", WtmUtil.parseDateStr(new Date(), null));
 		paramMap.put("applCd", applCd);
 		//결재라인 조회 기본으로 3단계까지 가져와서 뽑아  쓰자
-		List<WtmApplLineVO> applLineVOs = applMapper.getWtmApplLine(paramMap);
+		//List<WtmApplLineVO> applLineVOs = applMapper.getWtmApplLine(paramMap);
+		List<WtmApplLineVO> applLineVOs = getApplLine(tenantId, enterCd, sabun, applCd, userId);
 		
-		// System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& saveWtmApplLine start");
 		//기본 결재라인이 없으면 저장도 안됨.
 		if(applLineVOs != null && applLineVOs.size() > 0){
+			
+			if(applLines != null && applLines.size() > 0) {
+				
+				int whileLoop = 0;
+				for(WtmApplLine applLine : applLines) {
+					
+					if(whileLoop < applLineVOs.size()) {
+						WtmApplLineVO applLineVO = applLineVOs.get(whileLoop);
+						
+						if(!applLine.getApprSabun().equals(applLineVO.getSabun())) {
+							applLine.setApprSeq(applLineVO.getApprSeq());
+							applLine.setApprSabun(applLineVO.getSabun());
+							applLine.setApprTypeCd(applLineVO.getApprTypeCd());
+							applLine.setUpdateDate(new Date());
+							applLine.setUpdateId(userId);
+							applLineRepo.save(applLine);
+						}
+					} else {
+						//기존 결재라인이 더 많으면 지운다. 임시저장이니.. 바뀔수도 있을 것 같아서..
+						applLineRepo.delete(applLine);
+					}
+					
+					whileLoop++;
+				}
+				
+				//기 저장된 결재라인보다 조회한 결재라인이 더 길면 추가
+				if(applLines.size() < applLineVOs.size()) {
+					int cnt = applLineVOs.size()-applLines.size();
+					
+					for(int i=0; i<cnt; i++) {
+						WtmApplLineVO applLineVO = applLineVOs.get(applLineVOs.size()-i-1);
+						
+						WtmApplLine applLine = new WtmApplLine();
+						applLine.setApplId(applId);
+						applLine.setApprSeq(applLineVO.getApprSeq());
+						applLine.setApprSabun(applLineVO.getSabun());
+						applLine.setApprTypeCd(applLineVO.getApprTypeCd());
+						applLine.setUpdateDate(new Date());
+						applLine.setUpdateId(userId);
+						
+						applLineRepo.save(applLine);
+						
+					}
+				}
+				
+			} else {
+				int i = 0;
+				//신규생성
+				for(WtmApplLineVO applLineVO : applLineVOs) {
+					WtmApplLine applLine = new WtmApplLine();
+					applLine.setApplId(applId);
+					applLine.setApprSeq(applLineVO.getApprSeq());
+					applLine.setApprSabun(applLineVO.getSabun());
+					applLine.setApprTypeCd(applLineVO.getApprTypeCd());
+					applLine.setUpdateId(userId);
+					
+					if(i==0)
+						applLine.setApprDate(new Date());
+					
+					applLineRepo.save(applLine);
+					
+					i++;
+				}
+			}
 
+			/*
 			//결재라인 코드는 1,2,3으로 되어있다 이렇게 써야한다!!!! 1:1단계, 2:2단계, 3:3단계
 			int applCnt = apprLvl; 
 			
@@ -114,8 +178,7 @@ public class WtmApplLineServiceImpl implements WtmApplLineService{
 				int whileLoop = 0;
 				int lineCnt = 0;
 				for(WtmApplLine applLine : applLines) {
-					//WtmApplLineVO applLineVO = applLineVOs.get(whileLoop);
-					WtmApplLineVO applLineVO = applLineVOs.get(i-1);
+					WtmApplLineVO applLineVO = applLineVOs.get(whileLoop);
 					
 					if(whileLoop < applLineVOs.size()) {
 						
@@ -125,26 +188,6 @@ public class WtmApplLineServiceImpl implements WtmApplLineService{
 							applLine.setApprSabun(applLineVO.getSabun());
 							applLine.setApprTypeCd(applLineVO.getApprTypeCd());
 							applLine.setUpdateId(userId);
-							// System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& saveWtmApplLine UPDATE " + i);
-							/*
-							Object objLine = applLine;
-				            // 반복문을 이용하여 해당 클래스에 정의된 필드를 가져옵니다.
-							for (Field field : objLine.getClass().getDeclaredFields()){
-					            field.setAccessible(true);
-					            Object value;
-								try {
-									value = field.get(objLine);
-									System.out.println(field.getName()+","+value);
-								} catch (IllegalArgumentException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								} catch (IllegalAccessException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-					            
-					        }
-					        */
 							applLineRepo.save(applLine);
 							i++;
 						}
@@ -157,6 +200,7 @@ public class WtmApplLineServiceImpl implements WtmApplLineService{
 					}
 					whileLoop++;
 				} 
+				
 			}else {
 				//신규생성
 				int i=1; // apprSeq
@@ -174,27 +218,6 @@ public class WtmApplLineServiceImpl implements WtmApplLineService{
 						applLine.setApprSabun(applLineVO.getSabun());
 						applLine.setApprTypeCd(applLineVO.getApprTypeCd());
 						applLine.setUpdateId(userId);
-						
-						/*
-						System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& saveWtmApplLine INSERT " + i);
-						Object objLine = applLine;
-			            // 반복문을 이용하여 해당 클래스에 정의된 필드를 가져옵니다.
-						for (Field field : objLine.getClass().getDeclaredFields()){
-				            field.setAccessible(true);
-				            Object value;
-							try {
-								value = field.get(objLine);
-								System.out.println(field.getName()+","+value);
-							} catch (IllegalArgumentException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (IllegalAccessException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-				            
-				        }
-				        */
 						applLineRepo.save(applLine);
 						i++;
 					}
@@ -214,6 +237,7 @@ public class WtmApplLineServiceImpl implements WtmApplLineService{
 				sender.setUpdateId(userId);
 				applLineRepo.save(sender);
 			}
+			*/
 			
 		}
 		//결재라인 저장 끝
