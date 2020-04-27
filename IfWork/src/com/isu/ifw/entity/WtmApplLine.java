@@ -113,7 +113,7 @@ public class WtmApplLine {
 	@PrePersist
     protected void onCreate() {
 		this.updateDate = new Date();
-		this.apprDate = new Date();
+		//this.apprDate = new Date();
     }
 
     @PreUpdate

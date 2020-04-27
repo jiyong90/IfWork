@@ -1806,6 +1806,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						
 						// 3.2. WTM_TAA_APPL_DET 생성(근무상세_worksDet 루프)
 						WtmTaaApplDet taaApplDet = new WtmTaaApplDet();
+//						System.out.println("taaApplId : " + taaApplId);
 						taaApplDet.setTaaApplId(taaApplId);
 						taaApplDet.setTaaCd(empDetMap.get("workTimeCode").toString());
 						taaApplDet.setSymd(empDetMap.get("startYmd").toString());
@@ -1862,7 +1863,10 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						// result 생성해야함
 						if("99".equals(nowApplStatusCd)) {
 							WtmWorkDayResult dayResult = new WtmWorkDayResult();
-							Integer workMinute = Integer.parseInt(taaCode.getWorkApprHour().toString()) * 60;
+							Integer workMinute = 0;
+							if(taaCode.getWorkApprHour()!=null) {
+								workMinute = Integer.parseInt(taaCode.getWorkApprHour().toString()) * 60;
+							}
 							if(!"0".equals(taaDetMap.get("workMinute").toString())) {
 								workMinute = Integer.parseInt(taaDetMap.get("workMinute").toString());
 							}
@@ -1886,94 +1890,145 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						// 4.2.2 근무계획이 무조건 있어야 함
 						// 근태기준이 휴일포함이거나, 휴일포함아니면 근무일일때만 data 생성
 						if("Y".equals(taaCode.getHolInclYn()) || ("N".equals(taaCode.getHolInclYn()) && "N".equals(taaDetMap.get("holidayYn")))) {
-							String taaSdate = getStdMgrMap.get("taaSdate").toString();
-							String taaEdate = getStdMgrMap.get("taaEdate").toString();
-							if(!"0".equals(taaDetMap.get("workMinute").toString())) {
-								// 근무시간이 왔으면....신청서 근무시간대로 입력해줌
-								taaSdate = taaDetMap.get("taaSdate").toString();
-								taaEdate = taaDetMap.get("taaEdate").toString();
+							if("D".equals(taaCode.getRequestTypeCd()) && "Y".equals(taaCode.getHolInclYn()) && "Y".equals(taaDetMap.get("holidayYn"))) {
+								// 휴일포함이면서 휴일이면서 종일근무이면
+								WtmWorkDayResult dayResult = new WtmWorkDayResult();
+								dayResult.setTenantId(tenantId);
+								dayResult.setEnterCd(taaDetMap.get("enterCd").toString());
+								dayResult.setYmd(taaDetMap.get("ymd").toString());
+								dayResult.setSabun(taaDetMap.get("sabun").toString());
+								dayResult.setApplId(applId);
+								dayResult.setTimeTypeCd(timeTypeCd);
+								dayResult.setTaaCd(taaDetMap.get("taaCd").toString());
+								dayResult.setUpdateId("TAAIF");
+								dayResultRepo.save(dayResult);
 							} else {
-								// 근무시간이 없으면 근태코드별 시간을 조정해야함.
-								if("A".equals(taaCode.getRequestTypeCd()) || "P".equals(taaCode.getRequestTypeCd())){
-									// 반차는 근무시간을 변경함
-									Map<String, Object>  setTimeMap = null;
-									setTimeMap.put("taaSdate",taaSdate);
-									setTimeMap.put("taaEdate",taaEdate);
-									setTimeMap.put("reqTypeCd",taaCode.getRequestTypeCd());
-									Map<String, Object>  getTimeMap = null;
-									getTimeMap = wtmInterfaceMapper.getTaaPlanTimeList(setTimeMap);
-									if(getTimeMap == null || getTimeMap.size() == 0) {
-										retMap.put("status", "ERR");
-							        	retMap.put("retMsg", "근태 시간계산중 오류가 발생하였습니다.");
-										throw new Exception(retMsg);
-									}
-									taaSdate = getTimeMap.get("taaSdate").toString();
-									taaEdate = getTimeMap.get("taaEdate").toString();
-								} 
-							}
-							System.out.println("taaSdate : " + taaSdate);
-							System.out.println("taaEdate : " + taaEdate);
-							if("99".equals(nowApplStatusCd)) {
-								// 근태생성
-								//(Long tenantId, String enterCd, String ymd, String sabun, String addTimeTypeCd, String addTaaCd,
-								//		Date addSdate, Date addEdate, Long applId, String userId, boolean isAdd)
+								String taaSdate = getStdMgrMap.get("taaSdate").toString();
+								String taaEdate = getStdMgrMap.get("taaEdate").toString();
 								
-								System.out.println("taaSdate : " + WtmUtil.toDate(taaSdate, "yyyyMMddhhmmss"));
-								System.out.println("taaEdate : " + WtmUtil.toDate(taaEdate, "yyyyMMddhhmmss"));
-																		
-								WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
-										  Long.parseLong(taaDetMap.get("tenantId").toString())
-										, taaDetMap.get("enterCd").toString()
-										, taaDetMap.get("ymd").toString()
-										, taaDetMap.get("sabun").toString()
-										, timeTypeCd
-										, taaDetMap.get("taaCd").toString()
-										, dt.parse(taaSdate)
-										, dt.parse(taaEdate)
-										, Long.parseLong(taaDetMap.get("applId").toString())
-										, "TAAIF");
 								
-								String chkYmd = WtmUtil.parseDateStr(new Date(), null);
-				        		
-				        		// 오늘 이전이면 근무마감을 다시 돌려야함.
-								if (Integer.parseInt(chkYmd) > Integer.parseInt(taaDetMap.get("ymd").toString())) {
-					        		WtmFlexibleEmpService.calcApprDayInfo(Long.parseLong(taaDetMap.get("tenantId").toString())
-					        											 , taaDetMap.get("enterCd").toString()
-					        											 , taaDetMap.get("ymd").toString()
-					        											 , taaDetMap.get("ymd").toString()
-					        											 , taaDetMap.get("sabun").toString());
+								if(!"0".equals(taaDetMap.get("workMinute").toString())) {
+									// 근무시간이 왔으면....신청서 근무시간대로 입력해줌
+									taaSdate = taaDetMap.get("taaSdate").toString();
+									taaEdate = taaDetMap.get("taaEdate").toString();
+								} else {
+									// 근무시간이 없으면 근태코드별 시간을 조정해야함.
+									if("A".equals(taaCode.getRequestTypeCd())){
+										// 반차는 근무시간을 변경함
+										Map<String, Object>  setTimeMap = null;
+										setTimeMap.put("taaSdate",taaSdate);
+										setTimeMap.put("taaEdate",taaEdate);
+										setTimeMap.put("reqTypeCd",taaCode.getRequestTypeCd());
+										Map<String, Object>  getTimeMap = null;
+										getTimeMap = wtmInterfaceMapper.getTaaPlanTimeList(setTimeMap);
+										if(getTimeMap == null || getTimeMap.size() == 0) {
+											retMap.put("status", "ERR");
+								        	retMap.put("retMsg", "근태 시간계산중 오류가 발생하였습니다.");
+								        	retMsg = "근태 시간계산중 오류가 발생하였습니다.";
+											throw new Exception(retMsg);
+										}
+										taaSdate = getTimeMap.get("taaSdate").toString();
+										taaEdate = getTimeMap.get("taaEdate").toString();
+									} else if("P".equals(taaCode.getRequestTypeCd())){	
+										Map<String, Object>  getTimeMap = new HashMap();
+										getTimeMap.put("tenantId", tenantId);
+										getTimeMap.put("enterCd", taaDetMap.get("enterCd").toString());
+										getTimeMap.put("sabun", taaDetMap.get("sabun").toString());
+										getTimeMap.put("ymd", taaDetMap.get("ymd").toString());
+										getTimeMap.put("sDate", taaSdate);
+										getTimeMap.put("addMinute", 240);
+										getTimeMap.put("retDate", "");
+										// System.out.println("**** getTimeMap param : " + getTimeMap);
+										Map<String, Object>  setTimeMap = new HashMap();
+										setTimeMap = wtmFlexibleEmpMapper.addMinuteWithBreakMGR(getTimeMap);
+										String retDate = getTimeMap.get("retDate").toString();
+										
+										if("".equals(retDate) || retDate.length() != 14) {
+											System.out.println("**** getTimeMap callend : " + getTimeMap);
+											retMap.put("status", "ERR");
+								        	retMap.put("retMsg", "근태 시간계산중 오류가 발생하였습니다.");
+								        	retMsg = "근태 시간계산중 오류가 발생하였습니다.";
+											throw new Exception(retMsg);
+										}
+										taaSdate = retDate;
+										// taaEdate = getTimeMap.get("taaEdate").toString();
+									} 
 								}
 								
-							} else {
-								// 취소이면 근태삭제
-								WtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
-										Long.parseLong(taaDetMap.get("tenantId").toString())
-										, taaDetMap.get("enterCd").toString()
-										, taaDetMap.get("ymd").toString()
-										, taaDetMap.get("sabun").toString()
-										, timeTypeCd
-										, taaDetMap.get("taaCd").toString()
-										, dt.parse(taaSdate)
-										, dt.parse(taaEdate)
-										, Long.parseLong(taaDetMap.get("applId").toString())
-										, "TAAIF");
-								//취소는 무조건 재계산해주자
-								WtmFlexibleEmpService.calcApprDayInfo(Long.parseLong(taaDetMap.get("tenantId").toString())
-										 , taaDetMap.get("enterCd").toString()
-										 , taaDetMap.get("ymd").toString()
-										 , taaDetMap.get("ymd").toString()
-										 , taaDetMap.get("sabun").toString());
+								System.out.println("taaSdate : " + taaSdate);
+								System.out.println("taaEdate : " + taaEdate);
+								if("99".equals(nowApplStatusCd)) {
+									// 근태생성
+									//(Long tenantId, String enterCd, String ymd, String sabun, String addTimeTypeCd, String addTaaCd,
+									//		Date addSdate, Date addEdate, Long applId, String userId, boolean isAdd)
+									
+									if ("D".equals(taaCode.getRequestTypeCd()) && "N".equals(getStdMgrMap.get("taaWorkYn"))) {
+										// 종일근무이면서 근무가능여부가 N이면 근무계획을 삭제하고 근태만 남겨둬야함.  
+										List<String> timeType = new ArrayList<String>();
+										timeType.add(WtmApplService.TIME_TYPE_BASE);
+										timeType.add(WtmApplService.TIME_TYPE_LLA);
+										List<WtmWorkDayResult> base = dayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, taaDetMap.get("enterCd").toString(), taaDetMap.get("sabun").toString(), timeType, taaDetMap.get("ymd").toString(), taaDetMap.get("ymd").toString());
+										for(WtmWorkDayResult r : base) {
+											dayResultRepo.delete(r);
+										}
+									}
+//									System.out.println("taaSdate : " + WtmUtil.toDate(taaSdate, "yyyyMMddhhmmss"));
+//									System.out.println("taaEdate : " + WtmUtil.toDate(taaEdate, "yyyyMMddhhmmss"));
+																			
+									WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
+											  Long.parseLong(taaDetMap.get("tenantId").toString())
+											, taaDetMap.get("enterCd").toString()
+											, taaDetMap.get("ymd").toString()
+											, taaDetMap.get("sabun").toString()
+											, timeTypeCd
+											, taaDetMap.get("taaCd").toString()
+											, dt.parse(taaSdate)
+											, dt.parse(taaEdate)
+											, Long.parseLong(taaDetMap.get("applId").toString())
+											, "TAAIF");
+									
+									String chkYmd = WtmUtil.parseDateStr(new Date(), null);
+					        		
+					        		// 오늘 이전이면 근무마감을 다시 돌려야함.
+									if (Integer.parseInt(chkYmd) > Integer.parseInt(taaDetMap.get("ymd").toString())) {
+						        		WtmFlexibleEmpService.calcApprDayInfo(Long.parseLong(taaDetMap.get("tenantId").toString())
+						        											 , taaDetMap.get("enterCd").toString()
+						        											 , taaDetMap.get("ymd").toString()
+						        											 , taaDetMap.get("ymd").toString()
+						        											 , taaDetMap.get("sabun").toString());
+									}
+									
+								} else {
+									// 취소이면 근태삭제
+									WtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
+											Long.parseLong(taaDetMap.get("tenantId").toString())
+											, taaDetMap.get("enterCd").toString()
+											, taaDetMap.get("ymd").toString()
+											, taaDetMap.get("sabun").toString()
+											, timeTypeCd
+											, taaDetMap.get("taaCd").toString()
+											, dt.parse(taaSdate)
+											, dt.parse(taaEdate)
+											, Long.parseLong(taaDetMap.get("applId").toString())
+											, "TAAIF");
+									//취소는 무조건 재계산해주자
+									WtmFlexibleEmpService.calcApprDayInfo(Long.parseLong(taaDetMap.get("tenantId").toString())
+											 , taaDetMap.get("enterCd").toString()
+											 , taaDetMap.get("ymd").toString()
+											 , taaDetMap.get("ymd").toString()
+											 , taaDetMap.get("sabun").toString());
+								}
+								
+								// 근무시간합산은 재정산한다
+				        		HashMap<String, Object> setTermMap = new HashMap();
+				        		setTermMap.put("tenantId", reqMap.get("tenantId"));
+				        		setTermMap.put("enterCd", taaDetMap.get("enterCd").toString());
+				        		setTermMap.put("sabun", taaDetMap.get("sabun").toString());
+				        		setTermMap.put("symd", taaDetMap.get("ymd").toString());
+				        		setTermMap.put("eymd", taaDetMap.get("ymd").toString());
+				        		setTermMap.put("pId", "TAAIF");
+				        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 							}
-							
-							// 근무시간합산은 재정산한다
-			        		HashMap<String, Object> setTermMap = new HashMap();
-			        		setTermMap.put("tenantId", reqMap.get("tenantId"));
-			        		setTermMap.put("enterCd", taaDetMap.get("enterCd").toString());
-			        		setTermMap.put("sabun", taaDetMap.get("sabun").toString());
-			        		setTermMap.put("symd", taaDetMap.get("ymd").toString());
-			        		setTermMap.put("eymd", taaDetMap.get("ymd").toString());
-			        		setTermMap.put("pId", "TAAIF");
-			        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 						} 
 					}	
 				}
@@ -3227,7 +3282,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			monMap.put("retCode", "");
 			monMap.put("retMsg", "");
 			
-			wtmInterfaceMapper.monthWorkClose(dayMap);
+			wtmInterfaceMapper.monthWorkClose(monMap);
 			String retCodeMon = monMap.get("retCode").toString();
 			if("FAIL".equals(retCodeMon)) {
 				ifHisMap.put("ifStatus", "ERR");
