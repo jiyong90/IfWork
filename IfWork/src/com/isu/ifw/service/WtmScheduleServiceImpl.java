@@ -9,18 +9,29 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.common.entity.CommManagementInfomation;
+import com.isu.ifw.common.repository.CommManagementInfomationRepository;
 import com.isu.ifw.entity.WtmEmpHis;
 import com.isu.ifw.entity.WtmPushMgr;
 import com.isu.ifw.entity.WtmPushSendHis;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmInterfaceMapper;
 import com.isu.ifw.mapper.WtmScheduleMapper;
 import com.isu.ifw.repository.WtmEmpHisRepository;
 import com.isu.ifw.repository.WtmPushMgrRepository;
@@ -55,6 +66,16 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 
 	@Resource
 	WtmEmpHisRepository empRepository;
+	
+	@Autowired
+	WtmInterfaceMapper wtmInterfaceMapper;
+	
+	@Autowired
+	private RestTemplate restTemplate;
+	
+	@Autowired
+	private CommManagementInfomationRepository commManagementInfomationRepository;
+
 	
 	@Override
 	@Transactional
@@ -120,6 +141,75 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 		}
 	}
 
+	@Override
+	public void sendIntfData(Long tenantId, String ifType) {
+		Map<String, Object> paramMap = new HashMap<>();
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("ifType", ifType);
+		Map<String, Object> result = new HashMap();
+		result.put("lastDate", "20200101090000");
+		
+		Map<String, Object> temp = wtmInterfaceMapper.getIfLastDate(paramMap);
+		if(temp != null && temp.containsKey("lastDate")) {
+			result.put("lastDate", temp.get("lastDate"));
+		}
+		result.put("tenantId", tenantId);
+		result.put("ifType", ifType);
+		result.put("ifItem", ifType);
+		
+		List<Map<String, Object>> dataList = new ArrayList();
+		if(ifType.toUpperCase().equals("OT")) {
+			dataList = schedulerMapper.getIntfOtList(result);
+		} else if(ifType.toUpperCase().equals("COMP")) {
+			dataList = schedulerMapper.getIntfCompList(result);
+		}
+		try {
+			//intf쪽으로 전송
+			if(dataList != null && dataList.size() > 0) {
+				String url = "";
+			
+				List<CommManagementInfomation> info = commManagementInfomationRepository.findByTenantIdAndInfoKeyLike(tenantId, "HR.IT_URL");
+				if(info != null && info.size() > 0) {
+					url = info.get(0).getInfoData();
+					url += "/intf/data/"+ifType;
+				}
+				
+				ObjectMapper mapper = new ObjectMapper();
+	        	Map<String, Object> eParam = new HashMap<>();
+	        	eParam.put("data", dataList);
+	    		System.out.println("================================");
+	    		System.out.println(mapper.writeValueAsString(dataList));
+	    		System.out.println("================================");
+	        	//exchangeService.exchange(url, HttpMethod.POST, null, eParam);
+	        	
+	    		HttpHeaders headers = new HttpHeaders();
+	    		headers.set("Content-Type", MediaType.APPLICATION_JSON_VALUE);
+	    	
+	    		HttpEntity<Map<String, Object>> entity = new HttpEntity<>(eParam, headers);
+
+    			ResponseEntity<Map> res = restTemplate.postForEntity(url, entity, Map.class);
+    			if(res.getStatusCode().value() == HttpServletResponse.SC_OK) {
+    				result.put("ifStatus", "OK");
+    				result.put("ifMsg", ifType + " : " + dataList.size() + " 전송완료");
+    			}
+	    	} else {
+	    		result.put("ifStatus", "OK");
+	    		result.put("ifMsg", "갱신자료없음");
+	    	}
+		} catch(Exception e) {
+			result.put("ifStatus", "ERR");
+			result.put("ifMsg", e.getMessage());
+			e.printStackTrace();
+		} finally {
+			result.put("updateDate", WtmUtil.parseDateStr(new Date(), "yyyyMMddHHmmss"));
+			result.put("ifEndDate", WtmUtil.parseDateStr(new Date(), "yyyyMMddHHmmss"));
+			wtmInterfaceMapper.insertIfHis(result);
+		}
+	}
+
+
+	
+	
 	@Override
 	public void sendPushMessageMin(Long tenantId, String enterCd) {
 		

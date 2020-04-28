@@ -14,12 +14,23 @@ public interface WtmScheduleMapper {
 	public List<Map<String, Object>> getWtmCloseDay(Map<String, Object> paramMap);
 	
 	/**
+	 * intf전송할 ot내역
+	 **/
+	public List<Map<String, Object>> getIntfOtList(Map<String, Object> paramMap);
+
+	/**
+	 * intf전송할 보상휴가내역
+	 **/
+	public List<Map<String, Object>> getIntfCompList(Map<String, Object> paramMap);
+
+	
+	/**
 	 * 연장근무시간 조회
 	 * @param paramMap
 	 * @return 
 	 */
 	public List<Map<String, Object>> getOtList(Map<String, Object> paramMap);
-
+	
 	/**
 	 * 출퇴근 미타각자 조회
 	 * @param paramMap

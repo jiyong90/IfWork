@@ -18,6 +18,13 @@ public interface WtmScheduleService {
 	 */
 	public void setCloseDay(Long tenantId) throws Exception;
 
+	/**
+	 * 인터페이스로 자료 전송
+	 * @param reqMap - 파라메터 맵
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void sendIntfData(Long tenantId, String ifType) throws Exception;
 
 	/**
 	 * push 전송
