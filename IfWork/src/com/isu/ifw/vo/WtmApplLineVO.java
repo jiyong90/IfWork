@@ -66,6 +66,12 @@ public class WtmApplLineVO {
 	public void setApprOpinion(String apprOpinion) {
 		this.apprOpinion = apprOpinion;
 	}
+	@Override
+	public String toString() {
+		return "WtmApplLineVO [apprTypeCd=" + apprTypeCd + ", apprTypeNm=" + apprTypeNm + ", apprSeq=" + apprSeq
+				+ ", sabun=" + sabun + ", empNm=" + empNm + ", apprDate=" + apprDate + ", apprStatusCd=" + apprStatusCd
+				+ ", apprStatusNm=" + apprStatusNm + ", apprOpinion=" + apprOpinion + "]";
+	}
 	
 	
 }
