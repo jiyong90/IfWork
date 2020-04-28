@@ -113,7 +113,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         	queryMap.put(key, request.getParameter(key));
         }
         System.out.println("2. buildHttpsRedirectUrlForRequest param end");
-        redirectUrl = AjaxUtils.buildUrl(redirectUrl, queryMap);
+        //redirectUrl = AjaxUtils.buildUrl(redirectUrl, queryMap);
         System.out.println("3. redirectUrl ::::: " + redirectUrl);
         if(AjaxUtils.isAjax(request) || AjaxUtils.isApi(request)) {
 			Map<String, Object> map = new HashMap<>();

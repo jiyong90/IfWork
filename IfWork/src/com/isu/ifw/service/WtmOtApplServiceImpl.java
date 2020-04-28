@@ -1,5 +1,7 @@
 package com.isu.ifw.service;
 
+import java.sql.Timestamp;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplCode;
@@ -801,6 +804,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 	@Override
 	public ReturnParam validate(Long tenantId, String enterCd, String sabun, String workTypeCd,
 			Map<String, Object> paramMap) {
+		
+		System.out.println("validate ==========");
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
 		// TODO Auto-generated method stub
@@ -879,13 +884,26 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		
 		List<String> sabunList = new ArrayList<String>();
 		sabunList.add(sabun);
+		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> empParamMap = new HashMap<>();
-		empParamMap.put("sabun", sabunList);
+		empParamMap.put("sabuns", sabunList);
 		empParamMap.put("ymd", ymd);
 		empParamMap.put("tenantId", tenantId);
 		empParamMap.put("enterCd", enterCd);
+		try {
+			System.out.println(mapper.writeValueAsString(empParamMap));
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		List<Map<String, Object>> emps = wtmOtApplMapper.getRestOtMinute(empParamMap);
 		int restMin = 0;
+		try {
+			System.out.println(mapper.writeValueAsString(emps));
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		if(emps!=null && emps.size()>0) {
 			for(Map<String, Object> emp : emps) {
 				//Map<String, Object> restMinuteMap = new HashMap<String, Object>();
@@ -907,145 +925,189 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				}
 			}
 		}
+		
+		System.out.println("restMin ==========" + restMin);
+		
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+		
+		Map<String, Object> calcMinuteMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun);
+		
+		//잔여 소정 근로시간으로 모두 계산 시 연장근무 시간 체크를 하지 않는다. 
+		boolean isOtCheck = true;
 		//잔여 소정 근로 시간이 있을 경우 소정근로 시간을 먼저 구한다. 
 		if(restMin > 0) {
-			//
-		}
-		
-		//현재 신청할 연장근무 시간 계산
-		resultMap.putAll(wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun));
-		
-		Integer calcMinute = Integer.parseInt(resultMap.get("calcMinute").toString());
-		Integer breakMinute = 0;
-		if(resultMap.containsKey("breakMinute"))
-			breakMinute = Integer.parseInt(resultMap.get("breakMinute").toString());
-		
-		resultMap.putAll(wtmFlexibleEmpMapper.getSumOtMinute(paramMap));
-		Integer sumOtMinute = Integer.parseInt(resultMap.get("otMinute").toString());
-		
-		//회사의 주 시작요일을 가지고 온다.
-		paramMap.put("d", ymd);
-		
-		//7일전 ~ 7일 후 범위 지정
-		Date date = WtmUtil.toDate(ymd, "yyyyMMdd");
-        
-        Calendar sYmd = Calendar.getInstance();
-        sYmd.setTime(date);
-        sYmd.add(Calendar.DATE, -7);
-       
-        Calendar eYmd = Calendar.getInstance();
-        eYmd.setTime(date);
-        eYmd.add(Calendar.DATE, 7);
-
-		paramMap.put("sYmd", WtmUtil.parseDateStr(sYmd.getTime(), "yyyyMMdd"));
-		paramMap.put("eYmd", WtmUtil.parseDateStr(eYmd.getTime(), "yyyyMMdd"));
-		
-		Map<String, Object> rMap = wtmFlexibleStdMapper.getRangeWeekDay(paramMap);
-		if(rMap == null) {
-			rp.setFail("기준 일자 정보가 없습니다. 관리자에게 문의하세요.");
-			return rp;
-		}
-		String symd = rMap.get("symd").toString();
-		String eymd = rMap.get("eymd").toString();
-		
-		Integer subCalcMinute = 0; 
-		//대체휴일 정보 가져와서 휴일근무일 경우 같은 주의 대체휴일 만큼 빼줘야한다
-		if(paramMap.containsKey("holidayYn") && paramMap.get("holidayYn").equals("Y")
-				&& paramMap.containsKey("subYn") && paramMap.get("subYn").equals("Y")
-				&& paramMap.containsKey("subs")) {
+			//신청 근무시간 과 잔여 소정근로 시간을 체크하자.
+			//분을 구하자
+			int m = (int) ((ed.getTime() - sd.getTime()) / 1000 / 60);
+			//잔여 소정근로 시간보다 신청 시간이 작으면 
+			if(restMin > m) {
+				restMin = m;
+				isOtCheck = false;
+			} 
+			Map<String, Object> calcMap = new HashMap<>();
+			calcMap.put("tenantId", tenantId);
+			calcMap.put("enterCd", enterCd);
+			calcMap.put("sabun", sabun);
+			calcMap.put("ymd", ymd);
+			calcMap.put("sDate", sdf.format(sd));
+			restMin = Integer.parseInt(calcMinuteMap.get("calcMinute").toString());
+			calcMap.put("addMinute", restMin); 
+			calcMap.put("retDate", ""); 
+			wtmFlexibleEmpMapper.addMinuteWithBreakMGR(calcMap);
 			
-			List<Map<String, Object>> subs = (List<Map<String, Object>>) paramMap.get("subs");
-			if(subs != null && subs.size() > 0) {
-
-				for(Map<String, Object> sub : subs) {
-					if(!sub.containsKey("subYmd") || !sub.containsKey("subsSdate") || !sub.containsKey("subsEdate")
-							|| sub.get("subYmd").equals("") || sub.get("subsSdate").equals("") || sub.get("subsEdate").equals("")) {
-						rp.setFail("대체휴일을 선택하셨을 경우 대체휴일의 정보를 모두 입력해야합니다.");
-						return rp;
-					}
-					String subYmd = sub.get("subYmd").toString();
-					String subsSdate = sub.get("subsSdate").toString();
-					String subsEdate = sub.get("subsEdate").toString();
-					//같은 주에 있는 대체휴일 시간정보만
-					if(Integer.parseInt(subYmd) >= Integer.parseInt(symd) && Integer.parseInt(subYmd) <= Integer.parseInt(eymd)) {
-						
-						
-						Date subSd = WtmUtil.toDate(subsSdate, "yyyyMMddHHmm");
-						Date subEd = WtmUtil.toDate(subsEdate, "yyyyMMddHHmm");
-						 
-						
-						String subSHm = WtmUtil.parseDateStr(subSd, "HHmm");
-						String subEHm = WtmUtil.parseDateStr(subEd, "HHmm");
-						paramMap.put("shm", subSHm);
-						paramMap.put("ehm", subEHm);
-						
-						//현재 신청할 연장근무 시간 계산
-						Map<String, Object> subMap =  wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun);
-						if(subMap != null && !resultMap.get("calcMinute").equals("")) {
-							subCalcMinute += Integer.parseInt(resultMap.get("calcMinute").toString());
-						}
-					}
-					paramMap.put("sdate", subsSdate);
-					paramMap.put("edate", subsEdate);
-					Map<String, Object> resultSubsMap = wtmFlexibleEmpMapper.checkDuplicateSubsWorktime(paramMap);
-					//Long timeCdMgrId = Long.parseLong(paramMap.get("timeCdMgrId").toString());
-					
-					int workSubsCnt = Integer.parseInt(resultSubsMap.get("workCnt").toString());
-					if(workSubsCnt > 0) {
-						rp.setFail("이미 근무정보(신청중인 근무 포함)가 존재합니다.");
-						return rp;
-					}
-					
+			//String sHm = WtmUtil.parseDateStr(sd, "HHmm");
+			
+			String baseEdateStr = calcMap.get("retDate")+"";
+			System.out.println("retDate.toString() : " + calcMap.toString());
+			System.out.println("baseEdate : "+ baseEdateStr);
+			//근로시간 선 소진 후 잔여 연장 근무시간에 대해서는 체크 해야한다. 
+			if(isOtCheck) {
+				try {
+					paramMap.put("shm", WtmUtil.parseDateStr(sdf.parse(baseEdateStr), "HHmm"));
+				} catch (ParseException e) {
+					rp.setFail(e.getMessage());
+					return rp;
 				}
 			}
 		}
-		calcMinute = calcMinute - subCalcMinute;
-		
-		boolean weekOtCheck = true;
-		
-		//연장근무 가능 시간을 가지고 오자
-		WtmFlexibleEmp emp = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, ymd);
-		//선근제 이면
-		if(emp.getWorkTypeCd().startsWith("SELE")) {
-			//1주의 범위가 선근제 기간내에 있는지 체크
-			if(Integer.parseInt(symd) >= Integer.parseInt(emp.getSymd() ) && Integer.parseInt(eymd) <= Integer.parseInt(emp.getEymd())) {
-				//선근제는 주단위 연장근무 시간을 체크하지 않는다.
-				weekOtCheck = false;
-			}
-		}
-		
-		
-		if(weekOtCheck) {
-			paramMap.putAll(rMap);
-
-			//휴일근무의 경우 대체휴일 정보가 같은 주일 경우 퉁친다.	
- 			//근데 4시간 일하고 2시간씩 이번주 차주로 나눠쓰면!!!!! 차주꺼는 연장근무 시간으로 본다 써글
+		if(isOtCheck) {
+			//현재 신청할 연장근무 시간 계산
+			resultMap.putAll(wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun));
 			
-			rMap = wtmOtApplMapper.getTotOtMinuteBySymdAndEymd(paramMap);
-			int totOtMinute = 0;
-			if(rMap != null && rMap.get("totOtMinute") != null && !rMap.get("totOtMinute").equals("")) {
-				totOtMinute = Integer.parseInt(rMap.get("totOtMinute")+"");
-			}
-			Float f = (float) ((totOtMinute + (calcMinute-breakMinute)) / 60.0f);
-			if(f > 12) {
-				f = (float) (((12*60) - totOtMinute) / 60.0);
-				Float ff = (f - f.intValue()) * 60;
-				rp.setFail("연장근무 신청 가능 시간은 " + f.intValue() + "시간 " + ff.intValue() + "분 입니다.");
+			Integer calcMinute = Integer.parseInt(resultMap.get("calcMinute").toString());
+			Integer breakMinute = 0;
+			if(resultMap.containsKey("breakMinute"))
+				breakMinute = Integer.parseInt(resultMap.get("breakMinute").toString());
+			
+			resultMap.putAll(wtmFlexibleEmpMapper.getSumOtMinute(paramMap));
+			Integer sumOtMinute = Integer.parseInt(resultMap.get("otMinute").toString());
+			
+			//회사의 주 시작요일을 가지고 온다.
+			paramMap.put("d", ymd);
+			
+			//7일전 ~ 7일 후 범위 지정
+			Date date = WtmUtil.toDate(ymd, "yyyyMMdd");
+	        
+	        Calendar sYmd = Calendar.getInstance();
+	        sYmd.setTime(date);
+	        sYmd.add(Calendar.DATE, -7);
+	       
+	        Calendar eYmd = Calendar.getInstance();
+	        eYmd.setTime(date);
+	        eYmd.add(Calendar.DATE, 7);
+	
+			paramMap.put("sYmd", WtmUtil.parseDateStr(sYmd.getTime(), "yyyyMMdd"));
+			paramMap.put("eYmd", WtmUtil.parseDateStr(eYmd.getTime(), "yyyyMMdd"));
+			
+			Map<String, Object> rMap = wtmFlexibleStdMapper.getRangeWeekDay(paramMap);
+			if(rMap == null) {
+				rp.setFail("기준 일자 정보가 없습니다. 관리자에게 문의하세요.");
 				return rp;
 			}
-		}
-		
-		Integer otMinute = emp.getOtMinute();
-		//otMinute 연장근무 가능 시간이 0이면 체크 하지말자 우선!!
-		if(otMinute != null && otMinute > 0) {
-			int t = (((sumOtMinute!=null)?sumOtMinute:0) + ((calcMinute!=null)?calcMinute:0));
-			//연장 가능 시간보다 이미 신청중이거나 연장근무시간과 신청 시간의 합이 크면 안되유.
-			if(otMinute < t ) {
-				rp.setFail("연장근무 가능시간은 " + otMinute + " 시간 입니다. 신청 가능 시간은 " + (otMinute-((sumOtMinute!=null)?sumOtMinute:0)) + " 시간 입니다. 추가 신청이 필요한 경우 담당자에게 문의하세요" );
+			String symd = rMap.get("symd").toString();
+			String eymd = rMap.get("eymd").toString();
+			
+			Integer subCalcMinute = 0; 
+			//대체휴일 정보 가져와서 휴일근무일 경우 같은 주의 대체휴일 만큼 빼줘야한다
+			if(paramMap.containsKey("holidayYn") && paramMap.get("holidayYn").equals("Y")
+					&& paramMap.containsKey("subYn") && paramMap.get("subYn").equals("Y")
+					&& paramMap.containsKey("subs")) {
+				
+				List<Map<String, Object>> subs = (List<Map<String, Object>>) paramMap.get("subs");
+				if(subs != null && subs.size() > 0) {
+	
+					for(Map<String, Object> sub : subs) {
+						if(!sub.containsKey("subYmd") || !sub.containsKey("subsSdate") || !sub.containsKey("subsEdate")
+								|| sub.get("subYmd").equals("") || sub.get("subsSdate").equals("") || sub.get("subsEdate").equals("")) {
+							rp.setFail("대체휴일을 선택하셨을 경우 대체휴일의 정보를 모두 입력해야합니다.");
+							return rp;
+						}
+						String subYmd = sub.get("subYmd").toString();
+						String subsSdate = sub.get("subsSdate").toString();
+						String subsEdate = sub.get("subsEdate").toString();
+						//같은 주에 있는 대체휴일 시간정보만
+						if(Integer.parseInt(subYmd) >= Integer.parseInt(symd) && Integer.parseInt(subYmd) <= Integer.parseInt(eymd)) {
+							
+							
+							Date subSd = WtmUtil.toDate(subsSdate, "yyyyMMddHHmm");
+							Date subEd = WtmUtil.toDate(subsEdate, "yyyyMMddHHmm");
+							 
+							
+							String subSHm = WtmUtil.parseDateStr(subSd, "HHmm");
+							String subEHm = WtmUtil.parseDateStr(subEd, "HHmm");
+							paramMap.put("shm", subSHm);
+							paramMap.put("ehm", subEHm);
+							
+							//현재 신청할 연장근무 시간 계산
+							Map<String, Object> subMap =  wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun);
+							if(subMap != null && !resultMap.get("calcMinute").equals("")) {
+								subCalcMinute += Integer.parseInt(resultMap.get("calcMinute").toString());
+							}
+						}
+						paramMap.put("sdate", subsSdate);
+						paramMap.put("edate", subsEdate);
+						Map<String, Object> resultSubsMap = wtmFlexibleEmpMapper.checkDuplicateSubsWorktime(paramMap);
+						//Long timeCdMgrId = Long.parseLong(paramMap.get("timeCdMgrId").toString());
+						
+						int workSubsCnt = Integer.parseInt(resultSubsMap.get("workCnt").toString());
+						if(workSubsCnt > 0) {
+							rp.setFail("이미 근무정보(신청중인 근무 포함)가 존재합니다.");
+							return rp;
+						}
+						
+					}
+				}
 			}
+			calcMinute = calcMinute - subCalcMinute;
+			
+			boolean weekOtCheck = true;
+			
+			//연장근무 가능 시간을 가지고 오자
+			WtmFlexibleEmp emp = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, ymd);
+			//선근제 이면
+			if(emp.getWorkTypeCd().startsWith("SELE")) {
+				//1주의 범위가 선근제 기간내에 있는지 체크
+				if(Integer.parseInt(symd) >= Integer.parseInt(emp.getSymd() ) && Integer.parseInt(eymd) <= Integer.parseInt(emp.getEymd())) {
+					//선근제는 주단위 연장근무 시간을 체크하지 않는다.
+					weekOtCheck = false;
+				}
+			}
+			
+			
+			if(weekOtCheck) {
+				paramMap.putAll(rMap);
+	
+				//휴일근무의 경우 대체휴일 정보가 같은 주일 경우 퉁친다.	
+	 			//근데 4시간 일하고 2시간씩 이번주 차주로 나눠쓰면!!!!! 차주꺼는 연장근무 시간으로 본다 써글
+				
+				rMap = wtmOtApplMapper.getTotOtMinuteBySymdAndEymd(paramMap);
+				int totOtMinute = 0;
+				if(rMap != null && rMap.get("totOtMinute") != null && !rMap.get("totOtMinute").equals("")) {
+					totOtMinute = Integer.parseInt(rMap.get("totOtMinute")+"");
+				}
+				Float f = (float) ((totOtMinute + (calcMinute-breakMinute)) / 60.0f);
+				if(f > 12) {
+					f = (float) (((12*60) - totOtMinute) / 60.0);
+					Float ff = (f - f.intValue()) * 60;
+					rp.setFail("연장근무 신청 가능 시간은 " + f.intValue() + "시간 " + ff.intValue() + "분 입니다.");
+					return rp;
+				}
+			}
+			
+			Integer otMinute = emp.getOtMinute();
+			//otMinute 연장근무 가능 시간이 0이면 체크 하지말자 우선!!
+			if(otMinute != null && otMinute > 0) {
+				int t = (((sumOtMinute!=null)?sumOtMinute:0) + ((calcMinute!=null)?calcMinute:0));
+				//연장 가능 시간보다 이미 신청중이거나 연장근무시간과 신청 시간의 합이 크면 안되유.
+				if(otMinute < t ) {
+					rp.setFail("연장근무 가능시간은 " + otMinute + " 시간 입니다. 신청 가능 시간은 " + (otMinute-((sumOtMinute!=null)?sumOtMinute:0)) + " 시간 입니다. 추가 신청이 필요한 경우 담당자에게 문의하세요" );
+				}
+			}
+			
+			return rp;
+		}else {
+			return rp;
 		}
-		
-		return rp;
 	}
 
 	@Override

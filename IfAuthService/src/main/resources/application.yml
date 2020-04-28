@@ -1,7 +1,7 @@
 spring.application.name: api-auth
 
 server:
-  port: 8380
+  port: 8480
   servlet:
     context-path: /ifa
  
@@ -37,10 +37,17 @@ spring:
 #    port: 6379
 #    password: isu!!2019
     
+  redis:
+    url: 192.168.111.12
+    port: 6379
+    password: isu!!2019
+  main:
+    allow-bean-definition-overriding: true
+    
 security:
   oauth2:
     jwt:
-      signkey: 123@#$
+      signkey: iSuSystEmW0rkT1meM@n@gemEnTServ1c2
       
       
 logging:

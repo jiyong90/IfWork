@@ -1,6 +1,8 @@
 package com.isu.ifo.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.boot.web.servlet.support.ErrorPageFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,7 +13,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import com.isu.ifo.handler.CustomAuthenticationEntryPoint;
@@ -75,7 +76,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     		      .and().logout()
     		      .logoutRequestMatcher(new AntPathRequestMatcher("/logout/*"))
     		      .clearAuthentication(true).deleteCookies(new String[] { "*" }).invalidateHttpSession(true)
-    		      .logoutSuccessHandler(customLogoutSuccessHandler());
+    		      .logoutSuccessHandler(customLogoutSuccessHandler())
+    		      ;
     }
     @Bean
     public CustomLogoutSuccessHandler customLogoutSuccessHandler() {
@@ -104,11 +106,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
      * SuccessHandler bean register
      */
     @Bean
-    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+    public CustomAuthenticationSuccessHandler authenticationSuccessHandler() {
         CustomAuthenticationSuccessHandler successHandler = new CustomAuthenticationSuccessHandler();
         //successHandler.setDefaultTargetUrl("/index");
         successHandler.setUseReferer(false);
-        successHandler.setTargetUrlParameter("loginRedirect");
+        successHandler.setTargetUrlParameter("lru");
         return successHandler;
     }
     
@@ -121,5 +123,22 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         //failureHandler.setDefaultFailureUrl("/loginPage?error=error");
         return failureHandler;
     }
+    
+    
+    @Bean
+    public ErrorPageFilter errorPageFilter() {
+    	return new ErrorPageFilter();
+    }
+    
+    @Bean
+    public FilterRegistrationBean DisabledErrorPageFilter(ErrorPageFilter filter) { 
+        FilterRegistrationBean filterRegistration = new FilterRegistrationBean<>(); 
+        filterRegistration.setFilter(filter); 
+        filterRegistration.setName("disabledErrorPageFilter"); 
+        filterRegistration.setEnabled(false); 
+        return filterRegistration; 
+    }
+
+    
     
 }

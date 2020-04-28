@@ -15,7 +15,9 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.E
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
+import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 
 import com.isu.ifo.service.security.UserDetailServiceImpl;
 
@@ -77,7 +79,7 @@ public class Oauth2AuthorizationConfig extends AuthorizationServerConfigurerAdap
     	TokenEnhancerChain enhancerChain = new TokenEnhancerChain();
         endpoints.authenticationManager(authenticationManager).userDetailsService(userDetailService)
         .accessTokenConverter(jwtAccessTokenConverter()).approvalStoreDisabled()
-        //.tokenStore(tokenStore())
+        .tokenStore(tokenStore())
         //.tokenEnhancer(enhancerChain) 
         ;
     }
@@ -107,12 +109,11 @@ public class Oauth2AuthorizationConfig extends AuthorizationServerConfigurerAdap
     }
     */
     
-/*
     @Bean
     public TokenStore tokenStore() {
        return new JwtTokenStore(jwtAccessTokenConverter());
     }
-
+/*
     @Bean
     @Primary //Making this primary to avoid any accidental duplication with another token service instance of the same name
     public DefaultTokenServices tokenServices() {

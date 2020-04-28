@@ -1,20 +1,29 @@
 package com.isu.ifo.controller;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.UUID;
+import java.util.List;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.common.OAuth2RefreshToken;
 import org.springframework.security.oauth2.provider.ClientRegistrationService;
+import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.stereotype.Controller;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.isu.ifo.dto.ClientDetailsImpl;
@@ -30,7 +39,36 @@ public class ClientController {
     
     @Autowired private ClientRegistrationService clientRegistrationService;
     
-    @Autowired private PasswordEncoder passwordEncoder; 
+    @Autowired private PasswordEncoder passwordEncoder;
+    
+    @Autowired private TokenStore tokenStore;
+
+    @RequestMapping(value = "/logout", method = RequestMethod.GET)
+    @ResponseStatus(HttpStatus.OK)
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+    	System.out.println("logoutlogoutlogoutlogoutlogoutlogoutlogout");
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null) {
+            String tokenValue = authHeader.replace("Bearer", "").trim();
+            OAuth2AccessToken accessToken = tokenStore.readAccessToken(tokenValue);
+            tokenStore.removeAccessToken(accessToken);
+            
+            Cookie cookie = new Cookie("Authorization", null);
+            cookie.setSecure(false);
+            cookie.setPath("/");
+            cookie.setHttpOnly(true);
+            cookie.setMaxAge(0);
+            //cookie.setDomain("localhost");
+            response.addCookie(cookie);
+            try {
+            	
+				response.sendRedirect("http://www.naver.com");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+    }
     
     @GetMapping("/register")
     public ModelAndView registerPage(ModelAndView mav) {
@@ -89,6 +127,7 @@ public class ClientController {
     		System.out.println("passwordEncoder.encode(secret) : " +passwordEncoder.encode(secret));
         	return passwordEncoder.encode(secret);
     }
+    
 }
  
 
