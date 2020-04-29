@@ -42,7 +42,15 @@ zuul:
     #  url: http://10.30.30.188
     #  sensitiveHeaders: #Cookie,Set-Cookie,Authorization
     #  strip-prefix: false
-        
+    hr:
+      path: /
+      #url : http://10.62.8.183 #load balancer 
+      url: http://10.30.30.188:8880
+      #url: http://192.168.111.15
+      customSensitiveHeaders: true
+      sensitiveHeaders: #Cookie,Set-Cookie,Authorization
+      strip-prefix: false
+          
     worktime:
       path: /ifw/**
       #url : http://10.62.8.183 #load balancer 

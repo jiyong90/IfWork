@@ -3,6 +3,7 @@ package com.isu.ifo.handler;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,6 +29,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.common.exceptions.UnauthorizedClientException;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.client.RestTemplate;
 
@@ -42,7 +44,7 @@ import com.isu.ifo.util.AjaxUtils;
 
 /**
  * Form 로그인 인증을 담당하는 Filter이다.
- * @author yun-yeoseong
+ * @author JYP
  *
  */
 //@Slf4j
@@ -60,13 +62,14 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
 	@Autowired ClientDetailsServiceImpl clientDetailsService;
 	//@Autowired UserDetailsServiceImpl userDetailsService;
 	//@Autowired UserServiceImpl userService;
+	@Autowired CustomAuthenticationSuccessHandler authenticationSuccessHandler;
 	
     private boolean postOnly = true;
     
     public CustomUsernamePasswordAuthenticationFilter(AuthenticationManager authenticationManager) {
         super.setAuthenticationManager(authenticationManager);
     }
-    
+     
     /*
      * 해당 필터에서 인증 프로세스 이전에 요청에서 사용자 정보를 가져와서
      * Authentication 객체를 인증 프로세스 객체에게 전달하는 역할
@@ -150,9 +153,12 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
         	isValid =  false;
         }
         
+        System.out.println("isValid : " + isValid);
         if(!isValid) {
         	try {
+        		System.out.println("loginPageUrl : " + loginPageUrl);
 				response.sendRedirect(loginPageUrl + "#err=" + URLEncoder.encode(String.format("%s", errorMsg)));
+				return null;
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
@@ -242,14 +248,26 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
         
 
         List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+        authorities.add(new SimpleGrantedAuthority(new Date().getTime()+""));
         authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
        
         UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(username, password, authorities);
         System.out.println("authRequest.getName() : " + authRequest.getName());
+        System.out.println("authRequest.getDetails() : " +  authRequest.getDetails());
         System.out.println(this.getFilterName());
+        
         setDetails(request, authRequest);
         System.out.println(authRequest.getAuthorities());
         authRequest.setDetails(resultMap);
+        System.out.println("authRequest.getDetails() : " +  authRequest.getDetails());
+        //Authentication auth = authRequest;
+        
+        //return auth; //this.getAuthenticationManager().authenticate(authRequest);
+        
+        /**
+         * 기본 URL이 / 이다 로그인 성공 리다이렉트 URL로 기본 셋팅을 하자. 
+         */
+        authenticationSuccessHandler.setDefaultTargetUrl(clientDetails.getWebServerRedirectUri().toString());
         
         return this.getAuthenticationManager().authenticate(authRequest);
     }

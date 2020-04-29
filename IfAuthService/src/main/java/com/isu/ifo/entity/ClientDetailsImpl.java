@@ -75,6 +75,9 @@ public class ClientDetailsImpl implements ClientDetails{
 	@Column(name = "login_endpoint_method")
 	String loginEndpointMethod;
 	
+	@Column(name = "web_server_redirect_uri")
+	String webServerRedirectUri;
+	
 	@Override
 	public String getClientId() {
 		return this.clientId;
@@ -173,5 +176,8 @@ public class ClientDetailsImpl implements ClientDetails{
 		this.logoutCallbackUrl = logoutCallbackUrl;
 	}
 
+	public String getWebServerRedirectUri() {
+		return webServerRedirectUri;
+	}
 	
 }
