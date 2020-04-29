@@ -507,6 +507,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				}
 			}
 		}
+		logger.debug("############ stdYmd1 " + stdYmd);
 		
 		if(stdYmd.equals("")) {
 			stdYmd = today;
@@ -519,16 +520,17 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 						time.get("holydayYn").equals("N") && time.get("unplanedYn").equals("N")) {
 					//unplanned일때 계획이 없으면 안됨
 					throw new Exception("근무계획시간이 존재하지 않습니다.");
-				} else if(time.get("pSymd").equals(today) && paramMap.get("inoutType").equals("IN")) {
+				} else if(time.get("pSymd") != null && time.get("pSymd").equals(today) && paramMap.get("inoutType").equals("IN")) {
 					stdYmd = time.get("ymd").toString();
 					break;
-				}else if(time.get("pEymd").equals(today) && paramMap.get("inoutType").equals("OUT")) {
+				}else if(time.get("pEymd") != null && time.get("pEymd").equals(today) && paramMap.get("inoutType").equals("OUT")) {
 					stdYmd = time.get("ymd").toString();
 					break;
 				}
 			}
 		}
-		
+		logger.debug("############ stdYmd2 " + stdYmd);
+
 		//3.출근타각이 있으면 반영안됨(삼화 인터페이스 두번 들어올 수 있음)
 		if("IN".equals(paramMap.get("inoutType").toString()) && entrySdate !=null) {
 			logger.debug("출근 타각시간이 존재하므로 반영하지 않습니다." + paramMap.toString());
