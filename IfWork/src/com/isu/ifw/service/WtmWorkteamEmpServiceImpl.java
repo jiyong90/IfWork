@@ -143,9 +143,15 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 						
 						List<Map<String, Object>> dup = workteamEmpMapper.dupCheckByYmd(paramMap);
 						if(dup != null && dup.size() > 0) {
-							rp.setFail("중복된 기간이 존재합니다. (sabun : " + sabun + ")");
+							rp.setFail("근무조가 중복된 기간이 존재합니다. (sabun : " + sabun + ")");
 							return rp;
 						}
+						List<Map<String, Object>> dup2 = workteamEmpMapper.dupCheckFlexibleByYmd(paramMap);
+						if(dup2 != null && dup2.size() > 0) {
+							rp.setFail("해당 기간에 적둉된 유연근무제가 존재합니다. (sabun : " + sabun + ")");
+							return rp;
+						}
+
 						//saveList.add(workteam);
 						workteam = workteamRepository.save(workteam);
 						

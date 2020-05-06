@@ -8,12 +8,10 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.mapper.WtmCalendarMapper;
 import com.isu.ifw.mapper.WtmInOutChangeMapper;
 import com.isu.ifw.mapper.WtmInoutHisMapper;
@@ -22,7 +20,7 @@ import com.isu.ifw.util.WtmUtil;
 @Service("inOutChangeService")
 public class WtmInOutChangeServiceImpl implements WtmInOutChangeService{
 	
-	private final Logger logger = LoggerFactory.getLogger("ifwDBLog");
+	private final Logger logger = LoggerFactory.getLogger("ifwFileLog");
 	
 	@Autowired
 	WtmInOutChangeMapper inOutChangeMapper;
@@ -69,8 +67,7 @@ public class WtmInOutChangeServiceImpl implements WtmInOutChangeService{
 			
 		}
 			
-		logger.debug("setInOutChangeList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-		MDC.clear();
+		logger.debug("setInOutChangeList Service End ");
 		
 		return 1;
 	}
@@ -146,9 +143,40 @@ public class WtmInOutChangeServiceImpl implements WtmInOutChangeService{
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
 		} finally {
-			logger.debug("getInpoutChangeHis Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
-			MDC.clear();
+			logger.debug("getInpoutChangeHis Service End");
 		}
 		return list;
 	}
+	
+	@Override
+	public List<Map<String, Object>> getEntryInoutList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
+		List<Map<String, Object>> entryInoutList = null;
+		try {
+			paramMap.put("tenantId", "2");
+			paramMap.put("enterCd", "ISU_ST");
+			
+			String ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
+			if(paramMap.get("ymd")!=null && !"".equals("ymd")) {
+				ymd = paramMap.get("ymd").toString().replaceAll("-", "");
+				paramMap.put("ymd", ymd);
+			}
+			
+			List<String> auths = empService.getAuth(tenantId, enterCd, sabun);
+			if(auths!=null && !auths.contains("FLEX_SETTING") && auths.contains("FLEX_SUB")) {
+				//하위 조직 조회
+				paramMap.put("orgList", empService.getLowLevelOrgList(tenantId, enterCd, sabun, ymd));
+			}
+			
+			entryInoutList = inOutChangeMapper.getEntryInoutList(paramMap);
+		} catch(Exception e) {
+			e.printStackTrace();
+			logger.debug(e.toString(), e);
+		} finally {
+			logger.debug("entryDiffList End");
+
+		}
+		
+		return entryInoutList;
+	}
+	
 }
