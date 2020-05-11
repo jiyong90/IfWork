@@ -35,4 +35,6 @@ public interface WtmMobileService {
 	//계획 시간 조회
 	public List<Map<String, Object>> getPlan(Map<String, Object> paramMap) throws Exception ;
 
+	//부서원 계획 시간 조회
+	public List<Map<String, Object>> getPlanList(Map<String, Object> paramMap) throws Exception ;
 }
