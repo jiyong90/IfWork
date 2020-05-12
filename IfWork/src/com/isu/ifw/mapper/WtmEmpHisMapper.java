@@ -17,4 +17,6 @@ public interface WtmEmpHisMapper {
 	public List<Map<String, Object>> getCreateBaseTarget(Map<String, Object> paramMap);
 	
 	public Map<String, Object> getRuleTargetBySql(Map<String, Object> paramMap);
+	
+	public Map<String, Object> getLeaderYn(Map<String, Object> paramMap);
 }
