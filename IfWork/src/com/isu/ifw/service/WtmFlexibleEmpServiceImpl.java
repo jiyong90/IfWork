@@ -2478,7 +2478,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//미래의 연장근로시간의 경우 일마감에서 대체휴일 정보를 생성한다.
 			//1. 인정근무시간이 있거나 연장근무일이 오늘 이전이면
 			if(!isCalcAppr || (isCalcAppr && otAppl.getOtSdate().compareTo(new Date()) < 0)) {
-				
+				 
 				Map<String, Object> resultParam = new HashMap<String, Object>();
 				resultParam.put("tenantId", tenantId);
 				resultParam.put("enterCd", enterCd);
