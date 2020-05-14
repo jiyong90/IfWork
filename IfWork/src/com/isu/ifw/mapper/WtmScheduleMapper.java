@@ -37,4 +37,18 @@ public interface WtmScheduleMapper {
 	 * @return 
 	 */
 	public List<Map<String, Object>> getInoutCheckList(Map<String, Object> paramMap);
+	
+	/**
+	 * 근태갱신대상
+	 * @return 
+	 **/
+	public List<Map<String, Object>> getTaaReset();
+	
+	/**
+	 * 근태갱신대상
+	 * @return 
+	 **/
+	public int setDeleteTaaOld();
+	
+	
 }

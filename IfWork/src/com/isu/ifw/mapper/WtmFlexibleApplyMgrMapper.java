@@ -48,4 +48,8 @@ public interface WtmFlexibleApplyMgrMapper {
 	public void updateFlexibleEmpTemp(@Param("flexibleApplyTempId") Long flexibleApplyTempId);
 	//확정 시 전체 성공여부 업데이트
 	public void updateFlexibleApplyAll(@Param("flexibleApplyId") Long flexibleApplyId);
+	
+	//확정 시 선반영된 근태건이 있으면 재갱신 대상으로 변경해야함.
+	public void updateFlexibleTaaReset(@Param("flexibleApplyId") Long flexibleApplyId);
+	
 }

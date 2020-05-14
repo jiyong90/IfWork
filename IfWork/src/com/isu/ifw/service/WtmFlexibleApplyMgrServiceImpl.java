@@ -336,6 +336,9 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		if(cnt == searchList.size()) {
 			wtmFlexibleApplyMgrMapper.updateFlexibleApplyAll(flexibleApplyId);
 			
+			// 20200507 이효정추가 근무확정시 선반영된 근태건이 있으면 재갱신 대상으로 변경해야함.
+			wtmFlexibleApplyMgrMapper.updateFlexibleTaaReset(flexibleApplyId);
+			
 		}
 		return cnt;
 	}
