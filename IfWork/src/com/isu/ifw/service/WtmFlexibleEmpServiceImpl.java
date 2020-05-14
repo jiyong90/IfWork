@@ -2395,11 +2395,43 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						if(emp.get("holidayYn") != null && "Y".equals(emp.get("holidayYn"))) {
 							//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 소정근로 시간을 사용할 수 잇다. 
 							if(emp.get("workTypeCd") != null && ("BASE".equals(emp.get("workTypeCd")) || "DIFF".equals(emp.get("workTypeCd")) || "WORKTEAM".equals(emp.get("workTypeCd")) ) ) {
+								/*
+									한주에 대한 정보 조회 계획 및 인정 근무 시간의 합 - 결근 제외 
+								 */
+							
+								paramMap.put("sabun", emp.get("sabun").toString());
+
+								
+								Map<String, Object> weekInfo = flexEmpMapper.weekWorkTimeByEmp(paramMap);
+								System.out.println("aslkdjkslajdklsajdklsajdkljaskldjsakljdkalsdj");
+								System.out.println(mapper.writeValueAsString(weekInfo));
+								if(weekInfo != null && weekInfo.get("workMinute") != null && !weekInfo.get("workMinute").equals("")) {
+									//한주소정근로시간 40시간   * 60  = 2400
+									int weekWorkMinute = Integer.parseInt(weekInfo.get("weekWorkMinute")+"");
+									int exMinute = 0;
+									if(weekInfo.get("exMinute") != null && !weekInfo.get("exMinute").equals("")) {
+										exMinute = Integer.parseInt(weekInfo.get("exMinute")+"");
+									}
+									
+									System.out.println("weekWorkMinute : " + weekWorkMinute);
+									System.out.println("workMinute : " + Integer.parseInt(weekInfo.get("workMinute")+""));
+									System.out.println("exMinute : " + exMinute);
+									
+									int restMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute ;
+									System.out.println("restMin : " + restMin);
+									if(restMin > 0) {
+										restMinuteMap.put("restWorkMinute", restMin);
+										restMinuteMap.put("guideMessage", "* 잔여소정근로시간이 먼저 차감됩니다.");
+									}
+									
+								}
+								/*
 								if(emp.get("restWorkMinute")!=null && !"".equals(emp.get("restWorkMinute"))) {
 									int restMin = Integer.parseInt(emp.get("restWorkMinute").toString());
 									restMinuteMap.put("restWorkMinute", restMin);
 									restMinuteMap.put("guideMessage", "* 잔여소정근로시간이 먼저 차감됩니다.");
 								}
+								*/
 							}
 						}
 						targetList.put(emp.get("sabun").toString(), restMinuteMap);
