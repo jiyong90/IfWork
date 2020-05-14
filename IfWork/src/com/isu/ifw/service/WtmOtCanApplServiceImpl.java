@@ -325,6 +325,10 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 				for(WtmOtCanAppl otCanAppl : otCanApplList) {
 					Long deletedApplId = null;
 					
+					/**
+					 * 기본근무 , 근무조, 시차 출퇴근일 경우 연장근무 신청 시 잔여 소정근로시간이 남았을 경우 기본근무시간을 생성할 수 있다.
+					 *  취소 신청에서 신청서아이디가 잇는 기본근무시간이 있는지를 확인한다.
+					 */
 					//휴게시간도 지워줌
 					List<String> deleteTimeTypeCds = new ArrayList<String>();
 					deleteTimeTypeCds.add("BREAK_OT");
@@ -401,25 +405,44 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 		WtmApplCode applCode = getApplInfo(tenantId, enterCd, workTypeCd);
 		//Long flexibleStdMgrId = Long.parseLong(paramMap.get("flexibleStdMgrId").toString());
 		//신청서 최상위 테이블이다. 
-		WtmAppl appl = saveWtmAppl(tenantId, enterCd, applId, workTypeCd, status, sabun, userId);
+		//20.05.13 jyp  applId > null 수정. 신청서 아이디를 새로 받아야 한다. 임시저장 개념이 없다.
+		//WtmAppl appl = saveWtmAppl(tenantId, enterCd, applId, workTypeCd, status, sabun, userId);
+		WtmAppl appl = saveWtmAppl(tenantId, enterCd, null, workTypeCd, status, sabun, userId);
 		
-		applId = appl.getApplId();
+		/**
+		 * 20.05.13 jyp 새로 신청서가 저장된 아이디로
+		 * List<WtmOtAppl> otApplList = wtmOtApplRepo.findByApplId(applId);
+		 * 오티 신청 정보를 조회하고 있어서 조회가 안된다. 
+		 * 파라메터로 받은 applId 는 otApplId이다 취소할 연장근무신청서 아이디
+		 *  
+		 */
+		//applId = appl.getApplId();
 		 
 		Long workDayResultId = Long.parseLong(paramMap.get("workDayResultId").toString());
 		String reason = paramMap.get("reason").toString();
 		
-		WtmWorkDayResult result = wtmWorkDayResultRepo.findByWorkDayResultId(workDayResultId);
+		//WtmWorkDayResult result = wtmWorkDayResultRepo.findByWorkDayResultId(workDayResultId);
 		
-		List<WtmOtAppl> otApplList = wtmOtApplRepo.findByApplId(result.getApplId());
-		if(otApplList!=null && otApplList.size()>0) {
-			for(WtmOtAppl otAppl: otApplList) {
+		/**
+		 * 20.05.13 jyp
+		 * 취소할 오티 정보 조회수정
+		 */
+		//List<WtmOtAppl> otApplList = wtmOtApplRepo.findByApplId(applId);
+		WtmOtAppl otAppl = wtmOtApplRepo.findById(applId).get();
+		
+		//if(otApplList!=null && otApplList.size()>0) {
+		//	for(WtmOtAppl otAppl: otApplList) {
 				otAppl.setCancelYn("Y");
 				wtmOtApplRepo.save(otAppl);
 				
-				//근무제 신청서 테이블 조회
-				WtmOtCanAppl otCanAppl = saveWtmOtCanAppl(tenantId, enterCd, applId, otAppl.getOtApplId(), workDayResultId, result.getYmd(), result.getTimeTypeCd(), result.getPlanSdate(), result.getPlanEdate(), result.getPlanMinute(), result.getApprSdate(), result.getApprEdate(), result.getApprMinute(), reason, result.getSabun(), userId);
-			}
-		}
+				List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndApplId(tenantId, enterCd, sabun, otAppl.getApplId());
+				for(WtmWorkDayResult result : results) {
+					//근무제 신청서 테이블 조회
+					//WtmOtCanAppl otCanAppl = 
+					saveWtmOtCanAppl(tenantId, enterCd, appl.getApplId(), otAppl.getOtApplId(), result.getWorkDayResultId(), result.getYmd(), result.getTimeTypeCd(), result.getPlanSdate(), result.getPlanEdate(), result.getPlanMinute(), result.getApprSdate(), result.getApprEdate(), result.getApprMinute(), reason, result.getSabun(), userId);
+				}
+		//	}
+		//}
 		
 		
 //		
@@ -429,8 +452,8 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 //		if(paramMap.containsKey("subYn")) {
 //			subYn = paramMap.get("subYn")+"";
 //		}
-				
-		applLineService.saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, workTypeCd, sabun, userId);
+		//20.05.13 jyp applId 수정
+		applLineService.saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), appl.getApplId(), workTypeCd, sabun, userId);
 		paramMap.put("applId", appl.getApplId());
 		//rp.put("flexibleApplId", flexibleAppl.getFlexibleApplId());
 		rp.put("applId", appl.getApplId());
@@ -440,10 +463,17 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 
 	protected WtmOtCanAppl saveWtmOtCanAppl(Long tenantId, String enterCd, Long applId, Long otApplId, Long workDayResultId, String ymd, String timeTypeCd, Date planSdate, Date planEdate, Integer planMinute, Date apprSdate, Date apprEdate, Integer apprMinute,  String reason, String sabun, String userId) {
 		 
+		/**
+		 * 05.14 jyp 
+		 * 취소 신청의 경우 임시저장 개념이 없다. 그리고 여러건이 들어오게 되서 무조건 신규 저장이다. 
+		 */
+		/*
 		WtmOtCanAppl otAppl = wtmOtCanApplRepo.findByApplIdAndOtApplId(applId, otApplId);
 		if(otAppl == null) {
 			otAppl = new WtmOtCanAppl();
 		}
+		*/
+		WtmOtCanAppl otAppl = new WtmOtCanAppl();
 		otAppl.setApplId(applId);
 		otAppl.setOtApplId(otApplId);
 		otAppl.setYmd(ymd);
