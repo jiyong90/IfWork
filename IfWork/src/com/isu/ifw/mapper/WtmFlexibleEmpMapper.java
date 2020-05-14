@@ -480,5 +480,7 @@ public interface WtmFlexibleEmpMapper {
 	 */
 	public Map<String, Object> addMinuteWithBreakMGR(Map<String, Object> paramMap);
 	
+	//로그확인용 임시
+	public Map<String, Object> getTemporaryWorkResult(Map<String, Object> paramMap);
 	
 }
