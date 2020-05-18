@@ -749,9 +749,21 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 								pMap.put("sabun", appl.getApplSabun());
 								
 								//현재 신청할 연장근무 시간 계산
-								resultMap.putAll(wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId));
-								
-								otSub.setSubsMinute(resultMap.get("calcMinute").toString());
+								Map<String, Object> calcMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId);
+		                        
+		                        resultMap.putAll(calcMap);
+		                        
+		                        int subsMinute = 0;
+		                        if(calcMap!=null && calcMap.containsKey("calcMinute")) {
+		                           subsMinute = Integer.parseInt(resultMap.get("calcMinute").toString());
+		                           
+		                           if(calcMap.containsKey("breakMinute") && resultMap.get("breakMinute")!=null && !"".equals(resultMap.get("breakMinute"))) {
+		                              subsMinute = subsMinute -  Integer.parseInt(resultMap.get("breakMinute").toString());
+		                           }
+		                        }
+		                        
+		                        otSub.setSubsMinute(Integer.toString(subsMinute));
+		                        
 								otSub.setUpdateId(userId);
 								wtmOtSubsApplRepo.save(otSub);
 							}
