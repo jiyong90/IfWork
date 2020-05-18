@@ -1313,12 +1313,14 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//결근을 제외한 day result의 모든 계획데이터를 인정데이터로 만들어 준다. 
 		flexEmpMapper.updateApprDatetimeByYmdAndSabun(paramMap);
 		
-		//시작일 타각 데이터 기준 옵션에 해당하는 내용을 인정시간을 다시 업데이트 하자
-		//계획이 있지만 타각데이터로 인정하는 케이스는 완전선근제 옵션에만 있다. 기억하자 까묵지마라.
-		//unplanned 가Y이면 어카지? BASE 데이터가 없을텐데.. resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt 쪼 밑에서 하고 있다
-		try { logger.debug("9. APPLY_ENTRY_SDATE_YN / APPLY_ENTRY_EDATE_YN 여부에 따라 타각 시간을 계획시간으로 업데이트 한다. 그리고 인정시간을 다시 계산한다. 계획시간이 변경되었기 때문에 ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_CREATE_F"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-		flexEmpMapper.calcFlexApplyEntryDatetimeByFlexibleEmpId(paramMap);
-		
+		if("BRS".equals(enterCd) || "LSG".equals(enterCd) || "1000".equals(enterCd)) {
+			// 20200518 브로제랑 ls글로벌만 완전선근 사용중 ngv
+			//시작일 타각 데이터 기준 옵션에 해당하는 내용을 인정시간을 다시 업데이트 하자
+			//계획이 있지만 타각데이터로 인정하는 케이스는 완전선근제 옵션에만 있다. 기억하자 까묵지마라.
+			//unplanned 가Y이면 어카지? BASE 데이터가 없을텐데.. resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt 쪼 밑에서 하고 있다
+			try { logger.debug("9. APPLY_ENTRY_SDATE_YN / APPLY_ENTRY_EDATE_YN 여부에 따라 타각 시간을 계획시간으로 업데이트 한다. 그리고 인정시간을 다시 계산한다. 계획시간이 변경되었기 때문에 ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_CREATE_F"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+			flexEmpMapper.calcFlexApplyEntryDatetimeByFlexibleEmpId(paramMap);
+		}
 		// 이곳은 출/퇴근 타각데이터가 있는 사람에 한한다.. 
 
 		// 계획 종료 시간 보다 인정종료시간이 빠를 경우 BASE중에 
