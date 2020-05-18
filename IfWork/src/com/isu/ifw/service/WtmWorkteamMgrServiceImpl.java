@@ -112,11 +112,11 @@ public class WtmWorkteamMgrServiceImpl implements WtmWorkteamMgrService{
 						
 						workteam = workteamMgrRepository.save(workteam);
 
-						paramMap.put("workteamMgrId", workteam.getWorkteamMgrId());
-						paramMap.put("sabun", "");
-						paramMap.put("pId", userId);
-						
-						flexEmpMapper.resetWtmWorkteamOfWtmWorkDayResult(paramMap);
+//						paramMap.put("workteamMgrId", workteam.getWorkteamMgrId());
+//						paramMap.put("sabun", "");
+//						paramMap.put("pId", userId);
+//						
+//						flexEmpMapper.resetWtmWorkteamOfWtmWorkDayResult(paramMap);
 						cnt++;
 					}
 					//saveList = workteamMgrRepository.saveAll(saveList);
@@ -143,11 +143,11 @@ public class WtmWorkteamMgrServiceImpl implements WtmWorkteamMgrService{
 						
 						workteamMgrRepository.delete(workteam);
 						
-						paramMap.put("workteamMgrId", l.get("workteamMgrId").toString());
-						paramMap.put("sabun", "");
-						paramMap.put("pId", userId);
-						
-						flexEmpMapper.resetWtmWorkteamOfWtmWorkDayResult(paramMap);
+//						paramMap.put("workteamMgrId", l.get("workteamMgrId").toString());
+//						paramMap.put("sabun", "");
+//						paramMap.put("pId", userId);
+//						
+//						flexEmpMapper.resetWtmWorkteamOfWtmWorkDayResult(paramMap);
 						cnt++;
 					}
 //					workteamMgrRepository.deleteAll(deleteList);
