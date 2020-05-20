@@ -12,6 +12,6 @@ import com.isu.ifw.entity.WtmTimeBreakMgr;
 @Repository
 public interface WtmTimeBreakMgrRepository extends JpaRepository<WtmTimeBreakMgr, String> {
 	@Query(value="SELECT * FROM WTM_TIME_BREAK_MGR WHERE TIME_CD_MGR_ID = :timeCdMgrId ORDER BY SEQ", nativeQuery = true)
-	public List<WtmTimeBreakMgr> findByTimeCdMgrId(@Param(value="timeCdMgrId")String timeCdMgrId);
+	public List<WtmTimeBreakMgr> findByTimeCdMgrId(@Param(value="timeCdMgrId")Long timeCdMgrId);
 	
 }
