@@ -2117,7 +2117,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     			} else {
     				reqMap.put("eHm", "");
     			}
-    			reqMap.put("ifApplNo", Long.parseLong(getIfList.get(l).get("APPL_SEQ").toString()));
+    			reqMap.put("ifApplNo", getIfList.get(l).get("APPL_SEQ").toString());
     			reqMap.put("status", getIfList.get(l).get("APPL_STATUS_CD").toString());
     			
     			
@@ -3214,7 +3214,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			Map<String, Object> dayMap = reqMap;
 			dayMap.put("symd", sYmd);
 			dayMap.put("eymd", eYmd);
-			
+			System.out.println("dayMap" + dayMap.toString());
 			//근무 마감된 자료 있는지 조회
 			Map<String, Object> workCloseCntMap = wtmInterfaceMapper.isWorkClose(dayMap);
 			if(workCloseCntMap!=null && workCloseCntMap.containsKey("workCloseCnt") && workCloseCntMap.get("workCloseCnt")!=null && !"".equals(workCloseCntMap.get("workCloseCnt")) ) {
@@ -3246,6 +3246,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				rp.setFail(retMsg);
 	    		return rp;
 			}
+			
+			
 				
 			//생성할 자료 삭제
 			wtmInterfaceMapper.deleteWorktimeDayClose(dayMap);
@@ -3289,6 +3291,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				retMsg = monMap.get("retMsg").toString();
 				
 				dayMap.put("msg", retMsg);
+				System.out.println(dayMap.toString());
 				wtmInterfaceMapper.insertErrorLog(dayMap);
 				rp.setFail(retMsg);
 	    		return rp;
