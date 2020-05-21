@@ -42,6 +42,18 @@ public class WtmTaaApplDet {
 	private Date updateDate;
 	@Column(name="UPDATE_ID")
 	private String updateId;
+	@Column(name="TAA_MINUTE")
+	private String taaMinute;
+
+	public String getTaaMinute() {
+		return taaMinute;
+	}
+
+
+	public void setTaaMinute(String taaMinute) {
+		this.taaMinute = taaMinute;
+	}
+
 
 	public Long getTaaApplDetId() {
 		return taaApplDetId;
