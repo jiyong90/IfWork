@@ -137,6 +137,10 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			paramMap.put("applId", applId);
 			paramMap.put("sabun", sabun);
 			List<Map<String, Object>> otApplList = wtmOtApplMapper.otApplfindByApplId(paramMap);
+
+			ObjectMapper mapper = new ObjectMapper();
+			
+			System.out.println("otApplList : " + mapper.writeValueAsString(otApplList));
 			
 			Map<String, Object> otAppl = null;
 			if(otApplList!=null && otApplList.size()>0) {
@@ -221,7 +225,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				otAppl.put("recoveryYn", isRecovery);
 				otAppl.put("applLine", applLine);
 			}
-			
+			System.out.println("otAppl : " + mapper.writeValueAsString(otAppl));
 			return otAppl;
 			
 		}catch(Exception e) {
@@ -416,7 +420,22 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 					throw new RuntimeException(rp.get("message").toString());
 				}
 				
-				for(WtmOtAppl otAppl : otApplList) {
+				for(WtmOtAppl otA : otApplList) {
+					WtmOtAppl otAppl = new WtmOtAppl();
+					otAppl.setApplId(otA.getApplId());
+					otAppl.setCancelYn(otA.getCancelYn());
+					otAppl.setHolidayYn(otA.getHolidayYn());
+					otAppl.setOldOtApplId(otA.getOldOtApplId());
+					otAppl.setOtApplId(otA.getOtApplId());
+					otAppl.setOtEdate(otA.getOtEdate());
+					otAppl.setOtSdate(otA.getOtSdate());
+					otAppl.setOtMinute(otA.getOtMinute());
+					otAppl.setReason(otA.getReason());
+					otAppl.setReasonCd(otA.getReasonCd());
+					otAppl.setRetOtMinute(otA.getRetOtMinute());
+					otAppl.setSabun(otA.getSabun());
+					otAppl.setSubYn(otA.getSubYn());
+					otAppl.setYmd(otA.getYmd());
 					
 					Date otNightSdate = format.parse(otAppl.getYmd()+n_shm);
 					Date otNightEdate = null;
@@ -431,11 +450,222 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 					logger.debug("야간 근무시간 : " + format.format(otNightSdate) + "~" + format.format(otNightEdate));
 					logger.debug("연장 근무 신청 시간 : " + format.format(otAppl.getOtSdate()) + "~" + format.format(otAppl.getOtEdate()));
 					
-					//신청부터 야간연장신청이다.
-					if(otAppl.getOtSdate().compareTo(otNightSdate) == 1 ) {
-						//연장야간 종료시간이 야간 종료시간보다 클경우
-						if(otAppl.getOtEdate().compareTo(otNightEdate) == 1 ) {
-
+					
+					//잔여 소정근로시간 체크 
+					//기본근무/시차/근무조 일경우에 
+					//잔여 소정근로시간이 있을 경우 BASE 와 OT를 분리하여 체크 한다.  
+					List<String> sabunList = new ArrayList<String>();
+					sabunList.add(sabun);
+					Map<String, Object> empParamMap = new HashMap<>();
+					empParamMap.put("sabuns", sabunList);
+					empParamMap.put("ymd", otAppl.getYmd());
+					empParamMap.put("tenantId", tenantId);
+					empParamMap.put("enterCd", enterCd);
+					try {
+						System.out.println(mapper.writeValueAsString(empParamMap));
+					} catch (JsonProcessingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					List<Map<String, Object>> emps = wtmOtApplMapper.getRestOtMinute(empParamMap);
+					
+					int restMin = 0;
+					try {
+						System.out.println(mapper.writeValueAsString(emps));
+					} catch (JsonProcessingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					if(emps!=null && emps.size()>0) {
+						for(Map<String, Object> emp : emps) {
+							//Map<String, Object> restMinuteMap = new HashMap<String, Object>();
+							/*
+							if(emp.get("restOtMinute")!=null && !"".equals(emp.get("restOtMinute"))) {
+								int restMin = Integer.parseInt(emp.get("restOtMinute").toString());
+								restMinuteMap.put("restOtMinute", restMin);
+							}
+							*/
+							//휴일근무이며
+							if(emp.get("holidayYn") != null && "Y".equals(emp.get("holidayYn"))) {
+								//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 소정근로 시간을 사용할 수 잇다. 
+								if(emp.get("workTypeCd") != null && ("BASE".equals(emp.get("workTypeCd")) || "DIFF".equals(emp.get("workTypeCd")) || "WORKTEAM".equals(emp.get("workTypeCd")) ) ) {
+									/*
+										한주에 대한 정보 조회 계획 및 인정 근무 시간의 합 - 결근 제외 
+									 */
+									Map<String, Object> weekInfo = wtmFlexibleEmpMapper.weekWorkTimeByEmp(paramMap);
+									
+									if(weekInfo != null && weekInfo.get("workMinute") != null && !weekInfo.get("workMinute").equals("")) {
+										//한주소정근로시간 40시간   * 60  = 2400
+										int weekWorkMinute = Integer.parseInt(weekInfo.get("weekWorkMinute")+"");
+										int exMinute = 0;
+										if(weekInfo.get("exMinute") != null && !weekInfo.get("exMinute").equals("")) {
+											exMinute = Integer.parseInt(weekInfo.get("exMinute")+"");
+										}
+										
+										System.out.println("weekWorkMinute : " + weekWorkMinute);
+										System.out.println("workMinute : " + Integer.parseInt(weekInfo.get("workMinute")+""));
+										System.out.println("exMinute : " + exMinute);
+										
+										restMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute ;
+										System.out.println("restMin : " + restMin);
+										//restMinuteMap.put("restWorkMinute", restMin);
+										
+										//EX_MINUTE
+									}
+									/*	
+									if(emp.get("restWorkMinute")!=null && !"".equals(emp.get("restWorkMinute"))) {
+										restMin = Integer.parseInt(emp.get("restWorkMinute").toString());
+										restMinuteMap.put("restWorkMinute", restMin);
+									}
+									*/
+								}
+							}
+						}
+					}
+					boolean isOtSave = true;
+					//잔여소정근로시간이 있을 경우 BASE로 넣어줘야한다 나머지는 OT로 
+					if(restMin > 0) {
+						//dayResult.setPlanMinute(Integer.parseInt(otAppl.getOtMinute()));
+						Map<String, Object> reCalc = new HashMap<>();
+						reCalc.put("tenentId", tenantId);
+						reCalc.put("enterCd", enterCd);
+						reCalc.put("sabun", otAppl.getSabun());
+						reCalc.put("ymd", otAppl.getYmd());
+						reCalc.put("shm", sdf.format(otAppl.getOtSdate()));
+						reCalc.put("ehm", sdf.format(otAppl.getOtEdate()));
+						//Map<String, Object> addPlanMinuteMap = wtmFlexibleEmpMapper.calcMinuteExceptBreaktime(reCalc);
+						Map<String, Object> addPlanMinuteMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, otAppl.getSabun(), reCalc, userId);
+						//신청 시간의 인정시간(분)을 구한다.
+						int calcM = Integer.parseInt(addPlanMinuteMap.get("calcMinute")+"");
+						
+						//잔여소정근로시간과 비교
+						if(restMin >= calcM) {
+							//잔여소정근로시간 보다 신청 시간이 작거나 같을 경우 
+							//모두 BASE 		
+							WtmWorkDayResult dayResult = new WtmWorkDayResult();
+							dayResult.setApplId(applId);
+							dayResult.setTenantId(tenantId);
+							dayResult.setEnterCd(enterCd);
+							dayResult.setYmd(otAppl.getYmd());
+							dayResult.setSabun(otAppl.getSabun());
+							dayResult.setPlanSdate(otAppl.getOtSdate());
+							dayResult.setPlanEdate(otAppl.getOtEdate());
+							dayResult.setPlanMinute(calcM);
+							dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
+							dayResult.setUpdateId(userId);
+							wtmWorkDayResultRepo.save(dayResult);
+							isOtSave = false;
+						}else {
+							//BASE 만큼 만들어 주구 나머지를 isOtSave 로직을 태우자 (시작시간을 변경해서 넘기자)
+							//잔여소정근로시간 보다 신청 시간이 작거나 같을 경우 
+							//모두 BASE  	
+							SimpleDateFormat sd = new SimpleDateFormat("yyyyMMddHHmmss");
+							Map<String, Object> calcMap = new HashMap<>();
+							calcMap.put("tenantId", tenantId);
+							calcMap.put("enterCd", enterCd);
+							calcMap.put("sabun", sabun);
+							calcMap.put("ymd", otAppl.getYmd());
+							calcMap.put("sDate", sd.format(otAppl.getOtSdate()));
+							calcMap.put("addMinute", restMin); 
+							calcMap.put("retDate", ""); 
+							wtmFlexibleEmpMapper.addMinuteWithBreakMGR(calcMap);
+							//시간대를 자르
+							//잔여소정근로종료시간을 구해서 기본근무시간 정보를 만들어 준다. 
+							String baseEdateStr = calcMap.get("retDate")+"";
+							Date baseEdate = format.parse(baseEdateStr);
+							
+							WtmWorkDayResult dayResult = new WtmWorkDayResult();
+							dayResult.setApplId(applId);
+							dayResult.setTenantId(tenantId);
+							dayResult.setEnterCd(enterCd);
+							dayResult.setYmd(otAppl.getYmd());
+							dayResult.setSabun(otAppl.getSabun());
+							dayResult.setPlanSdate(otAppl.getOtSdate());
+							dayResult.setPlanEdate(baseEdate);
+							dayResult.setPlanMinute(restMin);
+							dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
+							dayResult.setUpdateId(userId);
+							wtmWorkDayResultRepo.save(dayResult);
+							
+							//BASE를 생성 후 OT데이터 생성을 위해 시작시간을 바꿔준다.
+							otAppl.setOtSdate(baseEdate);
+							isOtSave = true;
+						}
+						
+					}
+					if(isOtSave) {
+						//신청부터 야간연장신청이다.
+						if(otAppl.getOtSdate().compareTo(otNightSdate) == 1 ) {
+							//연장야간 종료시간이 야간 종료시간보다 클경우
+							if(otAppl.getOtEdate().compareTo(otNightEdate) == 1 ) {
+	
+								WtmWorkDayResult dayResult = new WtmWorkDayResult();
+								dayResult.setApplId(applId);
+								dayResult.setTenantId(tenantId);
+								dayResult.setEnterCd(enterCd);
+								dayResult.setYmd(otAppl.getYmd());
+								dayResult.setSabun(otAppl.getSabun());
+								dayResult.setPlanSdate(otAppl.getOtSdate());
+								dayResult.setPlanEdate(otNightSdate);
+								
+								Map<String, Object> reCalc = new HashMap<>();
+								reCalc.put("tenentId", tenantId);
+								reCalc.put("enterCd", enterCd);
+								reCalc.put("sabun", otAppl.getSabun());
+								reCalc.put("ymd", otAppl.getYmd());
+								reCalc.put("shm", sdf.format(otAppl.getOtSdate()));
+								reCalc.put("ehm", sdf.format(otNightSdate));
+								//Map<String, Object> addPlanMinuteMap = wtmFlexibleEmpMapper.calcMinuteExceptBreaktime(reCalc);
+								Map<String, Object> addPlanMinuteMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, otAppl.getSabun(), reCalc, userId);
+								
+								dayResult.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+""));
+								 
+								dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_NIGHT);
+								dayResult.setUpdateId(userId);
+								
+								wtmWorkDayResultRepo.save(dayResult);
+								
+	
+								dayResult = new WtmWorkDayResult();
+								dayResult.setApplId(applId);
+								dayResult.setTenantId(tenantId);
+								dayResult.setEnterCd(enterCd);
+								dayResult.setYmd(otAppl.getYmd());
+								dayResult.setSabun(otAppl.getSabun());
+								dayResult.setPlanSdate(otNightSdate);
+								dayResult.setPlanEdate(otAppl.getOtEdate());
+								 
+								reCalc.put("shm", sdf.format(otNightSdate));
+								reCalc.put("ehm", sdf.format(otAppl.getOtEdate()));
+								//addPlanMinuteMap = wtmFlexibleEmpMapper.calcMinuteExceptBreaktime(reCalc);
+								addPlanMinuteMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, otAppl.getSabun(), reCalc, userId);
+								
+								dayResult.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+"")); 
+								dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_OT);
+								dayResult.setUpdateId(userId);
+								
+								wtmWorkDayResultRepo.save(dayResult);
+							}else {
+	
+								//걍 나이트 오티				
+								WtmWorkDayResult dayResult = new WtmWorkDayResult();
+								dayResult.setApplId(applId);
+								dayResult.setTenantId(tenantId);
+								dayResult.setEnterCd(enterCd);
+								dayResult.setYmd(otAppl.getYmd());
+								dayResult.setSabun(otAppl.getSabun());
+								dayResult.setPlanSdate(otAppl.getOtSdate());
+								dayResult.setPlanEdate(otAppl.getOtEdate());
+								dayResult.setPlanMinute(Integer.parseInt(otAppl.getOtMinute()));
+								dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_NIGHT);
+								dayResult.setUpdateId(userId);
+								
+								wtmWorkDayResultRepo.save(dayResult);
+							}
+							
+						//야간시간 포함여부를판단 하자 연장야간 시간 시작시간보다 클경우
+						}else if(otAppl.getOtEdate().compareTo(otNightSdate) == 1 ) {
+							 
 							WtmWorkDayResult dayResult = new WtmWorkDayResult();
 							dayResult.setApplId(applId);
 							dayResult.setTenantId(tenantId);
@@ -457,12 +687,13 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 							
 							dayResult.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+""));
 							 
-							dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_NIGHT);
+							dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_OT);
 							dayResult.setUpdateId(userId);
 							
 							wtmWorkDayResultRepo.save(dayResult);
 							
-
+	
+							
 							dayResult = new WtmWorkDayResult();
 							dayResult.setApplId(applId);
 							dayResult.setTenantId(tenantId);
@@ -478,13 +709,12 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 							addPlanMinuteMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, otAppl.getSabun(), reCalc, userId);
 							
 							dayResult.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+"")); 
-							dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_OT);
+							dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_NIGHT);
 							dayResult.setUpdateId(userId);
 							
 							wtmWorkDayResultRepo.save(dayResult);
 						}else {
-
-							//걍 나이트 오티				
+							//걍 오티				
 							WtmWorkDayResult dayResult = new WtmWorkDayResult();
 							dayResult.setApplId(applId);
 							dayResult.setTenantId(tenantId);
@@ -493,92 +723,26 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 							dayResult.setSabun(otAppl.getSabun());
 							dayResult.setPlanSdate(otAppl.getOtSdate());
 							dayResult.setPlanEdate(otAppl.getOtEdate());
-							dayResult.setPlanMinute(Integer.parseInt(otAppl.getOtMinute()));
-							dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_NIGHT);
+							
+							//dayResult.setPlanMinute(Integer.parseInt(otAppl.getOtMinute()));
+							Map<String, Object> reCalc = new HashMap<>();
+							reCalc.put("tenentId", tenantId);
+							reCalc.put("enterCd", enterCd);
+							reCalc.put("sabun", otAppl.getSabun());
+							reCalc.put("ymd", otAppl.getYmd());
+							reCalc.put("shm", sdf.format(otAppl.getOtSdate()));
+							reCalc.put("ehm", sdf.format(otAppl.getOtEdate()));
+							//Map<String, Object> addPlanMinuteMap = wtmFlexibleEmpMapper.calcMinuteExceptBreaktime(reCalc);
+							Map<String, Object> addPlanMinuteMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, otAppl.getSabun(), reCalc, userId);
+							
+							dayResult.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+""));
+							
+							dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_OT);
 							dayResult.setUpdateId(userId);
 							
 							wtmWorkDayResultRepo.save(dayResult);
+	
 						}
-						
-					//야간시간 포함여부를판단 하자 연장야간 시간 시작시간보다 클경우
-					}else if(otAppl.getOtEdate().compareTo(otNightSdate) == 1 ) {
-						 
-						WtmWorkDayResult dayResult = new WtmWorkDayResult();
-						dayResult.setApplId(applId);
-						dayResult.setTenantId(tenantId);
-						dayResult.setEnterCd(enterCd);
-						dayResult.setYmd(otAppl.getYmd());
-						dayResult.setSabun(otAppl.getSabun());
-						dayResult.setPlanSdate(otAppl.getOtSdate());
-						dayResult.setPlanEdate(otNightSdate);
-						
-						Map<String, Object> reCalc = new HashMap<>();
-						reCalc.put("tenentId", tenantId);
-						reCalc.put("enterCd", enterCd);
-						reCalc.put("sabun", otAppl.getSabun());
-						reCalc.put("ymd", otAppl.getYmd());
-						reCalc.put("shm", sdf.format(otAppl.getOtSdate()));
-						reCalc.put("ehm", sdf.format(otNightSdate));
-						//Map<String, Object> addPlanMinuteMap = wtmFlexibleEmpMapper.calcMinuteExceptBreaktime(reCalc);
-						Map<String, Object> addPlanMinuteMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, otAppl.getSabun(), reCalc, userId);
-						
-						dayResult.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+""));
-						 
-						dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_OT);
-						dayResult.setUpdateId(userId);
-						
-						wtmWorkDayResultRepo.save(dayResult);
-						
-
-						
-						dayResult = new WtmWorkDayResult();
-						dayResult.setApplId(applId);
-						dayResult.setTenantId(tenantId);
-						dayResult.setEnterCd(enterCd);
-						dayResult.setYmd(otAppl.getYmd());
-						dayResult.setSabun(otAppl.getSabun());
-						dayResult.setPlanSdate(otNightSdate);
-						dayResult.setPlanEdate(otAppl.getOtEdate());
-						 
-						reCalc.put("shm", sdf.format(otNightSdate));
-						reCalc.put("ehm", sdf.format(otAppl.getOtEdate()));
-						//addPlanMinuteMap = wtmFlexibleEmpMapper.calcMinuteExceptBreaktime(reCalc);
-						addPlanMinuteMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, otAppl.getSabun(), reCalc, userId);
-						
-						dayResult.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+"")); 
-						dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_NIGHT);
-						dayResult.setUpdateId(userId);
-						
-						wtmWorkDayResultRepo.save(dayResult);
-					}else {
-						//걍 오티				
-						WtmWorkDayResult dayResult = new WtmWorkDayResult();
-						dayResult.setApplId(applId);
-						dayResult.setTenantId(tenantId);
-						dayResult.setEnterCd(enterCd);
-						dayResult.setYmd(otAppl.getYmd());
-						dayResult.setSabun(otAppl.getSabun());
-						dayResult.setPlanSdate(otAppl.getOtSdate());
-						dayResult.setPlanEdate(otAppl.getOtEdate());
-						
-						//dayResult.setPlanMinute(Integer.parseInt(otAppl.getOtMinute()));
-						Map<String, Object> reCalc = new HashMap<>();
-						reCalc.put("tenentId", tenantId);
-						reCalc.put("enterCd", enterCd);
-						reCalc.put("sabun", otAppl.getSabun());
-						reCalc.put("ymd", otAppl.getYmd());
-						reCalc.put("shm", sdf.format(otAppl.getOtSdate()));
-						reCalc.put("ehm", sdf.format(otAppl.getOtEdate()));
-						//Map<String, Object> addPlanMinuteMap = wtmFlexibleEmpMapper.calcMinuteExceptBreaktime(reCalc);
-						Map<String, Object> addPlanMinuteMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, otAppl.getSabun(), reCalc, userId);
-						
-						dayResult.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+""));
-						
-						dayResult.setTimeTypeCd(WtmApplService.TIME_TYPE_OT);
-						dayResult.setUpdateId(userId);
-						
-						wtmWorkDayResultRepo.save(dayResult);
-
 					}
 					//승인완료 시 해당 대상자의 통계데이터를 갱신하기 위함.
 					rp.put("sabun", otAppl.getSabun());
@@ -749,9 +913,21 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 								pMap.put("sabun", appl.getApplSabun());
 								
 								//현재 신청할 연장근무 시간 계산
-								resultMap.putAll(wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId));
-								
-								otSub.setSubsMinute(resultMap.get("calcMinute").toString());
+								Map<String, Object> calcMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId);
+		                        
+		                        resultMap.putAll(calcMap);
+		                        
+		                        int subsMinute = 0;
+		                        if(calcMap!=null && calcMap.containsKey("calcMinute")) {
+		                           subsMinute = Integer.parseInt(resultMap.get("calcMinute").toString());
+		                           
+		                           if(calcMap.containsKey("breakMinute") && resultMap.get("breakMinute")!=null && !"".equals(resultMap.get("breakMinute"))) {
+		                              subsMinute = subsMinute -  Integer.parseInt(resultMap.get("breakMinute").toString());
+		                           }
+		                        }
+		                        
+		                        otSub.setSubsMinute(Integer.toString(subsMinute));
+		                        
 								otSub.setUpdateId(userId);
 								wtmOtSubsApplRepo.save(otSub);
 							}
@@ -917,8 +1093,20 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				if(emp.get("holidayYn") != null && "Y".equals(emp.get("holidayYn"))) {
 					//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 소정근로 시간을 사용할 수 잇다. 
 					if(emp.get("workTypeCd") != null && ("BASE".equals(emp.get("workTypeCd")) || "DIFF".equals(emp.get("workTypeCd")) || "WORKTEAM".equals(emp.get("workTypeCd")) ) ) {
-						if(emp.get("restWorkMinute")!=null && !"".equals(emp.get("restWorkMinute"))) {
-							restMin = Integer.parseInt(emp.get("restWorkMinute").toString());
+						/*
+							한주에 대한 정보 조회 계획 및 인정 근무 시간의 합 - 결근 제외 
+						 */
+						Map<String, Object> weekInfo = wtmFlexibleEmpMapper.weekWorkTimeByEmp(paramMap);
+						
+						if(weekInfo != null && weekInfo.get("workMinute") != null && !weekInfo.get("workMinute").equals("")) {
+							//한주소정근로시간 40시간   * 60  = 2400
+							int weekWorkMinute = Integer.parseInt(weekInfo.get("weekWorkMinute")+"");
+							int exMinute = 0;
+							if(weekInfo.get("exMinute") != null && !weekInfo.get("exMinute").equals("")) {
+								exMinute = Integer.parseInt(weekInfo.get("exMinute")+"");
+							}
+							
+							restMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute ;
 							//restMinuteMap.put("restWorkMinute", restMin);
 						}
 					}
@@ -931,43 +1119,57 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
 		
 		Map<String, Object> calcMinuteMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun);
-		
+		//int calcMinute = Integer.parseInt(calcMinuteMap.get("calcMinute").toString());
+		//restMin
 		//잔여 소정 근로시간으로 모두 계산 시 연장근무 시간 체크를 하지 않는다. 
 		boolean isOtCheck = true;
 		//잔여 소정 근로 시간이 있을 경우 소정근로 시간을 먼저 구한다. 
 		if(restMin > 0) {
 			//신청 근무시간 과 잔여 소정근로 시간을 체크하자.
 			//분을 구하자
-			int m = (int) ((ed.getTime() - sd.getTime()) / 1000 / 60);
-			//잔여 소정근로 시간보다 신청 시간이 작으면 
+			//int m = (int) ((ed.getTime() - sd.getTime()) / 1000 / 60);
+			//잔여 소정근로 시간보다 신청 시간이 작으면
+			/*
 			if(restMin > m) {
 				restMin = m;
 				isOtCheck = false;
 			} 
-			Map<String, Object> calcMap = new HashMap<>();
-			calcMap.put("tenantId", tenantId);
-			calcMap.put("enterCd", enterCd);
-			calcMap.put("sabun", sabun);
-			calcMap.put("ymd", ymd);
-			calcMap.put("sDate", sdf.format(sd));
-			restMin = Integer.parseInt(calcMinuteMap.get("calcMinute").toString());
-			calcMap.put("addMinute", restMin); 
-			calcMap.put("retDate", ""); 
-			wtmFlexibleEmpMapper.addMinuteWithBreakMGR(calcMap);
-			
-			//String sHm = WtmUtil.parseDateStr(sd, "HHmm");
-			
-			String baseEdateStr = calcMap.get("retDate")+"";
-			System.out.println("retDate.toString() : " + calcMap.toString());
-			System.out.println("baseEdate : "+ baseEdateStr);
-			//근로시간 선 소진 후 잔여 연장 근무시간에 대해서는 체크 해야한다. 
-			if(isOtCheck) {
-				try {
-					paramMap.put("shm", WtmUtil.parseDateStr(sdf.parse(baseEdateStr), "HHmm"));
-				} catch (ParseException e) {
-					rp.setFail(e.getMessage());
-					return rp;
+			*/
+
+			//신청서의 시간을 구하고
+			int calcMinute =Integer.parseInt(calcMinuteMap.get("calcMinute").toString());
+			//잔여 소정근로시간보다 큰지를 판단
+			if(restMin < calcMinute) {
+				restMin = calcMinute - restMin;
+				isOtCheck = true;
+				
+				Map<String, Object> calcMap = new HashMap<>();
+				calcMap.put("tenantId", tenantId);
+				calcMap.put("enterCd", enterCd);
+				calcMap.put("sabun", sabun);
+				calcMap.put("ymd", ymd);
+				calcMap.put("sDate", sdf.format(sd));
+				calcMap.put("addMinute", restMin); 
+				calcMap.put("retDate", ""); 
+				wtmFlexibleEmpMapper.addMinuteWithBreakMGR(calcMap);
+				
+				//String sHm = WtmUtil.parseDateStr(sd, "HHmm");
+				
+				String baseEdateStr = calcMap.get("retDate")+"";
+				System.out.println("retDate.toString() : " + calcMap.toString());
+				System.out.println("baseEdate : "+ baseEdateStr);
+				//근로시간 선 소진 후 잔여 연장 근무시간에 대해서는 체크 해야한다. 
+				if(isOtCheck) {
+					try {
+						paramMap.put("shm", WtmUtil.parseDateStr(sdf.parse(baseEdateStr), "HHmm"));
+					} catch (ParseException e) {
+						rp.setFail(e.getMessage());
+						return rp;
+					}
 				}
+
+			} else {
+				isOtCheck = false;
 			}
 		}
 		if(isOtCheck) {

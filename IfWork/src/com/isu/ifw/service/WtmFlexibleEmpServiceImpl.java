@@ -1264,26 +1264,26 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("taaCd", absenceTaaCode.getTaaCd());
 		paramMap.put("userId", "SYSTEM");
 		//여기서 결근이 들어갈 경우 아래 출퇴근 타각이 모두 있을 때 조퇴처리가 될수 있다. 결근데이터가 있을 경우를 제외해줘야한다.
-		try { logger.debug("2.출/퇴근 타각정보가 없을 경우 결근 데이터를 생성한다. ", mapper.writeValueAsString(paramMap), "createDayResultByTimeTypeAndCheckRequireCoreTimeYn"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+		try { logger.debug("2.출/퇴근 타각정보가 없을 경우 결근 데이터를 생성한다. " + mapper.writeValueAsString(paramMap) + " createDayResultByTimeTypeAndCheckRequireCoreTimeYn"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 		flexEmpMapper.createDayResultByTimeTypeAndCheckRequireCoreTimeYn(paramMap);
 		
 		logger.debug("calcApprDayInfo 4");
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_REGA);
 		// 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다.
-		try { logger.debug("3. 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다. ", mapper.writeValueAsString(paramMap), "updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+		try { logger.debug("3. 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다. " + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 		flexEmpMapper.updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
 		
 		// 출근시간 자동 여부 -- 출근이 자유인 경운 지각이 없다고 본다?? 일단 ㅋ
 		// 출근시간 자동에 대해 일괄 업데이트 한다.
 		// 어디까지인가? 조출 / 기본근무
 		// 출근 타각데이터가 있는건 갱신하지 않는다.
-		try { logger.debug("4. 출근 자동 여부에 따라 계획 시간을 출근 타각 정보로 업데이트 한다. ", mapper.writeValueAsString(paramMap), "updateEntrySdateByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+		try { logger.debug("4. 출근 자동 여부에 따라 계획 시간을 출근 타각 정보로 업데이트 한다. " + mapper.writeValueAsString(paramMap) + " updateEntrySdateByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 		flexEmpMapper.updateEntrySdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
 		
 		// 퇴근 시간 자동 여부 (계획시간으로 )
 		// 어디까지인가? 기본근무 / 연장
 		// 퇴근 타각데이터가 있는건 갱신하지 않는다.
-		try { logger.debug("5. 퇴 자동 여부에 따라 계획 시간을 퇴근 타각 정보로 업데이트 한다. ", mapper.writeValueAsString(paramMap), "updateEntryEdateByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+		try { logger.debug("5. 퇴 자동 여부에 따라 계획 시간을 퇴근 타각 정보로 업데이트 한다. " + mapper.writeValueAsString(paramMap) + "updateEntryEdateByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 		flexEmpMapper.updateEntryEdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
 		
 		// 출근 타각이 없을 경우
@@ -1292,7 +1292,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("taaCd", absenceTaaCode.getTaaCd());
 		paramMap.put("userId", "SYSTEM");
 
-		try { logger.debug("6. ABSENCE_CHK_YN = Y 일때 출/퇴근 타각 정보가 없을 경우 결근 데이터 생성 ", mapper.writeValueAsString(paramMap), "createDayResultByTimeTypeAndEntryDateIsNull"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+		try { logger.debug("6. ABSENCE_CHK_YN = Y 일때 출/퇴근 타각 정보가 없을 경우 결근 데이터 생성 " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndEntryDateIsNull"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 		flexEmpMapper.createDayResultByTimeTypeAndEntryDateIsNull(paramMap);
 		
 
@@ -1300,7 +1300,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 		paramMap.put("taaCd", leaveTaaCode.getTaaCd());
 		
-		try { logger.debug("7. LATE_CHK_YN = Y  출근 데이터는 있고 퇴근 타각이 없을 경우 조퇴 (시/종 정보 없이 생성) ", mapper.writeValueAsString(paramMap), "createDayResultByTimeTypeAndEntrtEdateIsNull"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+		try { logger.debug("7. LATE_CHK_YN = Y  출근 데이터는 있고 퇴근 타각이 없을 경우 조퇴 (시/종 정보 없이 생성) " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndEntrtEdateIsNull"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 		// 출근 데이터는 있고 퇴근 타각이 없을 경우 조퇴 (시/종 정보 없이 생성)
 		flexEmpMapper.createDayResultByTimeTypeAndEntrtEdateIsNull(paramMap);
 		
@@ -1309,23 +1309,25 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//소정근로시간의 경우 출퇴근 타각기록으로만 판단 >> 결근 데이터가 있는 날은 빼야한다.
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 		paramMap.put("taaCd", absenceTaaCode.getTaaCd());
-		try { logger.debug("8. 결근 데이터를 제외하고 타각 시간으로 계획 시간들의 인정시간을 만들어 준다. ", mapper.writeValueAsString(paramMap), "updateApprDatetimeByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+		try { logger.debug("8. 결근 데이터를 제외하고 타각 시간으로 계획 시간들의 인정시간을 만들어 준다. " + mapper.writeValueAsString(paramMap) + "updateApprDatetimeByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 		//결근을 제외한 day result의 모든 계획데이터를 인정데이터로 만들어 준다. 
 		flexEmpMapper.updateApprDatetimeByYmdAndSabun(paramMap);
 		
-		//시작일 타각 데이터 기준 옵션에 해당하는 내용을 인정시간을 다시 업데이트 하자
-		//계획이 있지만 타각데이터로 인정하는 케이스는 완전선근제 옵션에만 있다. 기억하자 까묵지마라.
-		//unplanned 가Y이면 어카지? BASE 데이터가 없을텐데.. resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt 쪼 밑에서 하고 있다
-		try { logger.debug("9. APPLY_ENTRY_SDATE_YN / APPLY_ENTRY_EDATE_YN 여부에 따라 타각 시간을 계획시간으로 업데이트 한다. 그리고 인정시간을 다시 계산한다. 계획시간이 변경되었기 때문에 ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_CREATE_F"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-		flexEmpMapper.calcFlexApplyEntryDatetimeByFlexibleEmpId(paramMap);
-		
+		if("BRS".equals(enterCd) || "LSG".equals(enterCd) || "1000".equals(enterCd)) {
+			// 20200518 브로제랑 ls글로벌만 완전선근 사용중 ngv
+			//시작일 타각 데이터 기준 옵션에 해당하는 내용을 인정시간을 다시 업데이트 하자
+			//계획이 있지만 타각데이터로 인정하는 케이스는 완전선근제 옵션에만 있다. 기억하자 까묵지마라.
+			//unplanned 가Y이면 어카지? BASE 데이터가 없을텐데.. resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt 쪼 밑에서 하고 있다
+			try { logger.debug("9. APPLY_ENTRY_SDATE_YN / APPLY_ENTRY_EDATE_YN 여부에 따라 타각 시간을 계획시간으로 업데이트 한다. 그리고 인정시간을 다시 계산한다. 계획시간이 변경되었기 때문에 ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_CREATE_F"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+			flexEmpMapper.calcFlexApplyEntryDatetimeByFlexibleEmpId(paramMap);
+		}
 		// 이곳은 출/퇴근 타각데이터가 있는 사람에 한한다.. 
 
 		// 계획 종료 시간 보다 인정종료시간이 빠를 경우 BASE중에 
 		// 조퇴 데이터 생성
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 		paramMap.put("taaCd", leaveTaaCode.getTaaCd());
-		try { logger.debug("10. BASE중에 계획 종료 시간 보다 인정종료시간이 빠를 경우 조퇴 데이터를 생성한다  ", mapper.writeValueAsString(paramMap), "createDayResultByTimeTypeAndApprEdateLessThanPlanEdate"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+		try { logger.debug("10. BASE중에 계획 종료 시간 보다 인정종료시간이 빠를 경우 조퇴 데이터를 생성한다  " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndApprEdateLessThanPlanEdate"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 		flexEmpMapper.createDayResultByTimeTypeAndApprEdateLessThanPlanEdate(paramMap);
 		
 		// 계획 시작 시간보다 인정시작시간이 늦을 경우 BASE중에 
@@ -1333,8 +1335,20 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		WtmTaaCode lateTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LATE);
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 		paramMap.put("taaCd", lateTaaCode.getTaaCd());
-		try { logger.debug("11. BASE중에 계획 시작 시간보다 인정시작시간이 늦을 경우 지각 데이터를 생성한다  ", mapper.writeValueAsString(paramMap), "createDayResultByTimeTypeAndPlanSdateLessThanApprSdate"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-		flexEmpMapper.createDayResultByTimeTypeAndPlanSdateLessThanApprSdate(paramMap);
+		try { 
+			logger.debug("11. BASE중에 계획 시작 시간보다 인정시작시간이 늦을 경우 지각 데이터를 생성한다  " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndPlanSdateLessThanApprSdate"); 
+		
+			//여기서 지각데이터 생성이 되다안되다해서 select를 한번찍어보자
+			
+			Map<String, Object> temp = flexEmpMapper.getTemporaryWorkResult(paramMap);
+			if(temp != null) {
+				logger.debug("11-1. 지각 데이터 조회  " + mapper.writeValueAsString(temp)); 
+			}
+			flexEmpMapper.createDayResultByTimeTypeAndPlanSdateLessThanApprSdate(paramMap);
+
+		} catch (JsonProcessingException e) {	
+			e.printStackTrace();	
+		}
 		
 		
 		
@@ -1343,15 +1357,15 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//고정OT 일괄소진의 경우 계획데이터만 있을 수 없다 마감시 인정 시간을 바로 산정한다. 
 		
 		
-		try { logger.debug("12. BREAK_TYPE_CD가 MGR인것만 APPR_MINUTE 계산  ", mapper.writeValueAsString(paramMap), "updateApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+		try { logger.debug("12. BREAK_TYPE_CD가 MGR인것만 APPR_MINUTE 계산  " + mapper.writeValueAsString(paramMap) + "updateApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 		// BREAK_TYPE_CD가 MGR인것만 계산
 		flexEmpMapper.updateApprMinuteByYmdAndSabun(paramMap);
 		
-		try { logger.debug("13. BREAK_TYPE_CD가 TIME인것만 APPR_MINUTE 계산  ", mapper.writeValueAsString(paramMap), "updateTimeTypeApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+		try { logger.debug("13. BREAK_TYPE_CD가 TIME인것만 APPR_MINUTE 계산  " + mapper.writeValueAsString(paramMap) + "updateTimeTypeApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 		// BREAK_TYPE_CD가 TIME인것만 계산
 		flexEmpMapper.updateTimeTypeApprMinuteByYmdAndSabun(paramMap);
 		
-		try { logger.debug("14. BREAK_TYPE_CD가 TIMEFIX인것만 APPR_MINUTE 계산  ", mapper.writeValueAsString(paramMap), "updateTimeFixTypeApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+		try { logger.debug("14. BREAK_TYPE_CD가 TIMEFIX인것만 APPR_MINUTE 계산  " + mapper.writeValueAsString(paramMap) + "updateTimeFixTypeApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 		// BREAK_TYPE_CD가 TIMEFIX인것만 계산
 		flexEmpMapper.updateTimeFixTypeApprMinuteByYmdAndSabun(paramMap);
 		
@@ -1360,7 +1374,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		 * 고정 OT 일괄 소진에 대한 부분
 		 */
 		List<WtmFlexibleEmp> emps = flexEmpRepo.findAllTypeFixotByTenantIdAndEnterCdAndSabunAndSymdAndEymdAnd(tenantId, enterCd, sabun, sYmd, eYmd);
-		logger.debug("15. 고정 OT 일괄 소진에 대한 부분 & no plan 케이스  ", emps!=null?emps.toString():"emps is null" , "resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt"); 
+		logger.debug("15. 고정 OT 일괄 소진에 대한 부분 & no plan 케이스  " + emps!=null?emps.toString():"emps is null" + "resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt"); 
 		if(emps != null && emps.size() >0) {
 			for( WtmFlexibleEmp emp : emps) {
 				paramMap.put("flexibleEmpId", emp.getFlexibleEmpId());
@@ -1375,7 +1389,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		 */
 		
 		paramMap.put("type", "APPR");paramMap.put("taaInfoCd", "BREAK");
-		try { logger.debug("16. Time타입 휴게시간 일 경우만 / type이 plan이면 계획데이터를 생성한다.  인정 데이터 생성을 위함  ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_TIME_C"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+		try { logger.debug("16. Time타입 휴게시간 일 경우만 / type이 plan이면 계획데이터를 생성한다.  인정 데이터 생성을 위함  " + mapper.writeValueAsString(paramMap) + "call P_WTM_WORK_DAY_RESULT_TIME_C"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 		flexEmpMapper.createWorkDayResultOfTimeType(paramMap);
 		
 		
@@ -1383,7 +1397,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		 * 대체휴일 생성 
 		 */
 		List<Map<String, Object>> subsCreateTarget = otApplMapper.subsCreateTarget(paramMap);
-		logger.debug("17. subsCreateTarget ","subsCreateTarget : " + subsCreateTarget.size(), "subsCreateTarget"); 
+		logger.debug("17. subsCreateTarget ","subsCreateTarget : " + subsCreateTarget.size() + "subsCreateTarget"); 
 		if(subsCreateTarget!=null && subsCreateTarget.size()>0) {
 			logger.debug("calcApprDayInfo 18 ");
 			
@@ -1393,7 +1407,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				otAppls.add(otAppl);
 			}
 
-			try { logger.debug("18. applyOtSubs ","otAppls : " + mapper.writeValueAsString(otAppls), "applyOtSubs"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+			try { logger.debug("18. applyOtSubs ","otAppls : " + mapper.writeValueAsString(otAppls) + "applyOtSubs"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 			applyOtSubs(tenantId, enterCd, otAppls, false, "SYSTEM");
 		}
 		
@@ -2395,11 +2409,43 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						if(emp.get("holidayYn") != null && "Y".equals(emp.get("holidayYn"))) {
 							//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 소정근로 시간을 사용할 수 잇다. 
 							if(emp.get("workTypeCd") != null && ("BASE".equals(emp.get("workTypeCd")) || "DIFF".equals(emp.get("workTypeCd")) || "WORKTEAM".equals(emp.get("workTypeCd")) ) ) {
+								/*
+									한주에 대한 정보 조회 계획 및 인정 근무 시간의 합 - 결근 제외 
+								 */
+							
+								paramMap.put("sabun", emp.get("sabun").toString());
+
+								
+								Map<String, Object> weekInfo = flexEmpMapper.weekWorkTimeByEmp(paramMap);
+								System.out.println("aslkdjkslajdklsajdklsajdkljaskldjsakljdkalsdj");
+								System.out.println(mapper.writeValueAsString(weekInfo));
+								if(weekInfo != null && weekInfo.get("workMinute") != null && !weekInfo.get("workMinute").equals("")) {
+									//한주소정근로시간 40시간   * 60  = 2400
+									int weekWorkMinute = Integer.parseInt(weekInfo.get("weekWorkMinute")+"");
+									int exMinute = 0;
+									if(weekInfo.get("exMinute") != null && !weekInfo.get("exMinute").equals("")) {
+										exMinute = Integer.parseInt(weekInfo.get("exMinute")+"");
+									}
+									
+									System.out.println("weekWorkMinute : " + weekWorkMinute);
+									System.out.println("workMinute : " + Integer.parseInt(weekInfo.get("workMinute")+""));
+									System.out.println("exMinute : " + exMinute);
+									
+									int restMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute ;
+									System.out.println("restMin : " + restMin);
+									if(restMin > 0) {
+										restMinuteMap.put("restWorkMinute", restMin);
+										restMinuteMap.put("guideMessage", "* 잔여소정근로시간이 먼저 차감됩니다.");
+									}
+									
+								}
+								/*
 								if(emp.get("restWorkMinute")!=null && !"".equals(emp.get("restWorkMinute"))) {
 									int restMin = Integer.parseInt(emp.get("restWorkMinute").toString());
 									restMinuteMap.put("restWorkMinute", restMin);
 									restMinuteMap.put("guideMessage", "* 잔여소정근로시간이 먼저 차감됩니다.");
 								}
+								*/
 							}
 						}
 						targetList.put(emp.get("sabun").toString(), restMinuteMap);
@@ -2434,7 +2480,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//미래의 연장근로시간의 경우 일마감에서 대체휴일 정보를 생성한다.
 			//1. 인정근무시간이 있거나 연장근무일이 오늘 이전이면
 			if(!isCalcAppr || (isCalcAppr && otAppl.getOtSdate().compareTo(new Date()) < 0)) {
-				
+				 
 				Map<String, Object> resultParam = new HashMap<String, Object>();
 				resultParam.put("tenantId", tenantId);
 				resultParam.put("enterCd", enterCd);

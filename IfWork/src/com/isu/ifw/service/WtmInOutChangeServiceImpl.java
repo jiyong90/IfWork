@@ -152,8 +152,8 @@ public class WtmInOutChangeServiceImpl implements WtmInOutChangeService{
 	public List<Map<String, Object>> getEntryInoutList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
 		List<Map<String, Object>> entryInoutList = null;
 		try {
-			paramMap.put("tenantId", "2");
-			paramMap.put("enterCd", "ISU_ST");
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
 			
 			String ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 			if(paramMap.get("ymd")!=null && !"".equals("ymd")) {

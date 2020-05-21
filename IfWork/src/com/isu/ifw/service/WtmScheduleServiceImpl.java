@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -27,7 +26,6 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.common.entity.CommManagementInfomation;
 import com.isu.ifw.common.repository.CommManagementInfomationRepository;
-import com.isu.ifw.entity.WtmEmpHis;
 import com.isu.ifw.entity.WtmPushMgr;
 import com.isu.ifw.entity.WtmPushSendHis;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
@@ -51,6 +49,9 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 	
 	@Autowired
 	private WtmFlexibleEmpService WtmFlexibleEmpService;
+	
+	@Autowired
+	private WtmInterfaceService WtmInterfaceService;
 	
 	@Resource
 	WtmPushMgrRepository pushMgrRepository;
@@ -348,6 +349,31 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 		} catch(Exception e) {
 			logger.debug(e.getMessage());
 			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	@Transactional
+	@Async("threadPoolTaskExecutor")
+	public void setTaaReset() throws Exception {
+		HashMap<String, Object> getDateMap = new HashMap();
+    	
+    	// 근무제도 확정시 근태상태가 00으로 갱신된 근태정보를 읽어오자
+		List<Map<String, Object>> closeList = new ArrayList();
+		closeList = wtmScheduleMapper.getTaaReset();
+		
+		// 새로 근태갱신을 하자 99상태로 loop 돌리자
+		if(closeList != null && closeList.size() > 0) {
+			// 적용되었던 과거 근태를 삭제하자
+			int cnt = wtmScheduleMapper.setDeleteTaaOld();
+			logger.debug("setDeleteTaaOld : " + cnt);
+			// 일마감처리로 지각조퇴결근, 근무시간계산처리를 완료한다
+			for(int i=0; i<closeList.size(); i++) {
+				HashMap<String, Object> reqMap = new HashMap<>();
+				reqMap = (HashMap<String, Object>) closeList.get(i);
+				logger.debug("setTaaApplIf call : " + reqMap.toString());
+				WtmInterfaceService.setTaaApplIf(reqMap); //근태정보 인터페이스
+			}
 		}
 	}
 }

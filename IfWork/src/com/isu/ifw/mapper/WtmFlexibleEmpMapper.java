@@ -480,5 +480,17 @@ public interface WtmFlexibleEmpMapper {
 	 */
 	public Map<String, Object> addMinuteWithBreakMGR(Map<String, Object> paramMap);
 	
+	/**
+	 * 한주의 근무 정보를 가지고 온다.
+	 * 결근 제외 
+	 * 인정시간이 없으면 계획시간으로 합산 근무시간을 가지고 온다.
+	 * 휴일 근무 시 
+	 * @param paramMap
+	 * @return
+	 */
+	public Map<String, Object> weekWorkTimeByEmp(Map<String, Object> paramMap);
+
+	//로그확인용 임시
+	public Map<String, Object> getTemporaryWorkResult(Map<String, Object> paramMap);
 	
 }

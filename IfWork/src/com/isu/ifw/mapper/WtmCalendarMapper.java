@@ -123,4 +123,12 @@ public interface WtmCalendarMapper {
 	 * @throws Exception
 	 */
 	public List<Map<String, Object>> getEmpWorkDayResult(Map<String, Object> paramMap);
+	
+	/**
+	 * 부서원 근무계획 조회
+	 * @param paramMap
+	 * @return
+	 * @throws Exception
+	 */
+	public List<Map<String, Object>> getTeamPlanList(Map<String, Object> paramMap);
 }

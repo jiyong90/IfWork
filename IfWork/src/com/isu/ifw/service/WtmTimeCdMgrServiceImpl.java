@@ -147,7 +147,7 @@ public class WtmTimeCdMgrServiceImpl implements WtmTimeCdMgrService{
 	public List<Map<String, Object>> getTimeBreakMgrList(Long tenantId, String enterCd,  Map<String, Object> paramMap) {
 		List<Map<String, Object>> timeBreakList = new ArrayList();	
 		System.out.println("timecdmgrid : " + paramMap.get("timeCdMgrId").toString());
-		List<WtmTimeBreakMgr> list = timeBreakMgrRepository.findByTimeCdMgrId(paramMap.get("timeCdMgrId").toString());
+		List<WtmTimeBreakMgr> list = timeBreakMgrRepository.findByTimeCdMgrId(Long.parseLong(paramMap.get("timeCdMgrId").toString()));
 		
 		for(WtmTimeBreakMgr l : list) {
 			Map<String, Object> timeBreak = new HashMap();

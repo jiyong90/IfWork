@@ -84,7 +84,10 @@ public class WtmWorkteamMgrServiceImpl implements WtmWorkteamMgrService{
 				//List<WtmWorkteamMgr> saveList = new ArrayList();
 				if(iList != null && iList.size() > 0) {
 					for(Map<String, Object> l : iList) {
-						WtmWorkteamMgr workteam = workteamMgrRepository.findByWorkteamMgrId(Long.parseLong(l.get("workteamMgrId").toString()));
+						WtmWorkteamMgr workteam = null;
+						if(!l.get("workteamMgrId").equals("")) {
+							workteam = workteamMgrRepository.findByWorkteamMgrId(Long.parseLong(l.get("workteamMgrId").toString()));
+						}
 						
 						if(workteam != null) { //update는 종료일 변경, 비고만 가능
 							workteam.setNote(l.get("note").toString());
@@ -95,6 +98,7 @@ public class WtmWorkteamMgrServiceImpl implements WtmWorkteamMgrService{
 								throw new Exception(workteam.getWorkteamNm() +" 가 할당된 직원중 종료일이 남은 직원이 종료합니다. 먼저 해당직원의 근무조 정보를  변경해주세요.");
 							}
 						} else {               //insert
+							workteam = new WtmWorkteamMgr();
 							workteam.setEnterCd(enterCd);
 							workteam.setTenantId(tenantId);
 							workteam.setUpdateId(userId);
@@ -108,11 +112,11 @@ public class WtmWorkteamMgrServiceImpl implements WtmWorkteamMgrService{
 						
 						workteam = workteamMgrRepository.save(workteam);
 
-						paramMap.put("workteamMgrId", workteam.getWorkteamMgrId());
-						paramMap.put("sabun", "");
-						paramMap.put("pId", userId);
-						
-						flexEmpMapper.resetWtmWorkteamOfWtmWorkDayResult(paramMap);
+//						paramMap.put("workteamMgrId", workteam.getWorkteamMgrId());
+//						paramMap.put("sabun", "");
+//						paramMap.put("pId", userId);
+//						
+//						flexEmpMapper.resetWtmWorkteamOfWtmWorkDayResult(paramMap);
 						cnt++;
 					}
 					//saveList = workteamMgrRepository.saveAll(saveList);
@@ -139,11 +143,11 @@ public class WtmWorkteamMgrServiceImpl implements WtmWorkteamMgrService{
 						
 						workteamMgrRepository.delete(workteam);
 						
-						paramMap.put("workteamMgrId", l.get("workteamMgrId").toString());
-						paramMap.put("sabun", "");
-						paramMap.put("pId", userId);
-						
-						flexEmpMapper.resetWtmWorkteamOfWtmWorkDayResult(paramMap);
+//						paramMap.put("workteamMgrId", l.get("workteamMgrId").toString());
+//						paramMap.put("sabun", "");
+//						paramMap.put("pId", userId);
+//						
+//						flexEmpMapper.resetWtmWorkteamOfWtmWorkDayResult(paramMap);
 						cnt++;
 					}
 //					workteamMgrRepository.deleteAll(deleteList);
