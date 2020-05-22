@@ -92,13 +92,13 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 		Date today = new Date();
 		String ymdh = sdf.format(today);
 		String ymd = ymdh.substring(0, 8);
-    	System.out.println("********** ymd : " + ymd);
+    	// logger.debug("********** ymd : " + ymd);
     	
     	Calendar cal = Calendar.getInstance();
 		cal.setTime(today);
 		cal.add(Calendar.DATE, -1);
 		String beforeYmd = (sdf.format(cal.getTime())).substring(0, 8);
-		System.out.println("********** beforeYmd : " + beforeYmd);
+		// logger.debug("********** beforeYmd : " + beforeYmd);
     	// 마감구분 A:자정(당일퇴근자 마감), B:익일4시(익일심야근무 퇴근자 마감)
     	String closeType = "A";
     	if(tenantId == 52 && "04".equals(ymdh.substring(8, 10))) {
@@ -107,11 +107,12 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
     	} else if(Integer.parseInt(ymdh.substring(8, 10)) >= 10 && Integer.parseInt(ymdh.substring(8, 10)) <= 16) {
     		closeType = "B";
     	}
-    	// closeType = "A";
-    	System.out.println("********** closeType : " + closeType);
+    	
+    	// logger.debug("********** closeType : " + closeType);
     	
     	getDateMap = new HashMap();
-    	// beforeYmd = "20200317";
+    	// beforeYmd = "20200520";
+    	// closeType = "A";
     	getDateMap.put("tenantId", tenantId);
     	getDateMap.put("ymd", beforeYmd);	// 마감은 전일임으로 계산된 전일을 셋팅해야함
     	getDateMap.put("closeType", closeType);
@@ -126,7 +127,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
         		String enterCd = closeList.get(i).get("enterCd").toString();
         		String sabun = closeList.get(i).get("sabun").toString();
         		String closeYmd = closeList.get(i).get("ymd").toString();
-        		System.out.println("********** sabun : " + sabun + ", ymd : " + closeYmd);
+        		logger.debug("schedule_closeday tenantId : "+ tenantId + " enterCd : " + enterCd + " sabun : " + sabun + ", ymd : " + closeYmd + ", closeType : " + closeType);
         		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, closeYmd, closeYmd, sabun);
         		
         		HashMap<String, Object> setTermMap = new HashMap();
@@ -138,7 +139,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
         		setTermMap.put("pId", "DAYCLOSE");
         		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 			}
-			System.out.println("********** size : " + closeList.size() + " end ");
+			logger.debug("schedule_closeday tenantId : "+ tenantId + " tot cnt" + closeList.size() + " end ");
 		}
 	}
 
@@ -178,9 +179,9 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 				ObjectMapper mapper = new ObjectMapper();
 	        	Map<String, Object> eParam = new HashMap<>();
 	        	eParam.put("data", dataList);
-	    		System.out.println("================================");
-	    		System.out.println(mapper.writeValueAsString(dataList));
-	    		System.out.println("================================");
+	    		logger.debug("================================");
+	    		logger.debug(mapper.writeValueAsString(dataList));
+	    		logger.debug("================================");
 	        	//exchangeService.exchange(url, HttpMethod.POST, null, eParam);
 	        	
 	    		HttpHeaders headers = new HttpHeaders();
@@ -241,7 +242,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 					//기준에 맞는 대상자 리스트 가져오기
 					List<Map<String, Object>> pushEmps = schedulerMapper.getInoutCheckList(param);
 					if(pushEmps != null && pushEmps.size() > 0) {
-						//System.out.println(pushEmps.toString());
+						//logger.debug(pushEmps.toString());
 						List<String> target = new ArrayList();
 						for(Map<String, Object> pushEmp : pushEmps) {
 							target.add(pushEmp.get("EMP_KEY").toString());
