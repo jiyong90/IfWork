@@ -1563,10 +1563,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						chkMap.put("ymd", l.get("ymd").toString());
 						chkMap.put("otSdate", l.get("planSdate").toString());
 						chkMap.put("otEdate", l.get("planEdate").toString());
-						rp = applService.validate( tenantId,  enterCd,  l.get("sabun").toString(),  timeTypeCd, chkMap);
-						if(rp.getStatus().equals("FAIL")) {
-							retMsg = l.get("sabun").toString() + "," + l.get("ymd").toString() + ", "+ rp.get("message").toString();
-						}
+//						rp = applService.validate( tenantId,  enterCd,  l.get("sabun").toString(),  timeTypeCd, chkMap);
+//						if(rp.getStatus().equals("FAIL")) {
+//							retMsg = l.get("sabun").toString() + "," + l.get("ymd").toString() + ", "+ rp.get("message").toString();
+//						}
 					}
 					// 근무검증 end
 					
