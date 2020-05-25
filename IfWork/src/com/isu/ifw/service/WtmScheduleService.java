@@ -41,6 +41,15 @@ public interface WtmScheduleService {
 	 * @throws Exception 
 	 */
 	public void sendPushMessageDay(Long tenantId, String enterCd);
+
+	/**
+	 * push 전송
+	 * @param reqMap - 파라메터 맵
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void sendPushMessageDay2(Long tenantId, String enterCd);
+
 	
 	/**
 	 * 근태재갱신 - 근태상태코드가 00인것들을 99 상태로 갱신해야함
