@@ -17,7 +17,7 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndYmd(Long tenantId, String enterCd, String sabun, String ymd);
 	
 	@Query("SELECT D FROM WtmWorkDayResult D JOIN WtmWorkCalendar C ON D.tenantId = C.tenantId AND D.enterCd = C.enterCd AND D.ymd = C.ymd AND D.sabun = C.sabun WHERE D.timeTypeCd = ?1 AND C.tenantId = ?2 AND C.enterCd = ?3 AND C.sabun = ?4 AND C.ymd = ?5")
-	public WtmWorkDayResult findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmd(String timeTypeCd, Long tenantId, String enterCd, String sabun, String ymd);
+	public List<WtmWorkDayResult> findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmd(String timeTypeCd, Long tenantId, String enterCd, String sabun, String ymd);
 
 	@Query("SELECT D FROM WtmWorkDayResult D JOIN WtmWorkCalendar C ON D.tenantId = C.tenantId AND D.enterCd = C.enterCd AND D.ymd = C.ymd AND D.sabun = C.sabun WHERE C.workCalendarId = ?1")
 	public List<WtmWorkDayResult> findByWorkCalendarId(Long workCalendarId);
@@ -30,7 +30,7 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 
 	public WtmWorkDayResult findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndPlanSdateAndPlanEdate(Long tenantId, String enterCd, String sabun, String timeTypeCd, Date sdate, Date edate);
 	
-	public WtmWorkDayResult findByTenantIdAndEnterCdAndSabunAndApplId(Long tenantId, String enterCd, String sabun, Long applId);
+	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndApplId(Long tenantId, String enterCd, String sabun, Long applId);
 	
 	public WtmWorkDayResult findByWorkDayResultId(Long workDayResultId);
 	 

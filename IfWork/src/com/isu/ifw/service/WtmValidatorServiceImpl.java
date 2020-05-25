@@ -241,12 +241,18 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 							if(work.get("endHm")!=null && !"".equals(work.get("endHm"))) 
 								ehm = work.get("endHm").toString();
 							
+							/*
 							Long applId = null;
 							if(applNo!=null && !"".equals(applNo)) {
+								System.out.println("=== applNo ===> "+applNo);
 								WtmAppl wtmAppl = applRepo.findByIfApplNo(Long.valueOf(applNo));
+								System.out.println("=== wtmAppl ===> "+wtmAppl);	
 								if(wtmAppl!=null)
 									applId = wtmAppl.getApplId();
 							}
+							*/
+							
+							String applId = applNo; 
 							
 							//신청서 중복 체크
 							rp = checkDuplicateTaaAppl(tenantId, enterCd, sabun, workTimeCode, symd, eymd, shm, ehm, applId);
@@ -268,7 +274,7 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		return rp;
 	}
 	
-	protected ReturnParam checkDuplicateTaaAppl(Long tenantId, String enterCd, String sabun, String workTimeCode, String symd, String eymd, String shm, String ehm, Long applId) {
+	protected ReturnParam checkDuplicateTaaAppl(Long tenantId, String enterCd, String sabun, String workTimeCode, String symd, String eymd, String shm, String ehm, String applId) {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
 		
