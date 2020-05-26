@@ -1344,13 +1344,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			if(temp != null) {
 				logger.debug("11-1. 지각 데이터 조회  " + mapper.writeValueAsString(temp)); 
 			}
-			flexEmpMapper.createDayResultByTimeTypeAndPlanSdateLessThanApprSdate(paramMap);
-
+			int cnt = flexEmpMapper.createDayResultByTimeTypeAndPlanSdateLessThanApprSdate(paramMap);
+			logger.debug("11-2. 지각 데이터 조회 cnt  " + cnt); 
+			
 		} catch (JsonProcessingException e) {	
 			e.printStackTrace();	
 		}
-		
-		
 		
 		//고정OT 일괄소진의 경우 고정 OT데이터를 삭제후 다시 만들어 준다.
 		//근무 기간 내에 고정 OT정보를 확인부터 하자.
