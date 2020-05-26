@@ -224,7 +224,9 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 			if(tenantId != null && enterCd != null) {
 				pushList = pushMgrRepository.findByTenantIdAndEnterCdAndSymdAndEymd(tenantId, enterCd, today);
 			} else {
-				pushList = pushMgrRepository.findBySymdAndEymd(today);
+				logger.debug("sendPush FAIL");
+				throw new Exception();
+//				pushList = pushMgrRepository.findBySymdAndEymd(today);
 			}
 
 			for(WtmPushMgr push : pushList) {
@@ -283,7 +285,9 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 			if(tenantId != null && enterCd != null) {
 				pushList = pushMgrRepository.findByTenantIdAndEnterCdAndSymdAndEymd(tenantId, enterCd, today);
 			} else {
-				pushList = pushMgrRepository.findBySymdAndEymd(today);
+				logger.debug("sendPush FAIL");
+				throw new Exception();
+//				pushList = pushMgrRepository.findBySymdAndEymd(today);
 			}
 
 			for(WtmPushMgr push : pushList) {
@@ -365,7 +369,9 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 			if(tenantId != null && enterCd != null) {
 				pushList = pushMgrRepository.findByTenantIdAndEnterCdAndSymdAndEymd(tenantId, enterCd, today);
 			} else {
-				pushList = pushMgrRepository.findBySymdAndEymd(today);
+				logger.debug("sendPush FAIL");
+				throw new Exception();
+//				pushList = pushMgrRepository.findBySymdAndEymd(today);
 			}
 
 			for(WtmPushMgr push : pushList) {
