@@ -1348,6 +1348,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			logger.debug("11-2. 지각 데이터 조회 cnt  " + cnt); 
 			
 		} catch (JsonProcessingException e) {	
+			logger.debug("11-4. 지각 데이터 조회 exception " + e.getMessage()); 
 			e.printStackTrace();	
 		}
 		
