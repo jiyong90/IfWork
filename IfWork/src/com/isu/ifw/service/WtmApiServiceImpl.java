@@ -31,6 +31,7 @@ public class WtmApiServiceImpl implements WtmApiService{
 			updateType = "I";
 		}
 		
+		
 		HashMap<String,Object> paramMap = new HashMap<String,Object>();
 		
 		paramMap.put("baseYmd", datetime);
