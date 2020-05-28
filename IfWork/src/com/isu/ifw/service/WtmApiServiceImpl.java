@@ -19,7 +19,7 @@ public class WtmApiServiceImpl implements WtmApiService{
 	WtmApiMapper apiMapper;
 	
 	@Override
-	public List<Map<String, Object>> getEmpList(String datetime, String updateType, String enterCd)  throws Exception{
+	public List<Map<String, Object>> getEmpList(String datetime, String updateType, Long tenantId)  throws Exception{
 		// TODO Auto-generated method stub
 		
 		if(datetime == null || "".equals(datetime)) {
@@ -36,7 +36,7 @@ public class WtmApiServiceImpl implements WtmApiService{
 		
 		paramMap.put("baseYmd", datetime);
 		paramMap.put("updateType", updateType);
-		paramMap.put("enterCd", enterCd);		
+		paramMap.put("tenantId", tenantId);		
 		
 		return apiMapper.getEmpList(paramMap);
 	}

@@ -22,5 +22,5 @@ public interface WtmApiService {
 	 * 
 	 */
 	
-	public List<Map<String, Object>> getEmpList(String datetime, String updateType, String enterCd) throws Exception;
+	public List<Map<String, Object>> getEmpList(String datetime, String updateType, Long tenentId) throws Exception;
 }
