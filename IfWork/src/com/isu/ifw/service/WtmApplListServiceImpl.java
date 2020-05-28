@@ -33,15 +33,13 @@ public class WtmApplListServiceImpl implements WtmApplListService{
 			
 			String sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 			if(paramMap.get("sYmd")!=null && !"".equals("sYmd")) {
-				sYmd = paramMap.get("sYmd").toString();
-				Date s = WtmUtil.toDate(sYmd, "yyyy-MM-dd");
-				paramMap.put("sYmd", WtmUtil.parseDateStr(s, "yyyyMMdd"));
+				sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+				paramMap.put("sYmd", sYmd);
 			}
-			
+			String eYmd = paramMap.get("eYmd").toString();
 			if(paramMap.get("eYmd")!=null && !"".equals("eYmd")) {
-				String eYmd = paramMap.get("eYmd").toString();
-				Date e = WtmUtil.toDate(eYmd, "yyyy-MM-dd");
-				paramMap.put("eYmd", WtmUtil.parseDateStr(e, "yyyyMMdd"));
+				eYmd = paramMap.get("eYmd").toString().replaceAll("-", "");
+				paramMap.put("eYmd", eYmd);
 			}
 			
 			List<String> auths = empService.getAuth(tenantId, enterCd, sabun);
@@ -72,15 +70,13 @@ public class WtmApplListServiceImpl implements WtmApplListService{
 			
 			String sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 			if(paramMap.get("sYmd")!=null && !"".equals("sYmd")) {
-				sYmd = paramMap.get("sYmd").toString();
-				Date s = WtmUtil.toDate(sYmd, "yyyy-MM-dd");
-				paramMap.put("sYmd", WtmUtil.parseDateStr(s, "yyyyMMdd"));
+				sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+				paramMap.put("sYmd", sYmd);
 			}
-			
+			String eYmd = paramMap.get("eYmd").toString();
 			if(paramMap.get("eYmd")!=null && !"".equals("eYmd")) {
-				String eYmd = paramMap.get("eYmd").toString();
-				Date e = WtmUtil.toDate(eYmd, "yyyy-MM-dd");
-				paramMap.put("eYmd", WtmUtil.parseDateStr(e, "yyyyMMdd"));
+				eYmd = paramMap.get("eYmd").toString().replaceAll("-", "");
+				paramMap.put("eYmd", eYmd);
 			}
 			
 			List<String> auths = empService.getAuth(tenantId, enterCd, sabun);
