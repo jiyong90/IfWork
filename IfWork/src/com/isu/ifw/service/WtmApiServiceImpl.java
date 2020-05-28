@@ -27,6 +27,10 @@ public class WtmApiServiceImpl implements WtmApiService{
 			datetime = format.format(new Date());
 		}
 
+		if(updateType == null || "".equals(updateType)) {
+			updateType = "I";
+		}
+		
 		HashMap<String,Object> paramMap = new HashMap<String,Object>();
 		
 		paramMap.put("baseYmd", datetime);
