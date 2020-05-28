@@ -224,7 +224,9 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 			if(tenantId != null && enterCd != null) {
 				pushList = pushMgrRepository.findByTenantIdAndEnterCdAndSymdAndEymd(tenantId, enterCd, today);
 			} else {
-				pushList = pushMgrRepository.findBySymdAndEymd(today);
+				logger.debug("sendPush FAIL");
+				throw new Exception();
+//				pushList = pushMgrRepository.findBySymdAndEymd(today);
 			}
 
 			for(WtmPushMgr push : pushList) {
@@ -283,12 +285,14 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 			if(tenantId != null && enterCd != null) {
 				pushList = pushMgrRepository.findByTenantIdAndEnterCdAndSymdAndEymd(tenantId, enterCd, today);
 			} else {
-				pushList = pushMgrRepository.findBySymdAndEymd(today);
+				logger.debug("sendPush FAIL");
+				throw new Exception();
+//				pushList = pushMgrRepository.findBySymdAndEymd(today);
 			}
 
 			for(WtmPushMgr push : pushList) {
 				String stdType = push.getStdType();
-				if("R_OT".equals(stdType) || "R_WORK".equals(stdType)) {
+				if("R_OT".equals(stdType) || "R_WORK".equals(stdType) || "R_TOT".equals(stdType) ) {
 					Long stdOtTime = Long.valueOf(push.getStdMinute());
 					List<Map<String, Object>> otList = new ArrayList();
 					
@@ -301,6 +305,93 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 					param.put("ymd", today);
 					
 					otList = schedulerMapper.getOtList(param);
+
+					String toObj = !push.getPushObj().equals("EMP")?"LEADER":"EMP"; //LEADER, EMAIL
+					
+					Map<String, Object> toPush  = new HashMap();
+					
+					for(Map<String, Object> otMap : otList) {
+						logger.debug("[근로시간 초과자 리스트] " + otMap.toString());
+
+						String names = "";
+						if(otMap.get(toObj) != null && !otMap.get(toObj).equals("")) {
+							String empNames = "";
+							if(toPush.containsKey(otMap.get(toObj).toString())) {
+								empNames = toPush.get(otMap.get(toObj)).toString() + ", " + otMap.get("EMP_NM").toString();
+							} else {
+								empNames = otMap.get("EMP_NM").toString();
+							}
+							toPush.put(otMap.get(toObj).toString(), empNames);
+						}
+					}
+					//메일전송, db 저장
+					String title = "근무시간 관리 알림 서비스";
+					String fromEmail = "SYSTEM";
+					
+					for( Map.Entry<String, Object> data : toPush.entrySet() ) { 
+						String contents = push.getPushMsg();
+						if(contents.contains("[[NAME]]")) {
+							contents = contents.replace("[[NAME]]", "[" + data.getValue() + "]");
+						}
+						//일단 db 먼저 넣고 나중에 db 내역 보여주는 메뉴 추가하면...
+						WtmPushSendHis pushSendHis = new WtmPushSendHis();
+						pushSendHis.setEnterCd(push.getEnterCd());
+						pushSendHis.setTenantId(push.getTenantId());
+						pushSendHis.setStdType(stdType);
+						pushSendHis.setSendType("PUSH");
+						pushSendHis.setReceiveSabun(data.getKey());
+						pushSendHis.setReceiveMail(data.getKey());
+						pushSendHis.setSendMsg(contents);
+						pushSendHis.setUpdateId("SYSTEM");
+						pushHisRepository.save(pushSendHis);
+						if(push.getMobileYn().equals("Y")) {
+							logger.debug("[근로시간 초과자 리스트] " + pushSendHis.toString());
+//							inboxService.sendPushMessage(push.getTenantId(), push.getEnterCd(), "INFO", data.getKey(), title, contents);
+						}
+					}
+				} 
+			}	
+		} catch(Exception e) {
+			logger.debug(e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	public void sendPushMessageDay2(Long tenantId, String enterCd) {
+		
+		String f = "yyyyMMdd";
+		SimpleDateFormat sdf = new SimpleDateFormat(f);
+		String today = sdf.format(new Date());
+		
+		List<WtmPushMgr> pushList = new ArrayList();
+		try {
+			if(tenantId != null && enterCd != null) {
+				pushList = pushMgrRepository.findByTenantIdAndEnterCdAndSymdAndEymd(tenantId, enterCd, today);
+			} else {
+				logger.debug("sendPush FAIL");
+				throw new Exception();
+//				pushList = pushMgrRepository.findBySymdAndEymd(today);
+			}
+
+			for(WtmPushMgr push : pushList) {
+				String stdType = push.getStdType();
+				if("R_OT".equals(stdType) || "R_WORK".equals(stdType) || "R_TOT".equals(stdType) ) {
+					Long stdOtTime = Long.valueOf(push.getStdMinute());
+					Long stdOtTime2 = Long.valueOf(push.getStdMinute2());
+					List<Map<String, Object>> otList = new ArrayList();
+					
+					Map<String, Object> param = new HashMap();
+					param.put("stdOtTime", stdOtTime);
+					param.put("stdOtTime2", stdOtTime2);
+					param.put("tenantId", push.getTenantId());
+					param.put("enterCd", push.getEnterCd());
+					param.put("stdType", stdType);
+					param.put("businessPlaceCd", push.getBusinessPlaceCd());
+					param.put("ymd", today);
+					
+					//logger.debug("===param " + param.toString());
+					otList = schedulerMapper.getOtList2(param);
 
 					String toObj = !push.getPushObj().equals("EMP")?"LEADER":"EMP"; //LEADER, EMAIL
 					

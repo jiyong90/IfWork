@@ -24,6 +24,7 @@ import com.isu.ifw.entity.WtmIntfEmpAddr;
 import com.isu.ifw.entity.WtmIntfGnt;
 import com.isu.ifw.entity.WtmIntfHoliday;
 import com.isu.ifw.entity.WtmIntfOrg;
+import com.isu.ifw.entity.WtmIntfOrgChart;
 import com.isu.ifw.entity.WtmIntfOrgConc;
 import com.isu.ifw.entity.WtmIntfTaaAppl;
 import com.isu.ifw.entity.WtmTaaAppl;
@@ -38,6 +39,7 @@ import com.isu.ifw.repository.WtmIntfEmpAddrRepository;
 import com.isu.ifw.repository.WtmIntfEmpRepository;
 import com.isu.ifw.repository.WtmIntfGntRepository;
 import com.isu.ifw.repository.WtmIntfHolidayRepository;
+import com.isu.ifw.repository.WtmIntfOrgChartRepository;
 import com.isu.ifw.repository.WtmIntfOrgConcRepository;
 import com.isu.ifw.repository.WtmIntfOrgRepository;
 import com.isu.ifw.repository.WtmIntfTaaApplRepository;
@@ -75,6 +77,10 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	private WtmIntfHolidayRepository wtmHolidayIntfRepo;
 	@Autowired
 	private WtmIntfOrgRepository wtmOrgIntfRepo;
+
+	@Autowired
+	private WtmIntfOrgChartRepository wtmOrgChartIntfRepo;
+
 	@Autowired
 	private WtmIntfOrgConcRepository wtmOrgConcIntfRepo;
 	@Autowired
@@ -3090,6 +3096,39 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		
 	}
 
+	@Override
+	public void saveOrgChartIntf(Long tenantId, List<Map<String, Object>> dataList) {
+		if(dataList != null && dataList.size() > 0 ) {
+			List<WtmIntfOrgChart> datas = new ArrayList<WtmIntfOrgChart>();
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+			sdf.format(new Date());
+			String yyyymmddhhmiss= sdf.format(new Date());
+			/*
+			ENTER_CD, ORG_CD, ORG_NM,  PRIOR_ORG_CD, SEQ, ORG_LEVEL, SYMD, EYMD, ORG_TYPE, NOTE
+		     */
+			for(Map<String, Object> m : dataList) {
+				WtmIntfOrgChart d = new WtmIntfOrgChart();
+				//m.get("")+""
+				d.setYyyymmddhhmiss(yyyymmddhhmiss);
+				d.setTenantId(tenantId);
+				d.setEnterCd(m.get("ENTER_CD")+"");
+				d.setOrgCd(m.get("ORG_CD")+"");
+				d.setOrgNm(m.get("ORG_NM")+"");
+				d.setPriorOrgCd(m.get("PRIOR_ORG_CD")+"");
+				d.setSeq(m.get("SEQ")+"");
+				d.setOrgLevel(m.get("ORG_LEVEL")+"");
+				d.setSymd(m.get("SYMD")+"");
+				d.setEymd(m.get("EYMD")+"");
+				d.setOrgType(m.get("ORG_TYPE")+"");
+				d.setNote(m.get("NOTE")+"");
+
+				datas.add(d);
+			} 
+			wtmOrgChartIntfRepo.saveAll(datas); 
+		}
+		
+	}
+	
 	@Override
 	public void saveTaaApplIntf(Long tenantId, List<Map<String, Object>> dataList) {
 		if(dataList != null && dataList.size() > 0 ) {

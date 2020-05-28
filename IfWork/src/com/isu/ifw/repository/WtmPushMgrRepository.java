@@ -19,7 +19,7 @@ public interface WtmPushMgrRepository extends JpaRepository<WtmPushMgr, Long> {
 	@Query(value="SELECT * FROM WTM_PUSH_MGR WHERE :ymd <= eymd AND :ymd >= symd AND PUSH_OBJ IN('LEADER', 'EMP')", nativeQuery = true)
 	public List<WtmPushMgr> findBySymdAndEymd(@Param(value="ymd")String ymd);
 	
-	@Query(value="SELECT * FROM WTM_PUSH_MGR WHERE :ymd <= eymd AND :ymd >= symd AND TENANT_ID = :tenantId AND ENTER_CD = :enterCd AND PUSH_OBJ IN('LEADER', 'EMP')", nativeQuery = true)
+	@Query(value="SELECT * FROM WTM_PUSH_MGR WHERE :ymd <= eymd AND :ymd >= symd AND TENANT_ID = :tenantId AND ENTER_CD = :enterCd AND PUSH_OBJ IN('LEADER', 'EMP') AND MOBILE_YN='Y'", nativeQuery = true)
 	public List<WtmPushMgr> findByTenantIdAndEnterCdAndSymdAndEymd(@Param(value="tenantId")Long tenantId, @Param(value="enterCd")String enterCd, @Param(value="ymd")String ymd);
 
 	@Query("SELECT E FROM WtmPushMgr E WHERE E.tenantId = ?1 AND E.enterCd = ?2 AND E.businessPlaceCd = ?3 AND ?4 BETWEEN E.symd AND F_WTM_NVL(E.eymd, F_WTM_TO_DATE('99991231', 'YMD')) AND E.pushObj = ?5 AND E.stdType = ?6 ")

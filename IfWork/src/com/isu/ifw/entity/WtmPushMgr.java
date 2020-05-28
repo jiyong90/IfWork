@@ -38,6 +38,8 @@ public class WtmPushMgr {
 	private String pushObj;
 	@Column(name="STD_MINUTE")
 	private Integer stdMinute;
+	@Column(name="STD_MINUTE2")
+	private Integer stdMinute2;
 	@Column(name="STD_TYPE")
 	private String stdType;
 	@Column(name="TITLE")
@@ -109,6 +111,12 @@ public class WtmPushMgr {
 	public void setStdMinute(Integer stdMinute) {
 		this.stdMinute = stdMinute;
 	}
+	public Integer getStdMinute2() {
+		return stdMinute2;
+	}
+	public void setStdMinute2(Integer stdMinute2) {
+		this.stdMinute2 = stdMinute2;
+	}
 	public String getStdType() {
 		return stdType;
 	}
@@ -174,14 +182,12 @@ public class WtmPushMgr {
     protected void onUpdate() {
     	this.updateDate = new Date();
     }
-    
 	@Override
 	public String toString() {
 		return "WtmPushMgr [pushMgrId=" + pushMgrId + ", tenantId=" + tenantId + ", enterCd=" + enterCd
 				+ ", businessPlaceCd=" + businessPlaceCd + ", symd=" + symd + ", eymd=" + eymd + ", pushObj=" + pushObj
-				+ ", stdMinute=" + stdMinute + ", stdType=" + stdType + ", title=" + title + ", pushMsg=" + pushMsg
-				+ ", mobileYn=" + mobileYn + ", smsYn=" + smsYn + ", emailYn=" + emailYn + ", note=" + note
-				+ ", updateDate=" + updateDate + ", updateId=" + updateId + "]";
+				+ ", stdMinute=" + stdMinute + ", stdMinute2=" + stdMinute2 + ", stdType=" + stdType + ", title="
+				+ title + ", pushMsg=" + pushMsg + ", mobileYn=" + mobileYn + ", smsYn=" + smsYn + ", emailYn="
+				+ emailYn + ", note=" + note + ", updateDate=" + updateDate + ", updateId=" + updateId + "]";
 	}
-	
 }

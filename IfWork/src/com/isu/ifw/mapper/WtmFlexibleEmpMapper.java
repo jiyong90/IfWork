@@ -82,7 +82,7 @@ public interface WtmFlexibleEmpMapper {
 	public void createDayResultByTimeTypeAndEntrtEdateIsNull(Map<String, Object> paramMap);
 	
 
-	public void createDayResultByTimeTypeAndPlanSdateLessThanApprSdate(Map<String, Object> paramMap);
+	public int createDayResultByTimeTypeAndPlanSdateLessThanApprSdate(Map<String, Object> paramMap);
 	public void createDayResultByTimeTypeAndApprEdateLessThanPlanEdate(Map<String, Object> paramMap);
 	
 

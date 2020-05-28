@@ -235,6 +235,7 @@ public interface WtmInterfaceService {
 	public void saveHolidayIntf(Long tenantId, List<Map<String, Object>> dataList);
 	public void saveOrgIntf(Long tenantId, List<Map<String, Object>> dataList);
 	public void saveOrgConcIntf(Long tenantId, List<Map<String, Object>> dataList);
+	public void saveOrgChartIntf(Long tenantId, List<Map<String, Object>> dataList);
 	public void saveTaaApplIntf(Long tenantId, List<Map<String, Object>> dataList);
 	
 	/**

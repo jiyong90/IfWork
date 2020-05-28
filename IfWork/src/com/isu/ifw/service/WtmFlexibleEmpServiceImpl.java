@@ -1344,13 +1344,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			if(temp != null) {
 				logger.debug("11-1. 지각 데이터 조회  " + mapper.writeValueAsString(temp)); 
 			}
-			flexEmpMapper.createDayResultByTimeTypeAndPlanSdateLessThanApprSdate(paramMap);
-
+			int cnt = flexEmpMapper.createDayResultByTimeTypeAndPlanSdateLessThanApprSdate(paramMap);
+			logger.debug("11-2. 지각 데이터 조회 cnt  " + cnt); 
+			
 		} catch (JsonProcessingException e) {	
+			logger.debug("11-4. 지각 데이터 조회 exception " + e.getMessage()); 
 			e.printStackTrace();	
 		}
-		
-		
 		
 		//고정OT 일괄소진의 경우 고정 OT데이터를 삭제후 다시 만들어 준다.
 		//근무 기간 내에 고정 OT정보를 확인부터 하자.
@@ -1563,10 +1563,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						chkMap.put("ymd", l.get("ymd").toString());
 						chkMap.put("otSdate", l.get("planSdate").toString());
 						chkMap.put("otEdate", l.get("planEdate").toString());
-						rp = applService.validate( tenantId,  enterCd,  l.get("sabun").toString(),  timeTypeCd, chkMap);
-						if(rp.getStatus().equals("FAIL")) {
-							retMsg = l.get("sabun").toString() + "," + l.get("ymd").toString() + ", "+ rp.get("message").toString();
-						}
+//						rp = applService.validate( tenantId,  enterCd,  l.get("sabun").toString(),  timeTypeCd, chkMap);
+//						if(rp.getStatus().equals("FAIL")) {
+//							retMsg = l.get("sabun").toString() + "," + l.get("ymd").toString() + ", "+ rp.get("message").toString();
+//						}
 					}
 					// 근무검증 end
 					
