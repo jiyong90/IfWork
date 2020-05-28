@@ -3121,9 +3121,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				d.setEymd(m.get("EYMD")+"");
 				d.setOrgType(m.get("ORG_TYPE")+"");
 				d.setNote(m.get("NOTE")+"");
-
 				datas.add(d);
 			} 
+			
 			wtmOrgChartIntfRepo.saveAll(datas); 
 		}
 		

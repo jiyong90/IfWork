@@ -72,6 +72,10 @@ public interface WtmIuerpInterfaceMapper {
 	public int updateWtmOrgConc(Map<String, Object> paramMap);
 	public int insertWtmOrgConc(Map<String, Object> paramMap);
 	
+	public int expireWtmOrgChart(Map<String, Object> paramMap);
+	public int updateWtmOrgChart(Map<String, Object> paramMap);
+	public int insertWtmOrgChart(Map<String, Object> paramMap);
+
 	
 	public int expireWtmEmpAddr(Map<String, Object> paramMap);
 	public int updateWtmEmpAddr(Map<String, Object> paramMap);
