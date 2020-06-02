@@ -112,8 +112,8 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 			rp = saveWtmHolidayMgr(paramMap);
 		} else if(type.equalsIgnoreCase("GNT")) { //근태코드(더존, request type cd 안가져오기)
 			rp = saveWtmTaaCode(paramMap);
-		} else if(type.equalsIgnoreCase("GNT2")) { //근태코드
-			rp = saveWtmTaaCode2(paramMap);
+		} else if(type.equalsIgnoreCase("GNTETC")) { //근태코드(더존외)
+			rp = saveWtmTaaCodeEtc(paramMap);
 		} else if(type.equalsIgnoreCase("EMP")) { //직원정보
 			rp = saveWtmEmpHis(paramMap);
 		} else if(type.equalsIgnoreCase("EMPADDR")) { //직원 연락처
@@ -124,8 +124,8 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 			rp = saveWtmOrgConc(paramMap);
 		} else if(type.equalsIgnoreCase("TAAAPPL")) { //근태 신청
 			rp = saveWtmTaaAppl(paramMap);
-		} else if(type.equalsIgnoreCase("ORGCHART")) { //조직도
-			rp = saveWtmOrgChart(paramMap);
+		} else if(type.equalsIgnoreCase("ORGETC")) { //조직도(더존외)
+			rp = saveWtmOrgCodeEtc(paramMap);
 		}
 		
 		// WTM_IF_HIS 테이블에 결과저장
@@ -339,7 +339,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 	}
 	
 	//근태코드
-	protected ReturnParam saveWtmTaaCode2(Map<String, Object> paramMap) {
+	protected ReturnParam saveWtmTaaCodeEtc(Map<String, Object> paramMap) {
 		ReturnParam rp = new ReturnParam();
 		
 		int deleteCnt = 0;
@@ -621,57 +621,113 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		return rp;
 	}
 	
-	//조직도
-	protected ReturnParam saveWtmOrgChart(Map<String, Object> paramMap) {
+	protected ReturnParam saveWtmOrgCodeEtc(Map<String, Object> paramMap) {
 		ReturnParam rp = new ReturnParam();
-		ObjectMapper mapper = new ObjectMapper();
 		
+		int expireCnt = 0;
+		int deleteCnt = 0;
 		int updateCnt = 0;
 		int insertCnt = 0;
 		
 		try {
-			Long tenantId = Long.valueOf(paramMap.get("tenantId").toString());
-			String companyList = tcms.getConfigValue(tenantId, "WTMS.LOGIN.COMPANY_LIST", true, "");
-			String ymd = paramMap.get("ymd").toString();
+			ObjectMapper mapper = new ObjectMapper();
+			//1. expire wtm_org_code
+			List<Map<String, Object>> expireList = iuerpInterfaceMapper.getExpireWtmOrgCode(paramMap);
+			logger.debug("expireList : "+mapper.writeValueAsString(expireList));
+			System.out.println("expireList : "+mapper.writeValueAsString(expireList));
 			
-			if(companyList!=null && !"".equals(companyList)) {
-				List<Map<String, Object>> enterCds = mapper.readValue(companyList, new ArrayList<Map<String, Object>>().getClass());
+			expireCnt = iuerpInterfaceMapper.expireWtmOrgCode(paramMap);
+			logger.debug("WtmOrgCodeEtc expire "+expireCnt+" end");
+			System.out.println("WtmOrgCodeEtc expire "+expireCnt+" end");
+			
+			//2. delete wtm_org_code
+			List<Map<String, Object>> deleteList = iuerpInterfaceMapper.getDeleteWtmOrgCode(paramMap);
+			logger.debug("deleteList : "+mapper.writeValueAsString(deleteList));
+			System.out.println("deleteList : "+mapper.writeValueAsString(deleteList));
+			
+			deleteCnt = iuerpInterfaceMapper.deleteWtmOrgCode(paramMap);
+			logger.debug("WtmOrgCodeEtc delete "+deleteCnt+" end");
+			System.out.println("WtmOrgCodeEtc delete "+deleteCnt+" end");
+			
+			//인터페이스된 데이터가 중도에 잘려서 오면 종료됐다고 판단하여 주석처리
+			//3. insert wtm_org_code
+			//insertCnt = iuerpInterfaceMapper.insertWtmOrgCodeForBetween(paramMap);
+			//logger.debug("WtmOrgCode insert1 "+insertCnt+" end");
+			//System.out.println("WtmOrgCode insert1 "+insertCnt+" end");
+			
+			//4. update wtm_org_code
+			updateCnt = iuerpInterfaceMapper.updateWtmOrgCode(paramMap);
+			logger.debug("WtmOrgCodeEtc update "+updateCnt+" end");
+			System.out.println("WtmOrgCodeEtc update "+updateCnt+" end");
+			
+			//5. insert wtm_code
+			//기존 시작/종료일과 신규 시작/종료일이 다른 데이터 삽입
+			insertCnt += iuerpInterfaceMapper.insertWtmOrgCode(paramMap);
+			logger.debug("WtmOrgCodeEtc insert "+insertCnt+" end");
+			System.out.println("WtmOrgCodeEtc insert "+insertCnt+" end");
+			
+			//chart
+			if(insertCnt+updateCnt > 0) {
+				Long tenantId = Long.valueOf(paramMap.get("tenantId").toString());
+				String companyList = tcms.getConfigValue(tenantId, "WTMS.LOGIN.COMPANY_LIST", true, "");
+				String ymd = paramMap.get("ymd").toString();
 				
-				if(enterCds!=null && enterCds.size()>0) {
-					for(Map<String, Object> m : enterCds) {
-						for(String enterCd : m.keySet()) {
-							WtmOrgChart orgChart = orgChartRepo.findByTenantIdAndEnterCdAndBetweenSymdAndEymd(tenantId, enterCd, WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
-							//chart det
-							if(orgChart!=null) {
-								System.out.println("orgChartId : " + orgChart.getOrgChartId());
+				if(companyList!=null && !"".equals(companyList)) {
+					List<Map<String, Object>> enterCds = mapper.readValue(companyList, new ArrayList<Map<String, Object>>().getClass());
+					
+					if(enterCds!=null && enterCds.size()>0) {
+						for(Map<String, Object> m : enterCds) {
+							for(String enterCd : m.keySet()) {
+								Map<String, Object> cMap = new HashMap<String, Object>();
+								cMap.put("tenantId", tenantId);
+								cMap.put("enterCd", enterCd);
+								cMap.put("ymd", WtmUtil.parseDateStr(WtmUtil.addDate(new Date(), -1) , "yyyyMMdd"));
+								cMap.put("symd",  WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
+								cMap.put("eymd", "29991231");
+								cMap.put("updateId", "INTF");
+								cMap.put("orgChartNm", "조직도");
+								int uCnt = orgChartMapper.updateOrgChartEymd(cMap);
+								logger.debug("WtmOrgChart update "+uCnt+" end");
+								System.out.println("WtmOrgChart update "+uCnt+" end");
+								int iCnt = orgChartMapper.insertOrgChart(cMap);
+								logger.debug("WtmOrgChart insert "+iCnt+" end");
+								System.out.println("WtmOrgChart insert "+iCnt+" end");
+							
 								
-								Map<String, Object> dMap = new HashMap<String, Object>();
-								dMap.put("orgChartId", orgChart.getOrgChartId());
-								dMap.put("ymd", WtmUtil.parseDateStr(WtmUtil.addDate(new Date(), -1) , "yyyyMMdd"));
-								dMap.put("ymdhis", paramMap.get("ymdhis"));
-								dMap.put("updateId", "INTF");
-								
-								updateCnt = iuerpInterfaceMapper.updateWtmOrgChart(dMap);
-								 logger.debug("WtmOrgChartDet update "+updateCnt+" end");
-								 System.out.println("WtmOrgChartDet update "+updateCnt+" end");
-								 insertCnt = iuerpInterfaceMapper.insertWtmOrgChart(dMap);
-								 logger.debug("WtmOrgChartDet insert "+insertCnt+" end");
-								 System.out.println("WtmOrgChartDet insert "+insertCnt+" end");
+								WtmOrgChart orgChart = orgChartRepo.findByTenantIdAndEnterCdAndBetweenSymdAndEymd(tenantId, enterCd, WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
+								//chart det
+								if(orgChart!=null) {
+									System.out.println("orgChartId : " + orgChart.getOrgChartId());
+									
+									Map<String, Object> dMap = new HashMap<String, Object>();
+									dMap.put("orgChartId", orgChart.getOrgChartId());
+									dMap.put("ymd", WtmUtil.parseDateStr(WtmUtil.addDate(new Date(), -1) , "yyyyMMdd"));
+									dMap.put("ymdhis", paramMap.get("ymdhis"));
+									dMap.put("updateId", "INTF");
+									
+									 uCnt = iuerpInterfaceMapper.updateWtmOrgChart(dMap);
+									 logger.debug("WtmOrgChartDet update "+uCnt+" end");
+									 System.out.println("WtmOrgChartDet update "+uCnt+" end");
+									 iCnt = iuerpInterfaceMapper.insertWtmOrgChart(dMap);
+									 logger.debug("WtmOrgChartDet insert "+iCnt+" end");
+									 System.out.println("WtmOrgChartDet insert "+iCnt+" end");
+								}
 							}
 						}
 					}
 				}
 			}
-
+			
+			
 		} catch(Exception e) {
 			e.printStackTrace();
-			rp.setFail("WtmOrgChart 데이터 이관 오류");
+			rp.setFail("WtmOrgCodeEtc 데이터 이관 오류");
 			return rp;
 		}
 		
-		int applyCnt = updateCnt+insertCnt;
+		int applyCnt = expireCnt+deleteCnt+updateCnt+insertCnt;
 		if(applyCnt!=0)
-			rp.setSuccess(applyCnt+" 건(update:"+updateCnt+",insert:"+insertCnt+") 반영완료");
+			rp.setSuccess(applyCnt+"건(expire:"+expireCnt+",delete:"+deleteCnt+",update:"+updateCnt+",insert:"+insertCnt+") 반영완료");
 		else
 			rp.setSuccess("반영완료");
 		
