@@ -110,8 +110,10 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 			rp = saveWtmCode(paramMap);
 		} else if(type.equalsIgnoreCase("HOLIDAY")) { //공휴일
 			rp = saveWtmHolidayMgr(paramMap);
-		} else if(type.equalsIgnoreCase("GNT")) { //근태코드
+		} else if(type.equalsIgnoreCase("GNT")) { //근태코드(더존, request type cd 안가져오기)
 			rp = saveWtmTaaCode(paramMap);
+		} else if(type.equalsIgnoreCase("GNT2")) { //근태코드
+			rp = saveWtmTaaCode2(paramMap);
 		} else if(type.equalsIgnoreCase("EMP")) { //직원정보
 			rp = saveWtmEmpHis(paramMap);
 		} else if(type.equalsIgnoreCase("EMPADDR")) { //직원 연락처
@@ -324,6 +326,41 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		} catch(Exception e) {
 			e.printStackTrace();
 			rp.setFail("WtmTaaCode 데이터 이관 오류");
+			return rp;
+		}
+		
+		int applyCnt = deleteCnt+updateCnt+insertCnt;
+		if(applyCnt!=0)
+			rp.setSuccess(applyCnt+"건(delete:"+deleteCnt+",update:"+updateCnt+",insert:"+insertCnt+") 반영완료");
+		else
+			rp.setSuccess("반영완료");
+		
+		return rp;
+	}
+	
+	//근태코드
+	protected ReturnParam saveWtmTaaCode2(Map<String, Object> paramMap) {
+		ReturnParam rp = new ReturnParam();
+		
+		int deleteCnt = 0;
+		int updateCnt = 0;
+		int insertCnt = 0;
+		
+		try {
+			deleteCnt = iuerpInterfaceMapper.expireWtmTaaCode(paramMap);
+			logger.debug("WtmTaaCode2 delete "+deleteCnt+" end");
+			System.out.println("WtmTaaCode2 delete "+deleteCnt+" end");
+			
+			updateCnt = iuerpInterfaceMapper.updateWtmTaaCode2(paramMap);
+			logger.debug("WtmTaaCode2 update "+updateCnt+" end");
+			System.out.println("WtmTaaCode2 update "+updateCnt+" end");
+			
+			insertCnt = iuerpInterfaceMapper.insertWtmTaaCode(paramMap);
+			logger.debug("WtmTaaCode2 insert "+insertCnt+" end");
+			System.out.println("WtmTaaCode2 insert "+insertCnt+" end");
+		} catch(Exception e) {
+			e.printStackTrace();
+			rp.setFail("WtmTaaCode2 데이터 이관 오류");
 			return rp;
 		}
 		

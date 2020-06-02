@@ -55,6 +55,8 @@ public interface WtmIuerpInterfaceMapper {
 	
 	public int expireWtmTaaCode(Map<String, Object> paramMap);
 	public int updateWtmTaaCode(Map<String, Object> paramMap);
+    //reuqest type cd가 안맞는 경우 근태에서 조정하고 업데이트 할 때는 반영하지 않는다.
+	public int updateWtmTaaCode2(Map<String, Object> paramMap);
 	public int insertWtmTaaCode(Map<String, Object> paramMap);
 	
 	
