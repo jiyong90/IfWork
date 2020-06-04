@@ -16,7 +16,7 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 	@Query("SELECT D FROM WtmWorkDayResult D JOIN WtmWorkCalendar C ON D.tenantId = C.tenantId AND D.enterCd = C.enterCd AND D.ymd = C.ymd AND D.sabun = C.sabun WHERE C.tenantId = ?1 AND C.enterCd = ?2 AND C.sabun = ?3 AND C.ymd = ?4")
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndYmd(Long tenantId, String enterCd, String sabun, String ymd);
 	
-	@Query("SELECT D FROM WtmWorkDayResult D JOIN WtmWorkCalendar C ON D.tenantId = C.tenantId AND D.enterCd = C.enterCd AND D.ymd = C.ymd AND D.sabun = C.sabun WHERE D.timeTypeCd = ?1 AND C.tenantId = ?2 AND C.enterCd = ?3 AND C.sabun = ?4 AND C.ymd = ?5")
+	@Query("SELECT D FROM WtmWorkDayResult D JOIN WtmWorkCalendar C ON D.tenantId = C.tenantId AND D.enterCd = C.enterCd AND D.ymd = C.ymd AND D.sabun = C.sabun WHERE D.timeTypeCd = ?1 AND C.tenantId = ?2 AND C.enterCd = ?3 AND C.sabun = ?4 AND C.ymd = ?5 ORDER BY D.planSdate")
 	public List<WtmWorkDayResult> findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmd(String timeTypeCd, Long tenantId, String enterCd, String sabun, String ymd);
 
 	@Query("SELECT D FROM WtmWorkDayResult D JOIN WtmWorkCalendar C ON D.tenantId = C.tenantId AND D.enterCd = C.enterCd AND D.ymd = C.ymd AND D.sabun = C.sabun WHERE C.workCalendarId = ?1")
@@ -44,5 +44,37 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndTimeTypeCdNotAndPlanSdateGreaterThanEqualAndPlanEdateLessThanEqualOrderByPlanSdateAsc(Long tenantId, String enterCd, String sabun, String timeTypeCd, Date planSdate, Date planEdate );
 	
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndYmdGreaterThan(Long tenantId, String enterCd, String sabun, String ymd);
+	
+	
+	/**
+	 * 
+	 * @param tenantId
+	 * @param enterCd
+	 * @param sabun
+	 * @param ymd
+	 * @param timeTypeCd
+	 * @param taaCd
+	 * @return
+	 */
+	public WtmWorkDayResult findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndTaaCd(Long tenantId, String enterCd, String sabun, String ymd, String timeTypeCd, String taaCd);
+	
+	/**
+	 * 
+	 * @param tenantId
+	 * @param enterCd
+	 * @param sabun
+	 * @param ymd
+	 * @param timeTypeCd NOT IN
+	 * @param taaCd
+	 * @return
+	 */
+	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndTaaCdNotIn(Long tenantId, String enterCd, String sabun, String ymd, String timeTypeCd, List<String> taaCd);
+	
+	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndApprEdateAfterAndApprSdateBefore(Long tenantId, String enterCd, String sabun, String ymd, String timeTypeCd, Date sDate, Date eDate);
+	
+	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCd(Long tenantId, String enterCd, String sabun, String ymd, String timeTypeCd);
+	
+	@Query("SELECT D FROM WtmWorkDayResult D JOIN WtmWorkCalendar C ON D.tenantId = C.tenantId AND D.enterCd = C.enterCd AND D.ymd = C.ymd AND D.sabun = C.sabun WHERE C.tenantId = ?1 AND C.enterCd = ?2 AND C.sabun = ?3 AND C.ymd = ?4 AND D.timeTypeCd = ?5 AND C.entrySdate IS NOT NULL AND C.entryEdate IS NOT NULL AND D.planSdate IS NOT NULL AND D.planEdate IS NOT NULL")
+	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull( Long tenantId, String enterCd, String sabun, String ymd, String timeTypeCd);
 	
 }

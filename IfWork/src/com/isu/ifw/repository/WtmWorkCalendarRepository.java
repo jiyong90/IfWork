@@ -16,6 +16,7 @@ public interface WtmWorkCalendarRepository extends JpaRepository<WtmWorkCalendar
 	public List<WtmWorkCalendar> findByTenantIdAndEnterCdAndEntryEtypeCdAndUpdateDateAndUpdateId(Long tenantId, String enterCd, String entryEtypeCd, String updateDate, String updateId);
 
 	public List<WtmWorkCalendar> findByTenantIdAndEnterCdAndSabunAndYmdBetween(Long tenantId, String enterCd, String sabun, String symd, String eymd);
+	public List<WtmWorkCalendar> findByTenantIdAndEnterCdAndSabunAndYmdBetweenOrderByYmdAsc(Long tenantId, String enterCd, String sabun, String symd, String eymd);
 	
 	@Query("SELECT C FROM WtmWorkCalendar C WHERE C.tenantId=?1 AND C.enterCd=?2 AND C.ymd=?3 AND C.sabun IN ?4 ")
 	public List<WtmWorkCalendar> findByTenantIdAndEnterCdAndYmdInSabun(Long tenantId, String enterCd, String ymd, List<String> sabuns);
@@ -26,4 +27,7 @@ public interface WtmWorkCalendarRepository extends JpaRepository<WtmWorkCalendar
 	public List<WtmWorkCalendar> findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndHolidayYn(Long tenantId, String enterCd, String sabun, String symd, String eymd, String holidayYn);
 
 	public List<WtmWorkCalendar> findByTenantIdAndEnterCdAndSabunAndYmdGreaterThan(Long tenantId, String enterCd, String sabun, String ymd);
+	
+	@Query("SELECT C FROM WtmWorkCalendar C JOIN WtmTimeCdMgr T ON C.timeCdMgrId = C.timeCdMgrId WHERE C.tenantId=?1 AND C.enterCd=?2 AND C.ymd=?3 AND C.sabun = ?4 AND T.breakTypeCd = ?5 ")
+	public WtmWorkCalendar findByTenantIdAndEnterCdAndSabunAndYmdAndBreakTypeCd(Long tenantId, String enterCd, String sabun, String ymd, String breakTypeCd);
 }

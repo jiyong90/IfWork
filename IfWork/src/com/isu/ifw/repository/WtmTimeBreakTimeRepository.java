@@ -11,7 +11,10 @@ import com.isu.ifw.entity.WtmTimeBreakTime;
 
 @Repository
 public interface WtmTimeBreakTimeRepository extends JpaRepository<WtmTimeBreakTime, String> {
+	/*
 	@Query(value="SELECT * FROM WTM_TIME_BREAK_TIME WHERE TIME_CD_MGR_ID = :timeCdMgrId ORDER BY WORK_MINUTE", nativeQuery = true)
-	public List<WtmTimeBreakTime> findByTimeCdMgrId(@Param(value="timeCdMgrId")String timeCdMgrId);
-	
+	public List<WtmTimeBreakTime> findByTimeCdMgrId(@Param(value="timeCdMgrId")Long timeCdMgrId);
+	*/
+	//@Query("SELECT t FROM WtmTimeBreakTime t WHERE t.timeCdMgrId = :timeCdMgrId ORDER BY t.workMinute asc")
+	public List<WtmTimeBreakTime> findByTimeCdMgrIdOrderByWorkMinuteAsc(@Param(value="timeCdMgrId")Long timeCdMgrId);
 }

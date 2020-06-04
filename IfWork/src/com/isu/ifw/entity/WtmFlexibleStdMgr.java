@@ -87,6 +87,14 @@ public class WtmFlexibleStdMgr {
 	private String elasApplEditYn;
 	@Column(name="APPL_YN")
 	private String applYn;
+
+	@Column(name="TODAY_PLAN_EDIT_YN")
+	private String todayPlanEditYn;
+	@Column(name="APPLY_ENTRY_SDATE_YN")
+	private String applyEntrySdateYn;
+	@Column(name="APPLY_ENTRY_EDATE_YN")
+	private String applyEntryEdateYn;
+	
 	@Column(name="NOTE")
 	private String note;
 	@Temporal(TemporalType.TIMESTAMP)
@@ -361,6 +369,30 @@ public class WtmFlexibleStdMgr {
 
 	public void setApplYn(String applYn) {
 		this.applYn = applYn;
+	}
+
+	public String getTodayPlanEditYn() {
+		return todayPlanEditYn;
+	}
+
+	public void setTodayPlanEditYn(String todayPlanEditYn) {
+		this.todayPlanEditYn = todayPlanEditYn;
+	}
+
+	public String getApplyEntrySdateYn() {
+		return applyEntrySdateYn;
+	}
+
+	public void setApplyEntrySdateYn(String applyEntrySdateYn) {
+		this.applyEntrySdateYn = applyEntrySdateYn;
+	}
+
+	public String getApplyEntryEdateYn() {
+		return applyEntryEdateYn;
+	}
+
+	public void setApplyEntryEdateYn(String applyEntryEdateYn) {
+		this.applyEntryEdateYn = applyEntryEdateYn;
 	}
 
 	public String getNote() {
