@@ -384,8 +384,7 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 				paramMap.put("ymd", ymd);
 				
 				WtmWorkCalendar workCalendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
-				if("Y".equals(taaCode.getHolInclYn()) || ("N".equals(taaCode.getHolInclYn()) && "N".equals(workCalendar.getHolidayYn()) )) {
-					
+				if("Y".equals(taaCode.getHolInclYn()) || ( "N".equals(taaCode.getHolInclYn()) && "N".equals(workCalendar.getHolidayYn()) )) {
 					//1.근무 계획 시간보다 근태 신청 시간이 더 큰지 체크
 					Map<String, Object> m = validatorMapper.checkApplMinute(paramMap);
 					
@@ -409,9 +408,15 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 			        cal.setTime(s);
 			        cal.add(Calendar.DATE, 1);
 			        s = cal.getTime();
-		        
+			        
+				} else {
+					// 무한루프방지 날짜 더하기
+			        Calendar cal = Calendar.getInstance();
+			        cal.setTime(s);
+			        cal.add(Calendar.DATE, 1);
+			        s = cal.getTime();
 				}
-				
+												
 			} while(s.compareTo(e) == 0);
 			
 		}
