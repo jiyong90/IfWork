@@ -1326,9 +1326,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				//결근을 제외한 day result의 모든 계획데이터를 인정데이터로 만들어 준다. 
 				flexEmpMapper.updateApprDatetimeByYmdAndSabun(paramMap);
 				
-				try { logger.debug("9. APPLY_ENTRY_SDATE_YN / APPLY_ENTRY_EDATE_YN 여부에 따라 타각 시간을 계획시간으로 업데이트 한다. 그리고 인정시간을 다시 계산한다. 계획시간이 변경되었기 때문에 ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_CREATE_F"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 				
-				calcService.P_WTM_WORK_DAY_RESULT_CREATE_F(tenantId, enterCd, sabun,  calendar.getYmd(), flexStdMgr, timeCdMgr, sabun);
+				if(flexStdMgr.getWorkTypeCd().equals("SELE_F")) {
+					try { logger.debug("9. APPLY_ENTRY_SDATE_YN / APPLY_ENTRY_EDATE_YN 여부에 따라 타각 시간을 계획시간으로 업데이트 한다. 그리고 인정시간을 다시 계산한다. 계획시간이 변경되었기 때문에 ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_CREATE_F"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+					calcService.P_WTM_WORK_DAY_RESULT_CREATE_F(tenantId, enterCd, sabun,  calendar.getYmd(), flexStdMgr, timeCdMgr, sabun);
+				}
 				//if("BRS".equals(enterCd) || "LSG".equals(enterCd) || "1000".equals(enterCd)) {
 					// 20200518 브로제랑 ls글로벌만 완전선근 사용중 ngv
 					//시작일 타각 데이터 기준 옵션에 해당하는 내용을 인정시간을 다시 업데이트 하자
@@ -1392,9 +1394,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							}
 						}
 						logger.debug("isCreateLate : " + isCreateLate);
-						if(isCreateLate) {
-							logger.debug("minSdate : " + minSdate);
-							logger.debug("calendar.getEntrySdate() : " + calendar.getEntrySdate());
+						logger.debug("minSdate : " + minSdate);
+						logger.debug("calendar.getEntrySdate() : " + calendar.getEntrySdate());
+						if(isCreateLate && minSdate != null && calendar.getEntrySdate() != null) {
 							if(minSdate.compareTo(calendar.getEntrySdate()) < 0) {
 								logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각!");
 								WtmWorkDayResult lateResult = new WtmWorkDayResult();
