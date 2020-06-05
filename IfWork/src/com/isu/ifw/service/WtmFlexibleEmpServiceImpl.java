@@ -2480,9 +2480,14 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					for(Map<String, Object> emp : emps) {
 						Map<String, Object> restMinuteMap = new HashMap<String, Object>();
 						
+						// 신청중인 OT신청서 시간도 차감 하자.
+						
+						int restOtMin = 0;
+						int restWorkMin = 0;
+						Integer applOtMin = 0;
 						if(emp.get("restOtMinute")!=null && !"".equals(emp.get("restOtMinute"))) {
-							int restMin = Integer.parseInt(emp.get("restOtMinute").toString());
-							restMinuteMap.put("restOtMinute", restMin);
+							restOtMin = Integer.parseInt(emp.get("restOtMinute").toString());
+							
 						}
 						
 						//휴일근무이며
@@ -2499,6 +2504,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								Map<String, Object> weekInfo = flexEmpMapper.weekWorkTimeByEmp(paramMap);
 								System.out.println("aslkdjkslajdklsajdklsajdkljaskldjsakljdkalsdj");
 								System.out.println(mapper.writeValueAsString(weekInfo));
+								if(weekInfo != null && weekInfo.get("applOtMinute") != null && !weekInfo.get("applOtMinute").equals("")) {
+									applOtMin = Integer.parseInt(weekInfo.get("applOtMinute")+"");
+									if(applOtMin == null) {
+										applOtMin = 0;
+									}
+								}
 								if(weekInfo != null && weekInfo.get("workMinute") != null && !weekInfo.get("workMinute").equals("")) {
 									//한주소정근로시간 40시간   * 60  = 2400
 									int weekWorkMinute = Integer.parseInt(weekInfo.get("weekWorkMinute")+"");
@@ -2511,12 +2522,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 									System.out.println("workMinute : " + Integer.parseInt(weekInfo.get("workMinute")+""));
 									System.out.println("exMinute : " + exMinute);
 									
-									int restMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute ;
-									System.out.println("restMin : " + restMin);
-									if(restMin > 0) {
-										restMinuteMap.put("restWorkMinute", restMin);
-										restMinuteMap.put("guideMessage", "* 잔여소정근로시간이 먼저 차감됩니다.");
-									}
+									restWorkMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute ;
+									System.out.println("restMin : " + restWorkMin);
 									
 								}
 								/*
@@ -2528,6 +2535,28 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								*/
 							}
 						}
+						//신청 중인 OT가 있으면 해당 분을 빼야한다. 
+						if(applOtMin > 0) {
+							if(restWorkMin >= applOtMin) {
+								restWorkMin = restWorkMin - applOtMin;
+								applOtMin = 0;
+							}else {
+								applOtMin = applOtMin - restWorkMin;
+							}
+							
+							if(applOtMin > 0) {
+								restOtMin = restOtMin - applOtMin;
+								applOtMin = 0;
+							}
+						
+						}
+						
+						if(restWorkMin > 0) {
+							restMinuteMap.put("restWorkMinute", restWorkMin);
+							restMinuteMap.put("guideMessage", "* 잔여소정근로시간이 먼저 차감됩니다.");
+						}
+						restMinuteMap.put("restOtMinute", restOtMin);
+						
 						targetList.put(emp.get("sabun").toString(), restMinuteMap);
 					}
 				}
