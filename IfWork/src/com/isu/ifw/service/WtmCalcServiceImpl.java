@@ -121,7 +121,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							}
 							
 							//마지막 데이터
-							if(cnt == results.size()) {
+							if(cnt == results.size() && results.size() > 1 ) {
 								if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
 									eDate = calendar.getEntryEdate();
 								} else {
@@ -224,14 +224,17 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		//}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
 		}
 		
-		if ((workMinute - sumWorkMinute) < (apprMinute - breakMinute)) {
+		if ((workMinute - sumWorkMinute) < (sumWorkMinute + apprMinute - breakMinute)) {
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(calcSdate);
 			cal.add(Calendar.MINUTE, (workMinute - sumWorkMinute) + breakMinute );
-			calcSdate = cal.getTime();
+			calcEdate = cal.getTime();
 			apprMinute = (workMinute - sumWorkMinute) + breakMinute;
 		}
 
+		logger.debug("UPDATE_T :: calcSdate = " + calcSdate);
+		logger.debug("UPDATE_T :: calcEdate = " + calcEdate);
+		logger.debug("UPDATE_T :: apprMinute = " + apprMinute);
 		//result.setPlanSdate(calcSdate);
 		//result.setPlanEdate(calcEdate);
 		//result.setPlanMinute(apprMinute);
@@ -760,6 +763,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			result.setSabun(sabun);
 			result.setYmd(ymd);
 			result.setApplId(null);
+			result.setTimeTypeCd(WtmApplService.TIME_TYPE_FIXOT);
 			Date setApprSdate = (apprEdate != null && !apprEdate.equals(""))?apprEdate:planEdate;
 			//단위 시간 적용을 위해 10분단위면 10분단위로 맞추자
 			setApprSdate = this.WorkTimeCalcApprDate(setApprSdate,setApprSdate, unitMinute, "S");
