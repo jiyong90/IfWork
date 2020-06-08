@@ -182,6 +182,7 @@ public class WtmTimeCdMgr {
 
 
 	public String getLateChkYn() {
+		if(lateChkYn == null) return "N";
 		return lateChkYn;
 	}
 
@@ -192,6 +193,7 @@ public class WtmTimeCdMgr {
 
 
 	public String getLeaveChkYn() {
+		if(leaveChkYn == null) return "N";
 		return leaveChkYn;
 	}
 
@@ -202,6 +204,7 @@ public class WtmTimeCdMgr {
 
 
 	public String getAbsenceChkYn() {
+		if(absenceChkYn == null) return "N";
 		return absenceChkYn;
 	}
 
