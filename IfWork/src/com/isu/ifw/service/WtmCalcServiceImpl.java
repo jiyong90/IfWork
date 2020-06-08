@@ -160,13 +160,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			}else {
 				List<WtmWorkDayResult> result = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCd(tenantId, enterCd, sabun, ymd, WtmApplService.TIME_TYPE_BASE);
 				for(WtmWorkDayResult res : result) {
-					res.setTimeTypeCd("BASE_OVER");
-					res.setApprSdate(null);
-					res.setApprEdate(null);
+					res.setSabun(res.getSabun()+"_bk");
 					res.setUpdateDate(new Date());
 					res.setUpdateId(userId);
 					
-					logger.debug("CREATE_F :: workDayResultRepo.save",res);
+					logger.debug("CREATE_F :: BASE_OVER workDayResultRepo.save : " + res.getSabun()+"_bk  : " + res.getYmd());
 					workDayResultRepo.save(res);
 				}
 			}
