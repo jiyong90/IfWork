@@ -313,7 +313,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							logger.debug("CREATE_N :: sumWorkMinute = " + sumWorkMinute);
 							sumWorkMinute = sumWorkMinute + addApprMinute;
 							logger.debug("CREATE_N :: sumWorkMinute = " + sumWorkMinute);
-							if( workMinute <= sumWorkMinute ) {
+							if( workMinute < sumWorkMinute ) {
 								this.P_WTM_WORK_DAY_RESULT_CREATE_N(flexibleStdMgr, tenantId, enterCd, sabun, ymd, addApprMinute,  "RECALL_" + userId);
 								return;
 							}
