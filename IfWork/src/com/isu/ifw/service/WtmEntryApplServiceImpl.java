@@ -240,6 +240,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 			paramMap.put("sabun", applSabun);
 			paramMap.put("typeCd", "APPL");
 			paramMap.put("userId", userId);
+			paramMap.put("stdYmd", ymd);
 			List<Map<String, Object>> insertRows = new ArrayList<Map<String, Object>>();
 			insertRows.add(paramMap);
 			paramMap.put("insertRows", insertRows);

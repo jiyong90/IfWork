@@ -3198,7 +3198,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			  System.out.println("paramMap : " + paramMap);
 					inoutService.updateCalendar(paramMap);
 					//퇴근일때만 인정시간 계산
-					inoutService.inoutPostProcess(paramMap, "N");
+					inoutService.inoutPostProcess(paramMap);
 				} catch(Exception e) {
 					// e.printStackTrace();
 					System.out.println("paramMap : " + e.getMessage());

@@ -20,30 +20,19 @@ public interface WtmInoutService {
 	public Map<String, Object> getMenuContextWeb(Long tenantId, String enterCd, String sabun);
 	//출퇴근정보 업데이트
 	public void updateTimecard2(Map<String, Object> paramMap) throws Exception;
-	//출퇴근정보 업데이트
-	public void updateTimecardUnplanned(Map<String, Object> paramMap) throws Exception;
 	//퇴근취소 업데이트
-	public void updateTimecardCancel(Map<String, Object> paramMap, String unplanned) throws Exception;
+	public void updateTimecardCancel(Map<String, Object> paramMap) throws Exception;
 	//휴게정보 업데이트
-	public void updateTimecardExcept(Map<String, Object> paramMap, String unplanned) throws Exception;
-
-	//출퇴근정보 업데이트
-	public void updateTimecardCancelWeb(Map<String, Object> paramMap) throws Exception;
-	//출퇴근정보 업데이트
-	public void updateTimecard(Map<String, Object> paramMap) throws Exception;
-	//출퇴근정보 업데이트
-	public void updateTimecardIntf(Map<String, Object> paramMap) throws Exception;
-	//외출복귀정보 업데이트
-	public ReturnParam updateGoBack(Map<String, Object> paramMap) throws Exception;
-	//타각은 들어온 경우 캘린더 업뎃부터 테스트
-	public void updateCalendar(Map<String, Object> paramMap) throws Exception ;
+	public void updateTimecardExcept(Map<String, Object> paramMap) throws Exception;
 
 	//타각 후처리 로직
-	public void inoutPostProcess(Map<String, Object> paramMap, String unplanned);
+	public void inoutPostProcess(Map<String, Object> paramMap);
 	//타각데이터 저장
 	public boolean insertTimeStamp(Map<String, Object> paramMap) throws Exception;
 	//타각데이터 업데이트
 	public boolean updateTimeStamp(Map<String, Object> paramMap) throws Exception;
+	
+	public void updateCalendar(Map<String, Object> paramMap) throws Exception;
 	
 	//출퇴극 이력(달)
 	public List<Map<String, Object>> getMyInoutList(Map<String, Object> paramMap) throws Exception;
@@ -55,5 +44,7 @@ public interface WtmInoutService {
 	public ReturnParam cancel(Map<String, Object> paramMap) throws Exception;
 	
 	public List<Map<String, Object>> getInoutMonitorList(Map<String, Object> paramMap) throws Exception;
-	
+
+	public Map<String, Object> getMenuContext3(Long tenantId, String enterCd, String sabun, String ymd) throws Exception;
+
 }
