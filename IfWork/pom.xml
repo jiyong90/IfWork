@@ -199,6 +199,7 @@
 	</repositories>
 	
   <build>
+  	<finalName>IfWork.jar</finalName>
     <sourceDirectory>src</sourceDirectory>
     <plugins>
       <plugin>
