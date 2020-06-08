@@ -156,7 +156,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						cnt++;
 					}
 				}
-				
+			/*	
 			}else {
 				List<WtmWorkDayResult> result = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCd(tenantId, enterCd, sabun, ymd, WtmApplService.TIME_TYPE_BASE);
 				for(WtmWorkDayResult res : result) {
@@ -167,6 +167,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					logger.debug("CREATE_F :: BASE_OVER workDayResultRepo.save : " + res.getSabun()+"_bk  : " + res.getYmd());
 					workDayResultRepo.save(res);
 				}
+				*/
 			}
 		}
 	}
@@ -376,6 +377,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 								} catch (ParseException e) {
 									e.printStackTrace();
 								}
+								logger.debug("CREATE_N :: eYmd = " + eYmd);
+								
 								if(eYmd != null) {
 									if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
 										//call P_WTM_WORK_DAY_RESULT_OTFIX_C(P_FLEXIBLE_EMP_ID, v_ymd, v_ymd, CONCAT('FIXC',P_ID) );
@@ -483,11 +486,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				workDayResultRepo.deleteAll(delRes);
 			}
 			
-			List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndApprEdateAfterAndApprSdateBefore(tenantId, enterCd, sabun, eYmd, WtmApplService.TIME_TYPE_GOBACK, sDate, eDate);
+			List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndApprEdateAfterAndApprSdateBefore(tenantId, enterCd, sabun, ymd, WtmApplService.TIME_TYPE_GOBACK, sDate, eDate);
 			if(results != null && results.size() > 0) {
 				for(WtmWorkDayResult result : results) {
 					
-					List<WtmWorkDayResult> chkResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndApprEdateAfterAndApprSdateBefore(tenantId, enterCd, sabun, eYmd, WtmApplService.TIME_TYPE_GOBACK, result.getApprEdate(), eDate);
+					List<WtmWorkDayResult> chkResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndApprEdateAfterAndApprSdateBefore(tenantId, enterCd, sabun, ymd, WtmApplService.TIME_TYPE_GOBACK, result.getApprEdate(), eDate);
 					int cnt = chkResults.size();
 					
 					int calcMinute = 0;
