@@ -741,9 +741,9 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			
 			Map<String, Object> yn = inoutHisMapper.getMyUnplannedYn(paramMap);
 			//BASE, FIXOT 데이터만 삭제
-			logger.debug("inoutPostProcess2 " + yn.get("unplanned").toString());
+			logger.debug("inoutPostProcess2 " + yn.get("unplannedYn").toString());
 			
-			if(yn.get("unplanned").toString().equals("Y")) {
+			if(yn.get("unplannedYn").toString().equals("Y")) {
 //				SqlSession sqlSession = sqlSessionFactory.openSession();
 				if(results != null && results.size() > 0) {
 					for(WtmWorkDayResult r : results) {
