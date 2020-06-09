@@ -1228,6 +1228,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			for(WtmWorkCalendar calendar : works) {
 				
 				WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, calendar.getYmd());
+				if(flexEmp == null) {
+					continue;
+				}
 				WtmFlexibleStdMgr flexStdMgr = flexStdMgrRepo.findById(flexEmp.getFlexibleStdMgrId()).get();
 				WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(calendar.getTimeCdMgrId()).get();
 				List<WtmWorkDayResult> dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());

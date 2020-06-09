@@ -199,6 +199,7 @@
 	</repositories>
 	
   <build>
+  	<finalName>IfWork</finalName>
     <sourceDirectory>src</sourceDirectory>
     <plugins>
       <plugin>

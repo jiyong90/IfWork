@@ -121,7 +121,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							}
 							
 							//마지막 데이터
-							if(cnt == results.size()) {
+							if(cnt == results.size() && results.size() > 1 ) {
 								if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
 									eDate = calendar.getEntryEdate();
 								} else {
@@ -156,19 +156,18 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						cnt++;
 					}
 				}
-				
+			/*	
 			}else {
 				List<WtmWorkDayResult> result = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCd(tenantId, enterCd, sabun, ymd, WtmApplService.TIME_TYPE_BASE);
 				for(WtmWorkDayResult res : result) {
-					res.setTimeTypeCd("BASE_OVER");
-					res.setApprSdate(null);
-					res.setApprEdate(null);
+					res.setSabun(res.getSabun()+"_bk");
 					res.setUpdateDate(new Date());
 					res.setUpdateId(userId);
 					
-					logger.debug("CREATE_F :: workDayResultRepo.save",res);
+					logger.debug("CREATE_F :: BASE_OVER workDayResultRepo.save : " + res.getSabun()+"_bk  : " + res.getYmd());
 					workDayResultRepo.save(res);
 				}
+				*/
 			}
 		}
 	}
@@ -226,14 +225,17 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		//}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
 		}
 		
-		if ((workMinute - sumWorkMinute) < (apprMinute - breakMinute)) {
+		if ((workMinute - sumWorkMinute) < (sumWorkMinute + apprMinute - breakMinute)) {
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(calcSdate);
 			cal.add(Calendar.MINUTE, (workMinute - sumWorkMinute) + breakMinute );
-			calcSdate = cal.getTime();
+			calcEdate = cal.getTime();
 			apprMinute = (workMinute - sumWorkMinute) + breakMinute;
 		}
 
+		logger.debug("UPDATE_T :: calcSdate = " + calcSdate);
+		logger.debug("UPDATE_T :: calcEdate = " + calcEdate);
+		logger.debug("UPDATE_T :: apprMinute = " + apprMinute);
 		//result.setPlanSdate(calcSdate);
 		//result.setPlanEdate(calcEdate);
 		//result.setPlanMinute(apprMinute);
@@ -313,7 +315,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							logger.debug("CREATE_N :: sumWorkMinute = " + sumWorkMinute);
 							sumWorkMinute = sumWorkMinute + addApprMinute;
 							logger.debug("CREATE_N :: sumWorkMinute = " + sumWorkMinute);
-							if( workMinute <= sumWorkMinute ) {
+							if( workMinute < sumWorkMinute ) {
 								this.P_WTM_WORK_DAY_RESULT_CREATE_N(flexibleStdMgr, tenantId, enterCd, sabun, ymd, addApprMinute,  "RECALL_" + userId);
 								return;
 							}
@@ -375,6 +377,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 								} catch (ParseException e) {
 									e.printStackTrace();
 								}
+								logger.debug("CREATE_N :: eYmd = " + eYmd);
+								
 								if(eYmd != null) {
 									if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
 										//call P_WTM_WORK_DAY_RESULT_OTFIX_C(P_FLEXIBLE_EMP_ID, v_ymd, v_ymd, CONCAT('FIXC',P_ID) );
@@ -482,11 +486,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				workDayResultRepo.deleteAll(delRes);
 			}
 			
-			List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndApprEdateAfterAndApprSdateBefore(tenantId, enterCd, sabun, eYmd, WtmApplService.TIME_TYPE_GOBACK, sDate, eDate);
+			List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndApprEdateAfterAndApprSdateBefore(tenantId, enterCd, sabun, ymd, WtmApplService.TIME_TYPE_GOBACK, sDate, eDate);
 			if(results != null && results.size() > 0) {
 				for(WtmWorkDayResult result : results) {
 					
-					List<WtmWorkDayResult> chkResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndApprEdateAfterAndApprSdateBefore(tenantId, enterCd, sabun, eYmd, WtmApplService.TIME_TYPE_GOBACK, result.getApprEdate(), eDate);
+					List<WtmWorkDayResult> chkResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndApprEdateAfterAndApprSdateBefore(tenantId, enterCd, sabun, ymd, WtmApplService.TIME_TYPE_GOBACK, result.getApprEdate(), eDate);
 					int cnt = chkResults.size();
 					
 					int calcMinute = 0;
@@ -762,6 +766,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			result.setSabun(sabun);
 			result.setYmd(ymd);
 			result.setApplId(null);
+			result.setTimeTypeCd(WtmApplService.TIME_TYPE_FIXOT);
 			Date setApprSdate = (apprEdate != null && !apprEdate.equals(""))?apprEdate:planEdate;
 			//단위 시간 적용을 위해 10분단위면 10분단위로 맞추자
 			setApprSdate = this.WorkTimeCalcApprDate(setApprSdate,setApprSdate, unitMinute, "S");
