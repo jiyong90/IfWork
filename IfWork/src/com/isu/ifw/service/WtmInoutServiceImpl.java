@@ -9,7 +9,6 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +16,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
 
 import com.isu.ifw.entity.WtmEmpHis;
 import com.isu.ifw.entity.WtmFlexibleEmp;
+import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmCalendarMapper;
@@ -28,6 +27,7 @@ import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmInoutHisMapper;
 import com.isu.ifw.repository.WtmEmpHisRepository;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
+import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.util.WtmUtil;
@@ -68,11 +68,17 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	@Autowired
 	PlatformTransactionManager transactionManager;
 	
-	@Autowired
-    private org.mybatis.spring.SqlSessionTemplate sqlSessionTemplate;
+//	@Autowired
+//    private org.mybatis.spring.SqlSessionTemplate sqlSessionTemplate;
 	
-	@Autowired   
-	SqlSessionFactory sqlSessionFactory;
+	@Autowired
+	WtmCalcService calcService;
+	
+	@Autowired
+	WtmFlexibleStdMgrRepository flexStdMgrRepo;
+	
+//	@Autowired   
+//	SqlSessionFactory sqlSessionFactory;
 	
 	//계획 없이 무조건 타각 활성화
 	@Override
@@ -741,9 +747,9 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			
 			Map<String, Object> yn = inoutHisMapper.getMyUnplannedYn(paramMap);
 			//BASE, FIXOT 데이터만 삭제
-			logger.debug("inoutPostProcess2 " + yn.get("unplanned").toString());
+			logger.debug("inoutPostProcess2 " + yn.get("unplannedYn").toString());
 			
-			if(yn.get("unplanned").toString().equals("Y")) {
+			if(yn.get("unplannedYn").toString().equals("Y")) {
 //				SqlSession sqlSession = sqlSessionFactory.openSession();
 				if(results != null && results.size() > 0) {
 					for(WtmWorkDayResult r : results) {
@@ -781,7 +787,10 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					paramMap.put("sYmd", paramMap.get("stdYmd").toString());
 					paramMap.put("eYmd", paramMap.get("stdYmd").toString());
 					paramMap.put("userId", paramMap.get("sabun").toString());
-					flexEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(paramMap);
+					
+					 WtmFlexibleStdMgr flexStdMgr = flexStdMgrRepo.findById(emps.get(0).getFlexibleStdMgrId()).get();
+					calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, Long.parseLong(paramMap.get("tenantId").toString()), paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString(), 0, paramMap.get("sabun").toString());
+					//flexEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(paramMap);
 					
 					logger.debug("inoutPostProcess6 CREATE_N 끗 " + paramMap.toString());
 
