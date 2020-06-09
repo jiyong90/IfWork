@@ -921,9 +921,15 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		                        if(calcMap!=null && calcMap.containsKey("calcMinute")) {
 		                           subsMinute = Integer.parseInt(resultMap.get("calcMinute").toString());
 		                           
-		                           if(calcMap.containsKey("breakMinute") && resultMap.get("breakMinute")!=null && !"".equals(resultMap.get("breakMinute"))) {
-		                              subsMinute = subsMinute -  Integer.parseInt(resultMap.get("breakMinute").toString());
-		                           }
+		                           WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(calendar.getTimeCdMgrId()).get();
+		                           if(timeCdMgr.getBreakTypeCd().equals("TIME")) {
+		                        	   logger.debug("subMinute : TIME");
+			                           if(calcMap.containsKey("breakMinute") && resultMap.get("breakMinute")!=null && !"".equals(resultMap.get("breakMinute"))) {
+				                              subsMinute = subsMinute -  Integer.parseInt(resultMap.get("breakMinute").toString());
+				                           }
+		                           } else if(timeCdMgr.getBreakTypeCd().equals("MGR")) {
+		                        	   logger.debug("subMinute : MGR");
+		                           } else {logger.debug("subMinute : ELSE");}
 		                        }
 		                        
 		                        otSub.setSubsMinute(Integer.toString(subsMinute));
