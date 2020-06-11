@@ -2714,8 +2714,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								if(subs!=null && subs.size()>0) {
 									logger.debug("save subs start >>> ");
 									System.out.println("save subs start >>> ");
-									for(WtmOtSubsAppl sub : subs) { 
-										addWtmDayResultInBaseTimeType(tenantId, enterCd, sub.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, "", sub.getSubsSdate(), sub.getSubsEdate(), otAppl.getApplId(), userId);
+									for(WtmOtSubsAppl sub : subs) {
+										// 20200609 이효정 TAA_CD에도 고정값 SUBS를 추가해야함
+										addWtmDayResultInBaseTimeType(tenantId, enterCd, sub.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, WtmApplService.TIME_TYPE_SUBS, sub.getSubsSdate(), sub.getSubsEdate(), otAppl.getApplId(), userId);
 									}
 									logger.debug("save subs end >>> ");
 									System.out.println("save subs end >>> ");
