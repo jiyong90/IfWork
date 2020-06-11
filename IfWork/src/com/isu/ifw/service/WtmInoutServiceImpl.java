@@ -1,5 +1,10 @@
 package com.isu.ifw.service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -8,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.net.ssl.HttpsURLConnection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -720,6 +726,78 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		}
 	}
 
+	@Async("threadPoolTaskExecutor")
+	public void sendErp(String enterCd, String sabun, Map<String, Object> paramMap) {
+		HttpURLConnection urlCon = null;
+		OutputStream os = null;
+		InputStream in = null;
+		ByteArrayOutputStream baos = null;
+		
+		try {
+			
+			SimpleDateFormat sdf_date = new SimpleDateFormat("yyyy-MM-dd");
+			SimpleDateFormat sdf_time = new SimpleDateFormat("HH:mm");
+			
+			String gwPath = "http://m.isu.co.kr/api/Attendance.aspx?id=" + enterCd + sabun;
+	
+			URL url = new URL(gwPath);
+			urlCon = (HttpURLConnection) url.openConnection();
+			
+			urlCon.setRequestMethod("GET");
+			urlCon.setRequestProperty("Content-Type", "plain/text");
+			urlCon.connect();
+			
+			logger.debug("gwresponse : " + urlCon.getResponseCode());
+	
+			if (urlCon.getResponseCode() == HttpsURLConnection.HTTP_OK) {
+				in = urlCon.getInputStream();
+
+				baos = new ByteArrayOutputStream();
+
+				byte b[] = new byte[1024];
+				int numRead = 0;
+				while ((numRead = in.read(b)) != -1) {
+					baos.write(b, 0, numRead);
+				}
+
+				baos.flush();
+				System.out.println("gwresponse return : " + baos.toString());
+				
+				baos.close();
+				baos = null;
+				in.close();
+				in = null;
+			} else {
+				logger.debug("gwresponse : " + urlCon.getResponseCode());
+			}
+	
+		} catch (Exception e) {
+			logger.debug("gwresponse exception : " + e.getMessage());
+		
+		} finally {
+			try {
+				if (baos != null) {
+					baos.close();
+					baos = null;
+				}
+			} catch (Exception ee) {
+			}
+
+			try {
+				if (in != null) {
+					in.close();
+					in = null;
+				}
+			} catch (Exception ee) {
+			}
+
+			if (urlCon != null) {
+				urlCon.disconnect();
+				urlCon = null;
+			}
+		}
+	}
+	
 	@Transactional
 	@Async("threadPoolTaskExecutor")
 	public void inoutPostProcess(Map<String, Object> paramMap) {
