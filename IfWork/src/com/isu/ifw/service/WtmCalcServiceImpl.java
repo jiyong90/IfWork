@@ -177,6 +177,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		Date calcSdate = this.WorkTimeCalcApprDate(entrySdate, sDate, flexStdMgr.getUnitMinute(), "S");
 		Date calcEdate = this.WorkTimeCalcApprDate(entryEdate, eDate, flexStdMgr.getUnitMinute(), "E");
 		
+		logger.debug("UPDATE_T :: calcSdate :: " + calcSdate);
+		logger.debug("UPDATE_T :: calcEdate :: " + calcEdate);
+		
 		if( !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_OT)
 				&& !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_NIGHT)
 				) {
@@ -225,7 +228,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		//}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
 		}
 		
-		if ((workMinute - sumWorkMinute) < (sumWorkMinute + apprMinute - breakMinute)) {
+		if ((workMinute - sumWorkMinute) < (apprMinute - breakMinute)) {
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(calcSdate);
 			cal.add(Calendar.MINUTE, (workMinute - sumWorkMinute) + breakMinute );
@@ -1036,6 +1039,10 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						- (Integer.parseInt(strShm.substring(0, 2)) * 60 + Integer.parseInt(strShm.substring(2, 4)));
 				return resM;
 			}else {
+				
+				if(limitEhm.equals("0000")) {
+					limitEhm = "2400";
+				}
 				//종료시간이 0시면 2400으로 변경해준다.
 				if(ehm.equals("0000")) {
 					ehm = "2400";
@@ -1047,6 +1054,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				// 0800 ~ 0900   2300 ~ 0900 일때 휴게시간 1시간이 나와야 할 경우
 		        // 제한 시분이 다음날로 넘어갈 경우
 				if(Integer.parseInt(limitShm) > Integer.parseInt(limitEhm)) {
+					
+					if( Integer.parseInt(ehm) <= Integer.parseInt(limitShm)) {
+						//포함되지 않을 경우
+						return 0;
+					}
 					
 					// 24시전까지 먼저 체크한다.
 					if( (Integer.parseInt(shm) >= Integer.parseInt(limitShm) && Integer.parseInt(shm) <= 2400) 
@@ -1064,8 +1076,15 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							strEhm = "2400";
 						}
 						
-						resM = (Integer.parseInt(strEhm.substring(0, 2)) * 60 + Integer.parseInt(strEhm.substring(2, 4))
-								- Integer.parseInt(strShm.substring(0, 2)) * 60 + Integer.parseInt(strShm.substring(2, 4)));
+						
+
+						resM = (Integer.parseInt(strEhm.substring(0, 2)) * 60 + Integer.parseInt(strEhm.substring(2, 4)))
+								- (Integer.parseInt(strShm.substring(0, 2)) * 60 + Integer.parseInt(strShm.substring(2, 4)));
+
+						logger.debug("000 (Integer.parseInt(strEhm.substring(0, 2)) * 60 + Integer.parseInt(strEhm.substring(2, 4)) :: " + (Integer.parseInt(strEhm.substring(0, 2)) * 60 + Integer.parseInt(strEhm.substring(2, 4))));
+						logger.debug("000 (Integer.parseInt(strShm.substring(0, 2)) * 60 + Integer.parseInt(strShm.substring(2, 4))) :: " + (Integer.parseInt(strShm.substring(0, 2)) * 60 + Integer.parseInt(strShm.substring(2, 4))));
+						logger.debug("000 resM :: " + resM);
+						
 						return resM;
 					}else if( (Integer.parseInt(shm) >= 0 && Integer.parseInt(shm) <= Integer.parseInt(limitEhm))
 							|| (Integer.parseInt(ehm) >= 0 && Integer.parseInt(ehm) <= Integer.parseInt(limitEhm))
@@ -1077,8 +1096,14 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						}else {
 							strEhm = limitEhm;
 						}
-						resM = (Integer.parseInt(strEhm.substring(0, 2)) * 60 + Integer.parseInt(strEhm.substring(2, 4))
-								- Integer.parseInt(strShm.substring(0, 2)) * 60 + Integer.parseInt(strShm.substring(2, 4)));
+
+						resM = (Integer.parseInt(strEhm.substring(0, 2)) * 60 + Integer.parseInt(strEhm.substring(2, 4)))
+								- (Integer.parseInt(strShm.substring(0, 2)) * 60 + Integer.parseInt(strShm.substring(2, 4)));
+
+						logger.debug("111 (Integer.parseInt(strEhm.substring(0, 2)) * 60 + Integer.parseInt(strEhm.substring(2, 4)) :: " + (Integer.parseInt(strEhm.substring(0, 2)) * 60 + Integer.parseInt(strEhm.substring(2, 4))));
+						logger.debug("111 (Integer.parseInt(strShm.substring(0, 2)) * 60 + Integer.parseInt(strShm.substring(2, 4))) :: " + (Integer.parseInt(strShm.substring(0, 2)) * 60 + Integer.parseInt(strShm.substring(2, 4))));
+						logger.debug("111 resM :: " + resM);
+						
 						return resM;
 						
 					}else {
@@ -1115,8 +1140,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							strEhm = limitEhm;
 						}
 
-						resM = (Integer.parseInt(strEhm.substring(0, 2)) * 60 + Integer.parseInt(strEhm.substring(2, 4))
-								- Integer.parseInt(strShm.substring(0, 2)) * 60 + Integer.parseInt(strShm.substring(2, 4)));
+						resM = (Integer.parseInt(strEhm.substring(0, 2)) * 60 + Integer.parseInt(strEhm.substring(2, 4)))
+								- (Integer.parseInt(strShm.substring(0, 2)) * 60 + Integer.parseInt(strShm.substring(2, 4)));
+						logger.debug("222 (Integer.parseInt(strEhm.substring(0, 2)) * 60 + Integer.parseInt(strEhm.substring(2, 4)) :: " + (Integer.parseInt(strEhm.substring(0, 2)) * 60 + Integer.parseInt(strEhm.substring(2, 4))));
+						logger.debug("222 (Integer.parseInt(strShm.substring(0, 2)) * 60 + Integer.parseInt(strShm.substring(2, 4))) :: " + (Integer.parseInt(strShm.substring(0, 2)) * 60 + Integer.parseInt(strShm.substring(2, 4))));
+						logger.debug("222 resM :: " + resM);
 						return resM;
 					}else {
 						return 0;
@@ -1176,19 +1204,22 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				return cal.getTime();
 			}
 		} else {
+			logger.debug("rDt.compareTo(dt) :: " + rDt.compareTo(dt));
 			if(rDt.compareTo(dt) > -1) {
 				return dt;
-			} else {
-
+			} else {  
 				//단위 시간 적용
 				int calcM = m - m%unitMinute;
+				
+				logger.debug("calcM : " + calcM);
+				
 				Calendar cal = Calendar.getInstance();
 				try {
 					cal.setTime(df.parse(dYmd.format(rDt)+String.format("%02d",h)+String.format("%02d",calcM)));
 				} catch (ParseException e) {
 					e.printStackTrace();
 				}
-				return cal.getTime();
+				return cal.getTime(); 
 			}
 		}
 	}
@@ -1262,11 +1293,20 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		
 		if(sDate.compareTo(eDate) < 1) {
 			SimpleDateFormat HHmm = new SimpleDateFormat("HHmm");
+			SimpleDateFormat yyyyMMdd = new SimpleDateFormat("yyyyMMdd");
 			
 			List<WtmTimeBreakMgr> timeBreakMgrs = timebreakMgrRepo.findByTimeCdMgrId(timeCdMgrId);
 			
 			for(WtmTimeBreakMgr timeBreakMgr : timeBreakMgrs) {
-				sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), HHmm.format(eDate), unitMinute);
+				logger.debug("timeBreakMgr.getShm() :: "+ timeBreakMgr.getShm());
+				logger.debug("timeBreakMgr.getEhm() :: "+ timeBreakMgr.getEhm());
+				logger.debug("sumBreakMinute :: "+ sumBreakMinute);
+				if(!yyyyMMdd.format(sDate).equals(yyyyMMdd.format(eDate))) {
+					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), "0000", unitMinute);
+					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), "0000", HHmm.format(eDate), unitMinute);
+				}else {
+					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), HHmm.format(eDate), unitMinute);
+				}
 					
 			}
 			
