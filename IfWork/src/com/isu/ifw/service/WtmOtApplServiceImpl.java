@@ -921,7 +921,9 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		                        if(calcMap!=null && calcMap.containsKey("calcMinute")) {
 		                           subsMinute = Integer.parseInt(resultMap.get("calcMinute").toString());
 		                           
-		                           WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(calendar.getTimeCdMgrId()).get();
+		           			       WtmWorkCalendar subCalendar = wtmWorkCalendarRepository.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, subYmd);
+
+		                           WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(subCalendar.getTimeCdMgrId()).get();
 		                           if(timeCdMgr.getBreakTypeCd().equals("TIME")) {
 		                        	   logger.debug("subMinute : TIME");
 			                           if(calcMap.containsKey("breakMinute") && resultMap.get("breakMinute")!=null && !"".equals(resultMap.get("breakMinute"))) {
