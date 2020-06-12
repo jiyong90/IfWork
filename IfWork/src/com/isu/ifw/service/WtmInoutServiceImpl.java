@@ -382,7 +382,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				} else if((time.get("pSymd").equals(today) || time.get("pEymd").equals(today)) && time.get("entryEdate") == null) {
 					ymd = time.get("ymd").toString();
 					inoutType = "OUT";
-					entrySdate = (Date) time.get("entrySdate");
+					entrySdate = (Date) time.get("entrySdateDate");
 					desc = "근무중";
 					label = "퇴근하기";
 					break;
@@ -391,8 +391,8 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					inoutType = "END";
 					desc = "근무종료";
 					label = "퇴근취소";
-					entrySdate = (Date) time.get("entrySdate");
-					entryEdate = (Date) time.get("entryEdate");
+					entrySdate = (Date) time.get("entrySdateDate");
+					entryEdate = (Date) time.get("entryEdateDate");
 				}
 			}
 			
