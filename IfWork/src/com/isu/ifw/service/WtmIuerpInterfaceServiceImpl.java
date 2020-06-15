@@ -75,6 +75,9 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 	@Autowired
 	WtmOrgChartRepository orgChartRepo;
 	
+	@Autowired
+	WtmInterfaceMapper wtmInterfaceMapper;
+	
 	@Transactional
 	@Override
 	public void applyIntf(Long tenantId, String type) {
@@ -777,9 +780,11 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		try {
 			
 			List<WtmIntfTaaAppl> taaAppls = intfTaaApplRepo.findByYyyymmddhhmissGreaterThanAndTenantId(paramMap.get("ymdhis").toString(), Long.valueOf(paramMap.get("tenantId").toString()));
-			
+			System.out.println("============================== " + taaAppls.size());
+			int total = 0;
+			int success = 0;
 			if(taaAppls!=null && taaAppls.size()>0) {
-				
+				total = taaAppls.size();
 				for(WtmIntfTaaAppl a : taaAppls) {
 					HashMap<String, Object> taaApplMap = new HashMap<>();
 					taaApplMap.put("tenantId", a.getTenantId());
@@ -791,19 +796,29 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 					taaApplMap.put("sHm", a.getShm());
 					taaApplMap.put("eHm", a.getEhm());
 					taaApplMap.put("status", a.getApplStatusCd());
+					taaApplMap.put("ifApplNo", Long.valueOf(a.getApplSeq()));
 					
 					if(a.getApplSeq()!=null && !"".equals(a.getApplSeq())) {
-						taaApplMap.put("ifApplNo", Long.valueOf(a.getApplSeq()));
 						rp = wtmInterfaceService.setTaaApplIf(taaApplMap);
 						
 						if(rp.getStatus()!=null && !"OK".equals(rp.getStatus())) {
-							return rp;
+							//return rp;
+							
+							Map<String, Object> dayMap = taaApplMap;
+							dayMap.put("symd", taaApplMap.get("sYmd"));
+							dayMap.put("eymd", taaApplMap.get("eYmd"));
+							dayMap.put("type", taaApplMap.get("TAAAPPL"));
+							dayMap.put("msg", rp.get("message"));
+							System.out.println("saveWtmTaaAppl FAIL" + dayMap.toString());
+							wtmInterfaceMapper.insertErrorLogBatch(dayMap);
 						}
 					}
+					success++;
+					System.out.println("============================== " + total + "/" +success);
 				}
 			}
 			
-			rp.setSuccess("WtmTaaAppl 반영완료");
+			rp.setSuccess("WtmTaaAppl total : "+total + "succeess : "+ success +" 반영완료");
 		} catch(Exception e) {
 			e.printStackTrace();
 			rp.setFail("WtmTaaAppl 데이터 이관 오류");

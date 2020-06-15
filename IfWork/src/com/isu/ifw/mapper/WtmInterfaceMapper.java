@@ -296,6 +296,12 @@ public interface WtmInterfaceMapper {
 	public void insertErrorLog(Map<String, Object> paramMap);
 	
 	/**
+	 * 로그 쌓기 etc
+	 * @param paramMap
+	 */
+	public void insertErrorLogBatch(Map<String, Object> paramMap);
+
+	/**
 	 * 근무 마감된 자료 있는지 조회
 	 * @param paramMap
 	 * @return
