@@ -1721,6 +1721,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	    	
 	    	nowApplStatusCd = reqMap.get("status").toString();
 	    	
+	    	
 			// 2. DATA 생성 또는 갱신
 			getResultMap = (HashMap<String, Object>) wtmInterfaceMapper.getApplId(reqMap);
 			if(getResultMap != null && getResultMap.size() > 0) {
