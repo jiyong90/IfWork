@@ -336,18 +336,19 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 					List<WtmWorkDayResult> results =  wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, deleteTimeTypeCds, otCanAppl.getYmd(), otCanAppl.getYmd());
 					wtmWorkDayResultRepo.deleteAll(results);
 					
-					WtmWorkDayResult dayResult = wtmWorkDayResultRepo.findById(otCanAppl.getWorkDayResultId()).get();
+					WtmWorkDayResult dayResult = wtmWorkDayResultRepo.findById(otCanAppl.getWorkDayResultId()).orElse(null);
 					//지우려는 정보의 신청정보가 있다면 관련된 정보도 같이 지워준다 대체휴일과 같은 정보..
-					if(dayResult.getApplId() != null) {
-						deletedApplId = dayResult.getApplId(); 
+					if(dayResult != null) {
+						if(dayResult.getApplId() != null) {
+							deletedApplId = dayResult.getApplId(); 
+						}
+						
+						wtmWorkDayResultRepo.delete(dayResult);
+						 
+						rp.put("sabun", dayResult.getSabun());
+						rp.put("symd", dayResult.getYmd());
+						rp.put("eymd", dayResult.getYmd());
 					}
-					
-					wtmWorkDayResultRepo.delete(dayResult);
-					 
-					rp.put("sabun", dayResult.getSabun());
-					rp.put("symd", dayResult.getYmd());
-					rp.put("eymd", dayResult.getYmd());
-					
 					
 					if(deletedApplId != null) {
 						//대체 휴일 정보를 찾자
