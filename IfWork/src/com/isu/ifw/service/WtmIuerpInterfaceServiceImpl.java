@@ -811,9 +811,10 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 							dayMap.put("msg", rp.get("message"));
 							System.out.println("saveWtmTaaAppl FAIL" + dayMap.toString());
 							wtmInterfaceMapper.insertErrorLogBatch(dayMap);
+						}else {
+							success++;
 						}
-					}
-					success++;
+					} 
 					System.out.println("============================== " + total + "/" +success);
 				}
 			}
