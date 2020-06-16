@@ -25,6 +25,8 @@ public interface WtmMobileService {
 	
 	//adapter에서 data get
 	public Map<String, Object> getDataMap(String url, String queryId, Map<String, Object> user) throws Exception ;
+	//adapter에서 data get(신)
+	public Map<String, Object> getDataMap(String url, Map<String, Object> user) throws Exception ;
 	
 	//신청서 목록 조회
 	public List<Map<String, Object>> getApplList(Long tenantId, String enterCd, String sabun, String typeCd, int startPage, int pageCount) throws Exception ;

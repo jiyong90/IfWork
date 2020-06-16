@@ -152,6 +152,45 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		return data;
 	}
 	
+	//hr에서 데이터 조회 하기 위한 서비스(신)
+	public Map<String, Object> getDataMap(String url, Map<String,Object> user) throws Exception {
+		Map data = new HashMap();
+		RestTemplate restTemplate = new RestTemplate();
+		((org.springframework.http.client.SimpleClientHttpRequestFactory)
+		        restTemplate.getRequestFactory()).setConnectTimeout(1000*3);
+		
+		ResponseEntity<Map> responseEntity = null;
+		
+		
+		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url) ;
+//				.queryParam("enterCd", )
+//				.queryParam("sabun", sabun)
+		
+        for(String key : user.keySet()) {
+        	builder.queryParam(key, user.get(key));
+        }
+
+        URI uri = builder.build().toUri(); 
+	
+		responseEntity = restTemplate.getForEntity(uri, Map.class);
+		System.out.println("responseEntity  " + responseEntity.getBody());
+		logger.debug("getDataMap " + url + ", " + user.toString());
+		
+		if(responseEntity.getStatusCodeValue() != 200) {
+			logger.debug("getDataMap " + responseEntity.getStatusCodeValue() + " : " + responseEntity.getBody());
+			throw new Exception();
+		}
+		
+		Map<String, Object> result = responseEntity.getBody();
+		if(!result.get("Message").equals("")) {
+			logger.debug("getDataMap " + result.get("Message"));
+			return null;
+		}
+		data.putAll((Map)result.get("DATA"));
+		
+		return data;
+	}
+	
 	public List<Map<String, Object>> getApplList(Long tenantId, String enterCd, String sabun, String typeCd, int startPage, int pageCount) throws Exception {
 		Map<String, Object> paramMap = new HashMap();
 		paramMap.put("tenantId", tenantId);
