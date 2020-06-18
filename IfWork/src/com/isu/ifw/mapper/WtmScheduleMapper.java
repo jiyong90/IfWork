@@ -45,6 +45,13 @@ public interface WtmScheduleMapper {
 	public List<Map<String, Object>> getOtList2(Map<String, Object> paramMap);
 
 	/**
+	 * 전체근무시간 조회
+	 * @param paramMap
+	 * @return 
+	 */
+	public List<Map<String, Object>> getTotList(Map<String, Object> paramMap);
+
+	/**
 	 * 출퇴근 미타각자 조회
 	 * @param paramMap
 	 * @return 

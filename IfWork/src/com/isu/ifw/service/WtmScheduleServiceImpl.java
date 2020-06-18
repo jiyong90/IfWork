@@ -458,7 +458,11 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 					param.put("ymd", today);
 					
 					//logger.debug("===param " + param.toString());
-					otList = schedulerMapper.getOtList2(param);
+					if("R_OT".equals(stdType) || "R_WORK".equals(stdType)) {
+						otList = schedulerMapper.getOtList2(param);
+					} else if("R_TOT".equals(stdType)) {
+						otList = schedulerMapper.getTotList(param);
+					}
 
 					String toObj = !push.getPushObj().equals("EMP")?"LEADER":"EMP"; //LEADER, EMAIL
 					
