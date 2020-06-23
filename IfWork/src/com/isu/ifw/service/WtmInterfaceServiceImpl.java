@@ -1490,6 +1490,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		} catch(Exception e){
 			retMsg = "TAA_RESULT set : 근태 이관오류";
             e.printStackTrace();
+            
+            rp.setFail(retMsg);
+    		return rp;
         }
 		
     	// 3. 처리결과 저장
@@ -1504,6 +1507,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
+            rp.setFail(retMsg);
+    		return rp;
 		}
         System.out.println("WtmInterfaceServiceImpl setTaaApplIf end");
 		return rp;
