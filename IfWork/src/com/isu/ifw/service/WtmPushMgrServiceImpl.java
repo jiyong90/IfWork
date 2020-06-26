@@ -45,7 +45,7 @@ public class WtmPushMgrServiceImpl implements WtmPushMgrService{
 				code.put("stdMinute2", l.getStdMinute2());
 				code.put("stdType", l.getStdType());
 				code.put("title", l.getTitle());
-				code.put("pushMsg", l.getPushMsg());
+				code.put("pushMsg", l.getPushMsg()== null || l.getPushMsg().equals("") ? l.getTitle() :l.getPushMsg());
 				code.put("pushDetail", 0);
 				code.put("mobileYn", l.getMobileYn());
 				code.put("smsYn", l.getSmsYn());
