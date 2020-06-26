@@ -83,7 +83,7 @@ public class WtmPushMgrServiceImpl implements WtmPushMgrService{
 				push.put("stdMinute2", l.getStdMinute2());
 				push.put("stdType", l.getStdType());
 				push.put("title", l.getTitle());
-				push.put("pushMsg", l.getPushMsg()== null || l.getPushMsg().equals("") ? l.getTitle() :l.getPushMsg());
+				push.put("pushMsg", l.getPushMsg());
 				push.put("pushDetail", 0);
 				push.put("mobileYn", l.getMobileYn());
 				push.put("smsYn", l.getSmsYn());
@@ -116,8 +116,9 @@ public class WtmPushMgrServiceImpl implements WtmPushMgrService{
 						code.setEymd(l.get("eymd").toString());
 						code.setPushObj(l.get("pushObj").toString());
 						code.setStdMinute(Integer.parseInt(l.get("stdMinute").toString()));
+						code.setStdMinute2(Integer.parseInt(l.get("stdMinute2").toString()));
 						code.setStdType(l.get("stdType").toString());
-						code.setPushMsg(l.get("pushMsg").toString());
+						code.setPushMsg(l.get("pushMsg") == null || l.get("pushMsg").equals("") ? l.get("title").toString() :l.get("pushMsg").toString());
 						code.setTitle(l.get("title").toString());;
 						code.setMobileYn(l.get("mobileYn").toString());
 						code.setSmsYn(l.get("smsYn").toString());;
