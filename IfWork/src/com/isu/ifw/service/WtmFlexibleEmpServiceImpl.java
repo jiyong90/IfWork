@@ -1420,8 +1420,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								lateResult.setApprMinute(apprMinute);
 								lateResult.setUpdateDate(new Date());
 								lateResult.setUpdateId(sabun);
-								
-								workDayResultRepo.save(lateResult);
+								logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각 여기 " + lateResult.toString());
+								lateResult = workDayResultRepo.save(lateResult);
+								logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각 끝 " + lateResult.toString());
 							}
 						}
 					}
