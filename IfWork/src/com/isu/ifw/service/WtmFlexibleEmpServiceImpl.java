@@ -1420,8 +1420,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								lateResult.setApprMinute(apprMinute);
 								lateResult.setUpdateDate(new Date());
 								lateResult.setUpdateId(sabun);
-								
-								workDayResultRepo.save(lateResult);
+								logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각 여기 " + lateResult.toString());
+								lateResult = workDayResultRepo.save(lateResult);
+								logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각 끝 " + lateResult.toString());
 							}
 						}
 					}
@@ -1622,14 +1623,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					
 					l.put("shm", l.get("planSdate").toString().substring(8,12));
 					l.put("ehm", l.get("planEdate").toString().substring(8,12));
-					
-					Map<String, Object> planMinuteMap = calcMinuteExceptBreaktime(Long.parseLong(l.get("timeCdMgrId").toString()), l, userId);
-					
-					l.put("planMinute", (Integer.parseInt(planMinuteMap.get("calcMinute")+"")));
 					l.put("updateId", userId);
 					l.put("tenantId", tenantId);
 					l.put("enterCd", enterCd);
 					
+					Map<String, Object> planMinuteMap = calcMinuteExceptBreaktime(Long.parseLong(l.get("timeCdMgrId").toString()), l, userId);
+					
+					l.put("planMinute", (Integer.parseInt(planMinuteMap.get("calcMinute")+"")));
 					
 					// 근무검증 start
 					String timeTypeCd = l.get("timeTypeCd").toString();
@@ -1675,7 +1675,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						result.setPlanEdate(sdf.parse(l.get("planEdate").toString()));
 						result.setPlanMinute(Integer.parseInt(l.get("planMinute").toString()));
 						result.setUpdateId(userId);	
-											
+						// System.out.println("*******************hj ********** : " +result.toString());
 						workDayResultRepo.save(result);	
 						
 						//오늘 이전인 경우만 돌려주기, 오늘은 일마감에서
@@ -2303,8 +2303,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		
 		paramMap.put("breakTypeCd", breakTypeCd);
+		System.out.println("**************** hj : " + paramMap.toString());
 		Map<String, Object> breakMinuteMap = null;
 		if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
+			
 			breakMinuteMap = flexEmpMapper.calcTimeBreakMinute(paramMap);
 		} else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
 			
