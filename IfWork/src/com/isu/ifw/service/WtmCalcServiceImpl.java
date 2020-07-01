@@ -37,7 +37,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 
 	private static ObjectMapper mapper = new ObjectMapper();
 	
-	private static final Logger logger = LoggerFactory.getLogger("ifwLog");
+	private static final Logger logger = LoggerFactory.getLogger("ifwFileLog");
 	
 	@Autowired
 	private WtmWorkCalendarRepository workCalandarRepo;
@@ -174,6 +174,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	
 	@Transactional
 	public void P_WTM_WORK_DAY_RESULT_UPDATE_T(WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr, WtmWorkDayResult result, Date sDate, Date eDate, Date entrySdate, Date entryEdate, int sumWorkMinute, int workMinute, String userId ) {
+		// System.out.println("UPDATE_T :: START :: " );
+		// System.out.println("UPDATE_T :: entrySdate :: " + entrySdate);
+		// System.out.println("UPDATE_T :: sDate :: " + sDate);
+		// System.out.println("UPDATE_T :: flexStdMgr :: " + flexStdMgr.toString());
+		
 		Date calcSdate = this.WorkTimeCalcApprDate(entrySdate, sDate, flexStdMgr.getUnitMinute(), "S");
 		Date calcEdate = this.WorkTimeCalcApprDate(entryEdate, eDate, flexStdMgr.getUnitMinute(), "E");
 		
@@ -255,6 +260,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	@Transactional
 	@Override
 	public void P_WTM_WORK_DAY_RESULT_CREATE_N(WtmFlexibleStdMgr flexibleStdMgr, Long tenantId, String enterCd,  String sabun, String ymd, int addSumWorkMinute, String userId) {
+		
+		logger.debug("UPDATE_T :: P_WTM_WORK_DAY_RESULT_CREATE_N");
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
@@ -265,6 +272,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		
 		
 		WtmFlexibleInfoVO flexInfo = calcMapper.getTotalWorkMinuteAndRealWorkMinute(paramMap);
+		logger.debug("flexInfo :: WtmFlexibleInfoVO " + flexInfo.toString());
 		if(flexInfo != null) {
 			// ymd가 속한 근무제의 총 소정근로 시간.
 			int workMinute = flexInfo.getWorkMinute();
@@ -933,10 +941,13 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				
 				//잔여시간 만큼만 
 				eDate = cal.getTime();
+				// 20200623 효정수정 apprMinute(일근무 총시간) 변경전에 resultMinute 을 계산한다.
+				// EX) 일 총근무시간이 500(총시간은 휴게시간 고려없는상태)일때, 잔여시간(calcWorkMinute) 이 40이고, 휴계시간(breakMinute)이 60인 경우 잔여시간 가산해야할 시간이 (500-(40+60)) 으로 처리되어야함.
+				resultMinute = apprMinute - (calcWorkMinute+breakMinute);
 				apprMinute = calcWorkMinute+breakMinute;
 				
-
-				resultMinute = calcWorkMinute;
+				// 20200623 효정수정 리턴계산값을 고쳐야함. 초과잔여시간으로 
+				// resultMinute = calcWorkMinute;
 			}else {
 				resultMinute = apprMinute - breakMinute;
 			}

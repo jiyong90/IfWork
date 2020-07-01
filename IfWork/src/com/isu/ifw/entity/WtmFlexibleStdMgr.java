@@ -427,6 +427,23 @@ public class WtmFlexibleStdMgr {
     protected void onUpdate() {
     	this.updateDate = new Date();
     }
+
+	@Override
+	public String toString() {
+		return "WtmFlexibleStdMgr [flexibleStdMgrId=" + flexibleStdMgrId + ", tenantId=" + tenantId + ", enterCd="
+				+ enterCd + ", workTypeCd=" + workTypeCd + ", flexibleNm=" + flexibleNm + ", useSymd=" + useSymd
+				+ ", useEymd=" + useEymd + ", workShm=" + workShm + ", workEhm=" + workEhm + ", coreShm=" + coreShm
+				+ ", coreEhm=" + coreEhm + ", defaultWorkUseYn=" + defaultWorkUseYn + ", unitMinute=" + unitMinute
+				+ ", exhaustionYn=" + exhaustionYn + ", holExceptYn=" + holExceptYn + ", workDaysOpt=" + workDaysOpt
+				+ ", usedTermOpt=" + usedTermOpt + ", applTermOpt=" + applTermOpt + ", coreChkYn=" + coreChkYn
+				+ ", coreRequireYn=" + coreRequireYn + ", baseWorkYn=" + baseWorkYn + ", regardTimeCdId="
+				+ regardTimeCdId + ", fixotUseType=" + fixotUseType + ", fixotUseLimit=" + fixotUseLimit
+				+ ", taaTimeYn=" + taaTimeYn + ", taaWorkYn=" + taaWorkYn + ", dayOpenType=" + dayOpenType
+				+ ", dayCloseType=" + dayCloseType + ", elasApplEditYn=" + elasApplEditYn + ", applYn=" + applYn
+				+ ", todayPlanEditYn=" + todayPlanEditYn + ", applyEntrySdateYn=" + applyEntrySdateYn
+				+ ", applyEntryEdateYn=" + applyEntryEdateYn + ", note=" + note + ", updateDate=" + updateDate
+				+ ", updateId=" + updateId + "]";
+	}
 	
 	
 	
