@@ -113,7 +113,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
     	}
     	
     	// logger.debug("********** closeType : " + closeType);
-    	
+    	//closeType = "A";
     	getDateMap = new HashMap();
     	// beforeYmd = "20200520";
     	// closeType = "A";
@@ -124,8 +124,9 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
     	// 타각갱신이 완료되면, 출퇴근 기록완성자의 근무시간을 갱신해야한다.
 		List<Map<String, Object>> closeList = new ArrayList();
 		closeList = wtmScheduleMapper.getWtmCloseDay(getDateMap);
-		
+		System.out.println("schedule_closeday 1 ymdh: " + ymdh + ", " + getDateMap.toString());
 		if(closeList != null && closeList.size() > 0) {
+			System.out.println("schedule_closeday 2 " + closeList.size());
 			// 일마감처리로 지각조퇴결근, 근무시간계산처리를 완료한다
 			for(int i=0; i<closeList.size(); i++) {
         		String enterCd = closeList.get(i).get("enterCd").toString();
@@ -458,7 +459,11 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 					param.put("ymd", today);
 					
 					//logger.debug("===param " + param.toString());
-					otList = schedulerMapper.getOtList2(param);
+					if("R_OT".equals(stdType) || "R_WORK".equals(stdType)) {
+						otList = schedulerMapper.getOtList2(param);
+					} else if("R_TOT".equals(stdType)) {
+						otList = schedulerMapper.getTotList(param);
+					}
 
 					String toObj = !push.getPushObj().equals("EMP")?"LEADER":"EMP"; //LEADER, EMAIL
 					

@@ -15,7 +15,7 @@ public interface WtmFlexibleApplyMgrService {
 	
 	public List<Map<String, Object>> getApplyList(Long tenantId, String enterCd, String sYmd);
 
-	public int setApplyList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap);
+	public int setApplyList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) throws Exception;
 	
 	//확정, 비동기
 	public void setApplyAsync(List<Map<String, Object>> searchList, List<Map<String, Object>> ymdList);

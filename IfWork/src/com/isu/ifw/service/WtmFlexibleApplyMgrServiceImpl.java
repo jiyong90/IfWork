@@ -114,7 +114,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 	
 	@Transactional
 	@Override
-	public int setApplyList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) {
+	public int setApplyList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) throws Exception {
 		int cnt = 0;
 		try {
 			if(convertMap.containsKey("mergeRows") && ((List)convertMap.get("mergeRows")).size() > 0) {
@@ -196,7 +196,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		} catch(Exception e) {
 			e.printStackTrace();
 			logger.debug(e.toString());
-			return 0;
+			throw new Exception(e.getMessage());
 		} 
 		
 		return cnt;
