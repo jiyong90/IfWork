@@ -18,6 +18,12 @@ public interface WtmScheduleMapper {
 	 **/
 	public List<Map<String, Object>> getWtmCloseDayUnplaned(Map<String, Object> paramMap);
 	
+	/**
+	 * 근무계획없음 일 퇴근마감
+	 **/
+	public List<Map<String, Object>> setCalcGobackList(Map<String, Object> paramMap);
+	
+	
 	
 	/**
 	 * intf전송할 ot내역
