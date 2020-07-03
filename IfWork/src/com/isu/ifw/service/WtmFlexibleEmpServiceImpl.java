@@ -1229,7 +1229,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 	}
 
-	@Transactional(isolation = Isolation.READ_UNCOMMITTED)
+	@Transactional
 	@Override
 	public void calcApprDayInfo(Long tenantId, String enterCd, String sYmd, String eYmd, String sabun) {
 		TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
@@ -1245,7 +1245,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				}
 				WtmFlexibleStdMgr flexStdMgr = flexStdMgrRepo.findById(flexEmp.getFlexibleStdMgrId()).get();
 				WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(calendar.getTimeCdMgrId()).get();
-				List<WtmWorkDayResult> dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
 				
 				
 				Map<String, Object> paramMap = new HashMap<>();
@@ -1263,16 +1262,17 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				}
 				calcApprDayInfo1(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd());
 				
-				calcApprDayInfo2(calendar, flexStdMgr, timeCdMgr, dayResults);
+				calcApprDayInfo2(calendar, flexStdMgr, timeCdMgr);
 				
 				
 			}
 		}
 	}
-	@Transactional 
 	public void calcApprDayInfo1(Long tenantId, String enterCd, String sabun, String ymd) {
+		
 		List<String> timeTypeCd = new ArrayList<>();
 		timeTypeCd.add(WtmApplService.TIME_TYPE_LLA);
+		
 		logger.debug("1. 지각 조퇴 무단결근 데이터 삭제 ", "timeTypeCd : " + WtmApplService.TIME_TYPE_LLA + ", sabun : " + sabun);
 		//지각 조퇴 무단결근 데이터 삭제
 		if(sabun != null && !sabun.equals("")) {
@@ -1283,25 +1283,37 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			if(result != null && result.size() > 0) {
 				workDayResultRepo.deleteAll(result);
 			}
+
+			workDayResultRepo.flush();
+			result.clear();
+			
 		}else {
 			//try { logger.debug("workDayResultRepo.findByTenantIdAndEnterCdAndTimeTypeCdInAndYmdBetween ", "tenantId : " + tenantId + ", enterCd : " +  enterCd +", sabun : " + sabun + ", timeTypeCd : " + mapper.writeValueAsString(timeTypeCd) + ", calendar.getYmd() : " + calendar.getYmd(), "findByTenantIdAndEnterCdAndTimeTypeCdInAndYmdBetween"); } catch (JsonProcessingException e) { e.printStackTrace(); }
 			List<WtmWorkDayResult> result = workDayResultRepo.findByTenantIdAndEnterCdAndTimeTypeCdInAndYmdBetween(tenantId, enterCd, timeTypeCd, ymd, ymd);
 			logger.debug("result.size > deleteAll", result.size());
 			if(result != null && result.size() > 0) {
 				workDayResultRepo.deleteAll(result);
+				workDayResultRepo.flush();
 			}
+
+			workDayResultRepo.flush();
+			result.clear();
+			
+			
 		}  
 	}
 	
 	/**
 	 * 타각시간 기준으로 인정시간 계산
 	 */
-	@Transactional 
-	public void calcApprDayInfo2(WtmWorkCalendar calendar,WtmFlexibleStdMgr flexStdMgr,WtmTimeCdMgr timeCdMgr, List<WtmWorkDayResult> dayResults) {
+	public void calcApprDayInfo2(WtmWorkCalendar calendar,WtmFlexibleStdMgr flexStdMgr,WtmTimeCdMgr timeCdMgr) {
+		
 		
 		Long tenantId = calendar.getTenantId();
 		String enterCd = calendar.getEnterCd();
 		String sabun = calendar.getSabun();
+		
+		List<WtmWorkDayResult> dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
 		
 		Map<String, Object> paramMap = new HashMap<>();
 		paramMap.put("tenantId", tenantId);
@@ -1310,6 +1322,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("sYmd", calendar.getYmd());
 		paramMap.put("eYmd", calendar.getYmd());
 		
+		List<String> timeTypeCd = new ArrayList<>();
+		timeTypeCd.add(WtmApplService.TIME_TYPE_LLA);
+		List<WtmWorkDayResult> rrr = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCd, calendar.getYmd(), calendar.getYmd());
+		for(WtmWorkDayResult rr : rrr) {
+			System.out.println("================================== " + rr.getTimeTypeCd());
+		}
 		ObjectMapper mapper = new ObjectMapper();
 				 
 				
