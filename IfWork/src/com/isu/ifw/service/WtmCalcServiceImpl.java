@@ -1221,7 +1221,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			} else {  
 				//단위 시간 적용
 				int calcM = m - m%unitMinute;
-				
+				calcM += unitMinute;
 				logger.debug("calcM : " + calcM);
 				
 				Calendar cal = Calendar.getInstance();
