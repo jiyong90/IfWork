@@ -1313,7 +1313,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		String enterCd = calendar.getEnterCd();
 		String sabun = calendar.getSabun();
 		
-		List<WtmWorkDayResult> dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
+		
 		
 		Map<String, Object> paramMap = new HashMap<>();
 		paramMap.put("tenantId", tenantId);
@@ -1345,6 +1345,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		// 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다.
 		//List<WtmWorkDayResult> regaResult = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, calendar.getYmd(), calendar.getYmd());
 		boolean isRega = false;
+		List<WtmWorkDayResult> dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
 		for(WtmWorkDayResult r : dayResults) {
 			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA)) {
 				isRega = true;
@@ -1442,6 +1443,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		}
 		logger.debug("timeCdMgr.getLateChkYn() : " + timeCdMgr.getLateChkYn() + " 가 Y면 지각 데이터 체크 ");
 		if(timeCdMgr.getLateChkYn().equalsIgnoreCase("Y")) {
+			dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
 			if(dayResults != null && dayResults.size() > 0) {
 				boolean isCreateLate = true;
 				Date minSdate = null;
