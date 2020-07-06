@@ -1216,12 +1216,12 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			}
 		} else {
 			logger.debug("rDt.compareTo(dt) :: " + rDt.compareTo(dt));
-			if(rDt.compareTo(dt) > -1) {
+			if(rDt.compareTo(dt) > 0) {
 				return dt;
 			} else {  
 				//단위 시간 적용
 				int calcM = m - m%unitMinute;
-				
+				calcM += unitMinute;
 				logger.debug("calcM : " + calcM);
 				
 				Calendar cal = Calendar.getInstance();
