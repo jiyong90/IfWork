@@ -1493,15 +1493,22 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			paramMap.put("eymd",eymd);
 			
 			boolean weekOtCheck = true;
-			
+
+			logger.debug("emp.getWorkTypeCd() : " + emp.getWorkTypeCd());
 			//연장근무 가능 시간을 가지고 오자
 			//선근제 이면
 			if(emp.getWorkTypeCd().startsWith("SELE")) {
 				//1주의 범위가 선근제 기간내에 있는지 체크
+				/*  20200707 JYP 선근제도 체크 한다. 단 기간을 주단위가 아닌 선근제 전체 기간으로 체크 한다.
 				if(Integer.parseInt(symd) >= Integer.parseInt(emp.getSymd() ) && Integer.parseInt(eymd) <= Integer.parseInt(emp.getEymd())) {
 					//선근제는 주단위 연장근무 시간을 체크하지 않는다.
-					weekOtCheck = false;
+					//weekOtCheck = false;  
+					
 				}
+				*/
+				paramMap.put("symd", emp.getSymd());
+				paramMap.put("eymd", emp.getEymd());
+				
 			}
 			
 			if(weekOtCheck) {
