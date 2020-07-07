@@ -493,4 +493,8 @@ public interface WtmFlexibleEmpMapper {
 	//로그확인용 임시
 	public Map<String, Object> getTemporaryWorkResult(Map<String, Object> paramMap);
 	
+	//인정되지 않은 계획 시간은 인정시간을 0으로 갱신한다. 
+	public void updateWtmWorkDayResultByApprMinuteIsNull(Map<String, Object> paramMap);
+	
+	
 }
