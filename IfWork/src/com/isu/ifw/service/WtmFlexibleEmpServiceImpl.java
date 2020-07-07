@@ -2585,7 +2585,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								applOtMin = 0;
 							}
 						}
-
+						//신청중인 휴일연장근무 시간을 분리... 소정근로시간부터 차감이 필요하기때문이다. 
 						if(weekInfo != null && weekInfo.get("applHolOtMinute") != null && !weekInfo.get("applHolOtMinute").equals("")) {
 							applHolOtMin = Integer.parseInt(weekInfo.get("applHolOtMinute")+"");
 							if(applHolOtMin == null) {
@@ -2599,6 +2599,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								otMin = 0;
 							}
 						}
+						//기 신청된 휴일 연장근무는 별도로 빼서 계산한다. 소정근로시간부터 차감해야하기 때문인다.
+						//휴일근로 인터페이스도 확인 필요
 						if(weekInfo != null && weekInfo.get("holOtMinute") != null && !weekInfo.get("holOtMinute").equals("")) {
 							holOtMin = Integer.parseInt(weekInfo.get("holOtMinute")+"");
 							if(holOtMin == null) {
