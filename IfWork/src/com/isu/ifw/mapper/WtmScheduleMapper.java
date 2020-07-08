@@ -12,6 +12,22 @@ public interface WtmScheduleMapper {
 	 * 일 퇴근마감
 	 **/
 	public List<Map<String, Object>> getWtmCloseDay(Map<String, Object> paramMap);
+	/**
+	 * 현지출퇴근 코드 매핑여부(근태코드 매핑없으면 현출, 현퇴기능없음)
+	 * @return 
+	 **/
+	public Map<String, Object> getTaaLocalCode(Map<String, Object> paramMap);
+	/**
+	 * 현퇴 대상 퇴근시간 갱신
+	 * @return 
+	 **/
+	public int setUpdateLocalOut(Map<String, Object> paramMap);
+	
+	/**
+	 * 현출 대상 출근시간 갱신
+	 * @return 
+	 **/
+	public int setUpdateLocalIn(Map<String, Object> paramMap);
 	
 	/**
 	 * 근무계획없음 일 퇴근마감
@@ -74,7 +90,7 @@ public interface WtmScheduleMapper {
 	 * 근태갱신대상
 	 * @return 
 	 **/
-	public int setDeleteTaaOld();
+	public int setDeleteTaaOld(Map<String, Object> paramMap);
 	
 	
 }

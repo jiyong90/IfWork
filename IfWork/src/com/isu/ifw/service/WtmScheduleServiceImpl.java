@@ -123,11 +123,30 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
     	// logger.debug("********** closeType : " + closeType);
     	//closeType = "A";
     	getDateMap = new HashMap();
-    	// beforeYmd = "20200520";
+    	// beforeYmd = "20200707";
     	// closeType = "A";
     	getDateMap.put("tenantId", tenantId);
     	getDateMap.put("ymd", beforeYmd);	// 마감은 전일임으로 계산된 전일을 셋팅해야함
     	getDateMap.put("closeType", closeType);
+    	
+    	// 현퇴사용여부, 현출사용여부를 조회하자
+    	String taaLocalOut = ""; // 현퇴근태코드
+    	String taaLocalIn = "";	// 현출근태코드
+    	HashMap<String, Object> getTaaMap = null;
+    	getTaaMap = (HashMap<String, Object>) wtmScheduleMapper.getTaaLocalCode(getDateMap);
+    	if(getTaaMap != null && getTaaMap.containsKey("localIn") && !getTaaMap.get("localIn").equals("")) {
+    		taaLocalIn = getTaaMap.get("localIn").toString();
+    	}
+    	if(getTaaMap != null && getTaaMap.containsKey("localOut") && !getTaaMap.get("localOut").equals("")) {
+    		taaLocalOut = getTaaMap.get("localOut").toString();
+    	}
+    	// 현퇴코드가 있으면 마감일 현퇴 퇴근시간 갱신
+    	if(!"".equals(taaLocalOut)) {
+    		getDateMap.put("taaLocalOut", taaLocalOut);
+    		logger.debug("schedule_closeday taaLocalOut : "+ getDateMap.toString());
+    		int cnt = wtmScheduleMapper.setUpdateLocalOut(getDateMap);
+    		logger.debug("schedule_closeday taaLocalOut cnt : "+ cnt);
+    	}
     	
     	// 타각갱신이 완료되면, 출퇴근 기록완성자의 근무시간을 갱신해야한다.
 		List<Map<String, Object>> closeList = new ArrayList();
@@ -154,6 +173,19 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 			}
 			logger.debug("schedule_closeday tenantId : "+ tenantId + " tot cnt" + closeList.size() + " end ");
 		}
+		
+		// 마감일+1 현출 갱신
+		// 현출코드가 있으면 마감일익일 현출 출근시간 갱신
+    	if(!"".equals(taaLocalIn)) {
+    		getDateMap.put("taaLocalIn", taaLocalIn);
+    		cal.setTime(today);
+    		String nextYmd = (sdf.format(cal.getTime())).substring(0, 8);
+    		// nextYmd = "20200708";	// 임시용
+    		getDateMap.put("nextYmd", nextYmd);
+    		logger.debug("schedule_closeday taaLocalIn : "+ getDateMap.toString());
+    		int cnt = wtmScheduleMapper.setUpdateLocalIn(getDateMap);
+    		logger.debug("schedule_closeday taaLocalIn cnt : "+ cnt);
+    	}
 	}
 	
 	@Override
@@ -568,23 +600,24 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 	@Transactional
 	@Async("threadPoolTaskExecutor")
 	public void setTaaReset() throws Exception {
+		logger.debug("[근태재갱신] ********************************");
 		HashMap<String, Object> getDateMap = new HashMap();
     	
     	// 근무제도 확정시 근태상태가 00으로 갱신된 근태정보를 읽어오자
 		List<Map<String, Object>> closeList = new ArrayList();
 		closeList = wtmScheduleMapper.getTaaReset();
-		
 		// 새로 근태갱신을 하자 99상태로 loop 돌리자
 		if(closeList != null && closeList.size() > 0) {
-			// 적용되었던 과거 근태를 삭제하자
-			int cnt = wtmScheduleMapper.setDeleteTaaOld();
-			logger.debug("setDeleteTaaOld : " + cnt);
 			// 일마감처리로 지각조퇴결근, 근무시간계산처리를 완료한다
 			for(int i=0; i<closeList.size(); i++) {
 				HashMap<String, Object> reqMap = new HashMap<>();
 				reqMap = (HashMap<String, Object>) closeList.get(i);
+				// 적용되었던 과거 근태를 삭제하자
 				logger.debug("setTaaApplIf call : " + reqMap.toString());
+				int cnt = wtmScheduleMapper.setDeleteTaaOld(reqMap);
+				logger.debug("setDeleteTaaOld : " + cnt);
 				WtmInterfaceService.setTaaApplIf(reqMap); //근태정보 인터페이스
+				logger.debug("setTaaApplIf END");
 			}
 		}
 	}
