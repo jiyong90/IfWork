@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.WtmFlexibleEmpCalc;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmTaaCode;
 import com.isu.ifw.entity.WtmTimeBreakMgr;
@@ -24,6 +25,7 @@ import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmCalcMapper;
+import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmTaaCodeRepository;
 import com.isu.ifw.repository.WtmTimeBreakMgrRepository;
@@ -48,6 +50,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	@Autowired
 	private WtmFlexibleStdMgrRepository flexibleStdMgrRepo;
 	
+	@Autowired
+	private WtmFlexibleEmpRepository flexibleEmpRepo;
+
 	@Autowired 
 	private WtmTimeBreakMgrRepository timebreakMgrRepo;
 	
@@ -71,7 +76,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		paramMap.put("ymd", ymd);
 		
 		ObjectMapper mapper = new ObjectMapper();
-		WtmFlexibleInfoVO flexInfo = calcMapper.getTotalWorkMinuteAndRealWorkMinute(paramMap);
+
+		WtmFlexibleEmpCalc flexInfo = flexibleEmpRepo.getTotalWorkMinuteAndRealWorkMinute(tenantId, enterCd, sabun, ymd);
+//		WtmFlexibleInfoVO flexInfo = calcMapper.getTotalWorkMinuteAndRealWorkMinute(paramMap);
 		try {
 			logger.debug("CREATE_F :: workMinuteMap = " + mapper.writeValueAsString(flexInfo));
 		} catch (JsonProcessingException e) {
@@ -82,7 +89,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			// ymd가 속한 근무제의 총 소정근로 시간.
 			int workMinute = flexInfo.getWorkMinute();
 			// ymd가 속한 근무제의 인정 소정근로 시간.
-			int sumWorkMinute = flexInfo.getSumWorkMinute();
+			int sumWorkMinute = flexInfo.getWorkHour() - flexInfo.getBreakhour();
+			//int sumWorkMinute = flexInfo.getSumWorkMinute();
 			
 			logger.debug("CREATE_F :: workMinute = " + workMinute);
 			logger.debug("CREATE_F :: sumWorkMinute = " + sumWorkMinute);
@@ -269,15 +277,21 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		paramMap.put("ymd", ymd);
 		paramMap.put("sYmd", ymd);
 		paramMap.put("eYmd", ymd);
+
+		WtmFlexibleEmpCalc flexInfo = flexibleEmpRepo.getTotalWorkMinuteAndRealWorkMinute(tenantId, enterCd, sabun, ymd);
+		System.out.println("**************flexInfo " + flexInfo.toString());
 		
-		
-		WtmFlexibleInfoVO flexInfo = calcMapper.getTotalWorkMinuteAndRealWorkMinute(paramMap);
-		logger.debug("flexInfo :: WtmFlexibleInfoVO " + flexInfo.toString());
+//		WtmFlexibleInfoVO flexInfo = calcMapper.getTotalWorkMinuteAndRealWorkMinute(paramMap);
+//		logger.debug("flexInfo :: WtmFlexibleInfoVO " + flexInfo.toString());
 		if(flexInfo != null) {
-			// ymd가 속한 근무제의 총 소정근로 시간.
 			int workMinute = flexInfo.getWorkMinute();
-			// ymd가 속한 근무제의 인정 소정근로 시간.
-			int sumWorkMinute = flexInfo.getSumWorkMinute() + addSumWorkMinute;
+			int sumWorkMinute = (flexInfo.getWorkHour() - flexInfo.getBreakhour()) + addSumWorkMinute;
+	
+//			// ymd가 속한 근무제의 총 소정근로 시간.
+//			int workMinute = flexInfo.getWorkMinute();
+//			// ymd가 속한 근무제의 인정 소정근로 시간. -- 9840
+//			int sumWorkMinute = (flexInfo.getOtMinute() - Integer.parseInt(flexInfo.getNote())) + addSumWorkMinute;
+//			int sumWorkMinute = flexInfo.getSumWorkMinute() + addSumWorkMinute;
 			
 			WtmFlexibleInfoVO calendarMap = calcMapper.getCalendarInfoByYmdAndEntryIsNotNullAndisNotHoliday(paramMap);
 			try {
@@ -312,7 +326,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							 * P_WTM_WORK_DAY_RESULT_CREATE_T
 							 */
 							int addApprMinute = this.P_WTM_WORK_DAY_RESULT_CREATE_T(flexibleStdMgr, tenantId, enterCd, sabun, ymd, timeCdMgrId, entrySdate, entryEdate, unitMinute, WtmApplService.TIME_TYPE_BASE, breakTypeCd, workMinute, sumWorkMinute, userId);
-							
+								
 							/**
 							 *  if v_work_minute <= v_sum_work_minute then 이부분 해야한다.
 							 */
@@ -326,7 +340,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							logger.debug("CREATE_N :: sumWorkMinute = " + sumWorkMinute);
 							sumWorkMinute = sumWorkMinute + addApprMinute;
 							logger.debug("CREATE_N :: sumWorkMinute = " + sumWorkMinute);
-							if( workMinute < sumWorkMinute ) {
+							if( addApprMinute > 0 ) {
+								
 								this.P_WTM_WORK_DAY_RESULT_CREATE_N(flexibleStdMgr, tenantId, enterCd, sabun, ymd, addApprMinute,  "RECALL_" + userId);
 								return;
 							}
@@ -844,7 +859,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			
 		}
 	}
-
+	
 	@Transactional
 	@Override
 	public int P_WTM_WORK_DAY_RESULT_CREATE_T(WtmFlexibleStdMgr flexibleStdMgr, Long tenantId, String enterCd, String sabun, String ymd, Long timeCdMgrId, Date entrySdate, Date entryEdate, int unitMinute, String timeTypeCd, String breakTypeCd, int limitMinute, int useMinute, String userId) {
@@ -974,11 +989,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			
 			workDayResultRepo.save(res);
 			
-			
 			if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
 				// workDayResult 에 휴게시간을 만들어 준다. 
 				this.createWorkDayResultForBreakTime(tenantId, enterCd, sabun, ymd, (timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE))?"BREAK":"BREAK_FIXOT", "APPR", breakMinute, userId);
 			}
+			
 		}
 		}catch(Exception e) {
 			e.printStackTrace();
