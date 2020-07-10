@@ -2077,7 +2077,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     	Map<String, Object> ifHisMap = new HashMap<>();
     	ifHisMap.put("tenantId", tenantId);
     	ifHisMap.put("ifItem", ifType);
-    	
+    	ifHisMap.put("ifStatus", "OK");
     	// 인터페이스용 변수
     	String lastDataTime = null;
     	String nowDataTime = null;
@@ -2099,6 +2099,40 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		   		if (getIfMap != null && getIfMap.size() > 0) {
 		   			String ifMsg = getIfMap.get("message").toString();
 		   			getIfList = (List<Map<String, Object>>) getIfMap.get("ifData");
+		   	    	if(retMsg == null && getIfList != null && getIfList.size() > 0) {
+		   	    		System.out.println("WtmInterfaceServiceImpl tot " + getIfList.size());
+		   	    		
+		   				SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+		   				sdf.format(new Date());
+		   				String yyyymmddhhmiss= sdf.format(new Date());
+		   				
+		   	    		for(int l=0; l<getIfList.size(); l++) {
+		   	    			WtmIfTaaHis data = new WtmIfTaaHis();
+		   	    			data.setTenantId(tenantId);
+		   	    			data.setEnterCd(getIfList.get(l).get("ENTER_CD").toString());
+		   	    			data.setSabun(getIfList.get(l).get("SABUN").toString());
+		   	    			data.setStartYmd(getIfList.get(l).get("S_YMD").toString());
+		   	    			data.setEndYmd(getIfList.get(l).get("E_YMD").toString());
+		   	    			data.setWorkTimeCode(getIfList.get(l).get("GNT_CD").toString());
+		   	    			data.setIfYmdhis(yyyymmddhhmiss);
+		   	    			if(getIfList.get(l).get("REQ_S_HM") != null) {
+		   	    				data.setStartHm(getIfList.get(l).get("REQ_S_HM").toString());
+		   	    			} else {
+		   	    				data.setStartHm("");
+		   	    			}
+		   	    			if(getIfList.get(l).get("REQ_E_HM") != null) {
+		   	    				data.setEndHm(getIfList.get(l).get("REQ_E_HM").toString());
+		   	    			} else {
+		   	    				data.setEndHm("");
+		   	    			}
+		   	    			data.setApplNo(getIfList.get(l).get("APPL_SEQ").toString());
+		   	    			data.setStatus(getIfList.get(l).get("APPL_STATUS_CD").toString());
+		   	    			data.setIfStatus("");
+		   	    			data.setIfMsg("");
+		   	    			wtmIfTaaHisRepo.save(data);
+		   	    			System.out.println("WtmInterfaceServiceImpl get " + l + " "+ data.toString());
+		   	    		}
+		   	    	}
 		   		} else {
 		   			retMsg = "TAA_RESULT get : If 데이터 없음";
 		   			ifHisMap.put("ifStatus", "OK");
@@ -2111,44 +2145,14 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     	} catch(Exception e) {
     		retMsg = "TAA_RESULT get : 최종갱신일 조회오류";
     		ifHisMap.put("ifStatus", "ERR");
-    	}
-    	
-    	if(retMsg == null && getIfList != null && getIfList.size() > 0) {
-    		System.out.println("WtmInterfaceServiceImpl tot " + getIfList.size());
-    		
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-			sdf.format(new Date());
-			String yyyymmddhhmiss= sdf.format(new Date());
-			
-    		for(int l=0; l<getIfList.size(); l++) {
-    			WtmIfTaaHis data = new WtmIfTaaHis();
-    			data.setTenantId(tenantId);
-    			data.setEnterCd(getIfList.get(l).get("ENTER_CD").toString());
-    			data.setSabun(getIfList.get(l).get("SABUN").toString());
-    			data.setStartYmd(getIfList.get(l).get("S_YMD").toString());
-    			data.setEndYmd(getIfList.get(l).get("E_YMD").toString());
-    			data.setWorkTimeCode(getIfList.get(l).get("GNT_CD").toString());
-    			data.setIfYmdhis(yyyymmddhhmiss);
-    			if(getIfList.get(l).get("REQ_S_HM") != null) {
-    				data.setStartHm(getIfList.get(l).get("REQ_S_HM").toString());
-    			} else {
-    				data.setStartHm("");
-    			}
-    			if(getIfList.get(l).get("REQ_E_HM") != null) {
-    				data.setEndHm(getIfList.get(l).get("REQ_E_HM").toString());
-    			} else {
-    				data.setEndHm("");
-    			}
-    			data.setApplNo(getIfList.get(l).get("APPL_SEQ").toString());
-    			data.setStatus(getIfList.get(l).get("APPL_STATUS_CD").toString());
-    			data.setIfStatus("");
-    			data.setIfMsg("");
-    			wtmIfTaaHisRepo.save(data);
-    			System.out.println("WtmInterfaceServiceImpl get " + l + " "+ data.toString());
-    			
-    		}
-    		
-    	}
+    	} finally {
+			// WTM_IF_HIS 테이블에 결과저장
+			ifHisMap.put("updateDate", nowDataTime);
+   			ifHisMap.put("ifEndDate", lastDataTime);
+			ifHisMap.put("ifMsg", retMsg);
+			wtmInterfaceMapper.insertIfHis(ifHisMap);
+		} 
+		
     	//여기서부터다 바꿔
     	/*
     	//조회된 자료가 있으면...
