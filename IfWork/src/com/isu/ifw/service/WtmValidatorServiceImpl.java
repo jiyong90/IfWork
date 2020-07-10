@@ -12,7 +12,8 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.entity.WtmAppl;
+import com.isu.ifw.entity.WtmFlexibleEmp;
+import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmPropertie;
 import com.isu.ifw.entity.WtmTaaCode;
 import com.isu.ifw.entity.WtmWorkCalendar;
@@ -307,6 +308,10 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
 		
+		if(tenantId == 22) {	// 20200710 전영수과장 근무시간체크 해제요청(이효정메일전달)
+			return rp;
+		}
+		
 		String sDate = null;
 		String eDate = null;
 		int i = 0;
@@ -328,6 +333,7 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		
 		Map<String, Object> paramMap = null;
 		List<Map<String, Object>> applMinutes = new ArrayList<Map<String, Object>>();
+		String taaWorkYn = "Y";	// 선근제 체크용
 		for(Map<String, Object> a : appl) {
 			String workTimeCode = a.get("workTimeCode").toString();
 			String symd = a.get("startYmd").toString();
@@ -382,22 +388,27 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 			do {
 				String ymd = WtmUtil.parseDateStr(s, "yyyyMMdd");
 				paramMap.put("ymd", ymd);
-				
+				// WtmFlexibleEmp flexibleEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, ymd);
+				WtmFlexibleStdMgr flexibleStdMgr = flexStdMgrRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, ymd);
+				taaWorkYn = flexibleStdMgr.getTaaWorkYn();
 				WtmWorkCalendar workCalendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
 				if("Y".equals(taaCode.getHolInclYn()) || ( "N".equals(taaCode.getHolInclYn()) && "N".equals(workCalendar.getHolidayYn()) )) {
-					//1.근무 계획 시간보다 근태 신청 시간이 더 큰지 체크
-					Map<String, Object> m = validatorMapper.checkApplMinute(paramMap);
+					// 선근제는 해당없음. 전체구간을 검증할꺼니깐 시간가산만 하자
+					if(!"SELE_C".equals(flexibleStdMgr.getWorkTypeCd()) && !"SELE_F".equals(flexibleStdMgr.getWorkTypeCd())){
+						//1.근무 계획 시간보다 근태 신청 시간이 더 큰지 체크
+						Map<String, Object> m = validatorMapper.checkApplMinute(paramMap);
+						
+						if(m==null) {
+							rp.setFail( WtmUtil.parseDateStr(s, "yyyy-MM-dd") +"의 근무 시간 정보가 존재하지 않습니다.");
+							return rp;
+						} 
+						
+						if("N".equals(m.get("isValid").toString())) {
+							rp.setFail(m.get("empNm").toString()+"("+sabun+") "+ WtmUtil.parseDateStr(s, "yyyy-MM-dd") +"의 신청 시간이 근무 시간을 초과할 수 없습니다.");
+							return rp;
+						}
 					
-					if(m==null) {
-						rp.setFail( WtmUtil.parseDateStr(s, "yyyy-MM-dd") +"의 근무 시간 정보가 존재하지 않습니다.");
-						return rp;
-					} 
-					
-					if("N".equals(m.get("isValid").toString())) {
-						rp.setFail(m.get("empNm").toString()+"("+sabun+") "+ WtmUtil.parseDateStr(s, "yyyy-MM-dd") +"의 신청 시간이 근무 시간을 초과할 수 없습니다.");
-						return rp;
 					}
-					
 					Map<String, Object> applMinMap = new HashMap<String, Object>();
 					applMinMap.put("ymd", ymd);
 					applMinMap.put("applMinute", applMinute);
@@ -428,7 +439,9 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		paramMap.put("sabun", sabun);
 		paramMap.put("symd", sDate);
 		paramMap.put("eymd", eDate);
+		paramMap.put("taaWorkYn", taaWorkYn);	// 근무시간가산여부(가산이 아니면 해당기간 기본근무 빼고 계산해야함)
 		paramMap.put("applMinutes", applMinutes);
+		System.out.println("*********** paramMap : " + paramMap.toString());
 		List<Map<String, Object>> results = validatorMapper.checkTotalWorkMinuteForSele(paramMap);
 		
 		ObjectMapper mapper = new ObjectMapper();
