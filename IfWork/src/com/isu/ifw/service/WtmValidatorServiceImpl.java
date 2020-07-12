@@ -193,6 +193,13 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 	public ReturnParam worktimeValid(Long tenantId, String enterCd, String applNo, List<Map<String, Object>> works, String applSabun) {
 		ReturnParam rp = new ReturnParam();
 		
+		// 20200710 전영수과장 근무시간체크 해제요청(이효정메일전달)
+		// 20200713 현대ngv 연동시 벨리데이션 전부 해제
+		if(tenantId == 22) {	
+			rp.setSuccess("");
+			return rp;
+		}
+		
 		if(works!=null && works.size()>0) {
 			for(Map<String, Object> w : works) {
 				
@@ -307,10 +314,6 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 	protected ReturnParam checkWorktimeTaaAppl(Long tenantId, String enterCd, String sabun, List<Map<String, Object>> appl) {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
-		
-		if(tenantId == 22) {	// 20200710 전영수과장 근무시간체크 해제요청(이효정메일전달)
-			return rp;
-		}
 		
 		String sDate = null;
 		String eDate = null;
