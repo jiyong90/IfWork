@@ -128,7 +128,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
     	//closeType = "A";
     	getDateMap = new HashMap();
     	// beforeYmd = "20200710";
-    	// closeType = "C";
+    	// closeType = "A";
     	getDateMap.put("tenantId", tenantId);
     	getDateMap.put("ymd", beforeYmd);	// 마감은 전일임으로 계산된 전일을 셋팅해야함
     	getDateMap.put("closeType", closeType);
@@ -274,7 +274,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
     	// logger.debug("********** closeType : " + closeType);
     	
     	getDateMap = new HashMap();
-    	// beforeYmd = "20200630";
+    	// beforeYmd = "20200703";
     	// closeType = "A";
     	getDateMap.put("tenantId", tenantId);
     	getDateMap.put("ymd", beforeYmd);	// 마감은 전일임으로 계산된 전일을 셋팅해야함
@@ -304,12 +304,12 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 				
 				if(gooutCnt > 0) {
 					// create result 호출
-        			WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, ymd);
+        			WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, closeymd);
     				if(flexEmp == null) {
     					continue;
     				}
         			WtmFlexibleStdMgr flexStdMgr = flexStdMgrRepo.findById(flexEmp.getFlexibleStdMgrId()).get();
-        			calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, tenantId, enterCd, sabun, ymd, 0, sabun);
+        			calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, tenantId, enterCd, sabun, closeymd, 0, sabun);
         			
         			// wtmFlexibleEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(l);
         			
@@ -323,7 +323,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 		    				WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
 		    						  tenantId
 		    						, enterCd
-		    						, ymd
+		    						, closeymd
 		    						, sabun
 		    						, f.get("timeTypeCd").toString()
 		    						, ""
@@ -336,7 +336,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
         			}
         		}
 				// 일마감생성
-				WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
+				WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, closeymd, closeymd, sabun);
 				// 근무계획시간 합산
 				wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(l);
 			}

@@ -194,7 +194,7 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		ReturnParam rp = new ReturnParam();
 		
 		// 20200710 전영수과장 근무시간체크 해제요청(이효정메일전달)
-		// 20200713 현대ngv 연동시 벨리데이션 전부 해제
+		// 20200713 현대ngv 연동시 벨리데이션 전부 해제(취소건 벨리데이션 분리 후 삭제예정)
 		if(tenantId == 22) {	
 			rp.setSuccess("");
 			return rp;
@@ -315,6 +315,11 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
 		
+		// 20200710 전영수과장 근무시간체크 해제요청(이효정메일전달)
+		if(tenantId == 22) {	
+			return rp;
+		}
+				
 		String sDate = null;
 		String eDate = null;
 		int i = 0;

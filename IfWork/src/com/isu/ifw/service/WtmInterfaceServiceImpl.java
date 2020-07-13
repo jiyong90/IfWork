@@ -1973,6 +1973,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 								
 								System.out.println("taaSdate : " + taaSdate);
 								System.out.println("taaEdate : " + taaEdate);
+								String chkYmd = WtmUtil.parseDateStr(new Date(), null);
 								if("99".equals(nowApplStatusCd)) {
 									// 근태생성
 									//(Long tenantId, String enterCd, String ymd, String sabun, String addTimeTypeCd, String addTaaCd,
@@ -2002,8 +2003,6 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 											, dt.parse(taaEdate)
 											, Long.parseLong(taaDetMap.get("applId").toString())
 											, "TAAIF");
-									
-									String chkYmd = WtmUtil.parseDateStr(new Date(), null);
 					        		
 					        		// 오늘 이전이면 근무마감을 다시 돌려야함.
 									if (Integer.parseInt(chkYmd) > Integer.parseInt(taaDetMap.get("ymd").toString())) {
@@ -2027,12 +2026,15 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 											, dt.parse(taaEdate)
 											, Long.parseLong(taaDetMap.get("applId").toString())
 											, "TAAIF");
-									//취소는 무조건 재계산해주자
-									WtmFlexibleEmpService.calcApprDayInfo(Long.parseLong(taaDetMap.get("tenantId").toString())
-											 , taaDetMap.get("enterCd").toString()
-											 , taaDetMap.get("ymd").toString()
-											 , taaDetMap.get("ymd").toString()
-											 , taaDetMap.get("sabun").toString());
+									
+									// 오늘 이전이면 근무마감을 다시 돌려야함.
+									if (Integer.parseInt(chkYmd) > Integer.parseInt(taaDetMap.get("ymd").toString())) {
+						        		WtmFlexibleEmpService.calcApprDayInfo(Long.parseLong(taaDetMap.get("tenantId").toString())
+						        											 , taaDetMap.get("enterCd").toString()
+						        											 , taaDetMap.get("ymd").toString()
+						        											 , taaDetMap.get("ymd").toString()
+						        											 , taaDetMap.get("sabun").toString());
+									}
 								}
 								
 								// 근무시간합산은 재정산한다
