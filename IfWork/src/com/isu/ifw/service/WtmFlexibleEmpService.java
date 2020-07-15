@@ -5,7 +5,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.isu.ifw.vo.WtmDayWorkVO;
+import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmOtAppl;
+import com.isu.ifw.entity.WtmTimeCdMgr;
+import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.vo.ReturnParam;
 
 /**
@@ -191,7 +194,15 @@ public interface WtmFlexibleEmpService {
 	 * 타각시간 기준으로 인정시간 계산
 	 */
 	void calcApprDayInfo(Long tenantId, String enterCd, String sYmd, String eYmd, String sabun);
-	
+	/**
+	 * 지각 조퇴 데이터삭제
+	 * @param tenantId
+	 * @param enterCd
+	 * @param sabun
+	 * @param ymd
+	 */
+	public void calcApprDayInfo1(Long tenantId, String enterCd, String sabun, String ymd);
+	public void calcApprDayInfo2(WtmWorkCalendar calendar,WtmFlexibleStdMgr flexStdMgr,WtmTimeCdMgr timeCdMgr);
 	/**
 	 * BASE,OT,FIXOT,NIGHT 근무시간에 대해 add 로 들어오는 타임 구간을 잘라서 만들어 준다. 
 	 * @param tenantId

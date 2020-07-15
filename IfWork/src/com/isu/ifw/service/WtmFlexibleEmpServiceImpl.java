@@ -1268,6 +1268,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			}
 		}
 	}
+	@Override
 	public void calcApprDayInfo1(Long tenantId, String enterCd, String sabun, String ymd) {
 		
 		List<String> timeTypeCd = new ArrayList<>();
@@ -1284,10 +1285,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				workDayResultRepo.deleteAll(result);
 			}
 
-			workDayResultRepo.flush();
-			result.clear();
+			//workDayResultRepo.flush();
+			//result.clear();
 			
-		}else {
+		}
+		/*else {
 			//try { logger.debug("workDayResultRepo.findByTenantIdAndEnterCdAndTimeTypeCdInAndYmdBetween ", "tenantId : " + tenantId + ", enterCd : " +  enterCd +", sabun : " + sabun + ", timeTypeCd : " + mapper.writeValueAsString(timeTypeCd) + ", calendar.getYmd() : " + calendar.getYmd(), "findByTenantIdAndEnterCdAndTimeTypeCdInAndYmdBetween"); } catch (JsonProcessingException e) { e.printStackTrace(); }
 			List<WtmWorkDayResult> result = workDayResultRepo.findByTenantIdAndEnterCdAndTimeTypeCdInAndYmdBetween(tenantId, enterCd, timeTypeCd, ymd, ymd);
 			logger.debug("result.size > deleteAll", result.size());
@@ -1301,11 +1303,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 			
 		}  
+		*/
 	}
 	
 	/**
 	 * 타각시간 기준으로 인정시간 계산
 	 */
+	@Override
 	public void calcApprDayInfo2(WtmWorkCalendar calendar,WtmFlexibleStdMgr flexStdMgr,WtmTimeCdMgr timeCdMgr) {
 		
 		
