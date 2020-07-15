@@ -1273,6 +1273,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		List<String> timeTypeCd = new ArrayList<>();
 		timeTypeCd.add(WtmApplService.TIME_TYPE_LLA);
+		timeTypeCd.add(WtmApplService.TIME_TYPE_EXCEPT);
 		
 		logger.debug("1. 지각 조퇴 무단결근 데이터 삭제 ", "timeTypeCd : " + WtmApplService.TIME_TYPE_LLA + ", sabun : " + sabun);
 		//지각 조퇴 무단결근 데이터 삭제
@@ -1400,7 +1401,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//소정근로시간의 경우 출퇴근 타각기록으로만 판단 >> 결근 데이터가 있는 날은 빼야한다.
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 		paramMap.put("taaCd", absenceTaaCode.getTaaCd());
+<<<<<<< HEAD
 
+=======
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 		
 		if(flexStdMgr.getWorkTypeCd().equals("SELE_F")) {
 			try { logger.debug("9. APPLY_ENTRY_SDATE_YN / APPLY_ENTRY_EDATE_YN 여부에 따라 타각 시간을 계획시간으로 업데이트 한다. 그리고 인정시간을 다시 계산한다. 계획시간이 변경되었기 때문에 ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_CREATE_F"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
