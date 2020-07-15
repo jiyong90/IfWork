@@ -950,8 +950,8 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		
 		return workList;
 	}
-	
-	protected void updateWtmFlexibleApplyDet(List<WtmFlexibleApplyDet> applyDets, String userId) {
+
+	protected void updateWtmFlexibleApplyDet(Long tenantId, String enterCd, Long flexibleStdMgrId, List<WtmFlexibleApplyDet> applyDets, String userId) {
 		
 		if(applyDets!=null && applyDets.size()>0) {
 			for(WtmFlexibleApplyDet d : applyDets) {
@@ -959,8 +959,8 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				Date planEdate = d.getPlanEdate();
 				
 				if(planSdate!=null && planEdate!=null) {
-					String pSdate = WtmUtil.parseDateStr(planSdate, "yyyyMMddHHmm");
-					String pEdate = WtmUtil.parseDateStr(planEdate, "yyyyMMddHHmm");
+					String pSdate = WtmUtil.parseDateStr(planSdate, "yyyyMMddHHmmss");
+					String pEdate = WtmUtil.parseDateStr(planEdate, "yyyyMMddHHmmss");
 					
 					Map<String, Object> paramMap = new HashMap<>();
 					paramMap.put("ymd", d.getYmd());
@@ -971,28 +971,33 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 					d.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
 					
 					if(d.getOtbMinute()!=0) {
-						Map<String, Object> otbMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), d.getYmd(), pSdate, pEdate, "OTB", d.getOtbMinute(), userId);
+						//조출시간, 잔업시간 분을 통한 시간 알아오기
+						Map<String, Object> otbMinuteMap = flexibleEmpService.calcOtMinuteAddBreaktimeForElas(tenantId, enterCd, d.getTimeCdMgrId(), pSdate, "OTB", d.getOtbMinute(), userId);
+						//Map<String, Object> otbMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), d.getYmd(), pSdate, pEdate, "OTB", d.getOtbMinute(), userId);
 						
 						if(otbMinuteMap!=null) {
-							Date otbSdate = WtmUtil.toDate(otbMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
-							Date otbEdate = WtmUtil.toDate(otbMinuteMap.get("eDate").toString(), "yyyyMMddHHmmss");
+							Date otbSdate = WtmUtil.toDate(otbMinuteMap.get("retDate").toString(), "yyyyMMddHHmmss");
+							Date otbEdate = WtmUtil.toDate(pSdate, "yyyyMMddHHmmss");
 							
 							d.setOtbSdate(otbSdate);
 							d.setOtbEdate(otbEdate);
-							d.setOtbMinute(Integer.parseInt(otbMinuteMap.get("calcMinute").toString()));
+							d.setOtbMinute(Integer.parseInt(d.getOtbMinute().toString()));
 						}	
 					}
 					
 					if(d.getOtaMinute()!=0) {
-						Map<String, Object> otaMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), d.getYmd(), pSdate, pEdate, "OTA", d.getOtaMinute(), userId);
+						
+						//조출시간, 잔업시간 분을 통한 시간 알아오기
+						Map<String, Object> otaMinuteMap = flexibleEmpService.calcOtMinuteAddBreaktimeForElas(tenantId, enterCd, d.getTimeCdMgrId(), pEdate, "OTA", d.getOtaMinute(), userId);
+						//Map<String, Object> otaMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), d.getYmd(), pSdate, pEdate, "OTA", d.getOtaMinute(), userId);
 						
 						if(otaMinuteMap!=null) {
-							Date otaSdate = WtmUtil.toDate(otaMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
-							Date otaEdate = WtmUtil.toDate(otaMinuteMap.get("eDate").toString(), "yyyyMMddHHmmss");
+							Date otaSdate = WtmUtil.toDate(pEdate, "yyyyMMddHHmmss");
+							Date otaEdate = WtmUtil.toDate(otaMinuteMap.get("retDate").toString(), "yyyyMMddHHmmss");
 							
 							d.setOtaSdate(otaSdate);
 							d.setOtaEdate(otaEdate);
-							d.setOtaMinute(Integer.parseInt(otaMinuteMap.get("calcMinute").toString()));
+							d.setOtaMinute(Integer.parseInt(d.getOtaMinute().toString()));
 						}
 					}
 						
@@ -1012,7 +1017,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		
 		//계획 생성
 		List<WtmFlexibleApplyDet> applyDets = saveWtmFlexibleApplyDet(tenantId, enterCd, flexibleApplyId, flexibleStdMgrId, sYmd, eYmd, null, userId);
-		updateWtmFlexibleApplyDet(applyDets, userId);
+		updateWtmFlexibleApplyDet(tenantId, enterCd, flexibleStdMgrId, applyDets, userId);
 	}
 	
 	@Transactional

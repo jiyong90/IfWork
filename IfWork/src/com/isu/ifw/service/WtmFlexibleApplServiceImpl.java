@@ -655,11 +655,11 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 							workMinute = Integer.parseInt(w.get("workMinute").toString());
 							sumWorkMinute += workMinute;
 							
-							if(day>14 && (workMinute/60) > Integer.parseInt(max2weekMorethen)) {
+							if(day>14 && ((float)workMinute/60) > Integer.parseInt(max2weekMorethen)) {
 								rp.setFail("2주 이상 탄근제는 주간 최대 "+max2weekMorethen+"시간을 초과할 수 없습니다.");
 								return rp;
 							}
-							if(day<=14 && (workMinute/60) > Integer.parseInt(max2weekWithin)) {
+							if(day<=14 && ((float)workMinute/60) > Integer.parseInt(max2weekWithin)) {
 								rp.setFail("2주 이내 탄근제는 주간 최대 "+max2weekWithin+"시간을 초과할 수 없습니다.");
 								return rp;
 							}
@@ -669,13 +669,13 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 						if(w.get("otMinute")!=null && !"".equals(w.get("otMinute"))) 
 							otMinute = Integer.parseInt(w.get("otMinute").toString());
 						
-						if((otMinute/60) > 12) {
+						if(((float)otMinute/60) > 12) {
 							rp.setFail("연장 근무는 주 12시간을 초과할 수 없습니다.");
 							return rp;
 						}
 					}
 					
-					if(sumWorkMinute>0 && (sumWorkMinute/day*7)/60>40) {
+					if(sumWorkMinute>0 && ((float)sumWorkMinute/day*7)/60>40) {
 						rp.setFail("소정 근무는 평균 40시간을 초과할 수 없습니다.");
 						return rp;
 					} 
