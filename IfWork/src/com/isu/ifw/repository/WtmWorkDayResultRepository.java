@@ -77,4 +77,30 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 	@Query("SELECT D FROM WtmWorkDayResult D JOIN WtmWorkCalendar C ON D.tenantId = C.tenantId AND D.enterCd = C.enterCd AND D.ymd = C.ymd AND D.sabun = C.sabun WHERE C.tenantId = ?1 AND C.enterCd = ?2 AND C.sabun = ?3 AND C.ymd = ?4 AND D.timeTypeCd = ?5 AND C.entrySdate IS NOT NULL AND C.entryEdate IS NOT NULL AND D.planSdate IS NOT NULL AND D.planEdate IS NOT NULL")
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull( Long tenantId, String enterCd, String sabun, String ymd, String timeTypeCd);
 	
+
+	@Modifying
+	@Query("UPDATE WtmFlexibleStdMgr M JOIN WtmFlexibleEmp E ON E.flexibleStdMgrId = M.flexibleStdMgrId " + 
+			" JOIN WtmWorkCalendar C " + 
+			"   ON E.tenantId = C.tenantId " + 
+			"  AND E.enterCd = C.enterCd " + 
+			"  AND E.sabun = C.sabun AND C.ymd BETWEEN E.symd AND E.eymd " + 
+			" JOIN wtmWorkDayResult R ON C.tenantId = R.tenantId " + 
+			"  AND C.enterCd = R.enterCd AND C.ymd = R.ymd AND C.sabun = R.sabun " +
+			"    , R.udpateDate = now() , R.updateId = 'updateApprDateTimeBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd' " +
+			"WHERE C.tenantId = :tenantId " + 
+			"   AND C.enterCd = :enterCd " + 
+			"   AND C.ymd BETWEEN :ymd AND :ymd " + 
+			"   AND C.entryEdate >= R.planSdate " + 
+			"   AND C.entrySdate <= R.planEdate " + 
+			"   AND C.entrySdate IS NOT NULL AND C.entryEdate IS NOT NULL " + 
+			"   AND C.ymd NOT IN " + 
+			"   (SELECT S.ymd FROM " + 
+			"   	(SELECT DISTINCT SR.ymd " + 
+			"   	   FROM wtmWorkDayResult SR WHERE SR.tenantId = :tenantId " + 
+			"   		AND SR.enterCd = :enterCd AND SR.sabun =  :sabun " + 
+			"   		AND SR.timeTypeCd = :timeTypeCd " + 
+			"   		AND SR.taaCd = :taaCd AND SR.ymd BETWEEN :ymd AND :ymd ) S ) " + 
+			"   		AND (C.sabun =  :sabun OR :sabun = '' OR  :sabun IS NULL) AND R.timeTypeCd NOT IN ('TAA', 'SUBS')")
+	public int updateApprDateTimeBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd(@Param(value="tenantId") Long tenantId, @Param(value="enterCd") String enterCd, @Param(value="ymd") String ymd, @Param(value="timeTypeCd") String timeTypeCd, @Param(value="taaCd") String taaCd, @Param(value="sabun") String sabun );
+	
 }
