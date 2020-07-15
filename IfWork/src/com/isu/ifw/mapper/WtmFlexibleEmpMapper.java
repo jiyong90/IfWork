@@ -497,4 +497,32 @@ public interface WtmFlexibleEmpMapper {
 	public void updateWtmWorkDayResultByApprMinuteIsNull(Map<String, Object> paramMap);
 	
 	
+	/**
+	 * 탄근제 계획시간으로 ot시간 조회
+	 * @param paramMap
+	 * tableName
+	 * key
+	 * value
+	 * otType : OTA(연장)
+	 * sDate 탄근제 계획 시작시간
+	 * eDate 탄근제 계획 종료시간
+	 * minute ot시간(분)
+	 * @return
+	 */
+	public Map<String, Object> getElasOtaHm(Map<String, Object> paramMap);
+	
+	/**
+	 * 탄근제 계획시간으로 ot시간 조회
+	 * @param paramMap
+	 * tableName
+	 * key
+	 * value
+	 * otType : OTB(조출)
+	 * sDate 탄근제 계획 시작시간
+	 * eDate 탄근제 계획 종료시간
+	 * minute ot시간(분)
+	 * @return
+	 */
+	public Map<String, Object> getElasOtbHm(Map<String, Object> paramMap);
+	
 }
