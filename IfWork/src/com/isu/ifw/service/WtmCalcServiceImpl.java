@@ -359,7 +359,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					logger.debug("CREATE_N :: defaultWorkUseYn = " + defaultWorkUseYn);
 					logger.debug("CREATE_N :: fixotUseType = " + fixotUseType);
 					if(defaultWorkUseYn.equals("Y") && fixotUseType.equals("ALL")) {
-						List<WtmWorkDayResult> dayResult = workDayResultRepo.findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmd(WtmApplService.TIME_TYPE_BASE, tenantId, enterCd, sabun, ymd);
+						//List<WtmWorkDayResult> dayResult = workDayResultRepo.findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmd(WtmApplService.TIME_TYPE_BASE, tenantId, enterCd, sabun, ymd);
+						List<WtmWorkDayResult> dayResult = workDayResultRepo.findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmdAndApprSdateIsNotNullOrderByApprSdateAsc(WtmApplService.TIME_TYPE_BASE, tenantId, enterCd, sabun, ymd);
 						
 						String breakTypeCd = calendarMap.getBreakTypeCd();
 
@@ -924,19 +925,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		int breakMinute = 0;
 		// P_LIMIT_MINUTE (총소정근로시간) 에서 P_USE_MINUTE (합산 소정 근로시간) 을 뺀 남은 소정 근로 시간에 대해서만 근무 정보를 생성한다.. 
 		// 근무시간을 계산 하자
-		if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
-			
-			apprMinute = this.WtmCalcMinute(HHmm.format(sDate), HHmm.format(eDate), null, null, unitMinute) -  this.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgrId, unitMinute);
-			breakMinute = 0;
-			
-		}else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
-			apprMinute = this.WtmCalcMinute(HHmm.format(sDate), HHmm.format(eDate), null, null, unitMinute);
-			
-			breakMinute = this.getBreakMinuteIfBreakTimeTIME(sDate, eDate, timeCdMgrId, apprMinute); 
-			
-		}else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
-			// 미구현
-		}
+		Map<String, Object> calcMap = this.calcApprMinute(sDate, eDate, breakTypeCd, timeCdMgrId, unitMinute);
+		apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+		breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
 		
 		int calcWorkMinute = (limitMinute - useMinute);
 
@@ -1234,9 +1225,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			if(rDt.compareTo(dt) > 0) {
 				return dt;
 			} else {  
+				int namerge = m%unitMinute;
 				//단위 시간 적용
 				int calcM = m - m%unitMinute;
-				calcM += unitMinute;
+				if(namerge > 0)
+					calcM += unitMinute;
 				logger.debug("calcM : " + calcM);
 				
 				Calendar cal = Calendar.getInstance();
@@ -1340,5 +1333,32 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		}
 		return sumBreakMinute;
 		
+	}
+	
+	@Override
+	public Map<String, Object> calcApprMinute(Date sDate, Date eDate, String breakTypeCd, long timeCdMgrId, int unitMinute){
+		SimpleDateFormat HHmm = new SimpleDateFormat("HHmm");
+		Map<String, Object> resMap = new HashMap<>();
+		int apprMinute = 0;
+		int breakMinute = 0;
+		
+		// 근무시간을 계산 하자
+		if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_MGR)) {
+			
+			apprMinute = this.WtmCalcMinute(HHmm.format(sDate), HHmm.format(eDate), null, null, unitMinute) -  this.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgrId, unitMinute);
+			breakMinute = 0;
+			
+		}else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
+			apprMinute = this.WtmCalcMinute(HHmm.format(sDate), HHmm.format(eDate), null, null, unitMinute);
+			
+			breakMinute = this.getBreakMinuteIfBreakTimeTIME(sDate, eDate, timeCdMgrId, apprMinute); 
+			
+		}else if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
+			// 미구현
+		}
+		
+		resMap.put("apprMinute", apprMinute);
+		resMap.put("breakMinute", breakMinute);
+		return resMap;
 	}
 }

@@ -1396,14 +1396,28 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//소정근로시간의 경우 출퇴근 타각기록으로만 판단 >> 결근 데이터가 있는 날은 빼야한다.
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 		paramMap.put("taaCd", absenceTaaCode.getTaaCd());
-		try { logger.debug("8. 결근 데이터를 제외하고 타각 시간으로 계획 시간들의 인정시간을 만들어 준다. " + mapper.writeValueAsString(paramMap) + "updateApprDatetimeByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-		//결근을 제외한 day result의 모든 계획데이터를 인정데이터로 만들어 준다. 
-		flexEmpMapper.updateApprDatetimeByYmdAndSabun(paramMap);
-		
 		
 		if(flexStdMgr.getWorkTypeCd().equals("SELE_F")) {
 			try { logger.debug("9. APPLY_ENTRY_SDATE_YN / APPLY_ENTRY_EDATE_YN 여부에 따라 타각 시간을 계획시간으로 업데이트 한다. 그리고 인정시간을 다시 계산한다. 계획시간이 변경되었기 때문에 ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_CREATE_F"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-			calcService.P_WTM_WORK_DAY_RESULT_CREATE_F(tenantId, enterCd, sabun,  calendar.getYmd(), flexStdMgr, timeCdMgr, sabun);
+			calcService.P_WTM_WORK_DAY_RESULT_CREATE_F(tenantId, enterCd, sabun,  calendar.getYmd(), flexStdMgr, timeCdMgr, "P_WTM_WORK_DAY_RESULT_CREATE_F-"+sabun);
+		}else {
+			try { logger.debug("8. 결근 데이터를 제외하고 타각 시간으로 계획 시간들의 인정시간을 만들어 준다. " + mapper.writeValueAsString(paramMap) + "updateApprDatetimeByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+			//결근을 제외한 day result의 모든 계획데이터를 인정데이터로 만들어 준다. 
+			//flexEmpMapper.updateApprDatetimeByYmdAndSabun(paramMap);
+			List<WtmWorkDayResult> apprResults = workDayResultRepo.findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd(calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), WtmApplService.TIME_TYPE_LLA, absenceTaaCode.getTaaCd(), calendar.getSabun());
+			for(WtmWorkDayResult r : apprResults) {
+				Date sDate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
+				Date eDate = calcService.WorkTimeCalcApprDate(calendar.getEntryEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
+				r.setApprSdate(sDate);
+				r.setApprEdate(eDate);
+				Map<String, Object> calcMap = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+				int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+				int breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
+				r.setApprMinute(apprMinute - breakMinute);
+				
+				r.setUpdateId("findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd");
+				workDayResultRepo.save(r);
+			}
 		}
 		//if("BRS".equals(enterCd) || "LSG".equals(enterCd) || "1000".equals(enterCd)) {
 			// 20200518 브로제랑 ls글로벌만 완전선근 사용중 ngv
@@ -1531,7 +1545,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//	for( WtmFlexibleEmp emp : emps) {
 					//paramMap.put("flexibleEmpId", emp.getFlexibleEmpId());
 					//flexEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(paramMap);
-					calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, tenantId, enterCd, sabun, calendar.getYmd(), 0, sabun);
+					calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, tenantId, enterCd, sabun, calendar.getYmd(), 0, "P_WTM_WORK_DAY_RESULT_CREATE_N-" + sabun);
 			//	}
 			//}
 		}

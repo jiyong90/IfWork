@@ -19,6 +19,8 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 	@Query("SELECT D FROM WtmWorkDayResult D JOIN WtmWorkCalendar C ON D.tenantId = C.tenantId AND D.enterCd = C.enterCd AND D.ymd = C.ymd AND D.sabun = C.sabun WHERE D.timeTypeCd = ?1 AND C.tenantId = ?2 AND C.enterCd = ?3 AND C.sabun = ?4 AND C.ymd = ?5 ORDER BY D.planSdate")
 	public List<WtmWorkDayResult> findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmd(String timeTypeCd, Long tenantId, String enterCd, String sabun, String ymd);
 
+	public List<WtmWorkDayResult> findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmdAndApprSdateIsNotNullOrderByApprSdateAsc(String timeTypeCd, Long tenantId, String enterCd, String sabun, String ymd);
+	
 	@Query("SELECT D FROM WtmWorkDayResult D JOIN WtmWorkCalendar C ON D.tenantId = C.tenantId AND D.enterCd = C.enterCd AND D.ymd = C.ymd AND D.sabun = C.sabun WHERE C.workCalendarId = ?1")
 	public List<WtmWorkDayResult> findByWorkCalendarId(Long workCalendarId);
 	
@@ -78,29 +80,25 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull( Long tenantId, String enterCd, String sabun, String ymd, String timeTypeCd);
 	
 
-	@Modifying
-	@Query("UPDATE WtmFlexibleStdMgr M JOIN WtmFlexibleEmp E ON E.flexibleStdMgrId = M.flexibleStdMgrId " + 
+	@Query("SELECT R FROM WtmWorkDayResult R JOIN WtmWorkCalendar C " + 
+			" ON C.tenantId = R.tenantId  AND C.enterCd = R.enterCd AND C.ymd = R.ymd AND C.sabun = R.sabun " +
 			" JOIN WtmWorkCalendar C " + 
-			"   ON E.tenantId = C.tenantId " + 
-			"  AND E.enterCd = C.enterCd " + 
-			"  AND E.sabun = C.sabun AND C.ymd BETWEEN E.symd AND E.eymd " + 
-			" JOIN wtmWorkDayResult R ON C.tenantId = R.tenantId " + 
-			"  AND C.enterCd = R.enterCd AND C.ymd = R.ymd AND C.sabun = R.sabun " +
-			"    , R.udpateDate = now() , R.updateId = 'updateApprDateTimeBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd' " +
+			"   ON R.tenantId = C.tenantId " + 
+			"  AND R.enterCd = C.enterCd " + 
+			"  AND R.sabun = C.sabun AND C.ymd = R.ymd " + 
 			"WHERE C.tenantId = :tenantId " + 
 			"   AND C.enterCd = :enterCd " + 
-			"   AND C.ymd BETWEEN :ymd AND :ymd " + 
+			"   AND C.ymd = :ymd " + 
 			"   AND C.entryEdate >= R.planSdate " + 
 			"   AND C.entrySdate <= R.planEdate " + 
 			"   AND C.entrySdate IS NOT NULL AND C.entryEdate IS NOT NULL " + 
-			"   AND C.ymd NOT IN " + 
-			"   (SELECT S.ymd FROM " + 
-			"   	(SELECT DISTINCT SR.ymd " + 
-			"   	   FROM wtmWorkDayResult SR WHERE SR.tenantId = :tenantId " + 
-			"   		AND SR.enterCd = :enterCd AND SR.sabun =  :sabun " + 
-			"   		AND SR.timeTypeCd = :timeTypeCd " + 
-			"   		AND SR.taaCd = :taaCd AND SR.ymd BETWEEN :ymd AND :ymd ) S ) " + 
-			"   		AND (C.sabun =  :sabun OR :sabun = '' OR  :sabun IS NULL) AND R.timeTypeCd NOT IN ('TAA', 'SUBS')")
-	public int updateApprDateTimeBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd(@Param(value="tenantId") Long tenantId, @Param(value="enterCd") String enterCd, @Param(value="ymd") String ymd, @Param(value="timeTypeCd") String timeTypeCd, @Param(value="taaCd") String taaCd, @Param(value="sabun") String sabun );
+			"   AND 1 > (SELECT count(SR)" + 
+			"   	   	   FROM WtmWorkDayResult SR WHERE SR.tenantId = R.tenantId " + 
+			"   		    AND SR.enterCd = R.enterCd AND SR.sabun = R.sabun " + 
+			"   		    AND SR.timeTypeCd = :timeTypeCd " + 
+			"   		    AND SR.taaCd = :taaCd AND SR.ymd = R.ymd )  " +
+			"   AND (C.sabun =  :sabun OR :sabun = '' OR  :sabun IS NULL) " + 
+			"   AND R.timeTypeCd NOT IN ('TAA', 'SUBS') ")
+	public List<WtmWorkDayResult> findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd(@Param(value="tenantId") Long tenantId, @Param(value="enterCd") String enterCd, @Param(value="ymd") String ymd, @Param(value="timeTypeCd") String timeTypeCd, @Param(value="taaCd") String taaCd, @Param(value="sabun") String sabun);
 	
 }

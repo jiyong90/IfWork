@@ -1,6 +1,7 @@
 package com.isu.ifw.service;
 
 import java.util.Date;
+import java.util.Map;
 
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmTimeCdMgr;
@@ -23,4 +24,15 @@ public interface WtmCalcService {
 	public int WtmCalcMinute(String shm, String ehm, String limitShm, String limitEhm, Integer unitMinute) ;
 	public int getBreakMinuteIfBreakTimeTIME(Date sDate, Date eDate, long timeCdMgrId, int apprMinute);
 	public int getBreakMinuteIfBreakTimeMGR(Date sDate, Date eDate, long timeCdMgrId, int unitMinute) ;
+	
+	/**
+	 * 인정근무시간 (분) 계산
+	 * @param sDate
+	 * @param eDate
+	 * @param breakTypeCd
+	 * @param timeCdMgrId
+	 * @param unitMinute
+	 * @return
+	 */
+	public Map<String, Object> calcApprMinute(Date sDate, Date eDate, String breakTypeCd, long timeCdMgrId, int unitMinute);
 }
