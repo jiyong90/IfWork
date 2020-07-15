@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.isu.ifw.entity.WtmFlexibleEmp;
+import com.isu.ifw.entity.WtmFlexibleEmpCalc;
 
 @Repository
 public interface WtmFlexibleEmpRepository extends JpaRepository<WtmFlexibleEmp, Long> {
@@ -55,5 +56,6 @@ public interface WtmFlexibleEmpRepository extends JpaRepository<WtmFlexibleEmp, 
 	
 	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndSabunAndSymdGreaterThan(Long tenantId, String enterCd, String sabun, String ymd);
 	
-	
+	@Query(nativeQuery = true)
+	public WtmFlexibleEmpCalc getTotalWorkMinuteAndRealWorkMinute(@Param("tenantId") Long tenantId, @Param("enterCd") String enterCd, @Param("sabun") String sabun, @Param("symd") String symd);
 }

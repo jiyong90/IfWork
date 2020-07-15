@@ -21,91 +21,38 @@ import javax.persistence.Transient;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
-@Entity
-@Table(name="WTM_FLEXIBLE_EMP")
-@NamedNativeQuery(name="WtmFlexibleEmp.getTotalWorkMinuteAndRealWorkMinute",
-query="SELECT E.FLEXIBLE_EMP_ID AS flexibleEmpId, E.SYMD AS symd, E.EYMD AS eymd, E.TENANT_ID AS tenantId, E.ENTER_CD AS enterCd, E.SABUN AS sabun, E.WORK_MINUTE AS workMinute \n" + 
-"			    	 , SUM(CASE WHEN R.TIME_TYPE_CD IN ('BASE', 'REGA') OR (F_WTM_GET_EMP_DAY_OPTION(R.TENANT_ID, R.ENTER_CD, R.SABUN, R.YMD, 'TAA_TIME_YN') = 'Y' AND R.TIME_TYPE_CD = 'TAA')\n" + 
-"		                        THEN F_WTM_NVL(R.APPR_MINUTE,0)\n" + 
-"		                        ELSE 0 END ) AS workHour\n" + 
-"		             , SUM(CASE WHEN R.TIME_TYPE_CD = 'EXCEPT' AND  T.TAA_INFO_CD = 'BREAK' THEN F_WTM_NVL(R.APPR_MINUTE,0) ELSE 0 END ) AS breakHour\n" + 
-"		      FROM WTM_FLEXIBLE_EMP E\n" + 
-"			  LEFT OUTER JOIN WTM_WORK_DAY_RESULT R\n" + 
-"			    ON R.TENANT_ID = E.TENANT_ID\n" + 
-"			   AND R.ENTER_CD = E.ENTER_CD\n" + 
-"			   AND R.SABUN = E.SABUN\n" + 
-"			   AND R.YMD BETWEEN E.SYMD AND E.EYMD\n" + 
-"	 		   AND R.YMD BETWEEN E.SYMD AND :symd\n" + 
-"		      LEFT OUTER JOIN WTM_TAA_CODE T ON T.TENANT_ID = R.TENANT_ID AND T.ENTER_CD = R.ENTER_CD AND T.TAA_CD = R.TAA_CD  \n" + 
-"             WHERE E.TENANT_ID = :tenantId\n" + 
-"               AND E.ENTER_CD = :enterCd\n" + 
-"               AND E.SABUN = :sabun\n" + 
-"	 		   AND :symd BETWEEN E.SYMD AND E.EYMD\n" + 
-"		     GROUP BY E.WORK_MINUTE\n" + 
-"			", resultSetMapping="WtmFlexibleEmp.getTotalWorkMinuteAndRealWorkMinute")
-@SqlResultSetMappings({
-	@SqlResultSetMapping(
-		name="WtmFlexibleEmp.getTotalWorkMinuteAndRealWorkMinute",
-		classes = {
-				@ConstructorResult(
-						targetClass = WtmFlexibleEmpCalc.class,
-						columns = {
-								@ColumnResult(name="tenantId", type=Long.class),
-								@ColumnResult(name="enterCd", type=String.class),
-								@ColumnResult(name="sabun", type=String.class),
-								@ColumnResult(name="symd", type=String.class),
-								@ColumnResult(name="flexibleEmpId", type=Long.class),
-								@ColumnResult(name="workMinute", type=Integer.class),
-								@ColumnResult(name="workHour", type=Integer.class),
-								@ColumnResult(name="breakHour", type=Integer.class)
-						}
-						)
-		}
-		)
-	}
-)
-public class WtmFlexibleEmp {
-	
-	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	@Column(name="FLEXIBLE_EMP_ID")
-	private Long flexibleEmpId;
-	@Column(name="TENANT_ID")
-	private Long tenantId;
-	@Column(name="ENTER_CD")
-	private String enterCd;
-	@Column(name="FLEXIBLE_STD_MGR_ID")
-	private Long flexibleStdMgrId;
-	@Column(name="SABUN")
-	private String sabun;
-	@Column(name="SYMD")
-	private String symd;
-	@Column(name="EYMD")
-	private String eymd;
-	@Column(name="WORK_TYPE_CD")
-	private String workTypeCd;
-	@Column(name="FLEXIBLE_NM")
-	private String flexibleNm;
-	
-	@Column(name="WORK_MINUTE")
-	private Integer workMinute;
-	@Column(name="OT_MINUTE")
-	private Integer otMinute;
-	
-	@Column(name="NOTE")
-	private String note;
-	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name="UPDATE_DATE", columnDefinition="DATETIME") 
-	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-	private Date updateDate;
-	@Column(name="UPDATE_ID")
-	private String updateId;
 
-	@Transient
+public class WtmFlexibleEmpCalc {
+	
+	private Long flexibleEmpId;
+	private Long tenantId;
+	private String enterCd;
+	private Long flexibleStdMgrId;
+	private String sabun;
+	private String symd;
+	private String eymd;
+	private String workTypeCd;
+	private String flexibleNm;
+	private Integer workMinute;
+	private Integer otMinute;
+	private String note;
+	private Date updateDate;
+	private String updateId;
     private Integer workHour;
-	@Transient
     private Integer breakhour;
 
+    public WtmFlexibleEmpCalc(Long TenantId, String enterCd, String sabun, String symd, Long flexibleEmpId, Integer workMinute, Integer workHour, Integer breakhour) {
+    	this.tenantId = tenantId;
+    	this.enterCd = enterCd;
+    	this.sabun = sabun;
+    	this.symd = symd;
+    	this.eymd = symd;
+    	this.flexibleEmpId = flexibleEmpId;
+    	this.workMinute = workMinute;
+    	this.workHour = workHour;
+    	this.breakhour = breakhour;
+    }
+    
 	public Integer getWorkHour() {
 		return workHour;
 	}

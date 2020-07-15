@@ -30,6 +30,7 @@ import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmPushMgr;
 import com.isu.ifw.entity.WtmPushSendHis;
+import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmInterfaceMapper;
 import com.isu.ifw.mapper.WtmScheduleMapper;
@@ -38,6 +39,7 @@ import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmPushMgrRepository;
 import com.isu.ifw.repository.WtmPushSendHisRepository;
+import com.isu.ifw.repository.WtmTimeCdMgrRepository;
 import com.isu.ifw.util.WtmUtil;
 
 @Service
@@ -84,6 +86,8 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 	@Autowired
 	WtmFlexibleStdMgrRepository flexStdMgrRepo;
 	@Autowired
+	WtmTimeCdMgrRepository wtmTimeCdMgrRepo;
+	@Autowired
 	WtmCalcService calcService;
 	
 	@Autowired
@@ -123,11 +127,30 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
     	// logger.debug("********** closeType : " + closeType);
     	//closeType = "A";
     	getDateMap = new HashMap();
-    	// beforeYmd = "20200520";
+    	// beforeYmd = "20200710";
     	// closeType = "A";
     	getDateMap.put("tenantId", tenantId);
     	getDateMap.put("ymd", beforeYmd);	// 마감은 전일임으로 계산된 전일을 셋팅해야함
     	getDateMap.put("closeType", closeType);
+    	
+    	// 현퇴사용여부, 현출사용여부를 조회하자
+    	String taaLocalOut = ""; // 현퇴근태코드
+    	String taaLocalIn = "";	// 현출근태코드
+    	HashMap<String, Object> getTaaMap = null;
+    	getTaaMap = (HashMap<String, Object>) wtmScheduleMapper.getTaaLocalCode(getDateMap);
+    	if(getTaaMap != null && getTaaMap.containsKey("localIn") && !getTaaMap.get("localIn").equals("")) {
+    		taaLocalIn = getTaaMap.get("localIn").toString();
+    	}
+    	if(getTaaMap != null && getTaaMap.containsKey("localOut") && !getTaaMap.get("localOut").equals("")) {
+    		taaLocalOut = getTaaMap.get("localOut").toString();
+    	}
+    	// 현퇴코드가 있으면 마감일 현퇴 퇴근시간 갱신
+    	if(!"".equals(taaLocalOut)) {
+    		getDateMap.put("taaLocalOut", taaLocalOut);
+    		logger.debug("schedule_closeday taaLocalOut : "+ getDateMap.toString());
+    		int cnt = wtmScheduleMapper.setUpdateLocalOut(getDateMap);
+    		logger.debug("schedule_closeday taaLocalOut cnt : "+ cnt);
+    	}
     	
     	// 타각갱신이 완료되면, 출퇴근 기록완성자의 근무시간을 갱신해야한다.
 		List<Map<String, Object>> closeList = new ArrayList();
@@ -140,20 +163,82 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
         		String enterCd = closeList.get(i).get("enterCd").toString();
         		String sabun = closeList.get(i).get("sabun").toString();
         		String closeYmd = closeList.get(i).get("ymd").toString();
-        		logger.debug("schedule_closeday tenantId : "+ tenantId + " enterCd : " + enterCd + " sabun : " + sabun + ", ymd : " + closeYmd + ", closeType : " + closeType);
-        		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, closeYmd, closeYmd, sabun);
+        		Integer gooutCnt = Integer.parseInt(closeList.get(i).get("gooutCnt").toString());
         		
         		HashMap<String, Object> setTermMap = new HashMap();
         		setTermMap.put("tenantId", tenantId);
         		setTermMap.put("enterCd", enterCd);
         		setTermMap.put("sabun", sabun);
+        		setTermMap.put("ymd", closeYmd);
         		setTermMap.put("symd", closeYmd);
         		setTermMap.put("eymd", closeYmd);
         		setTermMap.put("pId", "DAYCLOSE");
+        		
+        		if(gooutCnt > 0) {
+					// create result 호출
+        			WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, closeYmd);
+    				if(flexEmp == null) {
+    					continue;
+    				}
+        			WtmFlexibleStdMgr flexStdMgr = flexStdMgrRepo.findById(flexEmp.getFlexibleStdMgrId()).get();
+        			// 20200709 일단 급하니깐 테넌트로 분기하자
+        			if(tenantId == 22) {
+        				// 그럼 임시로 f를 불러보자 ngv P_WTM_WORK_DAY_RESULT_CREATE_F 호출시 base 인정근무생성완료
+
+            			Long timeCdMgrId = Long.parseLong(closeList.get(i).get("timeCdMgrId").toString());
+            			WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(timeCdMgrId).get();
+            			calcService.P_WTM_WORK_DAY_RESULT_CREATE_F(tenantId, enterCd, sabun,  closeYmd, flexStdMgr, timeCdMgr, sabun);
+        			} else {
+        			// ngv는 P_WTM_WORK_DAY_RESULT_CREATE_N 으로 인정근무가 안만들어짐
+        			calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, tenantId, enterCd, sabun, closeYmd, 0, sabun);
+        			}
+        			
+        			// wtmFlexibleEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(l);
+        			
+        			// 외출횟수만큼 근무시간을 짤라야함 외출정보를 조회하자
+        			
+        			List<Map<String, Object>> goOutList = new ArrayList();
+        			goOutList = wtmScheduleMapper.setCalcGobackList(setTermMap);
+        			if(goOutList != null && goOutList.size() > 0) {
+        				for(Map<String, Object> f : goOutList) {
+        					
+        					logger.debug("goout send: " + f.toString());
+		        			SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
+		    				WtmFlexibleEmpService.addApprWtmDayResultInBaseTimeType(
+		    						  tenantId
+		    						, enterCd
+		    						, closeYmd
+		    						, sabun
+		    						, f.get("timeTypeCd").toString()
+		    						, ""
+		    						, dt.parse(f.get("planSdate").toString())
+		    						, dt.parse(f.get("planEdate").toString())
+		    						, null
+		    						, "0"
+		    						, false);
+        				}
+        			}
+        			
+        		}
+        		logger.debug("schedule_closeday tenantId : "+ tenantId + " enterCd : " + enterCd + " sabun : " + sabun + ", ymd : " + closeYmd + ", closeType : " + closeType);
+        		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, closeYmd, closeYmd, sabun);
         		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 			}
 			logger.debug("schedule_closeday tenantId : "+ tenantId + " tot cnt" + closeList.size() + " end ");
 		}
+		
+		// 마감일+1 현출 갱신
+		// 현출코드가 있으면 마감일익일 현출 출근시간 갱신
+    	if(!"".equals(taaLocalIn)) {
+    		getDateMap.put("taaLocalIn", taaLocalIn);
+    		cal.setTime(today);
+    		String nextYmd = (sdf.format(cal.getTime())).substring(0, 8);
+    		// nextYmd = "20200708";	// 임시용
+    		getDateMap.put("nextYmd", nextYmd);
+    		logger.debug("schedule_closeday taaLocalIn : "+ getDateMap.toString());
+    		int cnt = wtmScheduleMapper.setUpdateLocalIn(getDateMap);
+    		logger.debug("schedule_closeday taaLocalIn cnt : "+ cnt);
+    	}
 	}
 	
 	@Override
@@ -189,7 +274,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
     	// logger.debug("********** closeType : " + closeType);
     	
     	getDateMap = new HashMap();
-    	// beforeYmd = "20200630";
+    	// beforeYmd = "20200703";
     	// closeType = "A";
     	getDateMap.put("tenantId", tenantId);
     	getDateMap.put("ymd", beforeYmd);	// 마감은 전일임으로 계산된 전일을 셋팅해야함
@@ -219,12 +304,12 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 				
 				if(gooutCnt > 0) {
 					// create result 호출
-        			WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, ymd);
+        			WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, closeymd);
     				if(flexEmp == null) {
     					continue;
     				}
         			WtmFlexibleStdMgr flexStdMgr = flexStdMgrRepo.findById(flexEmp.getFlexibleStdMgrId()).get();
-        			calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, tenantId, enterCd, sabun, ymd, 0, sabun);
+        			calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, tenantId, enterCd, sabun, closeymd, 0, sabun);
         			
         			// wtmFlexibleEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(l);
         			
@@ -238,7 +323,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 		    				WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
 		    						  tenantId
 		    						, enterCd
-		    						, ymd
+		    						, closeymd
 		    						, sabun
 		    						, f.get("timeTypeCd").toString()
 		    						, ""
@@ -251,7 +336,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
         			}
         		}
 				// 일마감생성
-				WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
+				WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, closeymd, closeymd, sabun);
 				// 근무계획시간 합산
 				wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(l);
 			}
@@ -568,23 +653,24 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 	@Transactional
 	@Async("threadPoolTaskExecutor")
 	public void setTaaReset() throws Exception {
+		logger.debug("[근태재갱신] ********************************");
 		HashMap<String, Object> getDateMap = new HashMap();
     	
     	// 근무제도 확정시 근태상태가 00으로 갱신된 근태정보를 읽어오자
 		List<Map<String, Object>> closeList = new ArrayList();
 		closeList = wtmScheduleMapper.getTaaReset();
-		
 		// 새로 근태갱신을 하자 99상태로 loop 돌리자
 		if(closeList != null && closeList.size() > 0) {
-			// 적용되었던 과거 근태를 삭제하자
-			int cnt = wtmScheduleMapper.setDeleteTaaOld();
-			logger.debug("setDeleteTaaOld : " + cnt);
 			// 일마감처리로 지각조퇴결근, 근무시간계산처리를 완료한다
 			for(int i=0; i<closeList.size(); i++) {
 				HashMap<String, Object> reqMap = new HashMap<>();
 				reqMap = (HashMap<String, Object>) closeList.get(i);
+				// 적용되었던 과거 근태를 삭제하자
 				logger.debug("setTaaApplIf call : " + reqMap.toString());
+				int cnt = wtmScheduleMapper.setDeleteTaaOld(reqMap);
+				logger.debug("setDeleteTaaOld : " + cnt);
 				WtmInterfaceService.setTaaApplIf(reqMap); //근태정보 인터페이스
+				logger.debug("setTaaApplIf END");
 			}
 		}
 	}

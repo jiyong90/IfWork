@@ -1520,9 +1520,18 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 					totOtMinute = Integer.parseInt(rMap.get("totOtMinute")+"");
 				}
 				Float f = (float) (totOtMinute / 60);
-				if(f > 12) {
+				// 20200714 이효정 연장근무 가능시간은 프로퍼티에서 가져와야함.
+				Float baseOt = (float)0;
+				try {
+					WtmPropertie proOt = wtmPropertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_MAX_WORKTIME_1WEEK_OT");
+					baseOt = Float.parseFloat(proOt.getInfoValue());
+				} catch (Exception e) {
+					baseOt = (float)12;
+				}
+				if(f > baseOt) {
 					Float ff = (f - f.intValue()) * 60;
-					rp.setFail("연장근무 신청 가능 시간은 " + f.intValue() + "시간 " + ff.intValue() + "분 입니다.");
+					rp.setFail("연장근무 신청 가능 "+ baseOt.intValue() + "시간을 모두 사용하였습니다.");
+					// rp.setFail("연장근무 신청 가능 "+ baseOt.intValue() + "시간 중 " + f.intValue() + "시간 " + ff.intValue() + "분 사용하셨습니다.");
 					return rp;
 				}
 			}

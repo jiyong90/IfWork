@@ -124,6 +124,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				List<WtmFlexibleApplyMgr> codes = new ArrayList();
 				if(iList != null && iList.size() > 0) {
 					for(Map<String, Object> l : iList) {
+						int pattCnt = 0;
 						WtmFlexibleStdMgr mgr = flexStdMgrRepo.findByFlexibleStdMgrId(Long.parseLong(l.get("flexibleStdMgrId").toString()));
 						String mgrSymd = mgr.getUseSymd();
 						String mgrEymd = mgr.getUseEymd();
@@ -135,8 +136,19 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 							throw new Exception("근무제의 사용기간은" + 
 									mgrSymd.substring(0,4) +"/" + mgrSymd.substring(4,6) +"/"+ mgrSymd.substring(6,8) + " ~ " + 
 									mgrEymd.substring(0,4) +"/" + mgrEymd.substring(4,6) +"/"+ mgrEymd.substring(6,8) + "입니다.");
-						} 
+						}
 						
+						//20200708 안흥규 근무제 적용 관리 --start
+						if(mgr.getRegardTimeCdId() == null || mgr.getUnitMinute() ==  null) {
+							throw new Exception ("간주근무시간 혹은 인정근무단위시간이 비어있습니다. 근무제도관리에서 근무제기준을 작성해 주세요.");
+						}
+						
+						pattCnt = workPattDetRepo.countByFlexibleStdMgrId(Long.parseLong(l.get("flexibleStdMgrId").toString()));
+						if(pattCnt == 0) {
+							throw new Exception ("근무제에 등록된 패턴이 없습니다. 근무제패턴을 작성해 주세요.");
+						}
+						//20200708 안흥규 근무제 적용 관리 --end
+
 						WtmFlexibleApplyMgr code = new WtmFlexibleApplyMgr();
 						code.setFlexibleApplyId(l.get("flexibleApplyId").toString().equals("") ? null : Long.parseLong(l.get("flexibleApplyId").toString()));
 						code.setFlexibleStdMgrId(Long.parseLong(l.get("flexibleStdMgrId").toString()));

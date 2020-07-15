@@ -306,6 +306,7 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 					
 					history.setPlanMinute(hour+min);
 				}
+				
 				history.setUpdateId(userId);
 				
 				histories.add(history);
@@ -353,6 +354,10 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 				
 				//calc 인정근무시간
 				if(workCalendar.getEntrySdate()!=null || workCalendar.getEntryEdate()!=null) {
+					//appr null로
+					paramMap.put("sabun", sabun);
+					paramMap.put("stdYmd", ymd);
+					flexibleEmpMapper.updateResultAppr(paramMap);
 					empService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
 				}
 			}
