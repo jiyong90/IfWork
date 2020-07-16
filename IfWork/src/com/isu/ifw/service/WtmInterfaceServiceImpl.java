@@ -1864,7 +1864,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						throw new RuntimeException(retMsg);
 					}
 					// 4.2. 근무옵션 확인
-					SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddhhmmss");
+					SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
 					
 					Map<String, Object>  getStdMgrMap = null;
 					getStdMgrMap = wtmInterfaceMapper.getStdMgrList(taaDetMap);
