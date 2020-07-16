@@ -1035,6 +1035,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	}
 	@Override
 	public int WtmCalcMinute(String shm, String ehm, String limitShm, String limitEhm, Integer unitMinute) {
+		logger.debug("WtmCalcMinute : " + shm + " : " + ehm + " : "  + limitShm + " : "  + limitEhm + " : " + unitMinute );
 		if(shm != null && !shm.equals("") && ehm != null && !ehm.equals("") ) {
 			if(unitMinute == null || unitMinute.equals("") || unitMinute < 0) {
 				unitMinute = 1;
@@ -1051,9 +1052,15 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					strEhm = ehm;
 				}
 				strShm = shm;
+
+				logger.debug("WtmCalcMinute strShm : " + strShm);
+				logger.debug("WtmCalcMinute strEhm : " + strEhm);
 				
 				resM = (Integer.parseInt(strEhm.substring(0, 2)) * 60 + Integer.parseInt(strEhm.substring(2, 4)))
 						- (Integer.parseInt(strShm.substring(0, 2)) * 60 + Integer.parseInt(strShm.substring(2, 4)));
+				
+				logger.debug("WtmCalcMinute resM : " + resM);
+				
 				return resM;
 			}else {
 				

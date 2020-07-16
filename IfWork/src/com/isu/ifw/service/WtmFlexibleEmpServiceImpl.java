@@ -1494,17 +1494,20 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						lateResult.setTaaCd(lateTaaCode.getTaaCd());
 						Date calcSdate = calcService.WorkTimeCalcApprDate(minSdate, minSdate, flexStdMgr.getUnitMinute(), "S");
 						Date calcEdate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), calendar.getEntrySdate(), flexStdMgr.getUnitMinute(), "E");
-						
+
+						lateResult.setPlanSdate(calcSdate);
+						lateResult.setPlanEdate(calcEdate);
 						lateResult.setApprSdate(calcSdate);
 						lateResult.setApprEdate(calcEdate);
 						SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
 						
 						int apprMinute = calcService.WtmCalcMinute(sdf.format(calcSdate), sdf.format(calcEdate), null, null, flexStdMgr.getUnitMinute());
+						lateResult.setPlanMinute(apprMinute);
 						lateResult.setApprMinute(apprMinute);
 						lateResult.setUpdateDate(new Date());
 						lateResult.setUpdateId(sabun);
 						logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각 여기 " + lateResult.toString());
-						lateResult = workDayResultRepo.save(lateResult);
+						workDayResultRepo.save(lateResult);
 						logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각 끝 " + lateResult.toString());
 					}
 				}
@@ -1516,19 +1519,23 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//고정OT 일괄소진의 경우 고정 OT데이터를 삭제후 다시 만들어 준다.
 		//근무 기간 내에 고정 OT정보를 확인부터 하자.
 		//고정OT 일괄소진의 경우 계획데이터만 있을 수 없다 마감시 인정 시간을 바로 산정한다. 
+		if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+			try { logger.debug("12. BREAK_TYPE_CD가 MGR인것만 APPR_MINUTE 계산 (지각 데이터는 생성 시 인정 분을 만들기 때문에 제외한다.)  " + mapper.writeValueAsString(paramMap) + "updateApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+			// BREAK_TYPE_CD가 MGR인것만 계산
+			flexEmpMapper.updateApprMinuteByYmdAndSabun(paramMap);
+		}
 		
+		if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
+			try { logger.debug("13. BREAK_TYPE_CD가 TIME인것만 APPR_MINUTE 계산 (지각 데이터는 생성 시 인정 분을 만들기 때문에 제외한다.)  " + mapper.writeValueAsString(paramMap) + "updateTimeTypeApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+			// BREAK_TYPE_CD가 TIME인것만 계산
+			flexEmpMapper.updateTimeTypeApprMinuteByYmdAndSabun(paramMap);
+		}
 		
-		try { logger.debug("12. BREAK_TYPE_CD가 MGR인것만 APPR_MINUTE 계산  " + mapper.writeValueAsString(paramMap) + "updateApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-		// BREAK_TYPE_CD가 MGR인것만 계산
-		flexEmpMapper.updateApprMinuteByYmdAndSabun(paramMap);
-		
-		try { logger.debug("13. BREAK_TYPE_CD가 TIME인것만 APPR_MINUTE 계산  " + mapper.writeValueAsString(paramMap) + "updateTimeTypeApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-		// BREAK_TYPE_CD가 TIME인것만 계산
-		flexEmpMapper.updateTimeTypeApprMinuteByYmdAndSabun(paramMap);
-		
-		try { logger.debug("14. BREAK_TYPE_CD가 TIMEFIX인것만 APPR_MINUTE 계산  " + mapper.writeValueAsString(paramMap) + "updateTimeFixTypeApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-		// BREAK_TYPE_CD가 TIMEFIX인것만 계산
-		flexEmpMapper.updateTimeFixTypeApprMinuteByYmdAndSabun(paramMap);
+		if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
+			try { logger.debug("14. BREAK_TYPE_CD가 TIMEFIX인것만 APPR_MINUTE 계산 (지각 데이터는 생성 시 인정 분을 만들기 때문에 제외한다.)  " + mapper.writeValueAsString(paramMap) + "updateTimeFixTypeApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+			// BREAK_TYPE_CD가 TIMEFIX인것만 계산
+			flexEmpMapper.updateTimeFixTypeApprMinuteByYmdAndSabun(paramMap);
+		}
 		
 		
 		/**
