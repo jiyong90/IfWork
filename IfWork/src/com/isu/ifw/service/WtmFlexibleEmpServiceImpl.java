@@ -1343,16 +1343,65 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		// 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다.
 		//List<WtmWorkDayResult> regaResult = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, calendar.getYmd(), calendar.getYmd());
 		boolean isRega = false;
+		Date minPlanSdate = null;
+		Date maxPlanEdate = null;
+		
+		Date dayPlanSdate = null;
+		Date dayPlanEdate = null;
 		List<WtmWorkDayResult> dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
 		for(WtmWorkDayResult r : dayResults) {
 			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA)) {
 				isRega = true;
-				break;
+				//break;
+			}
+			//간주근무일때 출퇴근 타각을 생성하기 위함
+			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
+				if(minPlanSdate == null || minPlanSdate.compareTo(r.getPlanSdate()) > 0) {
+					minPlanSdate = r.getPlanSdate();
+					logger.debug("3. 간주근무의 경우 출근 타각데이터를 계획 데이터로 생성해 준다. minPlanSdate : " +  minPlanSdate); 
+				}
+				if(maxPlanEdate == null || maxPlanEdate.compareTo(r.getPlanEdate()) < 0 ) {
+					maxPlanEdate = r.getPlanEdate();
+					logger.debug("3. 간주근무의 경우 출근 타각데이터를 계획 데이터로 생성해 준다. maxPlanEdate : " +  maxPlanEdate); 
+				}
+			}
+			
+			//출근 자동 생성
+			if(!flexStdMgr.getDayOpenType().equals("N") && calendar.getEntrySdate() == null
+				&& (
+						(flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
+						|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)  || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)  ) 
+						    )
+					)
+			){
+				if(dayPlanSdate == null || dayPlanSdate.compareTo(r.getPlanSdate()) > 0) {
+					dayPlanSdate = r.getPlanSdate();
+					logger.debug("4.(출근)타각 자동 업데이트. dayPlanSdate : " +  dayPlanSdate); 
+				}
+			}
+			
+			//퇴근 자동 생성
+			if(!flexStdMgr.getDayCloseType().equals("N") && calendar.getEntryEdate() == null 
+					&& (
+							(flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
+							|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)  || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)  ) 
+							    )
+						)
+			){
+				if(dayPlanEdate == null || dayPlanEdate.compareTo(r.getPlanEdate()) < 0) {
+					dayPlanEdate = r.getPlanEdate();
+					logger.debug("4.(퇴근)타각 자동 업데이트. dayPlanEdate : " +  dayPlanEdate); 
+				}
 			}
 		}
 		if(isRega) {
 			try { logger.debug("3. 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다. " + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-			flexEmpMapper.updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
+			//flexEmpMapper.updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
+			calendar.setEntrySdate(minPlanSdate);
+			calendar.setEntryStypeCd(WtmApplService.TIME_TYPE_REGA);
+			calendar.setEntryEdate(maxPlanEdate);
+			calendar.setEntryEtypeCd(WtmApplService.TIME_TYPE_REGA);
+			workCalendarRepo.save(calendar);
 		}else {
 			try { logger.debug("3. 간주근무 없음." + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 		}
@@ -1361,15 +1410,25 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		// 출근시간 자동에 대해 일괄 업데이트 한다.
 		// 어디까지인가? 조출 / 기본근무
 		// 출근 타각데이터가 있는건 갱신하지 않는다.
-		try { logger.debug("4.(출근)타각 자동 업데이트 : 출근 자동 여부에 따라 계획 시간을 출근 타각 정보로 업데이트 한다. " + mapper.writeValueAsString(paramMap) + " updateEntrySdateByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-		flexEmpMapper.updateEntrySdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
 		
-		// 퇴근 시간 자동 여부 (계획시간으로 )
-		// 어디까지인가? 기본근무 / 연장
-		// 퇴근 타각데이터가 있는건 갱신하지 않는다.
-		try { logger.debug("5.(퇴근)타각 자동 업데이트 퇴 자동 여부에 따라 계획 시간을 퇴근 타각 정보로 업데이트 한다. " + mapper.writeValueAsString(paramMap) + "updateEntryEdateByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-		flexEmpMapper.updateEntryEdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
+		if(dayPlanSdate != null) {
+			try { logger.debug("4.(출근)타각 자동 업데이트 : 출근 자동 여부에 따라 계획 시간을 출근 타각 정보로 업데이트 한다. " + mapper.writeValueAsString(paramMap) + " updateEntrySdateByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+			//flexEmpMapper.updateEntrySdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
+			calendar.setEntrySdate(dayPlanSdate);
+			calendar.setEntryStypeCd("AUTO");
+			workCalendarRepo.save(calendar);
+		}
 		
+		if(dayPlanEdate != null) {
+			// 퇴근 시간 자동 여부 (계획시간으로 )
+			// 어디까지인가? 기본근무 / 연장
+			// 퇴근 타각데이터가 있는건 갱신하지 않는다.
+			try { logger.debug("5.(퇴근)타각 자동 업데이트 퇴 자동 여부에 따라 계획 시간을 퇴근 타각 정보로 업데이트 한다. " + mapper.writeValueAsString(paramMap) + "updateEntryEdateByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+			//flexEmpMapper.updateEntryEdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
+			calendar.setEntryEdate(dayPlanEdate);
+			calendar.setEntryEtypeCd("AUTO");
+			workCalendarRepo.save(calendar);
+		}
 		// 출근 타각이 없을 경우
 		// 출근 또는 출/퇴근 타각이 모두 없을 경우 무단결근
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
