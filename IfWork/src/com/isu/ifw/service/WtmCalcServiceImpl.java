@@ -107,60 +107,64 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						WtmWorkCalendar calendar = workCalandarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
 						Date sDate = null;
 						Date eDate = null;
-						if(results.size() > 1) {
-		
-							if(cnt != 1 && cnt != results.size()) {
-								//중간 데이터는 건너 뛴다. 
-								cnt++;
-								continue;
-							}
-							
 
-							//첫번째 데이터
-							if(cnt == 1) {
+						
+						//타각시간에서 벗어난 데이터는 패스 한다 .
+						if(calendar.getEntrySdate().compareTo(result.getPlanEdate()) < 0
+								&& calendar.getEntryEdate().compareTo(result.getPlanSdate()) > 0) {
 								
-								if(flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
-									sDate = calendar.getEntrySdate();
-								} else {
+							if(results.size() > 1) {
+			
+								if(cnt != 1 && cnt != results.size()) {
+									//중간 데이터는 건너 뛴다. 
+									cnt++;
+									continue;
+								}
+								//첫번째 데이터
+								if(cnt == 1) {
+									
+									if(flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
+										sDate = calendar.getEntrySdate();
+									} else {
+										sDate = result.getPlanSdate();
+									}
+								}else {
 									sDate = result.getPlanSdate();
 								}
-							}else {
-								sDate = result.getPlanSdate();
-							}
-							
-							//마지막 데이터
-							if(cnt == results.size() && results.size() > 1 ) {
-								if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
-									eDate = calendar.getEntryEdate();
-								} else {
+								
+								//마지막 데이터
+								if(cnt == results.size() && results.size() > 1 ) {
+									if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
+										eDate = calendar.getEntryEdate();
+									} else {
+										eDate = result.getPlanEdate();
+									}
+								}else {
 									eDate = result.getPlanEdate();
 								}
+								
+								
 							}else {
-								eDate = result.getPlanEdate();
+								//1개면 좋다. 
+								if(flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
+									sDate = calendar.getEntrySdate();
+								}else {
+									sDate = result.getPlanSdate();
+								}
+								
+								if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
+									eDate = calendar.getEntryEdate();
+								}else {
+									eDate = result.getPlanEdate();
+								}
+								
 							}
-							
-							
-						}else {
-							//1개면 좋다. 
-							if(flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
-								sDate = calendar.getEntrySdate();
-							}else {
-								sDate = result.getPlanSdate();
-							}
-							
-							if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
-								eDate = calendar.getEntryEdate();
-							}else {
-								eDate = result.getPlanEdate();
-							}
-							
+	
+							logger.debug("CREATE_F :: CALL P_WTM_WORK_DAY_RESULT_UPDATE_T " );
+							logger.debug("CREATE_F :: sDate = " + sDate );
+							logger.debug("CREATE_F :: eDate = " + eDate );
+							this.P_WTM_WORK_DAY_RESULT_UPDATE_T(flexStdMgr, timeCdMgr, result, sDate, eDate, calendar.getEntrySdate(), calendar.getEntryEdate(),  sumWorkMinute, workMinute, userId);
 						}
-
-						logger.debug("CREATE_F :: CALL P_WTM_WORK_DAY_RESULT_UPDATE_T " );
-						logger.debug("CREATE_F :: sDate = " + sDate );
-						logger.debug("CREATE_F :: eDate = " + eDate );
-						this.P_WTM_WORK_DAY_RESULT_UPDATE_T(flexStdMgr, timeCdMgr, result, sDate, eDate, calendar.getEntrySdate(), calendar.getEntryEdate(),  sumWorkMinute, workMinute, userId);
-
 						cnt++;
 					}
 				}
