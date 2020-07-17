@@ -68,11 +68,11 @@ public interface WtmFlexibleEmpMapper {
 	 */
 	public void updateApprDatetimeByYmdAndSabun(Map<String, Object> paramMap);
 	
-	public void updateEntrySdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(Map<String, Object> paramMap);
-	public void updateEntryEdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(Map<String, Object> paramMap);
-	public void updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(Map<String, Object> paramMap);
+	//public void updateEntrySdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(Map<String, Object> paramMap);
+	//public void updateEntryEdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(Map<String, Object> paramMap);
+	//public void updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(Map<String, Object> paramMap);
 	
-	public void createDayResultByTimeTypeAndEntryDateIsNull(Map<String, Object> paramMap);
+	//public void createDayResultByTimeTypeAndEntryDateIsNull(Map<String, Object> paramMap);
 	/**
 	 * 코어타임 필수 여부에 따라 출퇴근 타각정보 둘다 존재할 경우 코어타임 시작시간보다 적을 경우 결근처리를 한다.
 	 * @param paramMap
