@@ -126,4 +126,15 @@ public interface WtmApplService {
 	public void sendPush();
 	
 	
+	/**
+	 * 연장/휴일근무 신청내역조회 결재상태 변경
+	 * @param tenantId
+	 * @param enterCd
+	 * @param sabun
+	 * @param userId
+	 * @param convertMap
+	 * @return
+	 */
+	public ReturnParam saveWtmApplSts(Long tenantId, String enterCd, String sabun, String userId, Map<String, Object> convertMap);
+	
 }

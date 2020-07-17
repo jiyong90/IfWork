@@ -904,6 +904,12 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		// TODO Auto-generated method stub
 		return null;
 	}
- 
+
+	@Override
+	public ReturnParam saveWtmApplSts(Long tenantId, String enterCd, String sabun, String userId,
+			Map<String, Object> convertMap) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

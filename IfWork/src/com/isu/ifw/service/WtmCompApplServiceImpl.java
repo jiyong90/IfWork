@@ -140,5 +140,12 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public ReturnParam saveWtmApplSts(Long tenantId, String enterCd, String sabun, String userId,
+			Map<String, Object> convertMap) {
+		// TODO Auto-generated method stub
+		return null;
+	}
  
 }
