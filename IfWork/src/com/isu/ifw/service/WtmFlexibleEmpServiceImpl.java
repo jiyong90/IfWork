@@ -1343,8 +1343,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		// 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다.
 		//List<WtmWorkDayResult> regaResult = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, calendar.getYmd(), calendar.getYmd());
 		boolean isRega = false;
-		Date minPlanSdate = null;
-		Date maxPlanEdate = null;
+		Date minPlanSdate_REGA = null;
+		Date maxPlanEdate_REGA = null;
+		
+
+		Date minPlanSdate_BASE = null;
+		Date maxPlanEdate_BASE = null;
+		
 		
 		Date dayPlanSdate = null;
 		Date dayPlanEdate = null;
@@ -1355,16 +1360,17 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				//break;
 			}
 			//간주근무일때 출퇴근 타각을 생성하기 위함
-			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
-				if(minPlanSdate == null || minPlanSdate.compareTo(r.getPlanSdate()) > 0) {
-					minPlanSdate = r.getPlanSdate();
-					logger.debug("3. 간주근무의 경우 출근 타각데이터를 계획 데이터로 생성해 준다. minPlanSdate : " +  minPlanSdate); 
+			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA)) {
+				if(minPlanSdate_REGA == null || minPlanSdate_REGA.compareTo(r.getPlanSdate()) > 0) {
+					minPlanSdate_REGA = r.getPlanSdate();
+					logger.debug("3. 간주근무의 경우 출근 타각데이터를 계획 데이터로 생성해 준다. minPlanSdate : " +  minPlanSdate_REGA); 
 				}
-				if(maxPlanEdate == null || maxPlanEdate.compareTo(r.getPlanEdate()) < 0 ) {
-					maxPlanEdate = r.getPlanEdate();
-					logger.debug("3. 간주근무의 경우 출근 타각데이터를 계획 데이터로 생성해 준다. maxPlanEdate : " +  maxPlanEdate); 
+				if(maxPlanEdate_REGA == null || maxPlanEdate_REGA.compareTo(r.getPlanEdate()) < 0 ) {
+					maxPlanEdate_REGA = r.getPlanEdate();
+					logger.debug("3. 간주근무의 경우 출근 타각데이터를 계획 데이터로 생성해 준다. maxPlanEdate : " +  maxPlanEdate_REGA); 
 				}
 			}
+
 			
 			//출근 자동 생성
 			if(!flexStdMgr.getDayOpenType().equals("N") && calendar.getEntrySdate() == null
@@ -1397,9 +1403,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		if(isRega) {
 			try { logger.debug("3. 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다. " + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 			//flexEmpMapper.updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
-			calendar.setEntrySdate(minPlanSdate);
+			calendar.setEntrySdate(minPlanSdate_REGA);
 			calendar.setEntryStypeCd(WtmApplService.TIME_TYPE_REGA);
-			calendar.setEntryEdate(maxPlanEdate);
+			calendar.setEntryEdate(maxPlanEdate_REGA);
 			calendar.setEntryEtypeCd(WtmApplService.TIME_TYPE_REGA);
 			workCalendarRepo.save(calendar);
 		}else {
@@ -1434,214 +1440,280 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 		paramMap.put("taaCd", absenceTaaCode.getTaaCd());
 		paramMap.put("userId", "SYSTEM");
-
-		try { logger.debug("6. ABSENCE_CHK_YN = Y 일때 출/퇴근 타각 정보가 없을 경우 결근 데이터 생성 " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndEntryDateIsNull"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-		flexEmpMapper.createDayResultByTimeTypeAndEntryDateIsNull(paramMap);
-		
-
-		WtmTaaCode leaveTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LEAVE);
-		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
-		paramMap.put("taaCd", leaveTaaCode.getTaaCd());
-		
-		try { logger.debug("7. LATE_CHK_YN = Y  출근 데이터는 있고 퇴근 타각이 없을 경우 조퇴 (시/종 정보 없이 생성) " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndEntrtEdateIsNull"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-		// 출근 데이터는 있고 퇴근 타각이 없을 경우 조퇴 (시/종 정보 없이 생성)
-		flexEmpMapper.createDayResultByTimeTypeAndEntrtEdateIsNull(paramMap);
-		
-		
-//		paramMap.put("timeTypeCd", timeTypeCd);
-		//소정근로시간의 경우 출퇴근 타각기록으로만 판단 >> 결근 데이터가 있는 날은 빼야한다.
-		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
-		paramMap.put("taaCd", absenceTaaCode.getTaaCd());
-
-		if(flexStdMgr.getWorkTypeCd().equals("SELE_F")) {
-			try { logger.debug("9. APPLY_ENTRY_SDATE_YN / APPLY_ENTRY_EDATE_YN 여부에 따라 타각 시간을 계획시간으로 업데이트 한다. 그리고 인정시간을 다시 계산한다. 계획시간이 변경되었기 때문에 ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_CREATE_F"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-			calcService.P_WTM_WORK_DAY_RESULT_CREATE_F(tenantId, enterCd, sabun,  calendar.getYmd(), flexStdMgr, timeCdMgr, "P_WTM_WORK_DAY_RESULT_CREATE_F-"+sabun);
-		}else {
-			try { logger.debug("8. 결근 데이터를 제외하고 타각 시간으로 계획 시간들의 인정시간을 만들어 준다. " + mapper.writeValueAsString(paramMap) + "updateApprDatetimeByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-			//결근을 제외한 day result의 모든 계획데이터를 인정데이터로 만들어 준다. 
-			//flexEmpMapper.updateApprDatetimeByYmdAndSabun(paramMap);
-			List<WtmWorkDayResult> apprResults = workDayResultRepo.findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd(calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), WtmApplService.TIME_TYPE_LLA, absenceTaaCode.getTaaCd(), calendar.getSabun());
-			for(WtmWorkDayResult r : apprResults) {
-				Date sDate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
-				Date eDate = calcService.WorkTimeCalcApprDate(calendar.getEntryEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
-				r.setApprSdate(sDate);
-				r.setApprEdate(eDate);
-				Map<String, Object> calcMap = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
-				int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
-				int breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
-				r.setApprMinute(apprMinute - breakMinute);
-				
-				r.setUpdateId("findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd");
-				workDayResultRepo.save(r);
-			}
+		boolean isAbsence =  false;
+		if(calendar.getEntrySdate() == null && calendar.getEntryEdate() == null && timeCdMgr.getAbsenceChkYn().equals("Y")) {
+			//try { logger.debug("6. ABSENCE_CHK_YN = Y 일때 출/퇴근 타각 정보가 없을 경우 결근 데이터 생성 " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndEntryDateIsNull"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+			logger.debug("6. ABSENCE_CHK_YN = Y 일때 출/퇴근 타각 정보가 없을 경우 결근 데이터 생성 " );
+			//flexEmpMapper.createDayResultByTimeTypeAndEntryDateIsNull(paramMap);
+			WtmWorkDayResult laaResult = new WtmWorkDayResult();
+			laaResult.setTenantId(calendar.getTenantId());
+			laaResult.setEnterCd(calendar.getEnterCd());
+			laaResult.setYmd(calendar.getYmd());
+			laaResult.setSabun(calendar.getSabun());
+			laaResult.setApplId(null);
+			laaResult.setTimeTypeCd(WtmApplService.TIME_TYPE_LLA);
+			laaResult.setTaaCd(absenceTaaCode.getTaaCd());
+			laaResult.setUpdateId("SYSTEM");
+			workDayResultRepo.save(laaResult);
+			isAbsence = true;
 		}
-		//if("BRS".equals(enterCd) || "LSG".equals(enterCd) || "1000".equals(enterCd)) {
-			// 20200518 브로제랑 ls글로벌만 완전선근 사용중 ngv
-			//시작일 타각 데이터 기준 옵션에 해당하는 내용을 인정시간을 다시 업데이트 하자
-			//계획이 있지만 타각데이터로 인정하는 케이스는 완전선근제 옵션에만 있다. 기억하자 까묵지마라.
-			//unplanned 가Y이면 어카지? BASE 데이터가 없을텐데.. resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt 쪼 밑에서 하고 있다
-		//	try { logger.debug("9. APPLY_ENTRY_SDATE_YN / APPLY_ENTRY_EDATE_YN 여부에 따라 타각 시간을 계획시간으로 업데이트 한다. 그리고 인정시간을 다시 계산한다. 계획시간이 변경되었기 때문에 ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_CREATE_F"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-			//flexEmpMapper.calcFlexApplyEntryDatetimeByFlexibleEmpId(paramMap);
-		//	calcService.P_WTM_WORK_DAY_RESULT_CREATE_F(tenantId, enterCd, sabun, calendar.getYmd(), flexStdMgr, timeCdMgr, sabun);
-		//}
-		// 이곳은 출/퇴근 타각데이터가 있는 사람에 한한다.. 
-
-		// 계획 종료 시간 보다 인정종료시간이 빠를 경우 BASE중에 
-		// 조퇴 데이터 생성
-		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
-		paramMap.put("taaCd", leaveTaaCode.getTaaCd());
-		try { logger.debug("10. BASE중에 계획 종료 시간 보다 인정종료시간이 빠를 경우 조퇴 데이터를 생성한다  " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndApprEdateLessThanPlanEdate"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-		flexEmpMapper.createDayResultByTimeTypeAndApprEdateLessThanPlanEdate(paramMap);
 		
-		// 계획 시작 시간보다 인정시작시간이 늦을 경우 BASE중에 
-		// 지각 데이터 생성
-		WtmTaaCode lateTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LATE);
-		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
-		paramMap.put("taaCd", lateTaaCode.getTaaCd());
-		try { 
-			logger.debug("11. BASE중에 계획 시작 시간보다 인정시작시간이 늦을 경우 지각 데이터를 생성한다  " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndPlanSdateLessThanApprSdate"); 
-		
-			//여기서 지각데이터 생성이 되다안되다해서 select를 한번찍어보자
-			/*
-			Map<String, Object> temp = flexEmpMapper.getTemporaryWorkResult(paramMap);
-			if(temp != null) {
-				logger.debug("11-1. 지각 데이터 조회  " + mapper.writeValueAsString(temp)); 
-			}
-			*/
-		} catch (JsonProcessingException e) {	
-			logger.debug("11-4. 지각 데이터 조회 exception " + e.getMessage()); 
-			e.printStackTrace();	
-		}
-		logger.debug("timeCdMgr.getLateChkYn() : " + timeCdMgr.getLateChkYn() + " 가 Y면 지각 데이터 체크 ");
-		if(timeCdMgr.getLateChkYn().equalsIgnoreCase("Y")) {
-			dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
-			if(dayResults != null && dayResults.size() > 0) {
-				boolean isCreateLate = true;
-				Date minSdate = null;
+		//결근이면 이후꺼는 안타도 될듯 
+		if(!isAbsence) {
+			//paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
+			//paramMap.put("taaCd", leaveTaaCode.getTaaCd());
 			
-				for(WtmWorkDayResult result : dayResults) {
-					if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA)
-							&& result.getTaaCd().equals(lateTaaCode.getTaaCd())
-							) {
-						logger.debug("result.getTimeTypeCd() : " + result.getTimeTypeCd() + " / result.getTaaCd() " + result.getTaaCd() + " 인 데이터가 있는 날은 생성하지 않는다.");
-						isCreateLate = false;
-					}
-					//BASE중 젤 작은 계획시간을 찾는다. 
-					if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
-						if(minSdate == null) {
-							minSdate = result.getPlanSdate();
-						}else {
-							if(minSdate.compareTo(result.getPlanSdate()) > 0) {
-								minSdate = result.getPlanSdate();
+			if(timeCdMgr.getLateChkYn().equals("Y") && calendar.getEntrySdate() != null && calendar.getEntryEdate() == null) {
+				WtmTaaCode leaveTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LEAVE);
+				try { logger.debug("7. LATE_CHK_YN = Y  출근 데이터는 있고 퇴근 타각이 없을 경우 조퇴 (시/종 정보 없이 생성) " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndEntrtEdateIsNull"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+				// 출근 데이터는 있고 퇴근 타각이 없을 경우 조퇴 (시/종 정보 없이 생성)
+				//flexEmpMapper.createDayResultByTimeTypeAndEntrtEdateIsNull(paramMap);
+				WtmWorkDayResult laaResult = new WtmWorkDayResult();
+				laaResult.setTenantId(calendar.getTenantId());
+				laaResult.setEnterCd(calendar.getEnterCd());
+				laaResult.setYmd(calendar.getYmd());
+				laaResult.setSabun(calendar.getSabun());
+				laaResult.setApplId(null);
+				laaResult.setTimeTypeCd(WtmApplService.TIME_TYPE_LLA);
+				laaResult.setTaaCd(leaveTaaCode.getTaaCd());
+				laaResult.setUpdateId("SYSTEM");
+				workDayResultRepo.save(laaResult);
+				
+			}
+			
+			
+	//		paramMap.put("timeTypeCd", timeTypeCd);
+			//소정근로시간의 경우 출퇴근 타각기록으로만 판단 >> 결근 데이터가 있는 날은 빼야한다.
+			paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
+			paramMap.put("taaCd", absenceTaaCode.getTaaCd());
+	
+			if(flexStdMgr.getWorkTypeCd().equals("SELE_F")) {
+				try { logger.debug("9. APPLY_ENTRY_SDATE_YN / APPLY_ENTRY_EDATE_YN 여부에 따라 타각 시간을 계획시간으로 업데이트 한다. 그리고 인정시간을 다시 계산한다. 계획시간이 변경되었기 때문에 ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_CREATE_F"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+				calcService.P_WTM_WORK_DAY_RESULT_CREATE_F(tenantId, enterCd, sabun,  calendar.getYmd(), flexStdMgr, timeCdMgr, "P_WTM_WORK_DAY_RESULT_CREATE_F-"+sabun);
+			}else {
+				try { logger.debug("8. 결근 데이터를 제외하고 타각 시간으로 계획 시간들의 인정시간을 만들어 준다. " + mapper.writeValueAsString(paramMap) + "updateApprDatetimeByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+				//결근을 제외한 day result의 모든 계획데이터를 인정데이터로 만들어 준다. 
+				//flexEmpMapper.updateApprDatetimeByYmdAndSabun(paramMap);
+				List<WtmWorkDayResult> apprResults = workDayResultRepo.findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd(calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), WtmApplService.TIME_TYPE_LLA, absenceTaaCode.getTaaCd(), calendar.getSabun());
+				for(WtmWorkDayResult r : apprResults) {
+					Date sDate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
+					Date eDate = calcService.WorkTimeCalcApprDate(calendar.getEntryEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
+					r.setApprSdate(sDate);
+					r.setApprEdate(eDate);
+					Map<String, Object> calcMap = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+					int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+					int breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
+					r.setApprMinute(apprMinute - breakMinute);
+					
+					r.setUpdateId("findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd");
+					workDayResultRepo.save(r);
+				}
+			}
+			//if("BRS".equals(enterCd) || "LSG".equals(enterCd) || "1000".equals(enterCd)) {
+				// 20200518 브로제랑 ls글로벌만 완전선근 사용중 ngv
+				//시작일 타각 데이터 기준 옵션에 해당하는 내용을 인정시간을 다시 업데이트 하자
+				//계획이 있지만 타각데이터로 인정하는 케이스는 완전선근제 옵션에만 있다. 기억하자 까묵지마라.
+				//unplanned 가Y이면 어카지? BASE 데이터가 없을텐데.. resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt 쪼 밑에서 하고 있다
+			//	try { logger.debug("9. APPLY_ENTRY_SDATE_YN / APPLY_ENTRY_EDATE_YN 여부에 따라 타각 시간을 계획시간으로 업데이트 한다. 그리고 인정시간을 다시 계산한다. 계획시간이 변경되었기 때문에 ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_CREATE_F"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+				//flexEmpMapper.calcFlexApplyEntryDatetimeByFlexibleEmpId(paramMap);
+			//	calcService.P_WTM_WORK_DAY_RESULT_CREATE_F(tenantId, enterCd, sabun, calendar.getYmd(), flexStdMgr, timeCdMgr, sabun);
+			//}
+	
+			//결근은 최상단에서 제외
+			if(calendar.getEntrySdate() != null && calendar.getEntryEdate() != null && timeCdMgr.getLeaveChkYn().equals("Y")) {
+				
+				dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
+				//Date maxPlanEdate = null;
+				if(dayResults != null && dayResults.size() > 0) {
+					for(WtmWorkDayResult r : dayResults) {
+						//기본근무 사이에 올 수 있는 근무는 시간단위 연차와 반차, 대체휴일, 간주근무, 음? OT빼고 다? ㅡㅡ 연차나 출장 교육의 경우 사전 벨리데이션에서 걸러진다고 보자 여기선 테트리스
+						//dayResults 에는 OT가 있어선 안된다.. 넘어오는 기본데이터는 OT중복되어서 작성할 수 없기때문인다 오케?
+					
+						if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
+							if(minPlanSdate_BASE == null || minPlanSdate_BASE.compareTo(r.getPlanSdate()) > 0) {
+								minPlanSdate_BASE = r.getPlanSdate();
+							}
+							if(maxPlanEdate_BASE == null || maxPlanEdate_BASE.compareTo(r.getPlanEdate()) < 0 ) {
+								maxPlanEdate_BASE = r.getPlanEdate();
 							}
 						}
 						
 					}
 				}
-				logger.debug("isCreateLate : " + isCreateLate);
-				logger.debug("minSdate : " + minSdate);
-				logger.debug("calendar.getEntrySdate() : " + calendar.getEntrySdate());
-				if(isCreateLate && minSdate != null && calendar.getEntrySdate() != null) {
-					if(minSdate.compareTo(calendar.getEntrySdate()) < 0) {
-						logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각!");
-						WtmWorkDayResult lateResult = new WtmWorkDayResult();
-						lateResult.setTenantId(tenantId);
-						lateResult.setEnterCd(enterCd);
-						lateResult.setYmd(calendar.getYmd());
-						lateResult.setSabun(sabun);
-						lateResult.setTimeTypeCd(WtmApplService.TIME_TYPE_LLA);
-						lateResult.setTaaCd(lateTaaCode.getTaaCd());
-						Date calcSdate = calcService.WorkTimeCalcApprDate(minSdate, minSdate, flexStdMgr.getUnitMinute(), "S");
-						Date calcEdate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), calendar.getEntrySdate(), flexStdMgr.getUnitMinute(), "E");
-
-						lateResult.setPlanSdate(calcSdate);
-						lateResult.setPlanEdate(calcEdate);
-						lateResult.setApprSdate(calcSdate);
-						lateResult.setApprEdate(calcEdate);
-						SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
-						
-						int apprMinute = calcService.WtmCalcMinute(sdf.format(calcSdate), sdf.format(calcEdate), null, null, flexStdMgr.getUnitMinute());
-						lateResult.setPlanMinute(apprMinute);
-						lateResult.setApprMinute(apprMinute);
-						lateResult.setUpdateDate(new Date());
-						lateResult.setUpdateId(sabun);
-						logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각 여기 " + lateResult.toString());
-						workDayResultRepo.save(lateResult);
-						logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각 끝 " + lateResult.toString());
-					}
+				if(minPlanSdate_BASE != null && maxPlanEdate_BASE != null && minPlanSdate_BASE.compareTo(maxPlanEdate_BASE) > 0) {
+					
+				
+					WtmTaaCode leaveTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LEAVE);
+					// 이곳은 출/퇴근 타각데이터가 있는 사람에 한한다.. 
+					// 계획 종료 시간 보다 인정종료시간이 빠를 경우 BASE중에 
+					// 조퇴 데이터 생성
+					paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
+					paramMap.put("taaCd", leaveTaaCode.getTaaCd());
+					try { logger.debug("10. BASE중에 계획 종료 시간 보다 인정종료시간이 빠를 경우 조퇴 데이터를 생성한다  " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndApprEdateLessThanPlanEdate"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+					//flexEmpMapper.createDayResultByTimeTypeAndApprEdateLessThanPlanEdate(paramMap);
+					WtmWorkDayResult laaResult = new WtmWorkDayResult();
+					laaResult.setTenantId(calendar.getTenantId());
+					laaResult.setEnterCd(calendar.getEnterCd());
+					laaResult.setYmd(calendar.getYmd());
+					laaResult.setSabun(calendar.getSabun());
+					laaResult.setApplId(null);
+					laaResult.setTimeTypeCd(WtmApplService.TIME_TYPE_LLA);
+					laaResult.setTaaCd(leaveTaaCode.getTaaCd());
+					laaResult.setUpdateId("SYSTEM");
+					workDayResultRepo.save(laaResult);
+					
 				}
 			}
-			//int cnt = flexEmpMapper.createDayResultByTimeTypeAndPlanSdateLessThanApprSdate(paramMap);
-			//logger.debug("11-2. 지각 데이터 조회 cnt  " + cnt);
-		}
-		
-		//고정OT 일괄소진의 경우 고정 OT데이터를 삭제후 다시 만들어 준다.
-		//근무 기간 내에 고정 OT정보를 확인부터 하자.
-		//고정OT 일괄소진의 경우 계획데이터만 있을 수 없다 마감시 인정 시간을 바로 산정한다. 
-		if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
-			try { logger.debug("12. BREAK_TYPE_CD가 MGR인것만 APPR_MINUTE 계산 (지각 데이터는 생성 시 인정 분을 만들기 때문에 제외한다.)  " + mapper.writeValueAsString(paramMap) + "updateApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-			// BREAK_TYPE_CD가 MGR인것만 계산
-			flexEmpMapper.updateApprMinuteByYmdAndSabun(paramMap);
-		}
-		
-		if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
-			try { logger.debug("13. BREAK_TYPE_CD가 TIME인것만 APPR_MINUTE 계산 (지각 데이터는 생성 시 인정 분을 만들기 때문에 제외한다.)  " + mapper.writeValueAsString(paramMap) + "updateTimeTypeApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-			// BREAK_TYPE_CD가 TIME인것만 계산
-			flexEmpMapper.updateTimeTypeApprMinuteByYmdAndSabun(paramMap);
-		}
-		
-		if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
-			try { logger.debug("14. BREAK_TYPE_CD가 TIMEFIX인것만 APPR_MINUTE 계산 (지각 데이터는 생성 시 인정 분을 만들기 때문에 제외한다.)  " + mapper.writeValueAsString(paramMap) + "updateTimeFixTypeApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-			// BREAK_TYPE_CD가 TIMEFIX인것만 계산
-			flexEmpMapper.updateTimeFixTypeApprMinuteByYmdAndSabun(paramMap);
-		}
-		
-		
-		/**
-		 * 고정 OT 일괄 소진에 대한 부분
-		 */
-		if(flexStdMgr.getDefaultWorkUseYn().equalsIgnoreCase("Y") && flexStdMgr.getFixotUseType().equalsIgnoreCase("ALL")) {
-
-			//List<WtmFlexibleEmp> emps = flexEmpRepo.findAllTypeFixotByTenantIdAndEnterCdAndSabunAndSymdAndEymdAnd(tenantId, enterCd, sabun, calendar.getYmd(), calendar.getYmd());
-			logger.debug("15. 고정 OT 일괄 소진에 대한 부분 & no plan 케이스  " ); 
-			//if(emps != null && emps.size() >0) {
-			//	for( WtmFlexibleEmp emp : emps) {
-					//paramMap.put("flexibleEmpId", emp.getFlexibleEmpId());
-					//flexEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(paramMap);
-					calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, tenantId, enterCd, sabun, calendar.getYmd(), 0, "P_WTM_WORK_DAY_RESULT_CREATE_N-" + sabun);
-			//	}
-			//}
-		}
-		
-		/**
-		 * Time타입 휴게시간 일 경우만
-		 * type이 plan이면 계획데이터를 생성한다. 
-		 * 인정 데이터 생성을 위함
-		 */
-		
-		paramMap.put("type", "APPR");paramMap.put("taaInfoCd", "BREAK");
-		try { logger.debug("16. Time타입 휴게시간 일 경우만 / type이 plan이면 계획데이터를 생성한다.  인정 데이터 생성을 위함  " + mapper.writeValueAsString(paramMap) + "call P_WTM_WORK_DAY_RESULT_TIME_C"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-		flexEmpMapper.createWorkDayResultOfTimeType(paramMap);
-		
-		
-		/**
-		 * 대체휴일 생성 
-		 */
-		List<Map<String, Object>> subsCreateTarget = otApplMapper.subsCreateTarget(paramMap);
-		logger.debug("17. subsCreateTarget ","subsCreateTarget : " + subsCreateTarget.size() + "subsCreateTarget"); 
-		if(subsCreateTarget!=null && subsCreateTarget.size()>0) {
-			logger.debug("calcApprDayInfo 18 ");
 			
-			List<WtmOtAppl> otAppls = new ArrayList<WtmOtAppl>();
-			for(Map<String, Object> t : subsCreateTarget) {
-				WtmOtAppl otAppl = otApplRepo.findById(Long.valueOf(t.get("otApplId").toString())).get();
-				otAppls.add(otAppl);
+			// 계획 시작 시간보다 인정시작시간이 늦을 경우 BASE중에 
+			// 지각 데이터 생성
+			WtmTaaCode lateTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LATE);
+			paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
+			paramMap.put("taaCd", lateTaaCode.getTaaCd());
+			try { 
+				logger.debug("11. BASE중에 계획 시작 시간보다 인정시작시간이 늦을 경우 지각 데이터를 생성한다  " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndPlanSdateLessThanApprSdate"); 
+			
+				//여기서 지각데이터 생성이 되다안되다해서 select를 한번찍어보자
+				/*
+				Map<String, Object> temp = flexEmpMapper.getTemporaryWorkResult(paramMap);
+				if(temp != null) {
+					logger.debug("11-1. 지각 데이터 조회  " + mapper.writeValueAsString(temp)); 
+				}
+				*/
+			} catch (JsonProcessingException e) {	
+				logger.debug("11-4. 지각 데이터 조회 exception " + e.getMessage()); 
+				e.printStackTrace();	
 			}
-
-			try { logger.debug("18. applyOtSubs ","otAppls : " + mapper.writeValueAsString(otAppls) + "applyOtSubs"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-			applyOtSubs(tenantId, enterCd, otAppls, false, "SYSTEM");
+			logger.debug("timeCdMgr.getLateChkYn() : " + timeCdMgr.getLateChkYn() + " 가 Y면 지각 데이터 체크 ");
+			if(timeCdMgr.getLateChkYn().equalsIgnoreCase("Y")) {
+				dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
+				if(dayResults != null && dayResults.size() > 0) {
+					boolean isCreateLate = true;
+					Date minSdate = null;
+				
+					for(WtmWorkDayResult result : dayResults) {
+						if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA)
+								&& result.getTaaCd().equals(lateTaaCode.getTaaCd())
+								) {
+							logger.debug("result.getTimeTypeCd() : " + result.getTimeTypeCd() + " / result.getTaaCd() " + result.getTaaCd() + " 인 데이터가 있는 날은 생성하지 않는다.");
+							isCreateLate = false;
+						}
+						//BASE중 젤 작은 계획시간을 찾는다. 
+						if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
+							if(minSdate == null) {
+								minSdate = result.getPlanSdate();
+							}else {
+								if(minSdate.compareTo(result.getPlanSdate()) > 0) {
+									minSdate = result.getPlanSdate();
+								}
+							}
+							
+						}
+					}
+					logger.debug("isCreateLate : " + isCreateLate);
+					logger.debug("minSdate : " + minSdate);
+					logger.debug("calendar.getEntrySdate() : " + calendar.getEntrySdate());
+					if(isCreateLate && minSdate != null && calendar.getEntrySdate() != null) {
+						if(minSdate.compareTo(calendar.getEntrySdate()) < 0) {
+							logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각!");
+							WtmWorkDayResult lateResult = new WtmWorkDayResult();
+							lateResult.setTenantId(tenantId);
+							lateResult.setEnterCd(enterCd);
+							lateResult.setYmd(calendar.getYmd());
+							lateResult.setSabun(sabun);
+							lateResult.setTimeTypeCd(WtmApplService.TIME_TYPE_LLA);
+							lateResult.setTaaCd(lateTaaCode.getTaaCd());
+							Date calcSdate = calcService.WorkTimeCalcApprDate(minSdate, minSdate, flexStdMgr.getUnitMinute(), "S");
+							Date calcEdate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), calendar.getEntrySdate(), flexStdMgr.getUnitMinute(), "E");
+	
+							lateResult.setPlanSdate(calcSdate);
+							lateResult.setPlanEdate(calcEdate);
+							lateResult.setApprSdate(calcSdate);
+							lateResult.setApprEdate(calcEdate);
+							SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+							
+							int apprMinute = calcService.WtmCalcMinute(sdf.format(calcSdate), sdf.format(calcEdate), null, null, flexStdMgr.getUnitMinute());
+							lateResult.setPlanMinute(apprMinute);
+							lateResult.setApprMinute(apprMinute);
+							lateResult.setUpdateDate(new Date());
+							lateResult.setUpdateId(sabun);
+							logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각 여기 " + lateResult.toString());
+							workDayResultRepo.save(lateResult);
+							logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각 끝 " + lateResult.toString());
+						}
+					}
+				}
+				//int cnt = flexEmpMapper.createDayResultByTimeTypeAndPlanSdateLessThanApprSdate(paramMap);
+				//logger.debug("11-2. 지각 데이터 조회 cnt  " + cnt);
+			}
+			
+			//고정OT 일괄소진의 경우 고정 OT데이터를 삭제후 다시 만들어 준다.
+			//근무 기간 내에 고정 OT정보를 확인부터 하자.
+			//고정OT 일괄소진의 경우 계획데이터만 있을 수 없다 마감시 인정 시간을 바로 산정한다. 
+			if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+				try { logger.debug("12. BREAK_TYPE_CD가 MGR인것만 APPR_MINUTE 계산 (지각 데이터는 생성 시 인정 분을 만들기 때문에 제외한다.)  " + mapper.writeValueAsString(paramMap) + "updateApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+				// BREAK_TYPE_CD가 MGR인것만 계산
+				flexEmpMapper.updateApprMinuteByYmdAndSabun(paramMap);
+			}
+			
+			if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
+				try { logger.debug("13. BREAK_TYPE_CD가 TIME인것만 APPR_MINUTE 계산 (지각 데이터는 생성 시 인정 분을 만들기 때문에 제외한다.)  " + mapper.writeValueAsString(paramMap) + "updateTimeTypeApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+				// BREAK_TYPE_CD가 TIME인것만 계산
+				flexEmpMapper.updateTimeTypeApprMinuteByYmdAndSabun(paramMap);
+			}
+			
+			if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
+				try { logger.debug("14. BREAK_TYPE_CD가 TIMEFIX인것만 APPR_MINUTE 계산 (지각 데이터는 생성 시 인정 분을 만들기 때문에 제외한다.)  " + mapper.writeValueAsString(paramMap) + "updateTimeFixTypeApprMinuteByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+				// BREAK_TYPE_CD가 TIMEFIX인것만 계산
+				flexEmpMapper.updateTimeFixTypeApprMinuteByYmdAndSabun(paramMap);
+			}
+			
+			
+			/**
+			 * 고정 OT 일괄 소진에 대한 부분
+			 */
+			if(flexStdMgr.getDefaultWorkUseYn().equalsIgnoreCase("Y") && flexStdMgr.getFixotUseType().equalsIgnoreCase("ALL")) {
+	
+				//List<WtmFlexibleEmp> emps = flexEmpRepo.findAllTypeFixotByTenantIdAndEnterCdAndSabunAndSymdAndEymdAnd(tenantId, enterCd, sabun, calendar.getYmd(), calendar.getYmd());
+				logger.debug("15. 고정 OT 일괄 소진에 대한 부분 & no plan 케이스  " ); 
+				//if(emps != null && emps.size() >0) {
+				//	for( WtmFlexibleEmp emp : emps) {
+						//paramMap.put("flexibleEmpId", emp.getFlexibleEmpId());
+						//flexEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(paramMap);
+						calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, tenantId, enterCd, sabun, calendar.getYmd(), 0, "P_WTM_WORK_DAY_RESULT_CREATE_N-" + sabun);
+				//	}
+				//}
+			}
+			
+			/**
+			 * Time타입 휴게시간 일 경우만
+			 * type이 plan이면 계획데이터를 생성한다. 
+			 * 인정 데이터 생성을 위함
+			 */
+			
+			paramMap.put("type", "APPR");paramMap.put("taaInfoCd", "BREAK");
+			try { logger.debug("16. Time타입 휴게시간 일 경우만 / type이 plan이면 계획데이터를 생성한다.  인정 데이터 생성을 위함  " + mapper.writeValueAsString(paramMap) + "call P_WTM_WORK_DAY_RESULT_TIME_C"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+			flexEmpMapper.createWorkDayResultOfTimeType(paramMap);
+			
+			
+			/**
+			 * 대체휴일 생성 
+			 */
+			List<Map<String, Object>> subsCreateTarget = otApplMapper.subsCreateTarget(paramMap);
+			logger.debug("17. subsCreateTarget ","subsCreateTarget : " + subsCreateTarget.size() + "subsCreateTarget"); 
+			if(subsCreateTarget!=null && subsCreateTarget.size()>0) {
+				logger.debug("calcApprDayInfo 18 ");
+				
+				List<WtmOtAppl> otAppls = new ArrayList<WtmOtAppl>();
+				for(Map<String, Object> t : subsCreateTarget) {
+					WtmOtAppl otAppl = otApplRepo.findById(Long.valueOf(t.get("otApplId").toString())).get();
+					otAppls.add(otAppl);
+				}
+	
+				try { logger.debug("18. applyOtSubs ","otAppls : " + mapper.writeValueAsString(otAppls) + "applyOtSubs"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+				applyOtSubs(tenantId, enterCd, otAppls, false, "SYSTEM");
+			}
 		}
-		
 		/**
 		 * 인정되지 않은 계획 시간의 경우 일괄로 apprMinute에 0으로 갱신한다.
 		 */
