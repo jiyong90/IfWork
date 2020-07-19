@@ -1379,10 +1379,15 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)  || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)  ) 
 						    )
 					)
+				
 			){
-				if(dayPlanSdate == null || dayPlanSdate.compareTo(r.getPlanSdate()) > 0) {
-					dayPlanSdate = r.getPlanSdate();
-					logger.debug("4.(출근)타각 자동 업데이트. dayPlanSdate : " +  dayPlanSdate); 
+				if(r.getPlanSdate() != null) {
+					if(dayPlanSdate == null || dayPlanSdate.compareTo(r.getPlanSdate()) > 0) {
+						dayPlanSdate = r.getPlanSdate();
+						logger.debug("4.(출근)타각 자동 업데이트. dayPlanSdate : " +  dayPlanSdate); 
+					}
+				}else {
+					logger.debug("4.(출근)타각 자동 업데이트.  r.getPlanSdate() is null : " + r.getSabun() + " : " + r.getEnterCd() + " : " + r.getTimeTypeCd());
 				}
 			}
 			
@@ -1394,9 +1399,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							    )
 						)
 			){
-				if(dayPlanEdate == null || dayPlanEdate.compareTo(r.getPlanEdate()) < 0) {
-					dayPlanEdate = r.getPlanEdate();
-					logger.debug("4.(퇴근)타각 자동 업데이트. dayPlanEdate : " +  dayPlanEdate); 
+				if(r.getPlanEdate() != null) {
+					if(dayPlanEdate == null || dayPlanEdate.compareTo(r.getPlanEdate()) < 0) {
+						dayPlanEdate = r.getPlanEdate();
+						logger.debug("4.(퇴근)타각 자동 업데이트. dayPlanEdate : " +  dayPlanEdate); 
+					}
+				}else {
+					logger.debug("4.(퇴근)타각 자동 업데이트.  r.getPlanEdate() is null : " + r.getSabun() + " : " + r.getEnterCd() + " : " + r.getTimeTypeCd());
 				}
 			}
 		}
