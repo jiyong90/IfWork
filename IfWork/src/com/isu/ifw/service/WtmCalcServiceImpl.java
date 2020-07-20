@@ -184,6 +184,19 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		}
 	}
 	
+	/**
+	 * 인정시간 계산 
+	 * @param flexStdMgr
+	 * @param timeCdMgr
+	 * @param result
+	 * @param sDate
+	 * @param eDate
+	 * @param entrySdate
+	 * @param entryEdate
+	 * @param sumWorkMinute
+	 * @param workMinute
+	 * @param userId
+	 */
 	@Transactional
 	public void P_WTM_WORK_DAY_RESULT_UPDATE_T(WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr, WtmWorkDayResult result, Date sDate, Date eDate, Date entrySdate, Date entryEdate, int sumWorkMinute, int workMinute, String userId ) {
 		// System.out.println("UPDATE_T :: START :: " );
@@ -269,6 +282,13 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		workDayResultRepo.save(result);
 	}
 
+	/**
+	 * 고정 OT 일괄 소진일 경우에만 사용된다. 
+	 * flexStdMgr.getDefaultWorkUseYn().equalsIgnoreCase("Y") && flexStdMgr.getFixotUseType().equalsIgnoreCase("ALL"))
+	 * 소정근로시간이 모두 소진 되었을 경우 고정 OT를 생성한다 .
+	 * 소정근로시간 생성 시 unplannedYn == 'Y' 일경우만 생성한다.
+	 * 
+	 */
 	@Transactional
 	@Override
 	public void P_WTM_WORK_DAY_RESULT_CREATE_N(WtmFlexibleStdMgr flexibleStdMgr, Long tenantId, String enterCd,  String sabun, String ymd, int addSumWorkMinute, String userId) {
@@ -282,6 +302,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		paramMap.put("sYmd", ymd);
 		paramMap.put("eYmd", ymd);
 
+		/**
+		 * 근무제도 기간내 총 소정근로 시간과 ymd 까지의 근무 시간의 합을 구한다.
+		 */
 		WtmFlexibleEmpCalc flexInfo = flexibleEmpRepo.getTotalWorkMinuteAndRealWorkMinute(tenantId, enterCd, sabun, ymd);
 		System.out.println("**************flexInfo " + flexInfo.toString());
 		

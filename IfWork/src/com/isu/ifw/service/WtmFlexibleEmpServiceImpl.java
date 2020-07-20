@@ -1434,7 +1434,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			workCalendarRepo.save(calendar);
 		}
 		
-		if(dayPlanEdate != null) {
+		//출근타각이 있을 경우에만
+		if(dayPlanEdate != null && calendar.getEntrySdate() != null) {
 			// 퇴근 시간 자동 여부 (계획시간으로 )
 			// 어디까지인가? 기본근무 / 연장
 			// 퇴근 타각데이터가 있는건 갱신하지 않는다.
