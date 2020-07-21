@@ -64,6 +64,8 @@ public interface WtmApplService {
 	final static String TIME_TYPE_GOBACK = "GOBACK";
 	
 	final static String TIME_TYPE_EXCEPT = "EXCEPT";
+	//현출 현퇴
+	final static String TIME_TYPE_ETC = "ETC";
 	
 	//결재
 	final static String APPL_TYPE_REQUEST = "01"; //신청

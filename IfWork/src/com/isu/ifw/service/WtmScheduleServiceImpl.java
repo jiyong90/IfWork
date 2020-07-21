@@ -95,7 +95,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 
 	
 	@Override
-	@Transactional
+	//@Transactional
 	@Async("threadPoolTaskExecutor")
 	public void setCloseDay(Long tenantId) throws Exception {
 		
@@ -163,7 +163,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
         		String enterCd = closeList.get(i).get("enterCd").toString();
         		String sabun = closeList.get(i).get("sabun").toString();
         		String closeYmd = closeList.get(i).get("ymd").toString();
-        		Integer gooutCnt = Integer.parseInt(closeList.get(i).get("gooutCnt").toString());
+        		//Integer gooutCnt = Integer.parseInt(closeList.get(i).get("gooutCnt").toString());
         		
         		HashMap<String, Object> setTermMap = new HashMap();
         		setTermMap.put("tenantId", tenantId);
@@ -173,7 +173,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
         		setTermMap.put("symd", closeYmd);
         		setTermMap.put("eymd", closeYmd);
         		setTermMap.put("pId", "DAYCLOSE");
-        		
+        		/*
         		if(gooutCnt > 0) {
 					// create result 호출
         			WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, closeYmd);
@@ -220,6 +220,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
         			}
         			
         		}
+        		*/
         		logger.debug("schedule_closeday tenantId : "+ tenantId + " enterCd : " + enterCd + " sabun : " + sabun + ", ymd : " + closeYmd + ", closeType : " + closeType);
         		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, closeYmd, closeYmd, sabun);
         		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);

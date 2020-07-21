@@ -44,6 +44,7 @@ import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmFlexibleStdMapper;
 import com.isu.ifw.mapper.WtmOrgChartMapper;
 import com.isu.ifw.mapper.WtmOtApplMapper;
+import com.isu.ifw.mapper.WtmScheduleMapper;
 import com.isu.ifw.repository.WtmApplRepository;
 import com.isu.ifw.repository.WtmEmpHisRepository;
 import com.isu.ifw.repository.WtmFlexibleApplDetRepository;
@@ -154,8 +155,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	@Autowired
 	WtmCalcService calcService;
 
-	@Autowired private PlatformTransactionManager transactionManager;
+	//@Autowired private PlatformTransactionManager transactionManager;
 
+	@Autowired
+	WtmScheduleMapper wtmScheduleMapper;
 
 	
 	@Override
@@ -1224,7 +1227,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	@Transactional
 	@Override
 	public void calcApprDayInfo(Long tenantId, String enterCd, String sYmd, String eYmd, String sabun) {
-		TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+		//TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
 		
 		List<WtmWorkCalendar> works = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenOrderByYmdAsc(tenantId, enterCd, sabun, sYmd, eYmd);
 		
@@ -1299,6 +1302,27 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		*/
 	}
 	
+	public void calcApprDayInfo0(Long tenantId, String enterCd, String ymd, String sabun, String taaLocalIn, String taaLocalOut) {
+		Map<String, Object> paramMap = new HashMap<>();
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("ymd", ymd);
+		paramMap.put("nextYmd", ymd);
+		paramMap.put("sabun", sabun);
+		
+		if(taaLocalIn != null) {
+			paramMap.put("taaLocalIn", taaLocalIn);
+			int cnt = wtmScheduleMapper.setUpdateLocalIn(paramMap);
+			logger.debug("taaLocalIn : " + taaLocalIn + " 현지 출근 신청 타각 갱신 : " + cnt);
+		}
+		if(taaLocalOut != null) {
+			paramMap.put("taaLocalOut", taaLocalOut);
+    		logger.debug("schedule_closeday taaLocalOut : "+ paramMap.toString());
+    		int cnt = wtmScheduleMapper.setUpdateLocalOut(paramMap);
+    		logger.debug("taaLocalIn : " + taaLocalOut + " 현지 퇴근 신청 타각 갱신 : " + cnt);
+		}
+		 
+	}
 	/**
 	 * 타각시간 기준으로 인정시간 계산
 	 */
@@ -1328,6 +1352,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		}
 		ObjectMapper mapper = new ObjectMapper();
 				 
+		
 				
 		WtmTaaCode absenceTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_ABSENCE);
 		//코어타임 사용 시 코어타임 필수여부에 따라 근무시간이 코어타임에 미치지 못하면 결근으로 본다.
@@ -1342,7 +1367,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_REGA);
 		// 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다.
 		//List<WtmWorkDayResult> regaResult = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, calendar.getYmd(), calendar.getYmd());
-		boolean isRega = false;
+		boolean isRega = false;	//간주근무 여부
+		boolean isGoback = false; //외출복귀 데이터 여부
 		Date minPlanSdate_REGA = null;
 		Date maxPlanEdate_REGA = null;
 		
@@ -1353,6 +1379,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		Date dayPlanSdate = null;
 		Date dayPlanEdate = null;
+		
 		List<WtmWorkDayResult> dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
 		for(WtmWorkDayResult r : dayResults) {
 			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA)) {
@@ -1408,7 +1435,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					logger.debug("4.(퇴근)타각 자동 업데이트.  r.getPlanEdate() is null : " + r.getSabun() + " : " + r.getEnterCd() + " : " + r.getTimeTypeCd());
 				}
 			}
-		}
+			
+			// 외출복귀 데이터 여부 마감전에 생성되기 때문에 초반에 체크 해도 된다 .
+			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_GOBACK)) {
+				isGoback = true;
+			}
+
+		} 
 		if(isRega) {
 			try { logger.debug("3. 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다. " + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 			//flexEmpMapper.updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
@@ -1519,6 +1552,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					workDayResultRepo.save(r);
 				}
 			}
+			
+			
 			//if("BRS".equals(enterCd) || "LSG".equals(enterCd) || "1000".equals(enterCd)) {
 				// 20200518 브로제랑 ls글로벌만 완전선근 사용중 ngv
 				//시작일 타각 데이터 기준 옵션에 해당하는 내용을 인정시간을 다시 업데이트 하자
@@ -1696,6 +1731,27 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				//	}
 				//}
 			}
+			
+			/**
+			 * 외출 복귀 데이터 재계산
+			 */
+			if(isGoback) {
+				List<WtmWorkDayResult> gobackResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_GOBACK, calendar.getYmd(), calendar.getYmd());
+				for(WtmWorkDayResult gobackResult : gobackResults) {
+					this.addApprWtmDayResultInBaseTimeType(gobackResult.getTenantId()
+														 , gobackResult.getEnterCd()
+														 , gobackResult.getYmd()
+														 , gobackResult.getSabun()
+														 , gobackResult.getTimeTypeCd()
+														 ,""
+														 , gobackResult.getPlanSdate()
+														 , gobackResult.getPlanEdate()
+														 , null
+														 , sabun
+														 , false);
+				}
+			}
+			
 			
 			/**
 			 * Time타입 휴게시간 일 경우만
