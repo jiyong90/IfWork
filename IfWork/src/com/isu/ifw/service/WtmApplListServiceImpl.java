@@ -1,6 +1,8 @@
 package com.isu.ifw.service;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -10,7 +12,9 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.isu.ifw.entity.WtmFlexibleApplyMgr;
 import com.isu.ifw.mapper.WtmApplListMapper;
+import com.isu.ifw.mapper.WtmOtApplMapper;
 import com.isu.ifw.util.WtmUtil;
 
 @Service("applListService")
@@ -23,6 +27,12 @@ public class WtmApplListServiceImpl implements WtmApplListService{
 	
 	@Autowired
 	WtmFlexibleEmpService empService;
+	
+	@Autowired
+	WtmApplService wtmApplService;
+	
+	@Autowired
+	WtmOtApplMapper wtmOtAppMapper;
 	
 	@Override
 	public List<Map<String, Object>> getOtList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {

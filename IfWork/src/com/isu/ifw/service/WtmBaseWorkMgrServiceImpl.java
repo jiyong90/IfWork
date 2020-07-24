@@ -16,6 +16,12 @@ import org.springframework.stereotype.Service;
 import com.isu.ifw.entity.WtmBaseWorkMgr;
 import com.isu.ifw.repository.WtmBaseWorkMgrRepository;
 import com.isu.ifw.util.WtmUtil;
+//20200709 안흥규 근무제 적용 관리
+import com.isu.ifw.entity.WtmFlexibleStdMgr; 
+import com.isu.ifw.entity.WtmWorkPattDet; 
+import com.isu.ifw.repository.WtmFlexibleStdMgrRepository; 
+import com.isu.ifw.repository.WtmWorkPattDetRepository; 
+
 
 @Service("baseWorkMgrService")
 public class WtmBaseWorkMgrServiceImpl implements WtmBaseWorkMgrService{
@@ -24,6 +30,12 @@ public class WtmBaseWorkMgrServiceImpl implements WtmBaseWorkMgrService{
 	
 	@Resource
 	WtmBaseWorkMgrRepository baseWorkRepository;
+	
+	@Resource
+	WtmFlexibleStdMgrRepository flexibleStdMgrRepository; //20200709 안흥규 근무제 적용 관리
+	
+	@Resource
+	WtmWorkPattDetRepository workPattDetRepo; //20200709 안흥규 근무제 적용 관리
 	
 	@Override
 	public List<Map<String, Object>> getBaseWorkList(Long tenantId, String enterCd, Map<String, Object> paramMap) {
@@ -59,7 +71,30 @@ public class WtmBaseWorkMgrServiceImpl implements WtmBaseWorkMgrService{
 				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("mergeRows");
 				List<WtmBaseWorkMgr> works = new ArrayList();
 				if(iList != null && iList.size() > 0) {
+					
+					
+					
 					for(Map<String, Object> l : iList) {
+						
+						//20200708 안흥규 근무제 적용 관리 --start
+						WtmFlexibleStdMgr mgr = null;
+						int pattCnt = 0;
+						mgr = flexibleStdMgrRepository.findByFlexibleStdMgrId(Long.parseLong(l.get("flexibleStdMgrId").toString()));
+						System.out.println("mgr = "+mgr);
+						
+						if(mgr.getRegardTimeCdId() == null || mgr.getUnitMinute() ==  null) {
+							cnt = -1;
+							return cnt;
+						}
+						
+						pattCnt = workPattDetRepo.countByFlexibleStdMgrId(Long.parseLong(l.get("flexibleStdMgrId").toString()));
+						if(pattCnt == 0) {
+							cnt = -2;
+							return cnt;
+						}
+						//20200708 안흥규 근무제 적용 관리 --end
+						
+						
 						WtmBaseWorkMgr work = new WtmBaseWorkMgr();
 						work.setEnterCd(enterCd);
 						work.setTenantId(tenantId);

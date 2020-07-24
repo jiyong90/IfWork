@@ -27,6 +27,9 @@ public interface WtmInoutService {
 
 	//타각 후처리 로직
 	public void inoutPostProcess(Map<String, Object> paramMap);
+	//ISU_ST 타각 erp전송
+	public void sendErp(String enterCd, String sabun, Map<String, Object> paramMap);
+	
 	//타각데이터 저장
 	public boolean insertTimeStamp(Map<String, Object> paramMap) throws Exception;
 	//타각데이터 업데이트

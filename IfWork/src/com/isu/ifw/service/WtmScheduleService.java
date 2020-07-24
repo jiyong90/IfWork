@@ -17,6 +17,16 @@ public interface WtmScheduleService {
 	 * @throws Exception 
 	 */
 	public void setCloseDay(Long tenantId) throws Exception;
+	
+	/**
+	 * 일마감근무계획없음
+	 * @param reqMap - 파라메터 맵
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void setCloseDayUnplaned(Long tenantId) throws Exception;
+	
+	
 
 	/**
 	 * 인터페이스로 자료 전송

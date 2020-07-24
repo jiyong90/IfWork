@@ -154,6 +154,13 @@ public interface WtmInterfaceService {
 	public void setTaaApplBatchIf(Long tenantId) throws Exception;
 	
 	/**
+	 * 근태정보 테이블 내용 전체 돌리기
+	 * @return 
+	 * @throws Exception 
+	 */
+	public void setTaaApplBatchIfPostProcess();
+
+	/**
 	 * 근태마감
 	 * @param reqMap - 파라메터 맵
 	 * @return 

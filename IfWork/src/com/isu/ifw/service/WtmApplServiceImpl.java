@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -272,4 +273,10 @@ public class WtmApplServiceImpl implements WtmApplService {
 		return null;
 	}
 
+	@Override
+	public ReturnParam saveWtmApplSts(Long tenantId, String enterCd, String sabun, String userId,
+			Map<String, Object> convertMap) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

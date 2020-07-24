@@ -162,6 +162,16 @@ public class WtmFlexibleInfoVO {
 	}
 	public void setSumFixOtMinute(Integer sumFixOtMinute) {
 		this.sumFixOtMinute = sumFixOtMinute;
+	}
+	@Override
+	public String toString() {
+		return "WtmFlexibleInfoVO [tenantId=" + tenantId + ", enterCd=" + enterCd + ", ymd=" + ymd + ", sabun=" + sabun
+				+ ", flexibleEmpId=" + flexibleEmpId + ", workMinute=" + workMinute + ", sumWorkMinute=" + sumWorkMinute
+				+ ", otMinute=" + otMinute + ", timeCdMgrId=" + timeCdMgrId + ", entrySdate=" + entrySdate
+				+ ", entryEdate=" + entryEdate + ", workShm=" + workShm + ", workEhm=" + workEhm + ", unitMinute="
+				+ unitMinute + ", breakTypeCd=" + breakTypeCd + ", defaultWorkUseYn=" + defaultWorkUseYn
+				+ ", fixotUseType=" + fixotUseType + ", unplannedYn=" + unplannedYn + ", fixotUseLimit=" + fixotUseLimit
+				+ ", sumFixOtMinute=" + sumFixOtMinute + ", symd=" + symd + ", eymd=" + eymd + "]";
 	} 
 	
 	

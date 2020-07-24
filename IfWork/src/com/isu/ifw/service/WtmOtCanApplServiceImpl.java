@@ -95,6 +95,9 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 	
 	@Autowired
 	WtmApplLineService applLineService;
+	
+	@Autowired
+	private WtmApplAfterService vtmApplAfterService;
 
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
@@ -318,54 +321,7 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 		appl = wtmApplRepo.save(appl);
 		
 		if(lastAppr) {
-			//취소하는 근무시간 정보를 지운다.
-			List<WtmOtCanAppl> otCanApplList = wtmOtCanApplRepo.findByApplId(applId);
-			
-			if(otCanApplList!=null && otCanApplList.size()>0) {
-				for(WtmOtCanAppl otCanAppl : otCanApplList) {
-					Long deletedApplId = null;
-					
-					/**
-					 * 기본근무 , 근무조, 시차 출퇴근일 경우 연장근무 신청 시 잔여 소정근로시간이 남았을 경우 기본근무시간을 생성할 수 있다.
-					 *  취소 신청에서 신청서아이디가 잇는 기본근무시간이 있는지를 확인한다.
-					 */
-					//휴게시간도 지워줌
-					List<String> deleteTimeTypeCds = new ArrayList<String>();
-					deleteTimeTypeCds.add("BREAK_OT");
-					deleteTimeTypeCds.add("BREAK_NIGHT");
-					List<WtmWorkDayResult> results =  wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, deleteTimeTypeCds, otCanAppl.getYmd(), otCanAppl.getYmd());
-					wtmWorkDayResultRepo.deleteAll(results);
-					
-					WtmWorkDayResult dayResult = wtmWorkDayResultRepo.findById(otCanAppl.getWorkDayResultId()).get();
-					//지우려는 정보의 신청정보가 있다면 관련된 정보도 같이 지워준다 대체휴일과 같은 정보..
-					if(dayResult.getApplId() != null) {
-						deletedApplId = dayResult.getApplId(); 
-					}
-					
-					wtmWorkDayResultRepo.delete(dayResult);
-					 
-					rp.put("sabun", dayResult.getSabun());
-					rp.put("symd", dayResult.getYmd());
-					rp.put("eymd", dayResult.getYmd());
-					
-					
-					if(deletedApplId != null) {
-						//대체 휴일 정보를 찾자
-						List<WtmOtSubsAppl> otSubsAppls = wtmOtSubsApplRepo.findByApplId(deletedApplId);
-						if(otSubsAppls != null && otSubsAppls.size() > 0) {
-							String currYmd = null;
-							paramMap.put("tenantId", tenantId);
-							paramMap.put("enterCd", enterCd);
-							Map<String, Map<String, Date>> resetBaseTime = new HashMap<String, Map<String, Date>>();
-							for(WtmOtSubsAppl otSubsAppl : otSubsAppls) {
-								wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(tenantId, enterCd, otSubsAppl.getSubYmd(), otCanAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, "", otSubsAppl.getSubsSdate(), otSubsAppl.getSubsEdate(), deletedApplId, userId);
-							}
-						
-						}
-					}
-				}
-			}
-			 
+			rp = vtmApplAfterService.applyCanAfter(tenantId, enterCd, applId, paramMap, sabun, userId);
 		}
 		
 		List<String> pushSabun = new ArrayList();
@@ -568,5 +524,11 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 		return null;
 	}
 
+	@Override
+	public ReturnParam saveWtmApplSts(Long tenantId, String enterCd, String sabun, String userId,
+			Map<String, Object> convertMap) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

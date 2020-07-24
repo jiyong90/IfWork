@@ -64,6 +64,8 @@ public interface WtmApplService {
 	final static String TIME_TYPE_GOBACK = "GOBACK";
 	
 	final static String TIME_TYPE_EXCEPT = "EXCEPT";
+	//현출 현퇴
+	final static String TIME_TYPE_ETC = "ETC";
 	
 	//결재
 	final static String APPL_TYPE_REQUEST = "01"; //신청
@@ -125,5 +127,16 @@ public interface WtmApplService {
 	
 	public void sendPush();
 	
+	
+	/**
+	 * 연장/휴일근무 신청내역조회 결재상태 변경
+	 * @param tenantId
+	 * @param enterCd
+	 * @param sabun
+	 * @param userId
+	 * @param convertMap
+	 * @return
+	 */
+	public ReturnParam saveWtmApplSts(Long tenantId, String enterCd, String sabun, String userId, Map<String, Object> convertMap);
 	
 }

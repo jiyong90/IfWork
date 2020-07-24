@@ -23,6 +23,11 @@ import com.isu.ifw.repository.WtmTimeBreakMgrRepository;
 import com.isu.ifw.repository.WtmTimeBreakTimeRepository;
 import com.isu.ifw.repository.WtmTimeCdMgrRepository;
 import com.isu.ifw.util.WtmUtil;
+//20.07.02 안흥규 삭제 시 체크
+import com.isu.ifw.entity.WtmFlexibleStdMgr;
+import com.isu.ifw.entity.WtmWorkPattDet;
+import com.isu.ifw.repository.WtmFlexibleStdMgrRepository; 
+import com.isu.ifw.repository.WtmWorkPattDetRepository; 
 
 @Transactional
 @Service
@@ -38,6 +43,11 @@ public class WtmTimeCdMgrServiceImpl implements WtmTimeCdMgrService{
 	WtmTimeBreakMgrRepository timeBreakMgrRepository; 
 	@Resource
 	WtmTimeBreakTimeRepository timeBreakTimeRepository;
+	//20.07.02 안흥규 삭제 시 체크
+	@Resource
+	WtmFlexibleStdMgrRepository timeFlexibleStdMgrRepository;
+	@Resource
+	WtmWorkPattDetRepository timeWorkPattDetRepository;
 	
 	
 
@@ -84,6 +94,7 @@ public class WtmTimeCdMgrServiceImpl implements WtmTimeCdMgrService{
 	@Override
 	public int setTimeCodeMgrList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) {
 		int cnt = 0;
+		int delChkCnt = 0; //20.07.03 안흥규 삭제 시 체크
 		try {
 			if(convertMap.containsKey("mergeRows") && ((List)convertMap.get("mergeRows")).size() > 0) {
 				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("mergeRows");
@@ -119,8 +130,29 @@ public class WtmTimeCdMgrServiceImpl implements WtmTimeCdMgrService{
 		
 			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {
 				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("deleteRows");
+				//20.07.02 안흥규 삭제 시 체크 begin
+				List<WtmWorkPattDet> refList = new ArrayList();
 				List<WtmTimeCdMgr> delList = new ArrayList();
 				if(iList != null && iList.size() > 0) {
+					for(Map<String, Object> l : iList) {
+						Long timeCdMgrId = Long.parseLong(l.get("timeCdMgrId").toString());
+						int chkCnt = timeWorkPattDetRepository.countByTimeCdMgrId(timeCdMgrId);
+						//WtmWorkPattDet chkList = timeWorkPattDetRepository.findByTimeCdMgrId(timeCdMgrId);
+						
+						delChkCnt = chkCnt;
+						System.out.println("delChkCnt = "+delChkCnt); 
+						if(delChkCnt != 0) { 
+							cnt = -1;
+							return cnt; 
+						}
+						//chkList.add(code);
+					}
+					/*
+					 * delChkCnt = timeWorkPattDetRepository.countByTimeCdMgrId(chkList);
+					 * System.out.println("삭제 불가 = "+delChkCnt); if(delChkCnt != 0) { cnt = -1;
+					 * return cnt; }
+					 */
+					//20.07.02 안흥규 삭제 시 체크 end
 					for(Map<String, Object> l : iList) {
 						WtmTimeCdMgr code = new WtmTimeCdMgr();
 						code.setTimeCdMgrId(Long.parseLong(l.get("timeCdMgrId").toString()));

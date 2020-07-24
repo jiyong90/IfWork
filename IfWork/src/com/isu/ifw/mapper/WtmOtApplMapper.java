@@ -88,4 +88,21 @@ public interface WtmOtApplMapper {
 	 */
 	public List<Map<String, Object>> otSubsChgApplfindByApplId(Long applId);
 	
+	/**
+	 * 연장/휴일근무 신청내역조회 화면 결재 상태 변경
+	 * @author 유충현
+	 * @param paramMap
+	 * @return
+	 */
+	public void saveApplSts(Map<String, Object> paramMap);
+	
+	
+	/**
+	 * 연장/휴일근무 신청내역조회 화면 결재 상태 변경_결재라인 상태 변경
+	 * @author 유충현
+	 * @param paramMap
+	 * @return
+	 */
+	public void saveApplLineSts(Map<String, Object> paramMap);
+	
 }

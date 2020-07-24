@@ -1,5 +1,10 @@
 package com.isu.ifw.service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -8,8 +13,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.net.ssl.HttpsURLConnection;
 
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +22,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
 
 import com.isu.ifw.entity.WtmEmpHis;
 import com.isu.ifw.entity.WtmFlexibleEmp;
+import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmCalendarMapper;
@@ -28,6 +33,7 @@ import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmInoutHisMapper;
 import com.isu.ifw.repository.WtmEmpHisRepository;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
+import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.util.WtmUtil;
@@ -68,11 +74,17 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	@Autowired
 	PlatformTransactionManager transactionManager;
 	
-	@Autowired
-    private org.mybatis.spring.SqlSessionTemplate sqlSessionTemplate;
+//	@Autowired
+//    private org.mybatis.spring.SqlSessionTemplate sqlSessionTemplate;
 	
-	@Autowired   
-	SqlSessionFactory sqlSessionFactory;
+	@Autowired
+	WtmCalcService calcService;
+	
+	@Autowired
+	WtmFlexibleStdMgrRepository flexStdMgrRepo;
+	
+//	@Autowired   
+//	SqlSessionFactory sqlSessionFactory;
 	
 	//계획 없이 무조건 타각 활성화
 	@Override
@@ -370,7 +382,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				} else if((time.get("pSymd").equals(today) || time.get("pEymd").equals(today)) && time.get("entryEdate") == null) {
 					ymd = time.get("ymd").toString();
 					inoutType = "OUT";
-					entrySdate = (Date) time.get("entrySdate");
+					entrySdate = (Date) time.get("entrySdateDate");
 					desc = "근무중";
 					label = "퇴근하기";
 					break;
@@ -379,8 +391,8 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					inoutType = "END";
 					desc = "근무종료";
 					label = "퇴근취소";
-					entrySdate = (Date) time.get("entrySdate");
-					entryEdate = (Date) time.get("entryEdate");
+					entrySdate = (Date) time.get("entrySdateDate");
+					entryEdate = (Date) time.get("entryEdateDate");
 				}
 			}
 			
@@ -714,6 +726,78 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		}
 	}
 
+	@Async("threadPoolTaskExecutor")
+	public void sendErp(String enterCd, String sabun, Map<String, Object> paramMap) {
+		HttpURLConnection urlCon = null;
+		OutputStream os = null;
+		InputStream in = null;
+		ByteArrayOutputStream baos = null;
+		
+		try {
+			
+			SimpleDateFormat sdf_date = new SimpleDateFormat("yyyy-MM-dd");
+			SimpleDateFormat sdf_time = new SimpleDateFormat("HH:mm");
+			
+			String gwPath = "http://m.isu.co.kr/api/Attendance.aspx?id=" + enterCd + sabun;
+	
+			URL url = new URL(gwPath);
+			urlCon = (HttpURLConnection) url.openConnection();
+			
+			urlCon.setRequestMethod("GET");
+			urlCon.setRequestProperty("Content-Type", "plain/text");
+			urlCon.connect();
+			
+			logger.debug("gwresponse : " + urlCon.getResponseCode());
+	
+			if (urlCon.getResponseCode() == HttpsURLConnection.HTTP_OK) {
+				in = urlCon.getInputStream();
+
+				baos = new ByteArrayOutputStream();
+
+				byte b[] = new byte[1024];
+				int numRead = 0;
+				while ((numRead = in.read(b)) != -1) {
+					baos.write(b, 0, numRead);
+				}
+
+				baos.flush();
+				System.out.println("gwresponse return : " + baos.toString());
+				
+				baos.close();
+				baos = null;
+				in.close();
+				in = null;
+			} else {
+				logger.debug("gwresponse : " + urlCon.getResponseCode());
+			}
+	
+		} catch (Exception e) {
+			logger.debug("gwresponse exception : " + e.getMessage());
+		
+		} finally {
+			try {
+				if (baos != null) {
+					baos.close();
+					baos = null;
+				}
+			} catch (Exception ee) {
+			}
+
+			try {
+				if (in != null) {
+					in.close();
+					in = null;
+				}
+			} catch (Exception ee) {
+			}
+
+			if (urlCon != null) {
+				urlCon.disconnect();
+				urlCon = null;
+			}
+		}
+	}
+	
 	@Transactional
 	@Async("threadPoolTaskExecutor")
 	public void inoutPostProcess(Map<String, Object> paramMap) {
@@ -741,9 +825,9 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			
 			Map<String, Object> yn = inoutHisMapper.getMyUnplannedYn(paramMap);
 			//BASE, FIXOT 데이터만 삭제
-			logger.debug("inoutPostProcess2 " + yn.get("unplanned").toString());
+			logger.debug("inoutPostProcess2 " + yn.get("unplannedYn").toString());
 			
-			if(yn.get("unplanned").toString().equals("Y")) {
+			if(yn.get("unplannedYn").toString().equals("Y")) {
 //				SqlSession sqlSession = sqlSessionFactory.openSession();
 				if(results != null && results.size() > 0) {
 					for(WtmWorkDayResult r : results) {
@@ -781,7 +865,10 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					paramMap.put("sYmd", paramMap.get("stdYmd").toString());
 					paramMap.put("eYmd", paramMap.get("stdYmd").toString());
 					paramMap.put("userId", paramMap.get("sabun").toString());
-					flexEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(paramMap);
+					
+					 WtmFlexibleStdMgr flexStdMgr = flexStdMgrRepo.findById(emps.get(0).getFlexibleStdMgrId()).get();
+					calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, Long.parseLong(paramMap.get("tenantId").toString()), paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString(), 0, paramMap.get("sabun").toString());
+					//flexEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(paramMap);
 					
 					logger.debug("inoutPostProcess6 CREATE_N 끗 " + paramMap.toString());
 

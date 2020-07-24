@@ -68,11 +68,11 @@ public interface WtmFlexibleEmpMapper {
 	 */
 	public void updateApprDatetimeByYmdAndSabun(Map<String, Object> paramMap);
 	
-	public void updateEntrySdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(Map<String, Object> paramMap);
-	public void updateEntryEdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(Map<String, Object> paramMap);
-	public void updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(Map<String, Object> paramMap);
+	//public void updateEntrySdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(Map<String, Object> paramMap);
+	//public void updateEntryEdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(Map<String, Object> paramMap);
+	//public void updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(Map<String, Object> paramMap);
 	
-	public void createDayResultByTimeTypeAndEntryDateIsNull(Map<String, Object> paramMap);
+	//public void createDayResultByTimeTypeAndEntryDateIsNull(Map<String, Object> paramMap);
 	/**
 	 * 코어타임 필수 여부에 따라 출퇴근 타각정보 둘다 존재할 경우 코어타임 시작시간보다 적을 경우 결근처리를 한다.
 	 * @param paramMap
@@ -492,5 +492,37 @@ public interface WtmFlexibleEmpMapper {
 
 	//로그확인용 임시
 	public Map<String, Object> getTemporaryWorkResult(Map<String, Object> paramMap);
+	
+	//인정되지 않은 계획 시간은 인정시간을 0으로 갱신한다. 
+	public void updateWtmWorkDayResultByApprMinuteIsNull(Map<String, Object> paramMap);
+	
+	
+	/**
+	 * 탄근제 계획시간으로 ot시간 조회
+	 * @param paramMap
+	 * tableName
+	 * key
+	 * value
+	 * otType : OTA(연장)
+	 * sDate 탄근제 계획 시작시간
+	 * eDate 탄근제 계획 종료시간
+	 * minute ot시간(분)
+	 * @return
+	 */
+	public Map<String, Object> getElasOtaHm(Map<String, Object> paramMap);
+	
+	/**
+	 * 탄근제 계획시간으로 ot시간 조회
+	 * @param paramMap
+	 * tableName
+	 * key
+	 * value
+	 * otType : OTB(조출)
+	 * sDate 탄근제 계획 시작시간
+	 * eDate 탄근제 계획 종료시간
+	 * minute ot시간(분)
+	 * @return
+	 */
+	public Map<String, Object> getElasOtbHm(Map<String, Object> paramMap);
 	
 }

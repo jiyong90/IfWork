@@ -12,4 +12,12 @@ public interface WtmInOutChangeMapper {
 	
 	public List<Map<String, Object>> getEntryInoutList(Map<String, Object> paramMap);
 	
+	/**
+	 * 출퇴근 삭제시 Result 업데이트
+	 * @param paramMap
+	 * @return
+	 */
+	public int updateResultApprDate(Map<String, Object> paramMap);
+	
+	
 }

@@ -110,6 +110,12 @@ public class WtmInOutChangeServiceImpl implements WtmInOutChangeService{
 		System.out.println("inOutChangeMapper.setInOutChange " + cnt);
 		cnt = calendarMapper.updateEntryDateByAdmRow(paramMap);
 		System.out.println("calendarMapper.updateEntryDateByAdmRow " + cnt);
+		
+		//출퇴근 삭제 체크 시 WTM_WORK_DAY_RESULT 값 null로 업데이트
+		if("Y".equals(paramMap.get("entryDeleteYn").toString())) {
+			inOutChangeMapper.updateResultApprDate(paramMap);
+		}
+		
 		try {
 			retMap = calendarMapper.getStdMgrInfo(paramMap);
 		} catch(Exception e) {

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import com.isu.ifw.entity.WtmWorkteamEmp;
 import com.isu.ifw.entity.WtmWorkteamMgr;
+
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmWorkteamEmpMapper;
 import com.isu.ifw.mapper.WtmWorkteamMgrMapper;
@@ -23,6 +24,11 @@ import com.isu.ifw.repository.WtmWorkteamEmpRepository;
 import com.isu.ifw.repository.WtmWorkteamMgrRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
+//20200709 안흥규 근무제 적용 관리
+import com.isu.ifw.entity.WtmFlexibleStdMgr; 
+import com.isu.ifw.entity.WtmWorkPattDet; 
+import com.isu.ifw.repository.WtmFlexibleStdMgrRepository; 
+import com.isu.ifw.repository.WtmWorkPattDetRepository; 
 
 @Service("workteamMgrService")
 public class WtmWorkteamMgrServiceImpl implements WtmWorkteamMgrService{
@@ -34,6 +40,12 @@ public class WtmWorkteamMgrServiceImpl implements WtmWorkteamMgrService{
 
 	@Resource
 	WtmWorkteamEmpRepository workteamEmpRepository;
+	
+	@Resource
+	WtmFlexibleStdMgrRepository flexibleStdMgrRepository; //20200709 안흥규 근무제 적용 관리
+	
+	@Resource
+	WtmWorkPattDetRepository workPattDetRepo; //20200709 안흥규 근무제 적용 관리
 	
 	@Autowired
 	WtmWorkteamMgrMapper workteamMgrMapper;
@@ -84,6 +96,22 @@ public class WtmWorkteamMgrServiceImpl implements WtmWorkteamMgrService{
 				//List<WtmWorkteamMgr> saveList = new ArrayList();
 				if(iList != null && iList.size() > 0) {
 					for(Map<String, Object> l : iList) {
+						
+						//20200708 안흥규 근무제 적용 관리 --start
+						WtmFlexibleStdMgr mgr = null;
+						int pattCnt = 0;
+						mgr = flexibleStdMgrRepository.findByFlexibleStdMgrId(Long.parseLong(l.get("flexibleStdMgrId").toString()));
+						
+						if(mgr.getRegardTimeCdId() == null || mgr.getUnitMinute() ==  null) {
+							throw new Exception ("간주근무시간 혹은 인정근무단위시간이 비어있습니다. 근무제도관리에서 근무제기준을 작성해주세요.");
+						}
+						
+						pattCnt = workPattDetRepo.countByFlexibleStdMgrId(Long.parseLong(l.get("flexibleStdMgrId").toString()));
+						if(pattCnt == 0) {
+							throw new Exception ("근무제에 등록된 패턴이 없습니다. 근무제패턴을 작성해 주세요.");
+						}
+						//20200708 안흥규 근무제 적용 관리 --end
+						
 						WtmWorkteamMgr workteam = null;
 						if(!l.get("workteamMgrId").equals("")) {
 							workteam = workteamMgrRepository.findByWorkteamMgrId(Long.parseLong(l.get("workteamMgrId").toString()));
