@@ -1,4 +1,4 @@
-package com.isu.ifw.service;
+package com.isu.ifw.service; 
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -114,7 +114,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 	
 	@Transactional
 	@Override
-	public int setApplyList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) {
+	public int setApplyList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) throws Exception {
 		int cnt = 0;
 		try {
 			if(convertMap.containsKey("mergeRows") && ((List)convertMap.get("mergeRows")).size() > 0) {
@@ -122,8 +122,10 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				logger.debug("[setApplyList] iList" + iList.size());
 
 				List<WtmFlexibleApplyMgr> codes = new ArrayList();
+				List<WtmFlexibleApplyMgr> copyCodes = new ArrayList();
 				if(iList != null && iList.size() > 0) {
 					for(Map<String, Object> l : iList) {
+						int pattCnt = 0;
 						WtmFlexibleStdMgr mgr = flexStdMgrRepo.findByFlexibleStdMgrId(Long.parseLong(l.get("flexibleStdMgrId").toString()));
 						String mgrSymd = mgr.getUseSymd();
 						String mgrEymd = mgr.getUseEymd();
@@ -135,7 +137,18 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 							throw new Exception("근무제의 사용기간은" + 
 									mgrSymd.substring(0,4) +"/" + mgrSymd.substring(4,6) +"/"+ mgrSymd.substring(6,8) + " ~ " + 
 									mgrEymd.substring(0,4) +"/" + mgrEymd.substring(4,6) +"/"+ mgrEymd.substring(6,8) + "입니다.");
-						} 
+						}
+						
+						//20200708 안흥규 근무제 적용 관리 --start
+						if(mgr.getRegardTimeCdId() == null || mgr.getUnitMinute() ==  null) {
+							throw new Exception ("간주근무시간 혹은 인정근무단위시간이 비어있습니다. 근무제도관리에서 근무제기준을 작성해 주세요.");
+						}
+						
+						pattCnt = workPattDetRepo.countByFlexibleStdMgrId(Long.parseLong(l.get("flexibleStdMgrId").toString()));
+						if(pattCnt == 0) {
+							throw new Exception ("근무제에 등록된 패턴이 없습니다. 근무제패턴을 작성해 주세요.");
+						}
+						//20200708 안흥규 근무제 적용 관리 --end
 						
 						WtmFlexibleApplyMgr code = new WtmFlexibleApplyMgr();
 						code.setFlexibleApplyId(l.get("flexibleApplyId").toString().equals("") ? null : Long.parseLong(l.get("flexibleApplyId").toString()));
@@ -153,16 +166,91 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 						code.setNote(l.get("note").toString());
 						code.setUpdateId(userId);
 						
-						if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {
-							WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.save(code);
+						//20200720 안흥규 근무제도적용 복사기능 추가 --start
+						if(!"".equals(l.get("copyApplyId").toString()) || l.get("copyApplyId") != null) {
+							if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {
+								WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.save(code);
+								
+								createElasPlan(tenantId, enterCd, flexibleApply.getFlexibleStdMgrId(), flexibleApply.getFlexibleApplyId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), userId);
+								
+								cnt +=1;
+							} else {
+								WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.save(code);
+								cnt +=1;
+							}
 							
-							createElasPlan(tenantId, enterCd, flexibleApply.getFlexibleStdMgrId(), flexibleApply.getFlexibleApplyId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), userId);
+							Map<String, Object> paramMap = new HashMap(); 
+							paramMap.put("tenantId", tenantId);
+							paramMap.put("enterCd", enterCd);
+							paramMap.put("userId", userId);
+							//복사 대상 flexibleApplyId를 담은 copyApplyId를 paramMap에 flexibleApplyId로 설정
+							long copyApplyId = Long.parseLong(l.get("copyApplyId").toString()); 
+							paramMap.put("flexibleApplyId", copyApplyId);
 							
-							cnt += 1;
-						} else {
-							codes.add(code);
+							//wtm_felxible_apply 테이블 복사 건 저장 => 자동 증가되는 flexibleApplyId 생성 이후 조회하기 위함
+							List<Map<String, Object>> flexibleApplyIdList = wtmFlexibleApplyMgrMapper.getFlexibleApplyId(paramMap);
+							System.out.println("flexibleApplyIdList = "+flexibleApplyIdList);
+							long flexibleApplyId = Long.parseLong(flexibleApplyIdList.get(0).get("flexibleApplyId").toString()); //NPE터짐 
+							System.out.println("flexibleApplyId = "+flexibleApplyId);
+							List<Map<String, Object>> flexApplyGrpList= new ArrayList(); 
+							List<Map<String, Object>> flexApplyEmpList = new ArrayList();
+							//Map<String, Object> flexApplyEmpMap= new HashMap(); 
+							Map<String, Object> flexApplyEmpTempMap= new HashMap(); 
+							
+							//wtm_flexible_apply_group 테이블 복상 저장
+							List<Map<String, Object>> copyFlexApplyGrpList = wtmFlexibleApplyMgrMapper.getApplyGrpList(paramMap); //NPE 터짐
+							if (copyFlexApplyGrpList != null && copyFlexApplyGrpList.size() > 0) {
+								for(int i= 0; i < copyFlexApplyGrpList.size(); i++) {
+									Map<String, Object> saveMap = new HashMap();
+									saveMap.put("flexibleApplyId", flexibleApplyId);
+									saveMap.put("orgCd", copyFlexApplyGrpList.get(i).get("orgCd"));
+									saveMap.put("jobCd", copyFlexApplyGrpList.get(i).get("jobCd"));
+									saveMap.put("dutyCd", copyFlexApplyGrpList.get(i).get("dutyCd"));
+									saveMap.put("posCd", copyFlexApplyGrpList.get(i).get("posCd"));
+									saveMap.put("classCd", copyFlexApplyGrpList.get(i).get("classCd"));
+									saveMap.put("workteamCd", copyFlexApplyGrpList.get(i).get("workteamCd"));
+									saveMap.put("note", copyFlexApplyGrpList.get(i).get("note"));
+									saveMap.put("userId", userId);
+									flexApplyGrpList.add(saveMap);
+								} 
+								wtmFlexibleApplyMgrMapper.insertGrp(flexApplyGrpList);
+							}
+							
+							
+							//wtm_flexible_apply_emp 테이블 복사 저장
+							List<Map<String, Object>> copyflexApplyEmpList = wtmFlexibleApplyMgrMapper.getApplyEmpList(paramMap); 
+							if (copyflexApplyEmpList != null && copyflexApplyEmpList.size() > 0) {
+								for(int i= 0; i < copyflexApplyEmpList.size(); i++) {
+									Map<String, Object> saveMap = new HashMap();
+									saveMap.put("flexibleApplyId", flexibleApplyId);
+									saveMap.put("sabun", copyflexApplyEmpList.get(i).get("sabun"));
+									saveMap.put("note", copyflexApplyEmpList.get(i).get("note"));
+									saveMap.put("userId", userId);
+									flexApplyEmpList.add(saveMap);
+								}
+								wtmFlexibleApplyMgrMapper.insertEmp(flexApplyEmpList);
+							}
+							//wtm_flexible_apply_emp_temp 테이블 복사 저장
+							List<Map<String, Object>> copyflexApplyEmpTempList = wtmFlexibleApplyMgrMapper.getApplyEmpTempList(paramMap); 
+							if (copyflexApplyEmpTempList != null && copyflexApplyEmpTempList.size() > 0) {
+								flexApplyEmpTempMap.put("flexibleApplyId", flexibleApplyId);
+								flexApplyEmpTempMap.put("userId", userId);
+								wtmFlexibleApplyMgrMapper.insertApplyEmpTemp(flexApplyEmpTempMap);
+							}
+							
+							  
+						} 
+						//20200720 안흥규 근무제도적용 복사기능 추가 --end
+						else {
+							if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {
+								WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.save(code);
+								
+								createElasPlan(tenantId, enterCd, flexibleApply.getFlexibleStdMgrId(), flexibleApply.getFlexibleApplyId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), userId);
+								cnt += 1;
+							} else {
+								codes.add(code);
+							}
 						}
-						
 					}
 					codes = flexibleApplyRepository.saveAll(codes);
 					cnt += codes.size();
@@ -196,7 +284,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		} catch(Exception e) {
 			e.printStackTrace();
 			logger.debug(e.toString());
-			return 0;
+			throw new Exception(e.getMessage());
 		} 
 		
 		return cnt;
@@ -938,8 +1026,8 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		
 		return workList;
 	}
-	
-	protected void updateWtmFlexibleApplyDet(List<WtmFlexibleApplyDet> applyDets, String userId) {
+
+	protected void updateWtmFlexibleApplyDet(Long tenantId, String enterCd, Long flexibleStdMgrId, List<WtmFlexibleApplyDet> applyDets, String userId) {
 		
 		if(applyDets!=null && applyDets.size()>0) {
 			for(WtmFlexibleApplyDet d : applyDets) {
@@ -947,8 +1035,8 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				Date planEdate = d.getPlanEdate();
 				
 				if(planSdate!=null && planEdate!=null) {
-					String pSdate = WtmUtil.parseDateStr(planSdate, "yyyyMMddHHmm");
-					String pEdate = WtmUtil.parseDateStr(planEdate, "yyyyMMddHHmm");
+					String pSdate = WtmUtil.parseDateStr(planSdate, "yyyyMMddHHmmss");
+					String pEdate = WtmUtil.parseDateStr(planEdate, "yyyyMMddHHmmss");
 					
 					Map<String, Object> paramMap = new HashMap<>();
 					paramMap.put("ymd", d.getYmd());
@@ -959,28 +1047,33 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 					d.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
 					
 					if(d.getOtbMinute()!=0) {
-						Map<String, Object> otbMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), d.getYmd(), pSdate, pEdate, "OTB", d.getOtbMinute(), userId);
+						//조출시간, 잔업시간 분을 통한 시간 알아오기
+						Map<String, Object> otbMinuteMap = flexibleEmpService.calcOtMinuteAddBreaktimeForElas(tenantId, enterCd, d.getTimeCdMgrId(), pSdate, "OTB", d.getOtbMinute(), userId);
+						//Map<String, Object> otbMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), d.getYmd(), pSdate, pEdate, "OTB", d.getOtbMinute(), userId);
 						
 						if(otbMinuteMap!=null) {
-							Date otbSdate = WtmUtil.toDate(otbMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
-							Date otbEdate = WtmUtil.toDate(otbMinuteMap.get("eDate").toString(), "yyyyMMddHHmmss");
+							Date otbSdate = WtmUtil.toDate(otbMinuteMap.get("retDate").toString(), "yyyyMMddHHmmss");
+							Date otbEdate = WtmUtil.toDate(pSdate, "yyyyMMddHHmmss");
 							
 							d.setOtbSdate(otbSdate);
 							d.setOtbEdate(otbEdate);
-							d.setOtbMinute(Integer.parseInt(otbMinuteMap.get("calcMinute").toString()));
+							d.setOtbMinute(Integer.parseInt(d.getOtbMinute().toString()));
 						}	
 					}
 					
 					if(d.getOtaMinute()!=0) {
-						Map<String, Object> otaMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), d.getYmd(), pSdate, pEdate, "OTA", d.getOtaMinute(), userId);
+						
+						//조출시간, 잔업시간 분을 통한 시간 알아오기
+						Map<String, Object> otaMinuteMap = flexibleEmpService.calcOtMinuteAddBreaktimeForElas(tenantId, enterCd, d.getTimeCdMgrId(), pEdate, "OTA", d.getOtaMinute(), userId);
+						//Map<String, Object> otaMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), d.getYmd(), pSdate, pEdate, "OTA", d.getOtaMinute(), userId);
 						
 						if(otaMinuteMap!=null) {
-							Date otaSdate = WtmUtil.toDate(otaMinuteMap.get("sDate").toString(), "yyyyMMddHHmmss");
-							Date otaEdate = WtmUtil.toDate(otaMinuteMap.get("eDate").toString(), "yyyyMMddHHmmss");
+							Date otaSdate = WtmUtil.toDate(pEdate, "yyyyMMddHHmmss");
+							Date otaEdate = WtmUtil.toDate(otaMinuteMap.get("retDate").toString(), "yyyyMMddHHmmss");
 							
 							d.setOtaSdate(otaSdate);
 							d.setOtaEdate(otaEdate);
-							d.setOtaMinute(Integer.parseInt(otaMinuteMap.get("calcMinute").toString()));
+							d.setOtaMinute(Integer.parseInt(d.getOtaMinute().toString()));
 						}
 					}
 						
@@ -1000,7 +1093,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		
 		//계획 생성
 		List<WtmFlexibleApplyDet> applyDets = saveWtmFlexibleApplyDet(tenantId, enterCd, flexibleApplyId, flexibleStdMgrId, sYmd, eYmd, null, userId);
-		updateWtmFlexibleApplyDet(applyDets, userId);
+		updateWtmFlexibleApplyDet(tenantId, enterCd, flexibleStdMgrId, applyDets, userId);
 	}
 	
 	@Transactional
