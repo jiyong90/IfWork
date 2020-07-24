@@ -51,5 +51,9 @@ public interface WtmFlexibleApplyMgrMapper {
 	
 	//확정 시 선반영된 근태건이 있으면 재갱신 대상으로 변경해야함.
 	public void updateFlexibleTaaReset(@Param("flexibleApplyId") Long flexibleApplyId);
+	//복사 저장 시 Wtm_Flexible_apply_emp_temp 복사 대상 조회
+	public List<Map<String, Object>> getApplyEmpTempList(Map<String, Object> paramMap);
+	//복사 건 저장 이후 auto_increment flexibleApplyId 조회
+	public List<Map<String, Object>> getFlexibleApplyId(Map<String, Object> paramMap);
 	
 }
