@@ -1256,7 +1256,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					e.printStackTrace();
 				}
 				calcApprDayInfo1(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd());
-				
+				calcaApprDayReset(calendar, flexStdMgr, timeCdMgr);
 				calcApprDayInfo2(calendar, flexStdMgr, timeCdMgr);
 				
 				
@@ -1323,6 +1323,161 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		}
 		 
 	}
+	public void calcaApprDayReset(WtmWorkCalendar calendar, WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr) {
+		//타각 시간 기준으로 인정근무를 생성할 경우
+		//계획된 정보의 출퇴근 시간을 변경하고 
+		//간주근무 정보가 있을 경우 타임블럭을 재배치한다.
+		
+		List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), WtmApplService.TIME_TYPE_BASE);
+		if(results != null && results.size() > 0) {
+			int cnt = 1;
+			logger.debug("calcaApprDayReset :: flexStdMgr.getApplyEntrySdateYn() = " + flexStdMgr.getApplyEntrySdateYn());
+			logger.debug("calcaApprDayReset :: flexStdMgr.getApplyEntryEdateYn() = " + flexStdMgr.getApplyEntryEdateYn());
+			for(WtmWorkDayResult result : results) {
+				logger.debug("CREATE_F :: cnt = " + cnt);
+				
+				Date sDate = null;
+				Date eDate = null;
+				
+				//타각시간에서 벗어난 데이터는 패스 한다 .
+				if(calendar.getEntrySdate().compareTo(result.getPlanEdate()) < 0
+						&& calendar.getEntryEdate().compareTo(result.getPlanSdate()) > 0) {
+						
+					if(results.size() > 1) {
+	
+						if(cnt != 1 && cnt != results.size()) {
+							//중간 데이터는 건너 뛴다. 
+							cnt++;
+							continue;
+						}
+						//첫번째 데이터
+						if(cnt == 1) {
+							
+							if(flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
+								sDate = calendar.getEntrySdate();
+							} else {
+								sDate = result.getPlanSdate();
+							}
+						}else {
+							sDate = result.getPlanSdate();
+						}
+						
+						//마지막 데이터
+						if(cnt == results.size() && results.size() > 1 ) {
+							if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
+								eDate = calendar.getEntryEdate();
+							} else {
+								eDate = result.getPlanEdate();
+							}
+						}else {
+							eDate = result.getPlanEdate();
+						}
+						
+						
+					}else {
+						//1개면 좋다. 
+						if(flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
+							sDate = calendar.getEntrySdate();
+						}else {
+							sDate = result.getPlanSdate();
+						}
+						
+						if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
+							eDate = calendar.getEntryEdate();
+						}else {
+							eDate = result.getPlanEdate();
+						}
+						
+					}
+					result.setPlanSdate(sDate);
+					result.setPlanEdate(eDate);
+					
+					SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+					int apprMinute = calcService.WtmCalcMinute(sdf.format(sDate), sdf.format(eDate), null, null, flexStdMgr.getUnitMinute());
+					int breakMinute = 0;
+					if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+						breakMinute = calcService.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+						logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : apprMinute " + apprMinute);
+						logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : breakMinute " + breakMinute);
+						apprMinute = apprMinute - breakMinute;
+						breakMinute = 0;
+					}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
+						breakMinute = calcService.getBreakMinuteIfBreakTimeTIME(sDate, eDate, timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+						logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : apprMinute " + apprMinute);
+						logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : breakMinute " + breakMinute);
+					//}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
+					}
+					
+					result.setPlanMinute(apprMinute);
+					result.setUpdateDate(new Date());
+					result.setUpdateId("calcaApprDayReset");
+					logger.debug("calcaApprDayReset = " + result);
+					workDayResultRepo.save(result);
+				}
+				cnt++;
+			}
+		}
+		
+
+		/**
+		 * 간주근무 정보가 있을 경우 타임블럭을 재생성 하자. 
+		 * ngv 의 경우 타각정보 기준으로 인정근무를 생성하고 출장데이터가 하루에 여러건이 될 수 있다
+		 */
+		List<WtmWorkDayResult> r = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), WtmApplService.TIME_TYPE_REGA, calendar.getYmd(), calendar.getYmd());
+		for(WtmWorkDayResult res : r) {
+			this.addWtmDayResultInBaseTimeType(res.getTenantId()
+												 , res.getEnterCd()
+												 , res.getYmd()
+												 , res.getSabun()
+												 , res.getTimeTypeCd()
+												 ,""
+												 , res.getPlanSdate()
+												 , res.getPlanEdate()
+												 , null
+												 , "rega reset timeblock"
+												 , false);
+			res.setApprSdate(res.getPlanSdate());
+			res.setApprEdate(res.getPlanEdate());
+			res.setApprMinute(res.getPlanMinute());
+			res.setUpdateDate(new Date());
+			res.setUpdateId("rega appr");
+			workDayResultRepo.save(res);
+			
+		}
+		
+		/**
+		 * 외출 복귀 데이터 재계산
+		 */
+		List<WtmWorkDayResult> gobackResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), WtmApplService.TIME_TYPE_GOBACK, calendar.getYmd(), calendar.getYmd());
+		for(WtmWorkDayResult gobackResult : gobackResults) {
+
+			Date calcSdate = calcService.WorkTimeCalcApprDate(gobackResult.getPlanSdate(), gobackResult.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
+			Date calcEdate = calcService.WorkTimeCalcApprDate(gobackResult.getPlanEdate(), gobackResult.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
+			gobackResult.setApprSdate(gobackResult.getPlanSdate());
+			gobackResult.setApprEdate(gobackResult.getPlanEdate());
+			this.addWtmDayResultInBaseTimeType(gobackResult.getTenantId()
+												 , gobackResult.getEnterCd()
+												 , gobackResult.getYmd()
+												 , gobackResult.getSabun()
+												 , gobackResult.getTimeTypeCd()
+												 ,""
+												 , calcSdate
+												 , calcEdate
+												 , null
+												 , "goback reset timeblock"
+												 , false);
+			
+			gobackResult.setApprSdate(calcSdate);
+			gobackResult.setApprEdate(calcEdate);
+			SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+			int apprMinute = calcService.WtmCalcMinute(sdf.format(calcSdate), sdf.format(calcEdate), null, null, flexStdMgr.getUnitMinute());
+			gobackResult.setApprMinute(apprMinute);
+			gobackResult.setUpdateDate(new Date());
+			gobackResult.setUpdateId("goback appr");
+			workDayResultRepo.save(gobackResult);
+		}
+		
+	}
 	/**
 	 * 타각시간 기준으로 인정시간 계산
 	 */
@@ -1368,7 +1523,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		// 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다.
 		//List<WtmWorkDayResult> regaResult = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, calendar.getYmd(), calendar.getYmd());
 		boolean isRega = false;	//간주근무 여부
-		boolean isGoback = false; //외출복귀 데이터 여부
 		Date minPlanSdate_REGA = null;
 		Date maxPlanEdate_REGA = null;
 		
@@ -1435,14 +1589,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					logger.debug("4.(퇴근)타각 자동 업데이트.  r.getPlanEdate() is null : " + r.getSabun() + " : " + r.getEnterCd() + " : " + r.getTimeTypeCd());
 				}
 			}
-			
-			// 외출복귀 데이터 여부 마감전에 생성되기 때문에 초반에 체크 해도 된다 .
-			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_GOBACK)) {
-				isGoback = true;
-			}
 
 		} 
-		if(isRega) {
+		/**
+		 * 간주근무의 경우 출퇴근 타각정보가 있으면 출퇴근 타각정보를 갱신하지 않는다. 
+		 * 간주근무는 계획된 시각 모두 인정한다. 출퇴근 시간은 출퇴근 시간으로 인정근무를 생성해야할 경우에만 사용한다. NGV 케이스
+		 */
+		if(isRega && calendar.getEntrySdate() == null && calendar.getEntryEdate() == null) {
 			try { logger.debug("3. 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다. " + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 			//flexEmpMapper.updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
 			calendar.setEntrySdate(minPlanSdate_REGA);
@@ -1730,26 +1883,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, tenantId, enterCd, sabun, calendar.getYmd(), 0, "P_WTM_WORK_DAY_RESULT_CREATE_N-" + sabun);
 				//	}
 				//}
-			}
-			
-			/**
-			 * 외출 복귀 데이터 재계산
-			 */
-			if(isGoback) {
-				List<WtmWorkDayResult> gobackResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_GOBACK, calendar.getYmd(), calendar.getYmd());
-				for(WtmWorkDayResult gobackResult : gobackResults) {
-					this.addApprWtmDayResultInBaseTimeType(gobackResult.getTenantId()
-														 , gobackResult.getEnterCd()
-														 , gobackResult.getYmd()
-														 , gobackResult.getSabun()
-														 , gobackResult.getTimeTypeCd()
-														 ,""
-														 , gobackResult.getPlanSdate()
-														 , gobackResult.getPlanEdate()
-														 , null
-														 , sabun
-														 , false);
-				}
 			}
 			
 			
