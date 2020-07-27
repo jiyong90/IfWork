@@ -89,9 +89,11 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 			"WHERE C.tenantId = :tenantId " + 
 			"   AND C.enterCd = :enterCd " + 
 			"   AND C.ymd = :ymd " + 
-			"   AND C.entryEdate >= R.planSdate " + 
-			"   AND C.entrySdate <= R.planEdate " + 
-			"   AND C.entrySdate IS NOT NULL AND C.entryEdate IS NOT NULL " + 
+			"   AND C.entryEdate > R.planSdate " + 
+			"   AND C.entrySdate < R.planEdate " + 
+			"   AND C.entrySdate IS NOT NULL AND C.entryEdate IS NOT NULL " +
+			"   AND R.apprSdate IS NULL " +
+			"   AND R.apprEdate IS NULL " +
 			"   AND 1 > (SELECT count(SR)" + 
 			"   	   	   FROM WtmWorkDayResult SR WHERE SR.tenantId = R.tenantId " + 
 			"   		    AND SR.enterCd = R.enterCd AND SR.sabun = R.sabun " + 
