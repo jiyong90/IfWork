@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.common.entity.CommTenantModule;
 import com.isu.ifw.common.repository.CommTenantModuleRepository;
 import com.isu.ifw.entity.WtmAppl;
@@ -1738,8 +1739,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	    		List<Map<String, Object>> works = (List<Map<String, Object>>)reqMap.get("works");
 	    		
 	    		rp = validatorService.worktimeValid(tenantId, reqMap.get("enterCd").toString(), reqMap.get("applNo").toString(), works, reqMap.get("applSabun").toString());
-	    		
-	    		if(rp!=null && rp.getStatus()!=null && "OK".equals(rp.getStatus())) {
+	    		ObjectMapper mm = new ObjectMapper();
+	    		// System.out.println(mm.writeValueAsString(rp));
+	    		if(rp!=null && rp.getStatus()!=null && !"OK".equals(rp.getStatus())) {
 					throw new RuntimeException((String) rp.get("message"));
 	    		}
 	    		

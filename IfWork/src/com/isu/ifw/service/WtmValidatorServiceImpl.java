@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +35,8 @@ import com.isu.ifw.vo.ReturnParam;
 @Service
 public class WtmValidatorServiceImpl implements WtmValidatorService  {
 
+	private static final Logger logger = LoggerFactory.getLogger("ifwFileLog");
+	
 	@Autowired
 	WtmFlexibleStdMapper flexStdMapper;
 	
@@ -78,6 +82,9 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		
 		paramMap.put("applId", applId);
 		paramMap.put("sabun", sabun); 
+
+		ObjectMapper mapper = new ObjectMapper();
+		
 		if(taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_H)) {
 			//근태가 시간단위 일때 시분 정보가 누락되지 않았는지 체크한다.
 			if(shm.equals("") || ehm.equals("")) {
@@ -89,13 +96,17 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 			paramMap.put("sdate", symd + shm);
 			paramMap.put("edate", eymd + ehm);
 			Map<String, Object> m = validatorMapper.checkDuplicateTaaByTaaTypeH(paramMap);
+			try {
+				logger.debug("checkDuplicateTaaByTaaTypeH : " + mapper.writeValueAsString(m));
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			int cnt = Integer.parseInt(m.get("cnt").toString());
-			
 			if(cnt > 0) {
 				rp.setFail("이미 해당일에 중복된 근태 정보가 존재합니다.");
 				return rp;
 			}
-			
 			
 		}else {
 			//신청하려는근태 코드와 타입 종일 반일(오전/오후) 등 해당 건은 같은날 중복해서 들어갈 수 없다 체케럽
@@ -104,6 +115,12 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 			paramMap.put("symd", symd);
 			paramMap.put("eymd", eymd);
 			Map<String, Object> m = validatorMapper.checkDuplicateTaa(paramMap);
+			try {
+				logger.debug("checkDuplicateTaa : " + mapper.writeValueAsString(m));
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			int cnt = Integer.parseInt(m.get("cnt").toString());
 			
 			if(cnt > 0) {
@@ -120,6 +137,8 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		Map<String, Object> resultMap = new HashMap<>();
 		resultMap.put("workdayCnt", workCnt);
 		rp.put("result", resultMap);
+		
+		logger.debug("aa : " + rp);
 		
 		return rp;
 	}	
@@ -195,12 +214,12 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		
 		// 20200710 전영수과장 근무시간체크 해제요청(이효정메일전달)
 		// 20200713 현대ngv 연동시 벨리데이션 전부 해제(취소건 벨리데이션 분리 후 삭제예정)
-		/*
+		
 		if(tenantId == 22) {	
 			rp.setSuccess("");
 			return rp;
 		}
-		*/
+		
 		
 		if(works!=null && works.size()>0) {
 			for(Map<String, Object> w : works) {
@@ -302,9 +321,11 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		paramMap.put("ehm", ehm);
 		
 		Map<String, Object> m = validatorMapper.checkDuplicateTaaAppl(paramMap);
+		
 		if(m!=null && m.get("cnt")!=null) {
 			int cnt = Integer.parseInt(m.get("cnt").toString());
 			if(cnt > 0) {
+				
 				rp.setFail(m.get("empNm").toString()+"("+sabun+") " + WtmUtil.parseDateStr(WtmUtil.toDate(symd,"yyyyMMdd"), "yyyy-MM-dd") + "~" +  WtmUtil.parseDateStr(WtmUtil.toDate(eymd,"yyyyMMdd"), "yyyy-MM-dd") +"의 신청중인 또는 이미 적용된 근무정보가 있습니다.");
 				return rp;
 			}
