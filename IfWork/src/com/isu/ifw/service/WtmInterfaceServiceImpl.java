@@ -110,7 +110,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	
 	@Autowired
 	WtmApplRepository wtmApplRepo;
-		
+	
+	@Autowired private WtmValidatorService validatorService;
+	
 	@Override
 	public Map<String, Object> getIfLastDate(Long tenantId, String ifType) throws Exception {
 		// TODO Auto-generated method stub
@@ -1655,6 +1657,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     	String retMsg = "";
     	String status = "OK";
     	
+    	
     	int taaCnt = 0;
     	Map<String, Object> retMap = new HashMap<>();
     	
@@ -1730,6 +1733,17 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	    	
 	    	nowApplStatusCd = reqMap.get("status").toString();
 	    	
+	    	if(!nowApplStatusCd.equals(WtmApplService.APPL_STATUS_CANCEL)) {
+	    		ReturnParam rp = new ReturnParam();
+	    		List<Map<String, Object>> works = (List<Map<String, Object>>)reqMap.get("works");
+	    		
+	    		rp = validatorService.worktimeValid(tenantId, reqMap.get("enterCd").toString(), reqMap.get("applNo").toString(), works, reqMap.get("applSabun").toString());
+	    		
+	    		if(rp!=null && rp.getStatus()!=null && "OK".equals(rp.getStatus())) {
+					throw new RuntimeException((String) rp.get("message"));
+	    		}
+	    		
+	    	}
 	    	
 			// 2. DATA 생성 또는 갱신
 			getResultMap = (HashMap<String, Object>) wtmInterfaceMapper.getApplId(reqMap);

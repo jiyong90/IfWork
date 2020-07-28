@@ -102,17 +102,21 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					int cnt = 1;
 					logger.debug("CREATE_F :: flexStdMgr.getApplyEntrySdateYn() = " + flexStdMgr.getApplyEntrySdateYn());
 					logger.debug("CREATE_F :: flexStdMgr.getApplyEntryEdateYn() = " + flexStdMgr.getApplyEntryEdateYn());
+					WtmWorkCalendar calendar = workCalandarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
 					for(WtmWorkDayResult result : results) {
+						
 						logger.debug("CREATE_F :: cnt = " + cnt);
-						WtmWorkCalendar calendar = workCalandarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
+						
 						Date sDate = null;
 						Date eDate = null;
-
 						
 						//타각시간에서 벗어난 데이터는 패스 한다 .
 						if(calendar.getEntrySdate().compareTo(result.getPlanEdate()) < 0
 								&& calendar.getEntryEdate().compareTo(result.getPlanSdate()) > 0) {
-								
+							sDate = result.getPlanSdate();
+							eDate = result.getPlanEdate();
+							/*
+							 * calcaApprDayReset 여기서 했다 아래는
 							if(results.size() > 1) {
 			
 								if(cnt != 1 && cnt != results.size()) {
@@ -163,6 +167,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							logger.debug("CREATE_F :: CALL P_WTM_WORK_DAY_RESULT_UPDATE_T " );
 							logger.debug("CREATE_F :: sDate = " + sDate );
 							logger.debug("CREATE_F :: eDate = " + eDate );
+							*/
 							this.P_WTM_WORK_DAY_RESULT_UPDATE_T(flexStdMgr, timeCdMgr, result, sDate, eDate, calendar.getEntrySdate(), calendar.getEntryEdate(),  sumWorkMinute, workMinute, userId);
 						}
 						cnt++;
