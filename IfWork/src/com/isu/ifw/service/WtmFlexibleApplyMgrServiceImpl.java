@@ -1062,15 +1062,6 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 					}
 					
 					if(d.getOtaMinute()!=0) {
-						System.out.println("#####################################");
-						System.out.println("#####################################");
-						System.out.println("#####################################");
-						System.out.println("#####################################");
-						System.out.println("#####################################");
-						System.out.println("#####################################");
-						System.out.println("#####################################");
-						System.out.println("pEdate>>>>>>>>>>>>" + pEdate);
-						System.out.println("d.getOtaMinute().toString() >>>>>>>>>" + d.getOtaMinute().toString());
 						//조출시간, 잔업시간 분을 통한 시간 알아오기
 						Map<String, Object> otaMinuteMap = flexibleEmpService.calcOtMinuteAddBreaktimeForElas(tenantId, enterCd, d.getTimeCdMgrId(), pEdate, "OTA", d.getOtaMinute(), userId);
 						//Map<String, Object> otaMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), d.getYmd(), pSdate, pEdate, "OTA", d.getOtaMinute(), userId);
