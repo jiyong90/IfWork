@@ -159,6 +159,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
 	@Autowired
 	WtmScheduleMapper wtmScheduleMapper;
+	
+	@Autowired private WtmTaaCodeRepository wtmTaaCodeRepository;
 
 	
 	@Override
@@ -1445,6 +1447,17 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			workDayResultRepo.save(res);
 			
 		}
+		List<WtmWorkDayResult> taa = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), WtmApplService.TIME_TYPE_TAA, calendar.getYmd(), calendar.getYmd());
+		for(WtmWorkDayResult res : taa) {
+			if(res.getApprSdate() == null && res.getPlanSdate() != null) {
+				res.setApprSdate(res.getPlanSdate());
+				res.setApprEdate(res.getPlanEdate());
+				res.setApprMinute(res.getPlanMinute());
+				res.setUpdateDate(new Date());
+				res.setUpdateId("taa appr");
+				workDayResultRepo.save(res);
+			}
+		}
 		
 		/**
 		 * 외출 복귀 데이터 재계산
@@ -1524,6 +1537,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		// 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다.
 		//List<WtmWorkDayResult> regaResult = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, calendar.getYmd(), calendar.getYmd());
 		boolean isRega = false;	//간주근무 여부
+		boolean isTaaWork = true; //근태일에 근무 가능 여부 일 경우 마감을 돌린당
+		String taaCd = null;
+		
 		Date minPlanSdate_REGA = null;
 		Date maxPlanEdate_REGA = null;
 		
@@ -1537,6 +1553,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		List<WtmWorkDayResult> dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
 		for(WtmWorkDayResult r : dayResults) {
+			//통상적으로 근태가 있는 날은 마감을 멈춘다. 
+			//단 예외의 경우도 있다 아래에서 체크한다.
+			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) && r.getApprSdate() != null && r.getApprEdate() != null) {
+				isTaaWork = false;
+				taaCd = r.getTaaCd();
+			}
 			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA)) {
 				isRega = true;
 				//break;
@@ -1592,6 +1614,19 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			}
 
 		} 
+		
+		if(!isTaaWork) {
+			//완/부 선근제 이며
+			if(flexStdMgr.getWorkTypeCd().startsWith("SELE_")) {
+				WtmTaaCode taaCode = wtmTaaCodeRepository.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, taaCd);
+				if(taaCode.getRequestTypeCd().equals("D") && flexStdMgr.getTaaWorkYn().equals("Y")){
+					isTaaWork = true;
+				}
+			}
+		}
+		if(!isTaaWork) {
+			return;
+		}
 		/**
 		 * 간주근무의 경우 출퇴근 타각정보가 있으면 출퇴근 타각정보를 갱신하지 않는다. 
 		 * 간주근무는 계획된 시각 모두 인정한다. 출퇴근 시간은 출퇴근 시간으로 인정근무를 생성해야할 경우에만 사용한다. NGV 케이스
