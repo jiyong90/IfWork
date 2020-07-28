@@ -1445,6 +1445,17 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			workDayResultRepo.save(res);
 			
 		}
+		List<WtmWorkDayResult> taa = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), WtmApplService.TIME_TYPE_TAA, calendar.getYmd(), calendar.getYmd());
+		for(WtmWorkDayResult res : taa) {
+			if(res.getApprSdate() == null && res.getPlanSdate() != null) {
+				res.setApprSdate(res.getPlanSdate());
+				res.setApprEdate(res.getPlanEdate());
+				res.setApprMinute(res.getPlanMinute());
+				res.setUpdateDate(new Date());
+				res.setUpdateId("taa appr");
+				workDayResultRepo.save(res);
+			}
+		}
 		
 		/**
 		 * 외출 복귀 데이터 재계산

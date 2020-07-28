@@ -2004,22 +2004,41 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										for(WtmWorkDayResult r : base) {
 											dayResultRepo.delete(r);
 										}
+										
+										// 인정근무까지 만들어야함.
+										WtmWorkDayResult newTaa = new WtmWorkDayResult();
+										newTaa.setTenantId(Long.parseLong(taaDetMap.get("tenantId").toString()));
+										newTaa.setEnterCd(taaDetMap.get("enterCd").toString());
+										newTaa.setYmd(taaDetMap.get("ymd").toString());
+										newTaa.setSabun(taaDetMap.get("sabun").toString());
+										newTaa.setTimeTypeCd(timeTypeCd);
+										newTaa.setTaaCd(taaDetMap.get("taaCd").toString());
+										newTaa.setPlanSdate(dt.parse(taaSdate));
+										newTaa.setPlanEdate(dt.parse(taaEdate));
+										newTaa.setPlanMinute(480);
+										newTaa.setApprSdate(dt.parse(taaSdate));
+										newTaa.setApprEdate(dt.parse(taaEdate));
+										newTaa.setApprMinute(480);
+										newTaa.setUpdateDate(new Date());
+										newTaa.setUpdateId("taa if");
+										dayResultRepo.save(newTaa);
+										
+									} else {
+	//									System.out.println("taaSdate : " + WtmUtil.toDate(taaSdate, "yyyyMMddhhmmss"));
+	//									System.out.println("taaEdate : " + WtmUtil.toDate(taaEdate, "yyyyMMddhhmmss"));
+																				
+										WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
+												  Long.parseLong(taaDetMap.get("tenantId").toString())
+												, taaDetMap.get("enterCd").toString()
+												, taaDetMap.get("ymd").toString()
+												, taaDetMap.get("sabun").toString()
+												, timeTypeCd
+												, taaDetMap.get("taaCd").toString()
+												, dt.parse(taaSdate)
+												, dt.parse(taaEdate)
+												, Long.parseLong(taaDetMap.get("applId").toString())
+												, "TAAIF");
 									}
-//									System.out.println("taaSdate : " + WtmUtil.toDate(taaSdate, "yyyyMMddhhmmss"));
-//									System.out.println("taaEdate : " + WtmUtil.toDate(taaEdate, "yyyyMMddhhmmss"));
-																			
-									WtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
-											  Long.parseLong(taaDetMap.get("tenantId").toString())
-											, taaDetMap.get("enterCd").toString()
-											, taaDetMap.get("ymd").toString()
-											, taaDetMap.get("sabun").toString()
-											, timeTypeCd
-											, taaDetMap.get("taaCd").toString()
-											, dt.parse(taaSdate)
-											, dt.parse(taaEdate)
-											, Long.parseLong(taaDetMap.get("applId").toString())
-											, "TAAIF");
-					        		
 					        		// 오늘 이전이면 근무마감을 다시 돌려야함.
 									if (Integer.parseInt(chkYmd) > Integer.parseInt(taaDetMap.get("ymd").toString())) {
 						        		WtmFlexibleEmpService.calcApprDayInfo(Long.parseLong(taaDetMap.get("tenantId").toString())
