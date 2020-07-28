@@ -1051,7 +1051,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 						Map<String, Object> otbMinuteMap = flexibleEmpService.calcOtMinuteAddBreaktimeForElas(tenantId, enterCd, d.getTimeCdMgrId(), pSdate, "OTB", d.getOtbMinute(), userId);
 						//Map<String, Object> otbMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), d.getYmd(), pSdate, pEdate, "OTB", d.getOtbMinute(), userId);
 						
-						if(otbMinuteMap!=null) {
+						if(otbMinuteMap!=null && otbMinuteMap.get("retDate") != null) {
 							Date otbSdate = WtmUtil.toDate(otbMinuteMap.get("retDate").toString(), "yyyyMMddHHmmss");
 							Date otbEdate = WtmUtil.toDate(pSdate, "yyyyMMddHHmmss");
 							
@@ -1062,12 +1062,20 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 					}
 					
 					if(d.getOtaMinute()!=0) {
-						
+						System.out.println("#####################################");
+						System.out.println("#####################################");
+						System.out.println("#####################################");
+						System.out.println("#####################################");
+						System.out.println("#####################################");
+						System.out.println("#####################################");
+						System.out.println("#####################################");
+						System.out.println("pEdate>>>>>>>>>>>>" + pEdate);
+						System.out.println("d.getOtaMinute().toString() >>>>>>>>>" + d.getOtaMinute().toString());
 						//조출시간, 잔업시간 분을 통한 시간 알아오기
 						Map<String, Object> otaMinuteMap = flexibleEmpService.calcOtMinuteAddBreaktimeForElas(tenantId, enterCd, d.getTimeCdMgrId(), pEdate, "OTA", d.getOtaMinute(), userId);
 						//Map<String, Object> otaMinuteMap = flexibleEmpService.calcOtMinuteExceptBreaktimeForElas(true, d.getFlexibleApplyId(), d.getYmd(), pSdate, pEdate, "OTA", d.getOtaMinute(), userId);
 						
-						if(otaMinuteMap!=null) {
+						if(otaMinuteMap!=null && otaMinuteMap.get("retDate") != null) {
 							Date otaSdate = WtmUtil.toDate(pEdate, "yyyyMMddHHmmss");
 							Date otaEdate = WtmUtil.toDate(otaMinuteMap.get("retDate").toString(), "yyyyMMddHHmmss");
 							
