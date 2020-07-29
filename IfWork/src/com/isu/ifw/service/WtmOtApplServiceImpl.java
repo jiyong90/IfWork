@@ -1016,6 +1016,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		//WtmOtAppl otAppl = wtmOtApplRepo.findByApplId(applId);
 		WtmOtAppl otAppl = wtmOtApplRepo.findByApplIdAndSabun(applId, sabun);
 		if(otAppl == null ) {
+			logger.debug("otAppl is null");
 			otAppl = new WtmOtAppl();
 		}
 		
@@ -1029,6 +1030,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		otAppl.setReason(reason);
 		otAppl.setSubYn(subYn);
 		otAppl.setUpdateId(userId);
+		logger.debug("otAppl ymd : " + stdYmd +  " , otSdate " + otSdate + " , otEdate " +  otEdate);
 		
 		return wtmOtApplRepo.save(otAppl);
 	}
