@@ -25,6 +25,7 @@ import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmCalcMapper;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmTaaCodeRepository;
@@ -64,6 +65,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	
 	@Autowired
 	private WtmTaaCodeRepository taaCodeRepo;
+	
+	@Autowired private WtmFlexibleEmpMapper wtmFlexibleEmpMapper;
 	
 	@Transactional
 	public void P_WTM_WORK_DAY_RESULT_CREATE_F(Long tenantId, String enterCd,  String sabun, String ymd, WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr, String userId) {
@@ -168,7 +171,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							logger.debug("CREATE_F :: sDate = " + sDate );
 							logger.debug("CREATE_F :: eDate = " + eDate );
 							*/
-							this.P_WTM_WORK_DAY_RESULT_UPDATE_T(flexStdMgr, timeCdMgr, result, sDate, eDate, calendar.getEntrySdate(), calendar.getEntryEdate(),  sumWorkMinute, workMinute, userId);
+							//안에서 생성한 시간을 더해준다.
+							sumWorkMinute = sumWorkMinute + this.P_WTM_WORK_DAY_RESULT_UPDATE_T(flexStdMgr, timeCdMgr, result, sDate, eDate, calendar.getEntrySdate(), calendar.getEntryEdate(),  sumWorkMinute, workMinute, userId);
 						}
 						cnt++;
 					}
@@ -203,23 +207,26 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	 * @param userId
 	 */
 	@Transactional
-	public void P_WTM_WORK_DAY_RESULT_UPDATE_T(WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr, WtmWorkDayResult result, Date sDate, Date eDate, Date entrySdate, Date entryEdate, int sumWorkMinute, int workMinute, String userId ) {
+	public int P_WTM_WORK_DAY_RESULT_UPDATE_T(WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr, WtmWorkDayResult result, Date sDate, Date eDate, Date entrySdate, Date entryEdate, int sumWorkMinute, int workMinute, String userId ) {
 		// System.out.println("UPDATE_T :: START :: " );
 		// System.out.println("UPDATE_T :: entrySdate :: " + entrySdate);
 		// System.out.println("UPDATE_T :: sDate :: " + sDate);
 		// System.out.println("UPDATE_T :: flexStdMgr :: " + flexStdMgr.toString());
+		
+		if((workMinute - sumWorkMinute) <= 0) {
+			return 0;
+		}
 		
 		Date calcSdate = this.WorkTimeCalcApprDate(entrySdate, sDate, flexStdMgr.getUnitMinute(), "S");
 		Date calcEdate = this.WorkTimeCalcApprDate(entryEdate, eDate, flexStdMgr.getUnitMinute(), "E");
 		
 		logger.debug("UPDATE_T :: calcSdate :: " + calcSdate);
 		logger.debug("UPDATE_T :: calcEdate :: " + calcEdate);
-		
+		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
 		if( !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_OT)
 				&& !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_NIGHT)
 				) {
 			if( !flexStdMgr.getWorkShm().equals("") && !flexStdMgr.getWorkEhm().equals("") ) {
-				SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
 				try {
 					Date limitSdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkShm());
 					Date limitEdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkEhm());
@@ -238,7 +245,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					}
 					
 					if(calcEdate.compareTo(limitEdate) > 0) {
-						logger.debug("시작일 근무 제한 시간 적용. eDate : " + calcEdate + " limitEdate : " + limitEdate);
+						logger.debug("종료일 근무 제한 시간 적용. eDate : " + calcEdate + " limitEdate : " + limitEdate);
 						calcEdate = limitEdate;
 					}
 				} catch (ParseException e) {
@@ -263,12 +270,78 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		//}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
 		}
 		
+		//잔여시간이 현재 근무 시간보다 작으면 
+		logger.debug("UPDATE_T :: (workMinute - sumWorkMinute) = " + (workMinute - sumWorkMinute));
+		logger.debug("UPDATE_T :: (apprMinute - breakMinute) = " +  (apprMinute - breakMinute));
+		
 		if ((workMinute - sumWorkMinute) < (apprMinute - breakMinute)) {
-			Calendar cal = Calendar.getInstance();
-			cal.setTime(calcSdate);
-			cal.add(Calendar.MINUTE, (workMinute - sumWorkMinute) + breakMinute );
-			calcEdate = cal.getTime();
-			apprMinute = (workMinute - sumWorkMinute) + breakMinute;
+			//종료시간을 다시 계산해야한다.
+			logger.debug("UPDATE_T :: timeCdMgr.getBreakTypeCd() = " +  timeCdMgr.getBreakTypeCd());	
+			if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+				
+				calcEdate = this.P_WTM_DATE_ADD_FOR_BREAK_MGR(calcSdate, (workMinute - sumWorkMinute), timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+				
+				try {
+					Date limitSdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkShm());
+					Date limitEdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkEhm());
+				
+					if(limitSdate.compareTo(limitEdate) > 0) {
+						logger.debug("제한시간 셋팅이 종료시간 보다 시작시간이 늦을 경우 종료시간을 1일 더해서 다음날로 만든다. sHm : " + flexStdMgr.getWorkShm() + " eHm : " + flexStdMgr.getWorkEhm());
+						Calendar cal = Calendar.getInstance();
+						cal.setTime(limitEdate);
+						cal.add(Calendar.DATE, 1);
+						limitEdate = cal.getTime();
+					}
+	
+					if(calcSdate.compareTo(limitSdate) < 0) {
+						logger.debug("시작일 근무 제한 시간 적용. calcSdate : " + calcSdate + " limitSdate : " + limitSdate);
+						calcSdate = limitSdate;
+					}
+					
+					if(calcSdate.compareTo(limitEdate) >= 0) {
+						logger.debug("근무 제한 시간보다 이후 시간입니다.");
+						return 0;
+					}
+					
+					if(calcEdate.compareTo(limitEdate) > 0) {
+						logger.debug("종료일 근무 제한 시간 적용. eDate : " + calcEdate + " limitEdate : " + limitEdate);
+						calcEdate = limitEdate;
+					}
+
+				} catch (ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				apprMinute = this.WtmCalcMinute(sdf.format(calcSdate), sdf.format(calcSdate), null, null, flexStdMgr.getUnitMinute()) -  this.getBreakMinuteIfBreakTimeMGR(calcSdate, calcEdate, timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+				breakMinute = 0;
+				/*
+				SimpleDateFormat sd = new SimpleDateFormat("yyyyMMddHHmmss");
+				Map<String, Object> calcMap = new HashMap<>();
+				calcMap.put("tenantId", result.getTenantId());
+				calcMap.put("enterCd", result.getEnterCd());
+				calcMap.put("sabun", result.getSabun());
+				calcMap.put("ymd", result.getYmd());
+				calcMap.put("sDate", calcSdate);
+				calcMap.put("addMinute", (workMinute - sumWorkMinute)); 
+				calcMap.put("retDate", ""); 
+				wtmFlexibleEmpMapper.addMinuteWithBreakMGR(calcMap);
+				//시간대를 자르
+				//잔여소정근로종료시간을 구해서 기본근무시간 정보를 만들어 준다. 
+				String baseEdateStr = calcMap.get("retDate")+"";
+				try {
+					calcEdate = sd.parse(baseEdateStr);
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+				*/
+				logger.debug("UPDATE_T :: retDate = " +  calcEdate);
+			}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
+				Calendar cal = Calendar.getInstance();
+				cal.setTime(calcSdate);
+				cal.add(Calendar.MINUTE, (workMinute - sumWorkMinute) + breakMinute );
+				calcEdate = cal.getTime();
+				apprMinute = (workMinute - sumWorkMinute) + breakMinute;
+			}
 		}
 
 		logger.debug("UPDATE_T :: calcSdate = " + calcSdate);
@@ -285,6 +358,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		
 		logger.debug("UPDATE_T :: workDayResultRepo.save = " + result);
 		workDayResultRepo.save(result);
+		
+		return apprMinute;
 	}
 
 	/**
@@ -1399,5 +1474,43 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		resMap.put("apprMinute", apprMinute);
 		resMap.put("breakMinute", breakMinute);
 		return resMap;
+	}
+	
+	/**
+	 * 기준시간이 9시고 60분이후 시간을 구하고자 할때 
+	 * 9~10시까지의 휴게시간이 있는 지 확인한다.
+	 * 30분의 휴게 시간이 있을 경우 
+	 * 10~10:30 분까지 휴게시간 여뷰를 체크한다.
+	 * 없으면 그대로 전달하지만 있을 경우 다시 재귀호출을 한다.  
+	 * @param sDate
+	 * @param addMinute
+	 * @param timeCdMgrId
+	 * @param unitMinute
+	 * @return
+	 */
+	public Date P_WTM_DATE_ADD_FOR_BREAK_MGR(Date sDate, int addMinute, long timeCdMgrId, Integer unitMinute) {
+		
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(sDate);
+		cal.add(Calendar.MINUTE, addMinute);
+
+		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: sDate = "+ sDate);
+		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: addMinute = "+ addMinute);
+		Date eDate = cal.getTime();
+		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: eDate = "+ eDate);
+		
+		int breakMinute = this.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgrId, unitMinute);
+		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: breakMinute = "+ breakMinute);
+		cal = Calendar.getInstance();
+		cal.setTime(sDate);
+		cal.add(Calendar.MINUTE, addMinute+breakMinute);
+		Date calcEdate = cal.getTime();
+		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: calcEdate = "+ calcEdate);
+		
+		int addBreakMinute = this.getBreakMinuteIfBreakTimeMGR(eDate, calcEdate, timeCdMgrId, unitMinute);
+		if(addBreakMinute > 0) {
+			return P_WTM_DATE_ADD_FOR_BREAK_MGR(calcEdate, addBreakMinute, timeCdMgrId, unitMinute);
+		}
+		return calcEdate;
 	}
 }

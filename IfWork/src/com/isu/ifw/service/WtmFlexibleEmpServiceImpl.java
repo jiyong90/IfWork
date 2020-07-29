@@ -1261,6 +1261,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				
 				calcApprDayInfo2(calendar, flexStdMgr, timeCdMgr);
 				
+				calcApprDayInfo3();
+				
 				
 			}
 		}
@@ -1331,13 +1333,18 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//계획된 정보의 출퇴근 시간을 변경하고 
 		//간주근무 정보가 있을 경우 타임블럭을 재배치한다.
 		
-		List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), WtmApplService.TIME_TYPE_BASE);
+		//List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), WtmApplService.TIME_TYPE_BASE);
+		List<String> timeTypeCds = new ArrayList<String>();
+		timeTypeCds.add(WtmApplService.TIME_TYPE_BASE);
+		timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
+		timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
+		List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdInAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), timeTypeCds);
 		if(results != null && results.size() > 0) {
 			int cnt = 1;
 			logger.debug("calcaApprDayReset :: flexStdMgr.getApplyEntrySdateYn() = " + flexStdMgr.getApplyEntrySdateYn());
 			logger.debug("calcaApprDayReset :: flexStdMgr.getApplyEntryEdateYn() = " + flexStdMgr.getApplyEntryEdateYn());
 			for(WtmWorkDayResult result : results) {
-				logger.debug("CREATE_F :: cnt = " + cnt);
+				logger.debug("calcaApprDayReset :: cnt = " + cnt);
 				
 				Date sDate = null;
 				Date eDate = null;
@@ -1550,9 +1557,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		Date dayPlanSdate = null;
 		Date dayPlanEdate = null;
-		
+		//외출복귀데이터를 따로 담아두자. 인정근무 계산할때 외복귀시간은 제외한다. 
+		List<WtmWorkDayResult> gobackResults = new ArrayList<WtmWorkDayResult>();
 		List<WtmWorkDayResult> dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
 		for(WtmWorkDayResult r : dayResults) {
+			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_GOBACK)) {
+				gobackResults.add(r);
+			}
 			//통상적으로 근태가 있는 날은 마감을 멈춘다. 
 			//단 예외의 경우도 있다 아래에서 체크한다.
 			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) && r.getApprSdate() != null && r.getApprEdate() != null) {
@@ -1826,8 +1837,70 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			if(flexStdMgr.getWorkTypeCd().equals("SELE_F")) {
 				try { logger.debug("9. APPLY_ENTRY_SDATE_YN / APPLY_ENTRY_EDATE_YN 여부에 따라 타각 시간을 계획시간으로 업데이트 한다. 그리고 인정시간을 다시 계산한다. 계획시간이 변경되었기 때문에 ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_CREATE_F"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 				calcService.P_WTM_WORK_DAY_RESULT_CREATE_F(tenantId, enterCd, sabun,  calendar.getYmd(), flexStdMgr, timeCdMgr, "P_WTM_WORK_DAY_RESULT_CREATE_F-"+sabun);
+				
+				/**
+				 * 소정근로 시간 초과로 인해 소정근로시간 인정을 안할 경우에도 오티 나이트는 타각시간 내에 잇는 것은 인정해준다. 
+				 */
+				timeTypeCd = new ArrayList<>();
+				timeTypeCd.add(WtmApplService.TIME_TYPE_OT);
+				timeTypeCd.add(WtmApplService.TIME_TYPE_NIGHT);
+				
+				List<WtmWorkDayResult> apprResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCd, calendar.getYmd(), calendar.getYmd());
+				for(WtmWorkDayResult r : apprResults) {
+					Date sDate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
+					Date eDate = calcService.WorkTimeCalcApprDate(calendar.getEntryEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
+					if(sDate.compareTo(eDate) < 0) {
+						
+						boolean isAppr = true;
+						/**
+						 *  구간내 외출 복귀 구간을 제외하자 
+						 */
+						if(gobackResults != null) {
+							for(WtmWorkDayResult gbr : gobackResults) {
+
+								logger.debug("gbr.getApprSdate() : " + gbr.getApprSdate());
+								logger.debug("gbr.getApprEdate() : " + gbr.getApprEdate());
+								logger.debug("sDate : " + sDate);
+								logger.debug("eDate : " + eDate);
+								
+								if(gbr.getApprSdate().compareTo(eDate) == -1
+										&& gbr.getApprEdate().compareTo(sDate) == 1) {
+									
+									//시종 시간이 외/복귀 시간에 완전 속해 있으면 인정시간을 계산하지 않는다. 
+									if(gbr.getApprSdate().compareTo(sDate) < 1 
+											&& gbr.getApprEdate().compareTo(eDate) > -1) {
+										logger.debug("제외: " + gbr);
+										isAppr = false;
+									}
+									//외출 복귀 내 속해 있으면.
+									if(gbr.getApprEdate().compareTo(sDate) == 1) {
+										sDate = gbr.getApprEdate();
+									}
+									if(gbr.getApprSdate().compareTo(eDate) == -1) {
+										eDate = gbr.getApprSdate();
+									}
+								}
+							}
+									
+						}
+						logger.debug("isAppr : " + isAppr);
+
+						if(isAppr) {	
+							r.setApprSdate(sDate);
+							r.setApprEdate(eDate);
+							
+							Map<String, Object> calcMap = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+							int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+							int breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
+							r.setApprMinute(apprMinute - breakMinute);
+							
+							r.setUpdateId("SELE_F_OT_NIGHT");
+							workDayResultRepo.save(r);
+						}
+					}
+				}
 			}
-			//else {
+			else {
 				try { logger.debug("8. 결근 데이터를 제외하고 타각 시간으로 계획 시간들의 인정시간을 만들어 준다. " + mapper.writeValueAsString(paramMap) + "updateApprDatetimeByYmdAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 				//결근을 제외한 day result의 모든 계획데이터를 인정데이터로 만들어 준다. 
 				//flexEmpMapper.updateApprDatetimeByYmdAndSabun(paramMap);
@@ -1836,20 +1909,54 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					Date sDate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
 					Date eDate = calcService.WorkTimeCalcApprDate(calendar.getEntryEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
 					if(sDate.compareTo(eDate) < 0) {
-						
-						r.setApprSdate(sDate);
-						r.setApprEdate(eDate);
-						
-						Map<String, Object> calcMap = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
-						int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
-						int breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
-						r.setApprMinute(apprMinute - breakMinute);
-						
-						r.setUpdateId("findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd");
-						workDayResultRepo.save(r);
+						boolean isAppr = true;
+						/**
+						 *  구간내 외출 복귀 구간을 제외하자 
+						 */
+						if(gobackResults != null) {
+							for(WtmWorkDayResult gbr : gobackResults) {
+
+								logger.debug("gbr.getApprSdate() : " + gbr.getApprSdate());
+								logger.debug("gbr.getApprEdate() : " + gbr.getApprEdate());
+								logger.debug("sDate : " + sDate);
+								logger.debug("eDate : " + eDate);
+								
+								if(gbr.getApprSdate().compareTo(eDate) == -1
+										&& gbr.getApprEdate().compareTo(sDate) == 1) {
+									
+									//시종 시간이 외/복귀 시간에 완전 속해 있으면 인정시간을 계산하지 않는다. 
+									if(gbr.getApprSdate().compareTo(sDate) != -1 
+											&& gbr.getApprEdate().compareTo(eDate) > -1) {
+										isAppr = false;
+									}
+									//외출 복귀 내 속해 있으면.
+									if(gbr.getApprEdate().compareTo(sDate) == 1) {
+										sDate = gbr.getApprEdate();
+									}
+									if(gbr.getApprSdate().compareTo(eDate) == -1) {
+										eDate = gbr.getApprSdate();
+									}
+								}
+							}
+									
+						}
+						logger.debug("isAppr : " + isAppr);
+						if(isAppr) {	
+							
+							r.setApprSdate(sDate);
+							r.setApprEdate(eDate);
+							
+							Map<String, Object> calcMap = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+							int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+							int breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
+							r.setApprMinute(apprMinute - breakMinute);
+							
+							r.setUpdateId("findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd");
+							workDayResultRepo.save(r);
+						}
 					}
 				}
-			//}
+			}
 			
 			
 			
@@ -1986,6 +2093,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		 */
 		logger.debug("인정되지 않은 계획 시간의 경우 일괄로 apprMinute 0으로 갱신한다.");
 		flexEmpMapper.updateWtmWorkDayResultByApprMinuteIsNull(paramMap);
+		
+	}
+	
+	public void calcApprDayInfo3() {
 		
 	}
 	
