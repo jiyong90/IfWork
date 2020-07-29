@@ -1332,7 +1332,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//타각 시간 기준으로 인정근무를 생성할 경우
 		//계획된 정보의 출퇴근 시간을 변경하고 
 		//간주근무 정보가 있을 경우 타임블럭을 재배치한다.
-		
+		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
 		//List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), WtmApplService.TIME_TYPE_BASE);
 		List<String> timeTypeCds = new ArrayList<String>();
 		timeTypeCds.add(WtmApplService.TIME_TYPE_BASE);
@@ -1398,6 +1398,40 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							eDate = result.getPlanEdate();
 						}
 						
+					}
+					
+					if(!result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) && !result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)) {
+						try {
+							Date limitSdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkShm());
+							Date limitEdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkEhm());
+						
+							if(limitSdate.compareTo(limitEdate) > 0) {
+								logger.debug("제한시간 셋팅이 종료시간 보다 시작시간이 늦을 경우 종료시간을 1일 더해서 다음날로 만든다. sHm : " + flexStdMgr.getWorkShm() + " eHm : " + flexStdMgr.getWorkEhm());
+								Calendar cal = Calendar.getInstance();
+								cal.setTime(limitEdate);
+								cal.add(Calendar.DATE, 1);
+								limitEdate = cal.getTime();
+							}
+			
+							if(sDate.compareTo(limitSdate) < 0) {
+								logger.debug("시작일 근무 제한 시간 적용. sDate : " + sDate + " limitSdate : " + limitSdate);
+								sDate = limitSdate;
+							}
+	//						
+	//						if(sDate.compareTo(limitEdate) >= 0) {
+	//							logger.debug("근무 제한 시간보다 이후 시간입니다.");
+	//							return 0;
+	//						}
+							
+							if(eDate.compareTo(limitEdate) > 0) {
+								logger.debug("종료일 근무 제한 시간 적용. eDate : " + eDate + " limitEdate : " + limitEdate);
+								eDate = limitEdate;
+							}
+	
+						} catch (ParseException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					}
 					result.setPlanSdate(sDate);
 					result.setPlanEdate(eDate);
