@@ -105,4 +105,6 @@ public interface WtmOtApplMapper {
 	 */
 	public void saveApplLineSts(Map<String, Object> paramMap);
 	
+	//연장근무 신청 시 기준일에 신청 가능한 일자인지 확인하기 위해
+	public Map<String, Object> getCheckPlanDate(Map<String, Object> paramMap);
 }

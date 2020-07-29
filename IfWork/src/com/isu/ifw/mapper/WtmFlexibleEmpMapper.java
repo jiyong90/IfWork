@@ -525,4 +525,7 @@ public interface WtmFlexibleEmpMapper {
 	 */
 	public Map<String, Object> getElasOtbHm(Map<String, Object> paramMap);
 	
+	//기준일자의 계획시간 min, max 가져오기
+	public Map<String, Object> getPlanMinMaxDate(Map<String, Object> paramMap);
+	
 }

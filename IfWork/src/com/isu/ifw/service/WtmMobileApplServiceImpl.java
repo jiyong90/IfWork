@@ -109,9 +109,15 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		dataMap.put("sabun", sabun);
 
 		//서비스에서 사용하는게 좀 달라서...
-		dataMap.put("otSdate", dataMap.get("ymd").toString() + dataMap.get("shm").toString());
-		dataMap.put("otEdate", dataMap.get("ymd").toString() + dataMap.get("ehm").toString());
-
+		//연장근무 시작,종료 일자 추가
+		if(dataMap.containsKey("otSymd") && dataMap.containsKey("otEymd")) {
+			dataMap.put("otEdate", dataMap.get("otEymd").toString().replace(".", "") + dataMap.get("ehm").toString());
+			dataMap.put("otSdate", dataMap.get("otSymd").toString().replace(".", "") + dataMap.get("shm").toString());
+		} else {
+			dataMap.put("otSdate", dataMap.get("ymd").toString() + dataMap.get("shm").toString());
+			dataMap.put("otEdate", dataMap.get("ymd").toString() + dataMap.get("ehm").toString());
+		}
+		
 		ReturnParam rp =  otApplService.validate(tenantId, enterCd, sabun, dataMap.get("applCd").toString(), dataMap);
 		if(rp!=null && rp.getStatus()!=null && "FAIL".equals(rp.getStatus())) {
 			return rp;
@@ -193,6 +199,8 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 					dataMap.put("ymd", "");
 					throw new Exception(temp.get("message").toString());
 				}
+				dataMap.put("otSymd", dataMap.get("ymd"));
+				dataMap.put("otEymd", dataMap.get("ymd"));
 				//휴일인지 확인
 				WtmWorkCalendar calendars =  workCalendarRepo.findByTenantIdAndEnterCdAndYmdAndSabun(tenantId, enterCd, dataMap.get("ymd").toString(), sabun);
 				dataMap.put("holidayYn", calendars.getHolidayYn());
@@ -282,6 +290,8 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 	//				return rp;
 					throw new Exception("해당일은 휴일입니다.");
 				}
+			} else if(eventSource.equals("otSymd") || eventSource.equals("otEymd")) {
+				rp.setSuccess("연장근무 시작/종료 일자는 기준일과 근무일자가 다른경우에 변경하시면 됩니다. (근무일이 자정을 넘어서는경우, 주/야 교대 근무자인경우)");
 			}
 			
 			

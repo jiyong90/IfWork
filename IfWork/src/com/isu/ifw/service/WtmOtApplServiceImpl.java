@@ -397,7 +397,6 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		if(lastAppr) {
 			rp = wtmApplAfterService.applyStsAfter(tenantId, enterCd, applId, paramMap,  sabun,  userId);
 		}
-		
 		List<String> pushSabun = new ArrayList();
 		if(lastAppr) {
 			pushSabun.addAll(applSabuns);
@@ -414,7 +413,6 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		//메일 전송을 위한 파라미터
 		rp.put("from", sabun);
 		rp.put("to", pushSabun);
-		
 		return rp;
 
 	}
@@ -514,7 +512,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				}
 				
 				//근무제 신청서 테이블 조회
-				WtmOtAppl otAppl = saveWtmOtAppl(tenantId, enterCd, applId, applId, otSdate, otEdate, calendar.getHolidayYn(), subYn,  reasonCd, reason, sabun, userId);
+				WtmOtAppl otAppl = saveWtmOtAppl(tenantId, enterCd, applId, applId, ymd,otSdate, otEdate, calendar.getHolidayYn(), subYn,  reasonCd, reason, sabun, userId);
 				
 				//휴일근무 신청 여부
 				if(paramMap.containsKey("holidayYn") && paramMap.get("holidayYn").equals("Y")) {
@@ -639,6 +637,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		String otSdate = paramMap.get("otSdate").toString();
 		String otEdate = paramMap.get("otEdate").toString();
 		
+		Date td = WtmUtil.toDate(ymd, "yyyyMMdd");
 		Date sd = WtmUtil.toDate(otSdate, "yyyyMMddHHmm");
 		Date ed = WtmUtil.toDate(otEdate, "yyyyMMddHHmm");
 		
@@ -652,7 +651,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			return rp;
 		}
 		
-
+		
 		paramMap.put("enterCd", enterCd);
 		paramMap.put("sabun", sabun);
 		paramMap.put("tenantId", tenantId);
@@ -660,6 +659,18 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		//연장근무 신청 기간 내에 소정근로 외 다른 근무계획이 있는지 체크 한다.
 		paramMap.put("sdate", sd);
 		paramMap.put("edate", ed);
+		
+		//연장근무 신청은 기준일 전/후일의 근무계획시간 사이에만 신청할 수 있음
+		Map<String, Object> chekPlan = wtmOtApplMapper.getCheckPlanDate(paramMap);
+		Date tempSd = WtmUtil.toDate(chekPlan.get("minPlan").toString(), "yyyyMMddHHmm");
+		Date tempEd = WtmUtil.toDate(chekPlan.get("maxPlan").toString(), "yyyyMMddHHmm");
+		//시작시각, 종료시각이 무조건 tempSd, tempEd 사이에 있어야 함, 조건문은 나중에 바꿔주시오~
+		if(tempSd.compareTo(sd) < 0 && tempEd.compareTo(sd) > 0 &&
+				tempSd.compareTo(ed) < 0 && tempEd.compareTo(ed) > 0) {
+		} else {
+			rp.setFail("선택하신 근무일에 신청할 수 없는 연장근무 시간입니다.");
+			return rp;
+		}
 		
 		
 		Long applId = null;
@@ -1000,18 +1011,18 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		return wtmApplRepo.save(appl);
 	}
 	
-	protected WtmOtAppl saveWtmOtAppl(Long tenantId, String enterCd, Long applId, Long oldOtApplId, String otSdate, String otEdate, String holidayYn, String subYn, String reasonCd, String reason, String sabun, String userId) {
+	protected WtmOtAppl saveWtmOtAppl(Long tenantId, String enterCd, Long applId, Long oldOtApplId, String stdYmd, String otSdate, String otEdate, String holidayYn, String subYn, String reasonCd, String reason, String sabun, String userId) {
 		 
 		//WtmOtAppl otAppl = wtmOtApplRepo.findByApplId(applId);
 		WtmOtAppl otAppl = wtmOtApplRepo.findByApplIdAndSabun(applId, sabun);
 		if(otAppl == null ) {
 			otAppl = new WtmOtAppl();
 		}
-		Date sDate = WtmUtil.toDate(otSdate, "yyyyMMddHHmm");
+		
 		otAppl.setApplId(applId);
-		otAppl.setYmd(WtmUtil.parseDateStr(sDate, null));
+		otAppl.setYmd(stdYmd);
 		otAppl.setSabun(sabun);
-		otAppl.setOtSdate(sDate);
+		otAppl.setOtSdate(WtmUtil.toDate(otSdate, "yyyyMMddHHmm"));
 		otAppl.setOtEdate(WtmUtil.toDate(otEdate, "yyyyMMddHHmm"));
 		otAppl.setHolidayYn(holidayYn);
 		otAppl.setReasonCd(reasonCd);
@@ -1021,7 +1032,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		
 		return wtmOtApplRepo.save(otAppl);
 	}
-
+	
 	public ReturnParam preCheckOneByOne(Long tenantId, String enterCd, String sabun, String workTypeCd,
 			Map<String, Object> paramMap) {
 		ReturnParam rp = new ReturnParam();
@@ -1260,7 +1271,9 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		return rp;
 	}
 	
-	//모바일용 동기처리
+	//모바일 연장근무 신청서가 오류가 난다고 해서 여기까지 찾아왔다니 대단하군!
+	//모바일은 applId가 없고 이것저것 달라서 웹이랑 호출하는 서비스가 다르지. 하지만 안에 내용은 똑같아야 하니까 imsi안에 바뀐내용을 여기다 넣어주면 
+	//미션 클리어! (아마도)
 	public ReturnParam requestSync(Long tenantId, String enterCd, Map<String, Object> paramMap,
 			String sabun, String userId) throws Exception { 
 		
@@ -1272,8 +1285,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		long applId = appl.getApplId();
 		
 		String ymd = paramMap.get("ymd").toString();
-		String otSdate = paramMap.get("ymd").toString() + paramMap.get("shm").toString();
-		String otEdate = paramMap.get("ymd").toString() + paramMap.get("ehm").toString();
+		String otSdate = paramMap.get("otSdate").toString();
+		String otEdate = paramMap.get("otEdate").toString();
 		String reasonCd = paramMap.get("gubun").toString();
 		String reason = paramMap.get("reason").toString();
 		
@@ -1285,7 +1298,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			subYn = paramMap.get("subYn")+"";
 		}
 		//근무제 신청서 테이블 조회
-		WtmOtAppl otAppl = saveWtmOtAppl(tenantId, enterCd, applId, applId, otSdate, otEdate, calendar.getHolidayYn(), subYn,  reasonCd, reason, sabun, userId);
+		WtmOtAppl otAppl = saveWtmOtAppl(tenantId, enterCd, applId, applId, ymd, otSdate, otEdate, calendar.getHolidayYn(), subYn,  reasonCd, reason, sabun, userId);
 			
 		//휴일근무 신청 여부
 		if(paramMap.containsKey("holidayYn") && paramMap.get("holidayYn").equals("Y")) {
@@ -1323,14 +1336,35 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				pMap.put("shm", sHm);
 				pMap.put("ehm", eHm);
 				pMap.put("sabun", appl.getApplSabun());
-					
-				//현재 신청할 연장근무 시간 계산
-				resultMap.putAll(wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId));
 				
-				otSub.setSubsMinute(resultMap.get("calcMinute").toString());
+				//현재 신청할 연장근무 시간 계산
+				Map<String, Object> calcMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId);
+				
+                resultMap.putAll(calcMap);
+
+                int subsMinute = 0;
+                if(calcMap!=null && calcMap.containsKey("calcMinute")) {
+                   subsMinute = Integer.parseInt(resultMap.get("calcMinute").toString());
+                   
+   			       WtmWorkCalendar subCalendar = wtmWorkCalendarRepository.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, subYmd);
+
+                   WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(subCalendar.getTimeCdMgrId()).get();
+                   if(timeCdMgr.getBreakTypeCd().equals("TIME")) {
+                	   logger.debug("subMinute : TIME");
+                       if(calcMap.containsKey("breakMinute") && resultMap.get("breakMinute")!=null && !"".equals(resultMap.get("breakMinute"))) {
+                              subsMinute = subsMinute -  Integer.parseInt(resultMap.get("breakMinute").toString());
+                           }
+                   } else if(timeCdMgr.getBreakTypeCd().equals("MGR")) {
+                	   logger.debug("subMinute : MGR");
+                   } else {logger.debug("subMinute : ELSE");}
+                }
+
+                otSub.setSubsMinute(Integer.toString(subsMinute));
+                
 				otSub.setUpdateId(userId);
 				wtmOtSubsApplRepo.save(otSub);
 			}
+
 		}
 		
 		String otShm = WtmUtil.parseDateStr(WtmUtil.toDate(otSdate, "yyyyMMddHHmm"), "HHmm");
