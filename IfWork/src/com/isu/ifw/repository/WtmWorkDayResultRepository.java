@@ -20,6 +20,7 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 	public List<WtmWorkDayResult> findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmd(String timeTypeCd, Long tenantId, String enterCd, String sabun, String ymd);
 
 	public List<WtmWorkDayResult> findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmdAndApprSdateIsNotNullOrderByApprSdateAsc(String timeTypeCd, Long tenantId, String enterCd, String sabun, String ymd);
+	public List<WtmWorkDayResult> findByTimeTypeCdInAndTenantIdAndEnterCdAndSabunAndYmdAndApprSdateIsNotNullOrderByApprSdateAsc(List<String> timeTypeCds, Long tenantId, String enterCd, String sabun, String ymd);
 	
 	@Query("SELECT D FROM WtmWorkDayResult D JOIN WtmWorkCalendar C ON D.tenantId = C.tenantId AND D.enterCd = C.enterCd AND D.ymd = C.ymd AND D.sabun = C.sabun WHERE C.workCalendarId = ?1")
 	public List<WtmWorkDayResult> findByWorkCalendarId(Long workCalendarId);

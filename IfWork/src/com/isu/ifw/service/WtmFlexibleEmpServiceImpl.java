@@ -1261,9 +1261,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				
 				calcApprDayInfo2(calendar, flexStdMgr, timeCdMgr);
 				
-				calcApprDayInfo3();
-				
-				
 			}
 		}
 	}
@@ -2130,9 +2127,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 	}
 	
-	public void calcApprDayInfo3() {
-		
-	}
 	
 	@Override
 	public void workClosed(Long tenantId, String enterCd, String sabun, String ymd, String userId) {
@@ -2635,6 +2629,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 	}
 
+	@Transactional
 	@Override
 	public void removeWtmDayResultInBaseTimeType(Long tenantId, String enterCd, String ymd, String sabun,
 			String removeTimeTypeCd, String removeTaaCd, Date removeSdate, Date removeEdate, Long applId, String userId) {
@@ -2722,6 +2717,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 										// SUBS(지우려는 데이터) -> BASE 로 변
 										//SUBS or TAA
 										res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
+										res.setTaaCd(null);
 										//res.setApplId(applId); 
 										workDayResultRepo.save(res);
 										break;

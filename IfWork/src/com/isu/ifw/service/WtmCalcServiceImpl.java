@@ -2,6 +2,7 @@ package com.isu.ifw.service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -467,7 +468,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					logger.debug("CREATE_N :: fixotUseType = " + fixotUseType);
 					if(defaultWorkUseYn.equals("Y") && fixotUseType.equals("ALL")) {
 						//List<WtmWorkDayResult> dayResult = workDayResultRepo.findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmd(WtmApplService.TIME_TYPE_BASE, tenantId, enterCd, sabun, ymd);
-						List<WtmWorkDayResult> dayResult = workDayResultRepo.findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmdAndApprSdateIsNotNullOrderByApprSdateAsc(WtmApplService.TIME_TYPE_BASE, tenantId, enterCd, sabun, ymd);
+						//List<WtmWorkDayResult> dayResult = workDayResultRepo.findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmdAndApprSdateIsNotNullOrderByApprSdateAsc(WtmApplService.TIME_TYPE_BASE, tenantId, enterCd, sabun, ymd);
+						List<String> timeTypes = new ArrayList<String>();
+						timeTypes.add(WtmApplService.TIME_TYPE_BASE);
+						timeTypes.add(WtmApplService.TIME_TYPE_REGA);
+						List<WtmWorkDayResult> dayResult = workDayResultRepo.findByTimeTypeCdInAndTenantIdAndEnterCdAndSabunAndYmdAndApprSdateIsNotNullOrderByApprSdateAsc(timeTypes, tenantId, enterCd, sabun, ymd);
 						
 						String breakTypeCd = calendarMap.getBreakTypeCd();
 
