@@ -1261,9 +1261,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				
 				calcApprDayInfo2(calendar, flexStdMgr, timeCdMgr);
 				
-				calcApprDayInfo3();
-				
-				
 			}
 		}
 	}
@@ -2130,9 +2127,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 	}
 	
-	public void calcApprDayInfo3() {
-		
-	}
 	
 	@Override
 	public void workClosed(Long tenantId, String enterCd, String sabun, String ymd, String userId) {
