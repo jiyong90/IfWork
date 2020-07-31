@@ -79,6 +79,13 @@ public interface WtmApplService {
 	//휴게시간
 	final static String BREAK_TYPE_TIMEFIX = "TIMEFIX";
 	
+	final static String APPL_TAACD_D = "COMP_D"; //보상휴가
+	final static String APPL_TAACD_A = "COMP_A"; //보상휴가 오전반차
+	final static String APPL_TAACD_P = "COMP_P"; //보상휴가 오후반차
+	
+	final static int DAY_HOUR = 8;
+	final static int HARF_DAY_HOUR = 4;
+	
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId);
 	
 	public List<Map<String, Object>> getPrevApplList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId);

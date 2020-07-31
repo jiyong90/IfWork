@@ -11,6 +11,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,59 +20,69 @@ import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
 import com.isu.ifw.entity.WtmCompAppl;
-import com.isu.ifw.entity.WtmOtAppl;
-import com.isu.ifw.entity.WtmOtSubsAppl;
+import com.isu.ifw.entity.WtmCompCanAppl;
 import com.isu.ifw.entity.WtmTaaCode;
-import com.isu.ifw.entity.WtmTimeCdMgr;
-import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmCompApplMapper;
+import com.isu.ifw.mapper.WtmCompCanApplMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmInterfaceMapper;
 import com.isu.ifw.repository.WtmApplCodeRepository;
 import com.isu.ifw.repository.WtmApplLineRepository;
 import com.isu.ifw.repository.WtmApplRepository;
 import com.isu.ifw.repository.WtmCompApplRepository;
+import com.isu.ifw.repository.WtmCompCanApplRepository;
 import com.isu.ifw.repository.WtmTaaCodeRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
 import com.isu.ifw.vo.WtmApplLineVO;
 
-@Service("wtmCompApplService")
-public class WtmCompApplServiceImpl implements WtmApplService {
-	
+@Service("wtmCompCanApplService")
+public class WtmCompCanApplServiceImpl implements WtmApplService {
+
 	private final Logger logger = LoggerFactory.getLogger("ifwFileLog");
-
-	@Autowired private WtmCompApplRepository compApplRepo;
 	
 	@Autowired
-	private WtmCompApplMapper wtmCompApplMapper;
-
-	@Autowired
-	WtmApplRepository wtmApplRepo;
+	WtmCompApplListService wtmCompApplListService;
 	
 	@Autowired
-	WtmCompApplRepository wtmCompApplRepo;
-	
-	@Autowired
-	WtmApplCodeRepository wtmApplCodeRepo;
+	@Qualifier("wtmCompCanApplService")
+	WtmApplService wtmCompCanApplService;
 	
 	@Autowired
 	WtmApplLineService applLineService;
-	
-	@Autowired
-	WtmApplMapper applMapper;
-	
-	@Autowired
-	WtmValidatorService wtmValidatorService;
 	
 	@Autowired
 	WtmApplLineRepository wtmApplLineRepo;
 	
 	@Autowired
 	WtmInboxService inbox;
+	
+	@Autowired
+	WtmCompApplRepository wtmCompApplRepo;
+	
+	@Autowired
+	WtmWorkDayResultRepository wtmWorkDayResultRepo;
+	
+	@Autowired
+	WtmApplRepository wtmApplRepo;
+	
+	@Autowired
+	WtmApplCodeRepository wtmApplCodeRepo;
+	
+	@Autowired
+	WtmCompCanApplRepository wtmCompCanApplRepo;
+	
+	@Autowired
+	WtmCompApplMapper wtmCompApplMapper;
+	
+	@Autowired
+	WtmCompCanApplMapper wtmCompCanApplMapper;
+	
+	@Autowired
+	WtmApplMapper applMapper;
 	
 	@Autowired
 	private WtmTaaCodeRepository wtmTaaCodeRepo;
@@ -87,53 +98,6 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 	
 	@Autowired
 	private WtmFlexibleEmpService WtmFlexibleEmpService;
-	
-	
-	protected WtmAppl saveWtmAppl(Long tenantId, String enterCd, Long applId, String workTypeCd, String applStatusCd, String sabun, String userId) {
-		WtmAppl appl = null;
-		if(applId != null && !applId.equals("")) {
-			appl = wtmApplRepo.findById(applId).get();
-		}else {
-			appl = new WtmAppl();
-		}
-		appl.setApplStatusCd(applStatusCd);
-		appl.setTenantId(tenantId);
-		appl.setEnterCd(enterCd);
-		appl.setApplInSabun(sabun);
-		appl.setApplSabun(sabun);
-		appl.setApplCd(workTypeCd);
-		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
-		appl.setUpdateId(userId); 
-		//appl.
-		
-		return wtmApplRepo.save(appl);
-	}
-
-	
-	protected WtmCompAppl saveWtmCompAppl(Long applId, String sabun, String taaCd, String compSymd, String compEymd, int compMinute, String reason, String userId) {
-		
-		WtmCompAppl compAppl = null;
-		
-		compAppl = new WtmCompAppl();
-		
-		compAppl.setApplId(applId);
-		compAppl.setSabun(sabun);
-		compAppl.setTaaCd(taaCd);
-		compAppl.setCompSymd(compSymd);
-		compAppl.setCompEymd(compEymd);
-		compAppl.setCompMinute(compMinute+"");
-		compAppl.setReason(reason);
-		compAppl.setCancelYn("N");
-		compAppl.setUpdateDate(new Date());
-		compAppl.setUpdateId(userId); 
-		
-		return wtmCompApplRepo.save(compAppl);
-	}
-	
-	protected WtmApplCode getApplInfo(Long tenantId,String enterCd,String applCd) {
-		return wtmApplCodeRepo.findByTenantIdAndEnterCdAndApplCd(tenantId, enterCd, applCd);
-	}
-
 
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
@@ -142,25 +106,25 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 			Map<String, Object> paramMap = new HashMap<String, Object>();
 			paramMap.put("applId", applId);
 			paramMap.put("sabun", sabun);
-			List<Map<String, Object>> compApplList = wtmCompApplMapper.compApplfindByApplId(paramMap);
+			List<Map<String, Object>> compCanApplList = wtmCompCanApplMapper.compCanApplfindByApplId(paramMap);
 
 			ObjectMapper mapper = new ObjectMapper();
 			
-			logger.debug("compApplList :::::: " + mapper.writeValueAsString(compApplList));
+			logger.debug("compApplList :::::: " + mapper.writeValueAsString(compCanApplList));
 			
-			Map<String, Object> compAppl = null;
-			if(compApplList!=null && compApplList.size()>0) {
+			Map<String, Object> compCanAppl = null;
+			if(compCanApplList!=null && compCanApplList.size()>0) {
 				
 				List<String> sabuns = new ArrayList<String>();
 				
 				String ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 				
-				if(compAppl==null)
-					compAppl = compApplList.get(0);
+				if(compCanAppl==null)
+					compCanAppl = compCanApplList.get(0);
 				
-				for(Map<String, Object> o : compApplList) {
+				for(Map<String, Object> o : compCanApplList) {
 					if(sabun.equals(o.get("sabun").toString())) {
-						compAppl = o;
+						compCanAppl = o;
 //						ymd = o.get("ymd").toString();
 					}
 					sabuns.add(o.get("sabun").toString());
@@ -195,18 +159,17 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 					}
 				}
 				
-				compAppl.put("recoveryYn", isRecovery);
-				compAppl.put("applLine", applLine);
+				compCanAppl.put("recoveryYn", isRecovery);
+				compCanAppl.put("applLine", applLine);
 			}
-			logger.debug("compAppl :::::: " + mapper.writeValueAsString(compAppl));
-			return compAppl;
+			logger.debug("compAppl :::::: " + mapper.writeValueAsString(compCanAppl));
+			return compCanAppl;
 			
 		}catch(Exception e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
-
 
 	@Override
 	public List<Map<String, Object>> getPrevApplList(Long tenantId, String enterCd, String sabun,
@@ -215,14 +178,12 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 		return null;
 	}
 
-
 	@Override
 	public Map<String, Object> getLastAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap,
 			String userId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 
 	@Override
 	public List<Map<String, Object>> getApprList(Long tenantId, String enterCd, String empNo,
@@ -231,18 +192,12 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 		return null;
 	}
 
-
-	/**
-	 * 보상 휴가 신청 저장
-	 */
 	@Transactional
 	@Override
-	public ReturnParam request(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap, String sabun, String userId) throws Exception {
-		logger.debug(">>  WtmCompApplServiceImpl.saveApplRequest Start ");
-		ReturnParam rp = new ReturnParam();
+	public ReturnParam request(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap,
+			String sabun, String userId) throws Exception {
+		ReturnParam rp = imsi(tenantId, enterCd, applId, workTypeCd, paramMap, this.APPL_STATUS_APPLY_ING, sabun, userId);
 		
-		rp = imsi(tenantId, enterCd, applId, workTypeCd, paramMap, this.APPL_STATUS_APPLY_ING, sabun, userId);
-		//결재라인 상태값 업데이트
 		List<String> apprSabun = new ArrayList();
 		if(rp!=null && rp.getStatus()!=null && "OK".equals(rp.getStatus())) {
 			applId = Long.valueOf(rp.get("applId").toString());
@@ -267,25 +222,14 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 				}
 			}
 		}
-		inbox.setInbox(tenantId, enterCd, apprSabun, applId, "APPR", "결재요청 : 보상휴가신청", "", "Y");
+		inbox.setInbox(tenantId, enterCd, apprSabun, applId, "APPR", "결재요청 : 보상휴가취소신청", "", "Y");
+		
 		//메일 전송을 위한 파라미터
 		rp.put("from", sabun);
 		rp.put("to", apprSabun);
 		
-		logger.debug(">>  WtmCompApplServiceImpl.saveApplRequest End ");
-		
 		return rp;
-		
 	}
-
-
-	@Override
-	public ReturnParam requestSync(Long tenantId, String enterCd, Map<String, Object> paramMap, String sabun,
-			String userId) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 
 	@Transactional
 	@Override
@@ -308,19 +252,9 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 			applSabuns.add(sabun);
 		}
 		
-//		if(applSabuns!=null && applSabuns.size()>0) {
-//			for(String applSabun : applSabuns) {
-//				rp = this.validate(tenantId, enterCd, applSabun, "", paramMap);
-//				if(rp.getStatus().equals("FAIL")) {
-//					throw new Exception(rp.get("message").toString());
-//				}
-//			}
-//		} 
-		
 		logger.debug("COMP 승인 대상자 : " + mapper.writeValueAsString(applSabuns));
 		
 		//결재라인 상태값 업데이트
-		//WtmApplLine line = wtmApplLineRepo.findByApplIdAndApprSeq(applId, apprSeq);
 		List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);
 
 		String apprSabun = null;
@@ -355,7 +289,7 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 		
 		//신청서 메인 상태값 업데이트
 		WtmAppl appl = wtmApplRepo.findById(applId).get();
-		appl.setApplStatusCd((lastAppr)?APPL_STATUS_APPR:APPL_STATUS_APPLY_ING);
+		appl.setApplStatusCd((lastAppr)?APPL_STATUS_CANCEL:APPL_STATUS_APPLY_ING);
 		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
 		appl.setUpdateId(userId);
 		
@@ -363,6 +297,18 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 		
 		//최종 승인 완료일때 근무 반영
 		if(lastAppr) {
+			Map<String, Object> paramAppl = new HashMap<String, Object>();
+			Map<String, Object> param = new HashMap<String, Object>();
+			paramAppl = (Map<String, Object>) paramMap.get("appl");
+			param.put("tenantId", tenantId);
+			param.put("enterCd", enterCd);
+			param.put("sabun", sabun);
+			param.put("applId", applId);
+			param.put("userId", userId);
+			param.put("compCanApplId", Long.parseLong(paramAppl.get("compCanApplId").toString()));
+			param.put("applStatusCd", APPL_STATUS_CANCEL);
+			
+			wtmCompApplMapper.saveApplRequest(param);
 			this.applyStsAfter(tenantId, enterCd, applId, paramMap,  sabun,  userId);
 		}
 		
@@ -386,7 +332,6 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 		return rp;
 	}
 
-
 	protected  ReturnParam applyStsAfter(Long tenantId, String enterCd, Long applId, Map<String, Object> paramMap, String sabun, String userId) throws NumberFormatException, ParseException {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("결재가 완료되었습니다.");
@@ -397,11 +342,11 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 		paramMap.put("sabun", sabun);
 		paramMap.put("userId", userId);
 		
-		List<Map<String, Object>>  getCompApplList = null;
-		getCompApplList = wtmCompApplMapper.getCompApplList(paramMap);
+		List<Map<String, Object>>  getCompCanApplList = null;
+		getCompCanApplList = wtmCompCanApplMapper.getCompCanApplList(paramMap);
 		
-		for(Map<String, Object> compMap : getCompApplList) {
-			String nowApplStatusCd = this.APPL_STATUS_APPR;
+		for(Map<String, Object> compMap : getCompCanApplList) {
+			String nowApplStatusCd = this.APPL_STATUS_CANCEL;
 			
 			// 4.1 근태 코드별 기준확인
 			
@@ -586,10 +531,11 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 		}
 		return rp;
 	}
-
-
+	
+	@Transactional
 	@Override
-	public ReturnParam reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap, String sabun, String userId) throws Exception {
+	public ReturnParam reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap,
+			String sabun, String userId) throws Exception {
 		
 		ReturnParam rp = new ReturnParam();
 		
@@ -600,7 +546,6 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 		
 		List<String> applSabun = new ArrayList();
 		applSabun.add(paramMap.get("applSabun").toString());
-//		String applSabun = paramMap.get("applSabun").toString();
 		String apprOpinion = paramMap.get("apprOpinion").toString();
 		
 		List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);
@@ -628,8 +573,6 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 		wtmApplRepo.save(appl);
 		
 		paramMap.put("applStatusCd", APPL_STATUS_APPLY_REJECT);
-		wtmCompApplMapper.saveApplRequest(paramMap);
-		
 		
 		inbox.setInbox(tenantId, enterCd, applSabun, applId, "APPLY", "결재완료", "보상휴가신청서가  반려되었습니다.", "N");
 		
@@ -639,107 +582,49 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 		return null;
 	}
 
-
-	@Override
-	public void delete(Long applId) {
-		
-		Map<String, Object> paramMap = new HashMap<String, Object>();
-		paramMap.put("applId", applId);
-		paramMap.put("p_status_cd", this.APPL_STATUS_IMSI);
-		wtmCompApplMapper.saveApplRequest(paramMap);
-		
-		wtmApplLineRepo.deleteByApplId(applId);
-		wtmApplRepo.deleteById(applId);
-	}
-
 	@Transactional
-	@Override
 	public ReturnParam imsi(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap,
-			String status, String applSabun, String userId) throws Exception {
-		
-		logger.debug(">>  WtmCompApplServiceImpl.imsi Start ");
-		
+			String status, String sabun, String userId) throws Exception {
+
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
 		
+		 
+		
 		WtmApplCode applCode = getApplInfo(tenantId, enterCd, workTypeCd);
 		
-		//신청서 최상위 테이블이다. 
-		WtmAppl appl = saveWtmAppl(tenantId, enterCd, applId, workTypeCd, status, applSabun, userId);
+		WtmAppl appl = saveWtmAppl(tenantId, enterCd, null, workTypeCd, status, sabun, userId);
 		applId = appl.getApplId();
-		
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("userId", userId);
-		paramMap.put("sabun", applSabun);
-		paramMap.put("applStatusCd", APPL_STATUS_APPLY_ING);
-		paramMap.put("retCode", "");
-		paramMap.put("retMsg", "");
-		
-		String taaCd = paramMap.get("taaCd").toString();
-		String sDate = paramMap.get("sDate").toString();
-		String eDate = paramMap.get("eDate").toString();
+		Long compApplId = Long.parseLong(paramMap.get("compApplId").toString());
 		String reason = paramMap.get("reason").toString();
 		
-		Map<String, Object> resultMap = new HashMap<String, Object>();
-		Map<String, Object> resultMap2 = new HashMap<String, Object>();
-		
-		//신청 대상자
-		Map<String, Object> sabunList = null;
-		//개인 신청
-		sabunList = new HashMap<String, Object>();
-		sabunList.put(applSabun, "");
-		
-		if(sabunList!=null && sabunList.keySet().size()>0) {
-			for(String sabun : sabunList.keySet()) {
-				//캘린더 근무일수 확인 Holiday = N 인것
-				resultMap = wtmCompApplMapper.getWorkDayCalendar(paramMap);
-				int day = Integer.parseInt(resultMap.get("WORK_DAY").toString());
+		WtmCompCanAppl compAppl = saveWtmCompCanAppl(applId, compApplId, reason, sabun, userId);
+		paramMap.put("compAppl", compAppl.getCompCanApplId());
 				
-				
-				resultMap2 = wtmCompApplMapper.getPossibleUseTime(paramMap);
-				int rest_minute = Integer.parseInt(resultMap2.get("REST_MINUTE").toString());
-				
-				int totalMinute = 0;
-				
-				if(APPL_TAACD_D.equals(taaCd)) {
-					totalMinute = day * DAY_HOUR * 60;
-				} else {
-					totalMinute = 1 * HARF_DAY_HOUR * 60;
-				}
-				if(totalMinute <= rest_minute) {
-					Long compApplId = null;
-					
-					if(applId != null) {
-						paramMap.put("applId", applId);
-
-						WtmCompAppl compAppl = saveWtmCompAppl(applId, sabun, taaCd, sDate, eDate, totalMinute, reason, userId);
-						compApplId = compAppl.getCompApplId();
-						
-						if(compApplId != null) {
-							paramMap.put("compApplId", compApplId);
-							wtmCompApplMapper.saveApplRequest(paramMap);
-						}
-					}
-					
-					applLineService.saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, workTypeCd, sabun, userId);
-					
-				} else {
-					rp.setFail("fail");
-					rp.setMessage("보상휴가 신청가능시간을 초과 하였습니다.");
-				}
-			}
-		}
-		applLineService.saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, workTypeCd, applSabun, userId);
+		//20.05.13 jyp applId 수정
+		applLineService.saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), appl.getApplId(), workTypeCd, sabun, userId);
 		paramMap.put("applId", appl.getApplId());
 		rp.put("applId", appl.getApplId());
-		
-		logger.debug(">>  WtmCompApplServiceImpl.imsi End ");
 			
 		return rp;
 	}
 
-
+	protected WtmCompCanAppl saveWtmCompCanAppl(Long applId, Long compApplId, String reason, String sabun, String userId) {
+		 
+	
+		WtmCompCanAppl compAppl = new WtmCompCanAppl();
+		compAppl.setCompApplId(compApplId);
+		compAppl.setApplId(applId);
+		compAppl.setSabun(sabun);
+		compAppl.setReason(reason);
+		compAppl.setUpdateId(userId);
+		
+		return wtmCompCanApplRepo.save(compAppl);
+	}
+	protected WtmApplCode getApplInfo(Long tenantId,String enterCd,String applCd) {
+		return wtmApplCodeRepo.findByTenantIdAndEnterCdAndApplCd(tenantId, enterCd, applCd);
+	}
+	
 	@Override
 	public ReturnParam preCheck(Long tenantId, String enterCd, String sabun, String workTypeCd,
 			Map<String, Object> paramMap) {
@@ -747,21 +632,52 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 		return null;
 	}
 
-
 	@Override
 	public ReturnParam validate(Long tenantId, String enterCd, String sabun, String workTypeCd,
 			Map<String, Object> paramMap) {
 		// TODO Auto-generated method stub
-		return null;
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("");
+		
+		return rp;
 	}
-
 
 	@Override
 	public void sendPush() {
 		// TODO Auto-generated method stub
 		
 	}
+	
+	protected WtmAppl saveWtmAppl(Long tenantId, String enterCd, Long applId, String workTypeCd, String applStatusCd, String sabun, String userId) {
+		WtmAppl appl = null;
+		if(applId != null && !applId.equals("")) {
+			appl = wtmApplRepo.findById(applId).get();
+		}else {
+			appl = new WtmAppl();
+		}
+		appl.setApplStatusCd(applStatusCd);
+		appl.setTenantId(tenantId);
+		appl.setEnterCd(enterCd);
+		appl.setApplInSabun(sabun);
+		appl.setApplSabun(sabun);
+		appl.setApplCd(workTypeCd);
+		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
+		appl.setUpdateId(userId); 
+		
+		return wtmApplRepo.save(appl);
+	}
 
+	@Override
+	public void delete(Long applId) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public ReturnParam requestSync(Long tenantId, String enterCd, Map<String, Object> paramMap, String sabun,
+			String userId) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 	@Override
 	public ReturnParam saveWtmApplSts(Long tenantId, String enterCd, String sabun, String userId,
@@ -769,4 +685,5 @@ public class WtmCompApplServiceImpl implements WtmApplService {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 }

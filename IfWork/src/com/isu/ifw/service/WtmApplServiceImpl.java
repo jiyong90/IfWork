@@ -79,6 +79,14 @@ public class WtmApplServiceImpl implements WtmApplService {
 	@Autowired
 	@Qualifier("wtmOtSubsChgApplService")
 	WtmApplService wtmOtSubsChgApplService;
+
+	@Autowired
+	@Qualifier("wtmCompApplService")
+	WtmApplService wtmCompApplService;
+	
+	@Autowired
+	@Qualifier("wtmCompCanApplService")
+	WtmApplService wtmCompCanApplService;
 	
 	@Autowired
 	WtmApplCodeRepository applCodeRepo;
@@ -108,7 +116,6 @@ public class WtmApplServiceImpl implements WtmApplService {
 		
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			System.out.println("apprList : " + mapper.writeValueAsString(apprList));
 			logger.debug(">>>>>>>>>>>>>>>>approvalList result: "+ mapper.writeValueAsString(apprList));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -132,6 +139,10 @@ public class WtmApplServiceImpl implements WtmApplService {
 						appl = wtmOtSubsChgApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
 					} else if("ENTRY_CHG".equals(applCd)) { //근태사유서
 						appl = entryApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
+					} else if("COMP".equals(applCd)) { //보상휴가
+						appl = wtmCompApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
+					} else if("COMP_CAN".equals(applCd)) { //보상휴가취소
+						appl = wtmCompCanApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
 					} else {
 						//유연근무제
 						appl = wtmFlexibleApplService.getAppl(tenantId, enterCd, applSabun, applId, userId); 
@@ -139,7 +150,7 @@ public class WtmApplServiceImpl implements WtmApplService {
 					
 					if(appl!=null)
 						appl.put("sabun", empNo);
-					appr.put("appl", appl);
+						appr.put("appl", appl);
 					
 				}
 			}
