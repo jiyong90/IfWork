@@ -313,7 +313,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				apprMinute = this.WtmCalcMinute(sdf.format(calcSdate), sdf.format(calcSdate), null, null, flexStdMgr.getUnitMinute()) -  this.getBreakMinuteIfBreakTimeMGR(calcSdate, calcEdate, timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+				apprMinute = this.WtmCalcMinute(sdf.format(calcSdate), sdf.format(calcEdate), null, null, flexStdMgr.getUnitMinute()) -  this.getBreakMinuteIfBreakTimeMGR(calcSdate, calcEdate, timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
 				breakMinute = 0;
 				/*
 				SimpleDateFormat sd = new SimpleDateFormat("yyyyMMddHHmmss");
