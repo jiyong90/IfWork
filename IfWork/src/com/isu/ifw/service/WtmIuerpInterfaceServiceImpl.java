@@ -1,6 +1,8 @@
 package com.isu.ifw.service;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.common.service.TenantConfigManagerService;
+import com.isu.ifw.entity.WtmEmpHis;
 import com.isu.ifw.entity.WtmIntfTaaAppl;
 import com.isu.ifw.entity.WtmOrgChart;
 import com.isu.ifw.entity.WtmPropertie;
@@ -23,6 +26,7 @@ import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmInterfaceMapper;
 import com.isu.ifw.mapper.WtmIuerpInterfaceMapper;
 import com.isu.ifw.mapper.WtmOrgChartMapper;
+import com.isu.ifw.repository.WtmEmpHisRepository;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmIntfTaaApplRepository;
 import com.isu.ifw.repository.WtmOrgChartRepository;
@@ -77,6 +81,8 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 	
 	@Autowired
 	WtmInterfaceMapper wtmInterfaceMapper;
+	
+	@Autowired private WtmEmpHisRepository wtmEmpHisRepo;
 	
 	@Transactional
 	@Override
@@ -508,18 +514,192 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 			//expireCnt = iuerpInterfaceMapper.expireWtmEmpHis(paramMap);
 			//logger.debug("WtmEmpHis expire "+expireCnt+" end");
 			//System.out.println("WtmEmpHis expire "+expireCnt+" end");
+
+			String encKey = tcms.getConfigValue(Long.valueOf(paramMap.get("tenantId").toString()), "SECURITY.AES.KEY", true, "");
+			paramMap.put("encKey", encKey);
+			
+
+			Long tenantId = Long.valueOf(paramMap.get("tenantId").toString());
+			
+			List<Map<String, Object>> intfEmps = iuerpInterfaceMapper.getWtmIntfEmp(paramMap);
 			
 			//직원 정보 변경
-			List<Map<String, Object>> updateTargets = iuerpInterfaceMapper.getUpdateWtmEmpHis(paramMap);
-			logger.debug("updateTargets : "+ mapper.writeValueAsString(updateTargets));
-			System.out.println("updateTargets : " + mapper.writeValueAsString(updateTargets));
+			//List<Map<String, Object>> updateTargets = iuerpInterfaceMapper.getUpdateWtmEmpHis(paramMap);
 			
+			logger.debug("intfEmps : "+ mapper.writeValueAsString(intfEmps));
+			
+			String updateId = paramMap.get("updateId").toString();
+			if(intfEmps != null && intfEmps.size() > 0) {
+				boolean isNew = false;
+				SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+				String tmpEnterCd = null;
+				for(Map<String, Object> intfEmp : intfEmps) {
+					isNew = false;
+					String enterCd = intfEmp.get("enterCd").toString();
+					WtmPropertie propertie = null;
+					if(tmpEnterCd == null || !tmpEnterCd.equals(enterCd)) {
+						propertie = propertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_FLEXIBLE_EMP_EXCEPT_TARGET");
+						tmpEnterCd = enterCd;
+					}
+					
+					
+					String sabun = intfEmp.get("sabun") != null?intfEmp.get("sabun").toString():"";
+					String empNm = intfEmp.get("empNm") != null?intfEmp.get("empNm").toString():"";
+					String empEngNm = intfEmp.get("empEngNm") != null?intfEmp.get("empEngNm").toString():"";
+					String orgCd = intfEmp.get("orgCd") != null?intfEmp.get("orgCd").toString():"";
+					String statusCd = intfEmp.get("statusCd") != null?intfEmp.get("statusCd").toString():""; 
+					String locationCd = intfEmp.get("locationCd") != null?intfEmp.get("locationCd").toString():""; 
+					String dutyCd = intfEmp.get("dutyCd") != null?intfEmp.get("dutyCd").toString():""; 
+					String posCd = intfEmp.get("posCd") != null?intfEmp.get("posCd").toString():""; 
+					String classCd = intfEmp.get("classCd") != null?intfEmp.get("classCd").toString():""; 
+					String jobGroupCd = intfEmp.get("jobGroupCd") != null?intfEmp.get("jobGroupCd").toString():""; 
+					String jobCd = intfEmp.get("jobCd") != null?intfEmp.get("jobCd").toString():""; 
+					String payTypeCd = intfEmp.get("payTypeCd") != null?intfEmp.get("payTypeCd").toString():"";
+					String leaderYn = intfEmp.get("leaderYn") != null?intfEmp.get("leaderYn").toString():"";
+					String symd = intfEmp.get("symd") != null?intfEmp.get("symd").toString():"";
+					String eymd = intfEmp.get("eymd") != null?intfEmp.get("eymd").toString():"";
+					String empId = intfEmp.get("empId") != null?intfEmp.get("empId").toString():"";
+					
+					WtmEmpHis empHis = wtmEmpHisRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, symd);
+					if(empHis != null) {
+						if(empHis.getSymd().equals(symd)) {
+							if(!empHis.getEmpNm().equals(empNm)
+									|| !empHis.getEmpEngNm().equals(empEngNm)
+									|| !empHis.getStatusCd().equals(statusCd)
+									|| !empHis.getOrgCd().equals(orgCd)
+									|| !empHis.getDutyCd().equals(dutyCd)
+									|| !empHis.getPosCd().equals(posCd)
+									|| !empHis.getClassCd().equals(classCd)
+									|| !empHis.getJobGroupCd().equals(jobGroupCd)
+									|| !empHis.getJobCd().equals(jobCd)
+									|| !empHis.getPayTypeCd().equals(payTypeCd)
+									|| !empHis.getLeaderYn().equals(leaderYn)
+									) {
+								empHis.setEmpNm(empNm);
+								empHis.setEmpEngNm(empEngNm);
+								empHis.setOrgCd(orgCd);
+								empHis.setStatusCd(statusCd);
+								empHis.setBusinessPlaceCd(locationCd);
+								empHis.setDutyCd(dutyCd);
+								empHis.setPosCd(posCd);
+								empHis.setClassCd(classCd);
+								empHis.setJobGroupCd(jobGroupCd);
+								empHis.setJobCd(jobCd);
+								empHis.setPayTypeCd(payTypeCd);
+								empHis.setLeaderYn(leaderYn);
+								empHis.setSymd(symd);
+								empHis.setEymd(eymd);
+								empHis.setEmpId(empId);
+								empHis.setUpdateId(updateId);
+								
+								wtmEmpHisRepo.save(empHis);
+								updateCnt++;
+							}
+							
+						}else {
+							if(Integer.parseInt(empHis.getSymd()) < Integer.parseInt(symd)) {
+								Calendar cal = Calendar.getInstance();
+								cal.setTime(new Date(symd));
+								cal.add(Calendar.DATE, -1);
+								empHis.setEymd(ymd.format(cal.getTime()));
+								wtmEmpHisRepo.save(empHis);
+
+								WtmEmpHis newEmp = new WtmEmpHis();
+								newEmp.setTenantId(tenantId);
+								newEmp.setEnterCd(enterCd);
+								newEmp.setSabun(sabun);
+								newEmp.setEmpNm(empNm);
+								newEmp.setEmpEngNm(empEngNm);
+								newEmp.setOrgCd(orgCd);
+								newEmp.setStatusCd(statusCd);
+								newEmp.setBusinessPlaceCd(locationCd);
+								newEmp.setDutyCd(dutyCd);
+								newEmp.setPosCd(posCd);
+								newEmp.setClassCd(classCd);
+								newEmp.setJobGroupCd(jobGroupCd);
+								newEmp.setJobCd(jobCd);
+								newEmp.setPayTypeCd(payTypeCd);
+								newEmp.setLeaderYn(leaderYn);
+								newEmp.setSymd(symd);
+								newEmp.setEymd(eymd);
+								newEmp.setEmpId(empId);
+								newEmp.setUpdateId(updateId);
+								
+								wtmEmpHisRepo.save(newEmp);
+								insertCnt++;
+							}
+						}
+					}else {
+						WtmEmpHis newEmp = new WtmEmpHis();
+						newEmp.setTenantId(tenantId);
+						newEmp.setEnterCd(enterCd);
+						newEmp.setSabun(sabun);
+						newEmp.setEmpNm(empNm);
+						newEmp.setEmpEngNm(empEngNm);
+						newEmp.setOrgCd(orgCd);
+						newEmp.setStatusCd(statusCd);
+						newEmp.setBusinessPlaceCd(locationCd);
+						newEmp.setDutyCd(dutyCd);
+						newEmp.setPosCd(posCd);
+						newEmp.setClassCd(classCd);
+						newEmp.setJobGroupCd(jobGroupCd);
+						newEmp.setJobCd(jobCd);
+						newEmp.setPayTypeCd(payTypeCd);
+						newEmp.setLeaderYn(leaderYn);
+						newEmp.setSymd(symd);
+						newEmp.setEymd(eymd);
+						newEmp.setEmpId(empId);
+						newEmp.setUpdateId(updateId);
+						
+						wtmEmpHisRepo.save(newEmp);
+						insertCnt++;
+						isNew = true;
+						
+					}
+					
+					if(isNew) {
+						String ruleValue = null;
+						String ruleType = null;
+						if(propertie!=null && propertie.getInfoValue()!=null && !"".equals(propertie.getInfoValue())) {
+							WtmRule rule = ruleRepo.findByTenantIdAndEnterCdAndRuleNm(tenantId, enterCd, propertie.getInfoValue());
+							if(rule!=null && rule.getRuleValue()!=null && !"".equals(rule.getRuleValue())) {
+								ruleType = rule.getRuleType();
+								ruleValue = rule.getRuleValue();
+							}
+								
+						}
+					
+						boolean isNotTarget = false;
+						if(ruleValue!=null) 
+							isNotTarget = flexibleEmpService.isRuleTarget(tenantId, enterCd, sabun, ruleType, ruleValue);
+						
+						System.out.println("isNotTarget : " + isNotTarget);
+						
+					    if(!isNotTarget && !"CA".equals(statusCd) && !"EA".equals(statusCd) && !"RA".equals(statusCd)) {
+					    	Map<String, Object> pMap = new HashMap<>();
+					    	pMap.put("tenantId", tenantId);
+					    	pMap.put("enterCd", enterCd);
+					    	pMap.put("sabun", sabun);
+					    	pMap.put("symd", symd);
+					    	pMap.put("eymd", eymd);
+					    	pMap.put("userId", updateId);
+					    	pMap.put("pId", updateId);
+					    	
+					    	flexibleEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(pMap);
+							flexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(pMap);
+					    }
+					}
+					
+				}
+			}
+			
+
+			//System.out.println("updateTargets : " + mapper.writeValueAsString(updateTargets));
+			/*
 			updateCnt = iuerpInterfaceMapper.updateWtmEmpHis(paramMap);
 			logger.debug("1.WtmEmpHis update "+updateCnt+" end");
 			System.out.println("1.WtmEmpHis update "+updateCnt+" end");
 			
-			String encKey = tcms.getConfigValue(Long.valueOf(paramMap.get("tenantId").toString()), "SECURITY.AES.KEY", true, "");
-			paramMap.put("encKey", encKey);
 			
 			//신규 입사자 
 			List<Map<String, Object>> insertTargets = iuerpInterfaceMapper.getInsertWtmEmpHis(paramMap);
@@ -574,6 +754,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 				System.out.println("3.입사자 reset end");
 			}
 			
+		*/
 		} catch(Exception e) {
 			e.printStackTrace();
 			rp.setFail("WtmEmpHis 데이터 이관 오류");

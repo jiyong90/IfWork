@@ -93,4 +93,8 @@ public interface WtmIuerpInterfaceMapper {
 	public int updateWtmOrgChartDet(Map<String, Object> paramMap);
 	public int insertWtmOrgChartDet(Map<String, Object> paramMap);
 	
+
+	public List<Map<String, Object>> getWtmIntfEmp(Map<String, Object> paramMap);
+	
+	
 }
