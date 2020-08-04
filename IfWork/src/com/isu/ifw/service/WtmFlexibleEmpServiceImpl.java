@@ -1399,30 +1399,34 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					
 					if(!result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) && !result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)) {
 						try {
-							Date limitSdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkShm());
-							Date limitEdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkEhm());
-						
-							if(limitSdate.compareTo(limitEdate) > 0) {
-								logger.debug("제한시간 셋팅이 종료시간 보다 시작시간이 늦을 경우 종료시간을 1일 더해서 다음날로 만든다. sHm : " + flexStdMgr.getWorkShm() + " eHm : " + flexStdMgr.getWorkEhm());
-								Calendar cal = Calendar.getInstance();
-								cal.setTime(limitEdate);
-								cal.add(Calendar.DATE, 1);
-								limitEdate = cal.getTime();
-							}
-			
-							if(sDate.compareTo(limitSdate) < 0) {
-								logger.debug("시작일 근무 제한 시간 적용. sDate : " + sDate + " limitSdate : " + limitSdate);
-								sDate = limitSdate;
-							}
-	//						
-	//						if(sDate.compareTo(limitEdate) >= 0) {
-	//							logger.debug("근무 제한 시간보다 이후 시간입니다.");
-	//							return 0;
-	//						}
+							if(flexStdMgr.getWorkShm() != null && !"".equals(flexStdMgr.getWorkShm()) && flexStdMgr.getWorkEhm() != null && !"".equals(flexStdMgr.getWorkEhm())) {
+								// 20200803 선택근무제가 아니면 근무시각 옵션이 비활성화됨. 그리고 선근제도 근무제한이 없을수있음.
+								// logger.debug("****************** HJ ***************** result.getYmd() : " + result.getYmd() + ", flexStdMgr.getWorkShm() : " + flexStdMgr.getWorkShm());
+								Date limitSdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkShm());
+								Date limitEdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkEhm());
 							
-							if(eDate.compareTo(limitEdate) > 0) {
-								logger.debug("종료일 근무 제한 시간 적용. eDate : " + eDate + " limitEdate : " + limitEdate);
-								eDate = limitEdate;
+								if(limitSdate.compareTo(limitEdate) > 0) {
+									logger.debug("제한시간 셋팅이 종료시간 보다 시작시간이 늦을 경우 종료시간을 1일 더해서 다음날로 만든다. sHm : " + flexStdMgr.getWorkShm() + " eHm : " + flexStdMgr.getWorkEhm());
+									Calendar cal = Calendar.getInstance();
+									cal.setTime(limitEdate);
+									cal.add(Calendar.DATE, 1);
+									limitEdate = cal.getTime();
+								}
+				
+								if(sDate.compareTo(limitSdate) < 0) {
+									logger.debug("시작일 근무 제한 시간 적용. sDate : " + sDate + " limitSdate : " + limitSdate);
+									sDate = limitSdate;
+								}
+		//						
+		//						if(sDate.compareTo(limitEdate) >= 0) {
+		//							logger.debug("근무 제한 시간보다 이후 시간입니다.");
+		//							return 0;
+		//						}
+								
+								if(eDate.compareTo(limitEdate) > 0) {
+									logger.debug("종료일 근무 제한 시간 적용. eDate : " + eDate + " limitEdate : " + limitEdate);
+									eDate = limitEdate;
+								}
 							}
 	
 						} catch (ParseException e) {
@@ -2002,6 +2006,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//}
 	
 			//결근은 최상단에서 제외
+			logger.debug("10. ********************************** ");
 			if(calendar.getEntrySdate() != null && calendar.getEntryEdate() != null && timeCdMgr.getLeaveChkYn().equals("Y")) {
 				
 				dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
@@ -2022,7 +2027,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						
 					}
 				}
-				if(minPlanSdate_BASE != null && maxPlanEdate_BASE != null && minPlanSdate_BASE.compareTo(maxPlanEdate_BASE) > 0) {
+				logger.debug("10. ***********************  " + maxPlanEdate_BASE + ",  " + calendar.getEntryEdate());
+				if(minPlanSdate_BASE != null && maxPlanEdate_BASE != null && maxPlanEdate_BASE.compareTo(calendar.getEntryEdate()) > 0) {
 					
 				
 					WtmTaaCode leaveTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LEAVE);

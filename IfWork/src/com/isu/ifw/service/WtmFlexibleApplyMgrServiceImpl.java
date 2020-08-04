@@ -138,7 +138,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 									mgrSymd.substring(0,4) +"/" + mgrSymd.substring(4,6) +"/"+ mgrSymd.substring(6,8) + " ~ " + 
 									mgrEymd.substring(0,4) +"/" + mgrEymd.substring(4,6) +"/"+ mgrEymd.substring(6,8) + "입니다.");
 						}
-						
+						/* 20200731 이효정 주석
 						//20200708 안흥규 근무제 적용 관리 --start
 						if(mgr.getRegardTimeCdId() == null || mgr.getUnitMinute() ==  null) {
 							throw new Exception ("간주근무시간 혹은 인정근무단위시간이 비어있습니다. 근무제도관리에서 근무제기준을 작성해 주세요.");
@@ -149,7 +149,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 							throw new Exception ("근무제에 등록된 패턴이 없습니다. 근무제패턴을 작성해 주세요.");
 						}
 						//20200708 안흥규 근무제 적용 관리 --end
-						
+						*/
 						WtmFlexibleApplyMgr code = new WtmFlexibleApplyMgr();
 						code.setFlexibleApplyId(l.get("flexibleApplyId").toString().equals("") ? null : Long.parseLong(l.get("flexibleApplyId").toString()));
 						code.setFlexibleStdMgrId(Long.parseLong(l.get("flexibleStdMgrId").toString()));
@@ -166,7 +166,9 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 						code.setNote(l.get("note").toString());
 						code.setUpdateId(userId);
 						
+						
 						//20200720 안흥규 근무제도적용 복사기능 추가 --start
+						/* 20200731 이효정 주석
 						if(!"".equals(l.get("copyApplyId").toString()) || l.get("copyApplyId") != null) {
 							if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {
 								WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.save(code);
@@ -240,17 +242,19 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 							
 							  
 						} 
+						*/
 						//20200720 안흥규 근무제도적용 복사기능 추가 --end
-						else {
-							if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {
-								WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.save(code);
-								
-								createElasPlan(tenantId, enterCd, flexibleApply.getFlexibleStdMgrId(), flexibleApply.getFlexibleApplyId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), userId);
-								cnt += 1;
-							} else {
-								codes.add(code);
-							}
+						
+						// else { 20200731 이효정 주석
+						if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {
+							WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.save(code);
+							
+							createElasPlan(tenantId, enterCd, flexibleApply.getFlexibleStdMgrId(), flexibleApply.getFlexibleApplyId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), userId);
+							cnt += 1;
+						} else {
+							codes.add(code);
 						}
+						// } 20200731 이효정 주석
 					}
 					codes = flexibleApplyRepository.saveAll(codes);
 					cnt += codes.size();
