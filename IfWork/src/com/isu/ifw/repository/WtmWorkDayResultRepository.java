@@ -106,4 +106,17 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 			"   AND R.timeTypeCd NOT IN ('TAA', 'SUBS') ")
 	public List<WtmWorkDayResult> findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd(@Param(value="tenantId") Long tenantId, @Param(value="enterCd") String enterCd, @Param(value="ymd") String ymd, @Param(value="timeTypeCd") String timeTypeCd, @Param(value="taaCd") String taaCd, @Param(value="sabun") String sabun);
 	
+	/**
+	 * 시각 구간 내의 정보들을 조회한다.  
+	 * @param tenantId
+	 * @param enterCd
+	 * @param ymd
+	 * @param sabun
+	 * @param sDate
+	 * @param eDate
+	 * @param greaterMinute
+	 * @return
+	 */
+	@Query("SELECT D FROM WtmWorkDayResult D WHERE D.tenantId = :tenantId AND D.enterCd = :enterCd AND D.sabun = :sabun AND D.ymd = :ymd AND D.apprMinute IS NOT NULL AND D.apprMinute > :greaterMinute AND D.apprSdate < :eDate AND D.apprEdate > :sDate ORDER BY apprSdate ASC")
+	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndYmdAndSabunAndApprEdateAfterAndApprSdateBeforeAndApprMinuteGreaterThenAndApprMinuteIsNotNullOrderByApprSdateAsc(Long tenantId, String enterCd, String ymd, String sabun, Date sDate, Date eDate, int greaterMinute);
 }

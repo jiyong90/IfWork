@@ -1270,8 +1270,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		List<String> timeTypeCd = new ArrayList<>();
 		timeTypeCd.add(WtmApplService.TIME_TYPE_LLA);
 		timeTypeCd.add(WtmApplService.TIME_TYPE_EXCEPT);
+		timeTypeCd.add(WtmApplService.TIME_TYPE_FIXOT); //20200805 jyp 추가
 		
-		logger.debug("1. 지각 조퇴 무단결근 데이터 삭제 ", "timeTypeCd : " + WtmApplService.TIME_TYPE_LLA + ", sabun : " + sabun);
+		logger.debug("1. 지각 조퇴 무단결근 고정 오티 데이터 삭제 ", "timeTypeCd : " + WtmApplService.TIME_TYPE_LLA + ", sabun : " + sabun);
 		//지각 조퇴 무단결근 데이터 삭제
 		if(sabun != null && !sabun.equals("")) {
 			logger.debug("calcApprDayInfo 1");
@@ -1447,7 +1448,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						apprMinute = apprMinute - breakMinute;
 						breakMinute = 0;
 					}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
-						breakMinute = calcService.getBreakMinuteIfBreakTimeTIME(sDate, eDate, timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+						breakMinute = calcService.getBreakMinuteIfBreakTimeTIME(timeCdMgr.getTimeCdMgrId(), apprMinute);
 						logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : apprMinute " + apprMinute);
 						logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : breakMinute " + breakMinute);
 					//}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
@@ -2090,7 +2091,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				//	for( WtmFlexibleEmp emp : emps) {
 						//paramMap.put("flexibleEmpId", emp.getFlexibleEmpId());
 						//flexEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(paramMap);
-						calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, tenantId, enterCd, sabun, calendar.getYmd(), 0, "P_WTM_WORK_DAY_RESULT_CREATE_N-" + sabun);
+						calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(calendar, flexStdMgr, timeCdMgr, tenantId, enterCd, sabun, calendar.getYmd(), 0, "P_WTM_WORK_DAY_RESULT_CREATE_N-" + sabun);
 				//	}
 				//}
 			}

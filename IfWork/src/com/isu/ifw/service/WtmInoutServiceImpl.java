@@ -798,11 +798,13 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		}
 	}
 	
-	@Transactional
+	//@Transactional
 	@Async("threadPoolTaskExecutor")
 	public void inoutPostProcess(Map<String, Object> paramMap) {
 		try {
 			logger.debug("inoutPostProcess1");
+			/*  2020.08.05 JYP 주석처리 함 calc 에서 다하고 있음.
+			 
 			SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
 			WtmWorkCalendar cal = calendarRepository.findByTenantIdAndEnterCdAndSabunAndYmd(
 					Long.parseLong(paramMap.get("tenantId").toString()), 
@@ -909,7 +911,8 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 //				sqlSession.commit();
 				//TransactionSynchronization.
 			}
-
+			
+			*/
 			
 //			transactionManager.commit(status);
 		

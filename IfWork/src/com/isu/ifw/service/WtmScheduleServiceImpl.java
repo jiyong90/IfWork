@@ -243,7 +243,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 	}
 	
 	@Override
-	@Transactional
+	//@Transactional
 	@Async("threadPoolTaskExecutor")
 	public void setCloseDayUnplaned(Long tenantId) throws Exception {
 		
@@ -302,7 +302,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 				l.put("eYmd", l.get("ymd").toString());
 				l.put("pId", userId);
 				l.put("userId", userId);
-				
+				/*
 				if(gooutCnt > 0) {
 					// create result 호출
         			WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, closeymd);
@@ -310,6 +310,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
     					continue;
     				}
         			WtmFlexibleStdMgr flexStdMgr = flexStdMgrRepo.findById(flexEmp.getFlexibleStdMgrId()).get();
+        			
         			calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, tenantId, enterCd, sabun, closeymd, 0, sabun);
         			
         			// wtmFlexibleEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(l);
@@ -336,6 +337,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
         				}
         			}
         		}
+        		*/
 				// 일마감생성
 				WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, closeymd, closeymd, sabun);
 				// 근무계획시간 합산
