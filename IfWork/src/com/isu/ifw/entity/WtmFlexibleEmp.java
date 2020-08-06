@@ -35,7 +35,7 @@ query="SELECT E.FLEXIBLE_EMP_ID AS flexibleEmpId, E.SYMD AS symd, E.EYMD AS eymd
 "			   AND R.ENTER_CD = E.ENTER_CD\n" + 
 "			   AND R.SABUN = E.SABUN\n" + 
 "			   AND R.YMD BETWEEN E.SYMD AND E.EYMD\n" + 
-"	 		   AND R.YMD BETWEEN E.SYMD AND :symd\n" + 
+"	 		   AND R.YMD <> :symd\n" + 
 "		      LEFT OUTER JOIN WTM_TAA_CODE T ON T.TENANT_ID = R.TENANT_ID AND T.ENTER_CD = R.ENTER_CD AND T.TAA_CD = R.TAA_CD  \n" + 
 "             WHERE E.TENANT_ID = :tenantId\n" + 
 "               AND E.ENTER_CD = :enterCd\n" + 
