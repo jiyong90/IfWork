@@ -24,6 +24,7 @@ public interface WtmCalcService {
 	public void createWorkDayResultForBreakTime(Long tenantId, String enterCd, String sabun, String ymd, String taaInfoCd, String type, int breakMinute, String userId );
 	public int WtmCalcMinute(String shm, String ehm, String limitShm, String limitEhm, Integer unitMinute) ;
 	public int getBreakMinuteIfBreakTimeTIME(long timeCdMgrId, int apprMinute);
+	public Map<String, Object> getBreakMinuteIfBreakTimeMGR(Date sDate, Date eDate, long timeCdMgrId);
 	public int getBreakMinuteIfBreakTimeMGR(Date sDate, Date eDate, long timeCdMgrId, int unitMinute) ;
 	
 	/**

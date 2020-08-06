@@ -1815,6 +1815,14 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		}
 		return breakMinute;
 	}
+	/**
+	 * 시/종 시각 사이에 있는 휴게시간 전부를 가지고 온다. 
+	 * @param sDate
+	 * @param eDate
+	 * @param timeCdMgrId
+	 * @return
+	 */
+	@Override
 	public Map<String, Object> getBreakMinuteIfBreakTimeMGR(Date sDate, Date eDate, long timeCdMgrId) {
 		int sumBreakMinute = 0;
 		String maxEhm = null;
