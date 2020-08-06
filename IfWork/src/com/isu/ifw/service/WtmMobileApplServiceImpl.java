@@ -357,10 +357,6 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 				otWorkTime = new HashMap();
 				if(!dataMap.get("shm").equals("") && !dataMap.get("ehm").equals("")) {
 					
-//					//현재 신청할 연장근무 시간 계산
-//					calcMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, dataMap, null);
-//	                resultMap.putAll(calcMap);
-	                
 					//SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
 					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmm");
 					int apprMinute = calcService.WtmCalcMinute(dataMap.get("shm").toString(), dataMap.get("ehm").toString(), null, null, null);
@@ -380,11 +376,13 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 					System.out.println("otWorkTime" + otWorkTime.toString()); //{breakMinuteNoPay=30, calcMinute=-30, breakMinutePaid=0, breakMinute=30}
 					
 					
-					otWorkTime = flexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, dataMap, sabun);
+					otWorkTime = flexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, dataMap, sabun);									
 					
-					
-					if(calcMap != null) {
-						dataMap.put("desc", "근로시간 : "+otWorkTime.get("calcMinute").toString() + "분 휴게시간 : " + (!otWorkTime.containsKey("breakMinute")?"0":otWorkTime.get("breakMinute").toString()) + "분");
+					if(otWorkTime != null) {
+						int calMin = Integer.parseInt(otWorkTime.get("calcMinute").toString());
+						int breakMin = Integer.parseInt(otWorkTime.get("breakMinute").toString());
+						int workMin = calMin - breakMin;
+						dataMap.put("desc", "근로시간 : "+ String.valueOf(workMin) + "분 휴게시간 : " + (!otWorkTime.containsKey("breakMinute")?"0":otWorkTime.get("breakMinute").toString()) + "분");
 						dataMap.put("breakMinute", otWorkTime.get("breakMinute"));
 //						totalMinute = Integer.parseInt(calcMap.get("calcMinute").toString()) + Integer.parseInt(calcMap.get("breakMinute").toString());
 						totalMinute = Integer.parseInt(otWorkTime.get("calcMinute").toString());
