@@ -1815,6 +1815,40 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		}
 		return breakMinute;
 	}
+	public Map<String, Object> getBreakMinuteIfBreakTimeMGR(Date sDate, Date eDate, long timeCdMgrId) {
+		int sumBreakMinute = 0;
+		String maxEhm = null;
+		
+		Map<String, Object> resMap = new HashMap<>();
+		if(sDate.compareTo(eDate) < 1) {
+			SimpleDateFormat HHmm = new SimpleDateFormat("HHmm");
+			//SimpleDateFormat yyyyMMdd = new SimpleDateFormat("yyyyMMdd");
+			String shm = HHmm.format(sDate);
+			String ehm = HHmm.format(eDate);
+			List<WtmTimeBreakMgr> timeBreakMgrs = timebreakMgrRepo.findByTimeCdMgrId(timeCdMgrId);
+			
+			for(WtmTimeBreakMgr timeBreakMgr : timeBreakMgrs) {
+				logger.debug("timeBreakMgr.getShm() :: "+ timeBreakMgr.getShm());
+				logger.debug("timeBreakMgr.getEhm() :: "+ timeBreakMgr.getEhm());
+				if(Integer.parseInt(shm) < Integer.parseInt(timeBreakMgr.getEhm())
+						&&
+						Integer.parseInt(ehm) > Integer.parseInt(timeBreakMgr.getShm())
+				) {
+					if(maxEhm == null || Integer.parseInt(maxEhm) < Integer.parseInt(timeBreakMgr.getEhm())){
+						maxEhm = timeBreakMgr.getEhm();
+					}
+					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null, null, null);
+				}
+					
+			}
+			
+			//return this.WtmCalcMinute(HHmm.format(sDate), HHmm.format(eDate), null, null, unitMinute) - sumBreakMinute;
+		}
+		logger.debug("sumBreakMinute :: "+ sumBreakMinute);
+		resMap.put("maxEhm", maxEhm);
+		resMap.put("breakMinute", sumBreakMinute);
+		return resMap;
+	}
 	/**
 	 * BREAK TIME TYPE : MGR 의 휴게시간 구하기
 	 * @param sDate
@@ -1837,7 +1871,6 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			for(WtmTimeBreakMgr timeBreakMgr : timeBreakMgrs) {
 				logger.debug("timeBreakMgr.getShm() :: "+ timeBreakMgr.getShm());
 				logger.debug("timeBreakMgr.getEhm() :: "+ timeBreakMgr.getEhm());
-				logger.debug("sumBreakMinute :: "+ sumBreakMinute);
 				if(!yyyyMMdd.format(sDate).equals(yyyyMMdd.format(eDate))) {
 					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), "0000", unitMinute);
 					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), "0000", HHmm.format(eDate), unitMinute);
@@ -1849,6 +1882,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			
 			//return this.WtmCalcMinute(HHmm.format(sDate), HHmm.format(eDate), null, null, unitMinute) - sumBreakMinute;
 		}
+		logger.debug("sumBreakMinute :: "+ sumBreakMinute);
 		return sumBreakMinute;
 		
 	}
@@ -1903,7 +1937,15 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		Date eDate = cal.getTime();
 		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: eDate = "+ eDate);
 		
-		int breakMinute = this.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgrId, unitMinute);
+		int breakMinute = 0; 
+		String maxEhm =  null;
+		Map<String, Object> breakMap = this.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgrId);
+		if(breakMap != null) {
+			breakMinute = (int) breakMap.get("breakMinute");
+			if(breakMinute > 0) {
+				maxEhm =  (String) breakMap.get("maxEhm");
+			}
+		}
 		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: breakMinute = "+ breakMinute);
 		cal = Calendar.getInstance();
 		cal.setTime(sDate);
@@ -1911,9 +1953,24 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		Date calcEdate = cal.getTime();
 		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: calcEdate = "+ calcEdate);
 		
-		int addBreakMinute = this.getBreakMinuteIfBreakTimeMGR(eDate, calcEdate, timeCdMgrId, unitMinute);
-		if(addBreakMinute > 0) {
-			return P_WTM_DATE_ADD_FOR_BREAK_MGR(calcEdate, addBreakMinute, timeCdMgrId, unitMinute);
+		if(maxEhm != null) {
+			SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+			SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddhhmm");
+			breakMap = null;
+			int addBreakMinute = 0;
+			try {
+				breakMap = this.getBreakMinuteIfBreakTimeMGR(ymdhm.parse(ymd.format(sDate)+maxEhm), calcEdate, timeCdMgrId);
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if(breakMap != null) {
+				addBreakMinute = (int) breakMap.get("breakMinute");
+			}
+			logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: addBreakMinute = "+ addBreakMinute);
+			if(addBreakMinute > 0) {
+				return P_WTM_DATE_ADD_FOR_BREAK_MGR(calcEdate, addBreakMinute, timeCdMgrId, unitMinute);
+			}
 		}
 		return calcEdate;
 	}
