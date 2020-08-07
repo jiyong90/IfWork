@@ -3323,13 +3323,18 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 									//한주소정근로시간 40시간   * 60  = 2400
 									int weekWorkMinute = Integer.parseInt(weekInfo.get("weekWorkMinute")+"");
 									int exMinute = 0;
+									int exceptMinute = 0;
 									if(weekInfo.get("exMinute") != null && !weekInfo.get("exMinute").equals("")) {
 										exMinute = Integer.parseInt(weekInfo.get("exMinute")+"");
+									}
+									if(weekInfo.get("exceptMinute") != null && !weekInfo.get("exceptMinute").equals("")) {
+										exceptMinute = Integer.parseInt(weekInfo.get("exceptMinute")+"");
 									}
 									System.out.println("weekWorkMinute : " + weekWorkMinute);
 									System.out.println("workMinute : " + Integer.parseInt(weekInfo.get("workMinute")+""));
 									System.out.println("exMinute : " + exMinute);
-									restWorkMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute ;
+//									restWorkMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute;
+									restWorkMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute - exceptMinute;
 									System.out.println("restMin : " + restWorkMin);
 									
 								}
