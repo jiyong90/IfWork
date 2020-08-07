@@ -150,6 +150,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 						}
 						//20200708 안흥규 근무제 적용 관리 --end
 						*/
+						
 						WtmFlexibleApplyMgr code = new WtmFlexibleApplyMgr();
 						code.setFlexibleApplyId(l.get("flexibleApplyId").toString().equals("") ? null : Long.parseLong(l.get("flexibleApplyId").toString()));
 						code.setFlexibleStdMgrId(Long.parseLong(l.get("flexibleStdMgrId").toString()));
@@ -166,96 +167,35 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 						code.setNote(l.get("note").toString());
 						code.setUpdateId(userId);
 						
+						WtmFlexibleApplyMgr flexibleApply = null;
+						flexibleApply = flexibleApplyRepository.save(code);
 						
-						//20200720 안흥규 근무제도적용 복사기능 추가 --start
-						/* 20200731 이효정 주석
-						if(!"".equals(l.get("copyApplyId").toString()) || l.get("copyApplyId") != null) {
-							if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {
-								WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.save(code);
-								
-								createElasPlan(tenantId, enterCd, flexibleApply.getFlexibleStdMgrId(), flexibleApply.getFlexibleApplyId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), userId);
-								
-								cnt +=1;
-							} else {
-								WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.save(code);
-								cnt +=1;
-							}
-							
+						// 복사 기능 추가--start
+						if(l.get("copyApplyId") != null && !"".equals(l.get("copyApplyId").toString())) {
 							Map<String, Object> paramMap = new HashMap(); 
-							paramMap.put("tenantId", tenantId);
-							paramMap.put("enterCd", enterCd);
-							paramMap.put("userId", userId);
+							
 							//복사 대상 flexibleApplyId를 담은 copyApplyId를 paramMap에 flexibleApplyId로 설정
 							long copyApplyId = Long.parseLong(l.get("copyApplyId").toString()); 
-							paramMap.put("flexibleApplyId", copyApplyId);
+							paramMap.put("flexibleApplyId", flexibleApply.getFlexibleApplyId());
+							paramMap.put("copyApplyId", copyApplyId);
+							paramMap.put("note", l.get("note"));
+							paramMap.put("userId", userId);
 							
-							//wtm_felxible_apply 테이블 복사 건 저장 => 자동 증가되는 flexibleApplyId 생성 이후 조회하기 위함
-							List<Map<String, Object>> flexibleApplyIdList = wtmFlexibleApplyMgrMapper.getFlexibleApplyId(paramMap);
-							System.out.println("flexibleApplyIdList = "+flexibleApplyIdList);
-							long flexibleApplyId = Long.parseLong(flexibleApplyIdList.get(0).get("flexibleApplyId").toString()); //NPE터짐 
-							System.out.println("flexibleApplyId = "+flexibleApplyId);
-							List<Map<String, Object>> flexApplyGrpList= new ArrayList(); 
-							List<Map<String, Object>> flexApplyEmpList = new ArrayList();
-							//Map<String, Object> flexApplyEmpMap= new HashMap(); 
-							Map<String, Object> flexApplyEmpTempMap= new HashMap(); 
-							
-							//wtm_flexible_apply_group 테이블 복상 저장
-							List<Map<String, Object>> copyFlexApplyGrpList = wtmFlexibleApplyMgrMapper.getApplyGrpList(paramMap); //NPE 터짐
-							if (copyFlexApplyGrpList != null && copyFlexApplyGrpList.size() > 0) {
-								for(int i= 0; i < copyFlexApplyGrpList.size(); i++) {
-									Map<String, Object> saveMap = new HashMap();
-									saveMap.put("flexibleApplyId", flexibleApplyId);
-									saveMap.put("orgCd", copyFlexApplyGrpList.get(i).get("orgCd"));
-									saveMap.put("jobCd", copyFlexApplyGrpList.get(i).get("jobCd"));
-									saveMap.put("dutyCd", copyFlexApplyGrpList.get(i).get("dutyCd"));
-									saveMap.put("posCd", copyFlexApplyGrpList.get(i).get("posCd"));
-									saveMap.put("classCd", copyFlexApplyGrpList.get(i).get("classCd"));
-									saveMap.put("workteamCd", copyFlexApplyGrpList.get(i).get("workteamCd"));
-									saveMap.put("note", copyFlexApplyGrpList.get(i).get("note"));
-									saveMap.put("userId", userId);
-									flexApplyGrpList.add(saveMap);
-								} 
-								wtmFlexibleApplyMgrMapper.insertGrp(flexApplyGrpList);
-							}
-							
-							
-							//wtm_flexible_apply_emp 테이블 복사 저장
-							List<Map<String, Object>> copyflexApplyEmpList = wtmFlexibleApplyMgrMapper.getApplyEmpList(paramMap); 
-							if (copyflexApplyEmpList != null && copyflexApplyEmpList.size() > 0) {
-								for(int i= 0; i < copyflexApplyEmpList.size(); i++) {
-									Map<String, Object> saveMap = new HashMap();
-									saveMap.put("flexibleApplyId", flexibleApplyId);
-									saveMap.put("sabun", copyflexApplyEmpList.get(i).get("sabun"));
-									saveMap.put("note", copyflexApplyEmpList.get(i).get("note"));
-									saveMap.put("userId", userId);
-									flexApplyEmpList.add(saveMap);
-								}
-								wtmFlexibleApplyMgrMapper.insertEmp(flexApplyEmpList);
-							}
-							//wtm_flexible_apply_emp_temp 테이블 복사 저장
-							List<Map<String, Object>> copyflexApplyEmpTempList = wtmFlexibleApplyMgrMapper.getApplyEmpTempList(paramMap); 
-							if (copyflexApplyEmpTempList != null && copyflexApplyEmpTempList.size() > 0) {
-								flexApplyEmpTempMap.put("flexibleApplyId", flexibleApplyId);
-								flexApplyEmpTempMap.put("userId", userId);
-								wtmFlexibleApplyMgrMapper.insertApplyEmpTemp(flexApplyEmpTempMap);
-							}
-							
-							  
-						} 
-						*/
-						//20200720 안흥규 근무제도적용 복사기능 추가 --end
-						
-						// else { 20200731 이효정 주석
-						if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {
-							WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.save(code);
-							
+							wtmFlexibleApplyMgrMapper.copyWtmApplyGroup(paramMap);
+							wtmFlexibleApplyMgrMapper.copyWtmApplyEmp(paramMap);
+							wtmFlexibleApplyMgrMapper.copyWtmApplyEmpTemp(paramMap);
+						}
+						// End						
+
+						if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {	
 							createElasPlan(tenantId, enterCd, flexibleApply.getFlexibleStdMgrId(), flexibleApply.getFlexibleApplyId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), userId);
 							cnt += 1;
 						} else {
 							codes.add(code);
 						}
-						// } 20200731 이효정 주석
+						
 					}
+					
 					codes = flexibleApplyRepository.saveAll(codes);
 					cnt += codes.size();
 				}

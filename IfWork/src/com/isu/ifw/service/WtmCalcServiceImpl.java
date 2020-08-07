@@ -659,6 +659,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			// 찢어져서생성될 FIXOT 의 총 시간을 먼저 구한 다으면 브레이크 타임의 합을 구해 잔여시간 만큼만 다시 만들어줘야한다.. 이럴수가..
 			logger.debug("results size : " + results.size());
 			if(results.size() > 0) {
+				Date loopSdate = sDate;
 				for(WtmWorkDayResult r : results) {
 					logger.debug("WtmWorkDayResult : " + r);
 					
@@ -670,17 +671,19 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							// 근무시간을 계산 하자
 							Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 							sumApprMinute += Integer.parseInt(calcMap.get("apprMinute")+"");
+							loopSdate = r.getApprEdate();
 						}
 						nextDataCheck = false;
 					}
-					if(sDate.compareTo(r.getApprSdate()) < 0) {
-						Date calcSdate = sDate; 
+					if(loopSdate.compareTo(r.getApprSdate()) < 0) {
+						Date calcSdate = loopSdate; 
 						Date calcEdate = r.getApprSdate();
 						
 						// P_LIMIT_MINUTE (총소정근로시간) 에서 P_USE_MINUTE (합산 소정 근로시간) 을 뺀 남은 소정 근로 시간에 대해서만 근무 정보를 생성한다.. 
 						// 근무시간을 계산 하자
 						Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 						sumApprMinute += Integer.parseInt(calcMap.get("apprMinute")+"");
+						loopSdate = r.getApprEdate();
 						
 						if(eDate.compareTo(r.getApprEdate()) > 0) {
 							//다음데이터를 확인해야한다. 
@@ -733,7 +736,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				}
 				
 				
-				
+
+				loopSdate = sDate;
 				logger.debug("createLimitMinute 만큼만 만들자 : " + createLimitMinute);
 				for(WtmWorkDayResult r : results) {
 					
@@ -796,16 +800,18 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 								newResult.setPlanMinute(apprMinute);
 								newResult.setApprMinute(apprMinute);
 								newResult.setUpdateDate(new Date());
-								newResult.setUpdateId("createFixOt");
+								newResult.setUpdateId("createFixOt1");
 								
 								workDayResultRepo.save(newResult);
+								
+								loopSdate = calcEdate;
 							}
 							nextDataCheck = false;
 						}
 						
 						// 시작시각 보다 빠를 경우 
 						logger.debug("sDate.compareTo(r.getApprSdate()) : " + sDate.compareTo(r.getApprSdate()));
-						if(sDate.compareTo(r.getApprSdate()) < 0) {
+						if(loopSdate.compareTo(r.getApprSdate()) < 0) {
 							
 							Date calcSdate = sDate; 
 							Date calcEdate = r.getApprSdate();
@@ -858,10 +864,10 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							newResult.setPlanMinute(apprMinute);
 							newResult.setApprMinute(apprMinute);
 							newResult.setUpdateDate(new Date());
-							newResult.setUpdateId("createFixOt");
+							newResult.setUpdateId("createFixOt2");
 							
 							workDayResultRepo.save(newResult);
-							
+							loopSdate = calcEdate;
 							
 							//그런데? 종료시간도 포함된 시각이라면?
 							//09:00 ~ 15:00 인데 r 이 10:00~11:00 인지 체크
@@ -876,9 +882,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							nextDataCheck = true;
 							preEdate = r.getApprEdate();
 						}
+						
 					}else {
 						break;
 					}
+
 				}
 				
 				if(nextDataCheck &&  createLimitMinute > 0) {
@@ -936,7 +944,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						newResult.setPlanMinute(apprMinute);
 						newResult.setApprMinute(apprMinute);
 						newResult.setUpdateDate(new Date());
-						newResult.setUpdateId("createFixOt");
+						newResult.setUpdateId("createFixOt-last");
 						
 						workDayResultRepo.save(newResult);
 					}

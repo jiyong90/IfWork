@@ -56,4 +56,9 @@ public interface WtmFlexibleApplyMgrMapper {
 	//복사 건 저장 이후 auto_increment flexibleApplyId 조회
 	public List<Map<String, Object>> getFlexibleApplyId(Map<String, Object> paramMap);
 	
+	//근무제 복사
+	public int copyWtmApplyGroup(Map<String, Object> paramMap);
+	public int copyWtmApplyEmp(Map<String, Object> paramMap);
+	public int copyWtmApplyEmpTemp(Map<String, Object> paramMap);
+	
 }
