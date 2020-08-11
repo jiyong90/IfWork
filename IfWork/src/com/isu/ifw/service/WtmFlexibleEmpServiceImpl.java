@@ -1333,16 +1333,33 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
 		//List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), WtmApplService.TIME_TYPE_BASE);
 		List<String> timeTypeCds = new ArrayList<String>();
-		timeTypeCds.add(WtmApplService.TIME_TYPE_BASE);
+		timeTypeCds.add(WtmApplService.TIME_TYPE_BASE); 
 		timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
 		timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
+		timeTypeCds.add(WtmApplService.TIME_TYPE_SUBS);
+		/*
+		timeTypeCds.add(WtmApplService.TIME_TYPE_REGA);  // 아래서 하고 있음 
+		timeTypeCds.add(WtmApplService.TIME_TYPE_TAA);	// 아래서 하고 있음
+		timeTypeCds.add(WtmApplService.TIME_TYPE_GOBACK); // 아래서 하고 있음
+		*/ 
+		/**
+		 * 사이사이 비어있는 구간을 재생성 해줘야한다.타각시간 기준으로 계획 데이터가 변경 시 
+		 * 계획이 없고 타각이 있을 경우엔 생성해줘야하는건가. 계획이 무슨 의미가 있는것인가.. 
+		 */
 		List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdInAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), timeTypeCds);
+		boolean isLast = false; 
+		boolean isUpdate = false;
+		WtmWorkDayResult preResult = null;
+		WtmWorkDayResult tmpResult = null;
 		if(results != null && results.size() > 0) {
 			int cnt = 1;
 			logger.debug("calcaApprDayReset :: flexStdMgr.getApplyEntrySdateYn() = " + flexStdMgr.getApplyEntrySdateYn());
 			logger.debug("calcaApprDayReset :: flexStdMgr.getApplyEntryEdateYn() = " + flexStdMgr.getApplyEntryEdateYn());
 			for(WtmWorkDayResult result : results) {
 				logger.debug("calcaApprDayReset :: cnt = " + cnt);
+				if(cnt == results.size() && results.size() > 1 ) {
+					isLast = true;
+				}
 				
 				Date sDate = null;
 				Date eDate = null;
@@ -1351,8 +1368,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				if(calendar.getEntrySdate().compareTo(result.getPlanEdate()) < 0
 						&& calendar.getEntryEdate().compareTo(result.getPlanSdate()) > 0) {
 						
+					logger.debug("타각시간에 포함된다. = " + results.size());
 					if(results.size() > 1) {
-	
+						/*
 						if(cnt != 1 && cnt != results.size()) {
 							//중간 데이터는 건너 뛴다. 
 							cnt++;
@@ -1360,12 +1378,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}
 						//첫번째 데이터
 						if(cnt == 1) {
-							
 							if(flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
 								sDate = calendar.getEntrySdate();
 							} else {
 								sDate = result.getPlanSdate();
-							}
+							} 
 						}else {
 							sDate = result.getPlanSdate();
 						}
@@ -1380,25 +1397,198 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}else {
 							eDate = result.getPlanEdate();
 						}
-						
-						
-					}else {
-						//1개면 좋다. 
-						if(flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
-							sDate = calendar.getEntrySdate();
+						*/
+						if(cnt == 1) {
+							if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
+								if(cnt == 1 && flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
+									if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y") && result.getPlanEdate().compareTo(calendar.getEntryEdate()) < 0) {	//종료시간을 타각시간으로 갱신시에만
+										//다음 데이터를 체크 한다. 
+										preResult = result;
+										preResult.setPlanSdate(calendar.getEntrySdate());
+									}else {
+										Date nSdate =  calendar.getEntrySdate();
+										Date nEdate = result.getPlanEdate();
+										this.saveWorkDayResult(flexStdMgr, timeCdMgr, result, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
+										tmpResult = result;
+									}
+								}
+							}else {
+								//베이스가 아니면 출퇴근 적용 여부가 모두 Y이어야 한다. 
+								if(cnt == 1 && flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y") && flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
+									//첫번째 데이터일 경우 
+									if(result.getPlanSdate().compareTo( calendar.getEntrySdate() ) > 0) {
+										Date nSdate =  calendar.getEntrySdate();
+										Date nEdate = null;
+										boolean isCheck = false;
+										if(result.getPlanSdate().compareTo( calendar.getEntryEdate()) < 0) {
+											nEdate = result.getPlanSdate();
+											isCheck = true;
+										}else {
+											nEdate = calendar.getEntryEdate();
+										}
+										preResult = this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
+										
+										if(!isCheck) {
+											preResult = null;
+											tmpResult = result;
+										}
+									}
+								}
+								
+							}
 						}else {
-							sDate = result.getPlanSdate();
+							if(preResult != null) {
+								if(result.getPlanSdate().compareTo(calendar.getEntryEdate()) < 0) {
+									preResult.setPlanEdate(result.getPlanSdate());
+									Date nSdate = preResult.getPlanSdate();
+									Date nEdate = result.getPlanSdate();
+									this.saveWorkDayResult(flexStdMgr, timeCdMgr, preResult, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
+									
+									//현 데이터가 베이스면
+									if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
+										if(isLast) {
+											//마지막일 경우 
+											nSdate = result.getPlanSdate();
+											nEdate = calendar.getEntryEdate();
+											this.saveWorkDayResult(flexStdMgr, timeCdMgr, result, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
+											
+										}else {
+											//지금 데이터 보다 타각 시간이 뒤일 경우 체크
+											preResult = result;
+											tmpResult = null;
+										}
+									}else {
+										//베이스가 아니면 
+										//마지막 데이터이면 
+										if(isLast) {
+											if(result.getPlanEdate().compareTo(calendar.getEntryEdate()) < 0) {
+												nSdate = result.getPlanEdate();
+												nEdate = calendar.getEntryEdate();
+												//새로 생성
+												this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
+											}
+										}else {
+											preResult = null;
+											tmpResult = result;
+										}
+										//nSdate = result.getPlanSdate();
+										//nEdate = calendar.getEntryEdate();
+										//this.saveWorkDayResult(flexStdMgr, timeCdMgr, result, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
+										//break;
+									}
+								}else {
+									logger.debug("현재의 계획 시작일이 타각 시간보다 늦다. " + preResult);
+									logger.debug("result : " + result);
+									preResult.setPlanEdate(calendar.getEntryEdate());
+									this.saveWorkDayResult(flexStdMgr, timeCdMgr, preResult, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, null, null, null, null, null, null);
+									logger.debug("그만 돌아도 된다.");
+								}
+							}else if(tmpResult != null) {
+								if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
+									if(calendar.getEntryEdate().compareTo(result.getPlanSdate())<0) {
+										workDayResultRepo.delete(result);
+									}else {
+										if(isLast) {
+											result.setPlanSdate(tmpResult.getPlanEdate());
+											result.setPlanEdate(calendar.getEntryEdate());
+											this.saveWorkDayResult(flexStdMgr, timeCdMgr, result, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, null, null, null, null, null, null);
+										}else {
+											result.setPlanSdate(tmpResult.getPlanEdate());
+											preResult = result;
+											tmpResult = null;
+										}
+									}
+								}else {
+									//사이 데이터를 만들자
+									if(tmpResult.getPlanEdate().compareTo(result.getPlanSdate()) <0 ) {
+										if(calendar.getEntryEdate().compareTo(result.getPlanSdate()) < 0) {
+											Date nSdate = tmpResult.getPlanEdate();
+											Date nEdate = calendar.getEntryEdate();
+											this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
+											tmpResult = null;
+											preResult = null;
+											//끝이다
+										}
+									}else if(result.getPlanEdate().compareTo(calendar.getEntryEdate()) < 0){
+										if(isLast) {
+											Date nSdate = result.getPlanEdate();
+											Date nEdate = calendar.getEntryEdate();
+											this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
+											//끝이다
+										}else {
+											tmpResult = result;
+											preResult = null;
+										}
+									}
+								}
+							}
 						}
-						
-						if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
-							eDate = calendar.getEntryEdate();
+					}else { 
+						logger.debug("1개다");
+						if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
+							
+							//1개면 좋다. 
+							if(flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
+								sDate = calendar.getEntrySdate();
+							}else {
+								sDate = result.getPlanSdate();
+							}
+							
+							if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
+								eDate = calendar.getEntryEdate();
+							}else {
+								eDate = result.getPlanEdate();
+							}
+							isUpdate = true;
 						}else {
-							eDate = result.getPlanEdate();
+							//없을 경우 타각시간 구간을 새로 생성한다. 
+							if(flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
+								sDate = calendar.getEntrySdate();
+							}
+							if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
+								eDate = calendar.getEntryEdate();
+							}
+							if(sDate != null && eDate != null && sDate.compareTo(eDate) < 0) {
+								if(result.getPlanSdate().compareTo(sDate) <= 0 && result.getPlanEdate().compareTo(eDate) >= 0) {
+									//만들지 않는다.
+								}else {
+									if(result.getPlanSdate().compareTo(sDate) > 0 && result.getPlanEdate().compareTo(eDate) < 0) {
+										logger.debug("앞뒤로 만들어 준다.");
+										Date nSdate = sDate;
+										Date nEdate = result.getPlanSdate();
+										this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
+										nSdate = result.getPlanEdate();
+										nEdate = eDate;
+										this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
+										
+									}else if(result.getPlanSdate().compareTo(eDate) >= 0 || sDate.compareTo(result.getPlanEdate()) >= 0) {
+										//아예 벗어난 구간은 새로 만든다.
+										this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, sDate, eDate, null, null, null, null);
+									}else {
+										logger.debug("걸쳤다");
+										if(sDate.compareTo(result.getPlanSdate()) < 0 && eDate.compareTo(result.getPlanSdate()) > 0) {
+											Date nSdate = sDate;
+											Date nEdate = result.getPlanSdate();
+											this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
+											
+										}
+										
+										if(sDate.compareTo(result.getPlanEdate()) < 0 && eDate.compareTo(result.getPlanEdate()) > 0) {
+											Date nSdate = result.getPlanEdate();
+											Date nEdate = eDate;
+											this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
+										}
+									}
+			
+								}
+							}
+							isUpdate = false;
 						}
 						
 					}
 					
-					if(!result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) && !result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)) {
+					if(isUpdate && !result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) && !result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) && !result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS)) {
+						isUpdate = false;
 						try {
 							if(flexStdMgr.getWorkShm() != null && !"".equals(flexStdMgr.getWorkShm()) && flexStdMgr.getWorkEhm() != null && !"".equals(flexStdMgr.getWorkEhm())) {
 								// 20200803 선택근무제가 아니면 근무시각 옵션이 비활성화됨. 그리고 선근제도 근무제한이 없을수있음.
@@ -1434,31 +1624,32 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
+						result.setPlanSdate(sDate);
+						result.setPlanEdate(eDate);
+						
+						SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+						int apprMinute = calcService.WtmCalcMinute(sdf.format(sDate), sdf.format(eDate), null, null, flexStdMgr.getUnitMinute());
+						int breakMinute = 0;
+						if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+							breakMinute = calcService.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+							logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : apprMinute " + apprMinute);
+							logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : breakMinute " + breakMinute);
+							apprMinute = apprMinute - breakMinute;
+							breakMinute = 0;
+						}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
+							breakMinute = calcService.getBreakMinuteIfBreakTimeTIME(timeCdMgr.getTimeCdMgrId(), apprMinute);
+							logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : apprMinute " + apprMinute);
+							logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : breakMinute " + breakMinute);
+						//}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
+						}
+						
+						result.setPlanMinute(apprMinute);
+						result.setUpdateDate(new Date());
+						result.setUpdateId("calcaApprDayReset");
+						logger.debug("calcaApprDayReset = " + result);
+						workDayResultRepo.save(result);
 					}
-					result.setPlanSdate(sDate);
-					result.setPlanEdate(eDate);
 					
-					SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
-					int apprMinute = calcService.WtmCalcMinute(sdf.format(sDate), sdf.format(eDate), null, null, flexStdMgr.getUnitMinute());
-					int breakMinute = 0;
-					if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
-						breakMinute = calcService.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
-						logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : apprMinute " + apprMinute);
-						logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : breakMinute " + breakMinute);
-						apprMinute = apprMinute - breakMinute;
-						breakMinute = 0;
-					}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
-						breakMinute = calcService.getBreakMinuteIfBreakTimeTIME(timeCdMgr.getTimeCdMgrId(), apprMinute);
-						logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : apprMinute " + apprMinute);
-						logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : breakMinute " + breakMinute);
-					//}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
-					}
-					
-					result.setPlanMinute(apprMinute);
-					result.setUpdateDate(new Date());
-					result.setUpdateId("calcaApprDayReset");
-					logger.debug("calcaApprDayReset = " + result);
-					workDayResultRepo.save(result);
 				}
 				cnt++;
 			}
@@ -1510,8 +1701,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
 			Date calcSdate = calcService.WorkTimeCalcApprDate(gobackResult.getPlanSdate(), gobackResult.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
 			Date calcEdate = calcService.WorkTimeCalcApprDate(gobackResult.getPlanEdate(), gobackResult.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
-			gobackResult.setApprSdate(gobackResult.getPlanSdate());
-			gobackResult.setApprEdate(gobackResult.getPlanEdate());
+			//gobackResult.setApprSdate(gobackResult.getPlanSdate());
+			//gobackResult.setApprEdate(gobackResult.getPlanEdate());
 			this.addWtmDayResultInBaseTimeType(gobackResult.getTenantId()
 												 , gobackResult.getEnterCd()
 												 , gobackResult.getYmd()
@@ -1534,6 +1725,164 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			workDayResultRepo.save(gobackResult);
 		}
 		
+	}
+	
+	@Transactional
+	protected WtmWorkDayResult saveWorkDayResult(WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr, WtmWorkDayResult result, Long tenantId, String enterCd, String ymd, String sabun, String timeTypeCd, Date planSdate, Date planEdate, Date apprSdate, Date apprEdate, Long applId, String taaCd) {
+
+		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
+		if(result == null) {
+			result = new WtmWorkDayResult();
+			result.setTenantId(tenantId);
+			result.setEnterCd(enterCd);
+			result.setSabun(sabun);
+			result.setYmd(ymd);
+			result.setTimeTypeCd(timeTypeCd);
+			
+		} 
+		result.setApplId(applId);
+		result.setTaaCd(taaCd);
+		if(planSdate != null) {
+			result.setPlanSdate(planSdate);
+		}
+		if(planEdate != null) {
+			result.setPlanEdate(planEdate);
+		}
+		Date calcSdate = result.getPlanSdate();
+		Date calcEdate = result.getPlanEdate();
+
+		if(calcSdate != null && calcEdate != null) {
+			try {
+				if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE) && flexStdMgr.getWorkShm() != null && !"".equals(flexStdMgr.getWorkShm()) && flexStdMgr.getWorkEhm() != null && !"".equals(flexStdMgr.getWorkEhm())) {
+					// 20200803 선택근무제가 아니면 근무시각 옵션이 비활성화됨. 그리고 선근제도 근무제한이 없을수있음.
+					// logger.debug("****************** HJ ***************** result.getYmd() : " + result.getYmd() + ", flexStdMgr.getWorkShm() : " + flexStdMgr.getWorkShm());
+					Date limitSdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkShm());
+					Date limitEdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkEhm());
+				
+					if(limitSdate.compareTo(limitEdate) > 0) {
+						logger.debug("제한시간 셋팅이 종료시간 보다 시작시간이 늦을 경우 종료시간을 1일 더해서 다음날로 만든다. sHm : " + flexStdMgr.getWorkShm() + " eHm : " + flexStdMgr.getWorkEhm());
+						Calendar cal = Calendar.getInstance();
+						cal.setTime(limitEdate);
+						cal.add(Calendar.DATE, 1);
+						limitEdate = cal.getTime();
+					}
+	
+					if(calcSdate.compareTo(limitSdate) < 0) {
+						logger.debug("시작일 근무 제한 시간 적용. sDate : " + calcSdate + " limitSdate : " + limitSdate);
+						calcSdate = limitSdate;
+					}
+	//						
+	//						if(sDate.compareTo(limitEdate) >= 0) {
+	//							logger.debug("근무 제한 시간보다 이후 시간입니다.");
+	//							return 0;
+	//						}
+					
+					if(calcEdate.compareTo(limitEdate) > 0) {
+						logger.debug("종료일 근무 제한 시간 적용. eDate : " + calcEdate + " limitEdate : " + limitEdate);
+						calcEdate = limitEdate;
+					}
+					
+				}
+	
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			if(calcSdate.compareTo(calcEdate) >= 0) {
+				return null;
+			}
+			
+			SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+			int apprMinute = calcService.WtmCalcMinute(sdf.format(calcSdate), sdf.format(calcEdate), null, null, flexStdMgr.getUnitMinute());
+			int breakMinute = 0;
+			if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+				breakMinute = calcService.getBreakMinuteIfBreakTimeMGR(calcSdate, calcEdate, timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+				logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : apprMinute " + apprMinute);
+				logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : breakMinute " + breakMinute);
+				apprMinute = apprMinute - breakMinute;
+				breakMinute = 0;
+			}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
+				breakMinute = calcService.getBreakMinuteIfBreakTimeTIME(timeCdMgr.getTimeCdMgrId(), apprMinute);
+				logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : apprMinute " + apprMinute);
+				logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : breakMinute " + breakMinute);
+			//}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
+			}
+		
+			result.setPlanMinute(apprMinute);
+		}
+		
+
+		if(apprSdate != null) {
+			result.setApprSdate(apprSdate);
+		}
+		if(apprEdate != null) {
+			result.setApprEdate(apprEdate);
+		} 
+		calcSdate = result.getApprSdate();
+		calcEdate = result.getApprEdate();
+		if(calcSdate != null && calcEdate != null) {
+			try {
+				if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE) && flexStdMgr.getWorkShm() != null && !"".equals(flexStdMgr.getWorkShm()) && flexStdMgr.getWorkEhm() != null && !"".equals(flexStdMgr.getWorkEhm())) {
+					// 20200803 선택근무제가 아니면 근무시각 옵션이 비활성화됨. 그리고 선근제도 근무제한이 없을수있음.
+					// logger.debug("****************** HJ ***************** result.getYmd() : " + result.getYmd() + ", flexStdMgr.getWorkShm() : " + flexStdMgr.getWorkShm());
+					Date limitSdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkShm());
+					Date limitEdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkEhm());
+				
+					if(limitSdate.compareTo(limitEdate) > 0) {
+						logger.debug("제한시간 셋팅이 종료시간 보다 시작시간이 늦을 경우 종료시간을 1일 더해서 다음날로 만든다. sHm : " + flexStdMgr.getWorkShm() + " eHm : " + flexStdMgr.getWorkEhm());
+						Calendar cal = Calendar.getInstance();
+						cal.setTime(limitEdate);
+						cal.add(Calendar.DATE, 1);
+						limitEdate = cal.getTime();
+					}
+	
+					if(calcSdate.compareTo(limitSdate) < 0) {
+						logger.debug("시작일 근무 제한 시간 적용. sDate : " + calcSdate + " limitSdate : " + limitSdate);
+						calcSdate = limitSdate;
+					}
+	//						
+	//						if(sDate.compareTo(limitEdate) >= 0) {
+	//							logger.debug("근무 제한 시간보다 이후 시간입니다.");
+	//							return 0;
+	//						}
+					
+					if(calcEdate.compareTo(limitEdate) > 0) {
+						logger.debug("종료일 근무 제한 시간 적용. eDate : " + calcEdate + " limitEdate : " + limitEdate);
+						calcEdate = limitEdate;
+					}
+				}
+	
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
+			if(calcSdate.compareTo(calcEdate) >= 0) {
+				return null;
+			}
+			
+			SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+			int apprMinute = calcService.WtmCalcMinute(sdf.format(calcSdate), sdf.format(calcEdate), null, null, flexStdMgr.getUnitMinute());
+			int breakMinute = 0;
+			if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+				breakMinute = calcService.getBreakMinuteIfBreakTimeMGR(calcSdate, calcEdate, timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+				logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : apprMinute " + apprMinute);
+				logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : breakMinute " + breakMinute);
+				apprMinute = apprMinute - breakMinute;
+				breakMinute = 0;
+			}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
+				breakMinute = calcService.getBreakMinuteIfBreakTimeTIME(timeCdMgr.getTimeCdMgrId(), apprMinute);
+				logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : apprMinute " + apprMinute);
+				logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : breakMinute " + breakMinute);
+			//}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
+			}
+		
+			result.setApprMinute(apprMinute);
+		}
+		result.setUpdateDate(new Date());
+		result.setUpdateId("new calcaApprDayReset"); 
+		return workDayResultRepo.save(result);
 	}
 	/**
 	 * 타각시간 기준으로 인정시간 계산
@@ -1667,6 +2016,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			if(flexStdMgr.getWorkTypeCd().startsWith("SELE_")) {
 				WtmTaaCode taaCode = wtmTaaCodeRepository.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, taaCd);
 				if(taaCode.getRequestTypeCd().equals("D") && flexStdMgr.getTaaWorkYn().equals("Y")){
+					isTaaWork = true;
+				}else if(taaCode.getRequestTypeCd().equals("P") || taaCode.getRequestTypeCd().equals("A") || taaCode.getRequestTypeCd().equals("H")){
 					isTaaWork = true;
 				}
 			}
