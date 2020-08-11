@@ -985,8 +985,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//flexEmpMapper.updatePlanMinute(flexibleEmpId);
 			
 			Map<String, Object> result = flexEmpMapper.checkBaseWorktime(flexibleEmpId);
-			if(result!=null && result.get("isValid")!=null && result.get("isValid").equals("0")) {
-				throw new RuntimeException(result.get("totalWorktime").toString() + "시간의 소정근로시간을 넘을 수 없습니다.");
+			if(result!=null && result.get("isValid")!=null && "0".equals(result.get("isValid").toString())) {
+				throw new RuntimeException(result.get("totalWorktime").toString() + "분의 소정근로시간을 넘을 수 없습니다.");
 			}
 		}
 		
