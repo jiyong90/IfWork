@@ -2083,7 +2083,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			laaResult.setApplId(null);
 			laaResult.setTimeTypeCd(WtmApplService.TIME_TYPE_LLA);
 			laaResult.setTaaCd(absenceTaaCode.getTaaCd());
-			laaResult.setUpdateId("SYSTEM");
+			laaResult.setUpdateId(WtmApplService.TIME_TYPE_LLA + absenceTaaCode.getTaaCd());
 			workDayResultRepo.save(laaResult);
 			isAbsence = true;
 		}
@@ -2092,8 +2092,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		if(!isAbsence) {
 			//paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 			//paramMap.put("taaCd", leaveTaaCode.getTaaCd());
-			
-			if(timeCdMgr.getLateChkYn().equals("Y") && calendar.getEntrySdate() != null && calendar.getEntryEdate() == null) {
+			//BASE 가 없으면 조퇴도 만들지 않는다. 
+			if(timeCdMgr.getLateChkYn().equals("Y") && calendar.getEntrySdate() != null && calendar.getEntryEdate() == null
+					&& minPlanSdate_BASE != null && maxPlanEdate_BASE != null
+					) {
 				WtmTaaCode leaveTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LEAVE);
 				try { logger.debug("7. LATE_CHK_YN = Y  출근 데이터는 있고 퇴근 타각이 없을 경우 조퇴 (시/종 정보 없이 생성) " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndEntrtEdateIsNull"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 				// 출근 데이터는 있고 퇴근 타각이 없을 경우 조퇴 (시/종 정보 없이 생성)
@@ -2106,7 +2108,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				laaResult.setApplId(null);
 				laaResult.setTimeTypeCd(WtmApplService.TIME_TYPE_LLA);
 				laaResult.setTaaCd(leaveTaaCode.getTaaCd());
-				laaResult.setUpdateId("SYSTEM");
+				laaResult.setUpdateId(WtmApplService.TIME_TYPE_LLA + leaveTaaCode.getTaaCd());
 				workDayResultRepo.save(laaResult);
 				
 			}
@@ -2380,7 +2382,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					}
 				}
 				logger.debug("10. ***********************  " + maxPlanEdate_BASE + ",  " + calendar.getEntryEdate());
-				if(minPlanSdate_BASE != null && maxPlanEdate_BASE != null && maxPlanEdate_BASE.compareTo(calendar.getEntryEdate()) > 0) {
+				if(minPlanSdate_BASE != null && !minPlanSdate_BASE.equals("") && maxPlanEdate_BASE != null  && !maxPlanEdate_BASE.equals("")  && maxPlanEdate_BASE.compareTo(calendar.getEntryEdate()) > 0) {
 					
 				
 					WtmTaaCode leaveTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LEAVE);
@@ -2399,7 +2401,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					laaResult.setApplId(null);
 					laaResult.setTimeTypeCd(WtmApplService.TIME_TYPE_LLA);
 					laaResult.setTaaCd(leaveTaaCode.getTaaCd());
-					laaResult.setUpdateId("SYSTEM");
+					laaResult.setUpdateId(WtmApplService.TIME_TYPE_LLA + leaveTaaCode.getTaaCd());
 					workDayResultRepo.save(laaResult);
 					
 				}
