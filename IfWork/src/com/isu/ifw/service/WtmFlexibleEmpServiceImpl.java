@@ -3684,8 +3684,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 									System.out.println("weekWorkMinute : " + weekWorkMinute);
 									System.out.println("workMinute : " + Integer.parseInt(weekInfo.get("workMinute")+""));
 									System.out.println("exMinute : " + exMinute);
-//									restWorkMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute;
-									restWorkMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute - exceptMinute;
+									restWorkMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute;
+//									restWorkMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute - exceptMinute;
 									System.out.println("restMin : " + restWorkMin);
 									
 								}
