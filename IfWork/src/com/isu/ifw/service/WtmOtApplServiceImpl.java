@@ -665,10 +665,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		Date tempSd = WtmUtil.toDate(chekPlan.get("minPlan").toString(), "yyyyMMddHHmm");
 		Date tempEd = WtmUtil.toDate(chekPlan.get("maxPlan").toString(), "yyyyMMddHHmm");
 		//시작시각, 종료시각이 무조건 tempSd, tempEd 사이에 있어야 함, 조건문은 나중에 바꿔주시오~
-		if(tempSd.compareTo(sd) < 0 && tempEd.compareTo(sd) > 0 &&
-				tempSd.compareTo(ed) < 0 && tempEd.compareTo(ed) > 0) {
-		} else {
-			rp.setFail("선택하신 근무일에 신청할 수 없는 연장근무 시간입니다.");
+		if((tempSd.compareTo(sd) > 0 ) || (tempEd.compareTo(sd) < 0) || (tempSd.compareTo(ed) > 0) || (tempEd.compareTo(ed) < 0)) {
+			rp.setFail("선택하신 근무일에 신청할 수 없는 연장근무 시간입니다.!!");
 			return rp;
 		}
 		
