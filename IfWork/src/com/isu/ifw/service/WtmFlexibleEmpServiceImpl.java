@@ -15,10 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,6 +34,7 @@ import com.isu.ifw.entity.WtmTaaCode;
 import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
+import com.isu.ifw.entity.WtmWorkDayResultO;
 import com.isu.ifw.mapper.WtmAuthMgrMapper;
 import com.isu.ifw.mapper.WtmEmpHisMapper;
 import com.isu.ifw.mapper.WtmFlexibleApplMapper;
@@ -58,6 +57,7 @@ import com.isu.ifw.repository.WtmOtSubsApplRepository;
 import com.isu.ifw.repository.WtmTaaCodeRepository;
 import com.isu.ifw.repository.WtmTimeCdMgrRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
+import com.isu.ifw.repository.WtmWorkDayResultORepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.repository.WtmWorkteamEmpRepository;
 import com.isu.ifw.repository.WtmWorkteamMgrRepository;
@@ -92,6 +92,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	
 	@Autowired
 	WtmWorkDayResultRepository workDayResultRepo;
+
+	@Autowired private WtmWorkDayResultORepository workDayResultORepo;
 	
 	@Autowired
 	WtmOtApplRepository otApplRepo;
@@ -1253,10 +1255,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				
 				ObjectMapper mapper = new ObjectMapper();
 				try {
-					logger.debug("calcApprDayInfo", mapper.writeValueAsString(paramMap));
+					logger.debug("calcApprDayInfo : " + mapper.writeValueAsString(paramMap));
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
+				calcApprDayInfo0(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd());
+				
 				calcApprDayInfo1(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd());
 				
 				calcApprDayInfo2(calendar, flexStdMgr, timeCdMgr);
@@ -1304,24 +1308,34 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		*/
 	}
 	
-	public void calcApprDayInfo0(Long tenantId, String enterCd, String ymd, String sabun, String taaLocalIn, String taaLocalOut) {
-		Map<String, Object> paramMap = new HashMap<>();
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("ymd", ymd);
-		paramMap.put("nextYmd", ymd);
-		paramMap.put("sabun", sabun);
-		
-		if(taaLocalIn != null) {
-			paramMap.put("taaLocalIn", taaLocalIn);
-			int cnt = wtmScheduleMapper.setUpdateLocalIn(paramMap);
-			logger.debug("taaLocalIn : " + taaLocalIn + " 현지 출근 신청 타각 갱신 : " + cnt);
+	@Transactional
+	public void calcApprDayInfo0(Long tenantId, String enterCd, String sabun, String ymd) {
+		logger.debug("calcApprDayInfo0");
+		List<WtmWorkDayResultO> delResults = workDayResultORepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
+		List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
+		if(delResults != null && delResults.size() > 0) {
+			workDayResultORepo.deleteAll(delResults);
 		}
-		if(taaLocalOut != null) {
-			paramMap.put("taaLocalOut", taaLocalOut);
-    		logger.debug("schedule_closeday taaLocalOut : "+ paramMap.toString());
-    		int cnt = wtmScheduleMapper.setUpdateLocalOut(paramMap);
-    		logger.debug("taaLocalIn : " + taaLocalOut + " 현지 퇴근 신청 타각 갱신 : " + cnt);
+
+		logger.debug("calcApprDayInfo0 results : " + results.size());
+		for(WtmWorkDayResult r : results) {
+			
+			WtmWorkDayResultO nr = new WtmWorkDayResultO();
+			nr.setTenantId(r.getTenantId());
+			nr.setEnterCd(r.getEnterCd());
+			nr.setYmd(r.getYmd());
+			nr.setSabun(r.getSabun());
+			nr.setApplId(r.getApplId());
+			nr.setTimeTypeCd(r.getTimeTypeCd());
+			nr.setTaaCd(r.getTaaCd());
+			nr.setPlanSdate(r.getPlanSdate());
+			nr.setPlanEdate(r.getPlanEdate());
+			nr.setPlanMinute(r.getPlanMinute());
+			nr.setApprSdate(r.getApprSdate());
+			nr.setApprEdate(r.getApprEdate());
+			nr.setApprMinute(r.getApprMinute());
+			logger.debug("nr : " + nr.toString());
+			workDayResultORepo.save(nr);
 		}
 		 
 	}

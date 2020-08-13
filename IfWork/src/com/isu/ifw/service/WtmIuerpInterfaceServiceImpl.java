@@ -977,7 +977,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 					taaApplMap.put("sHm", a.getShm());
 					taaApplMap.put("eHm", a.getEhm());
 					taaApplMap.put("status", a.getApplStatusCd());
-					taaApplMap.put("ifApplNo", Long.valueOf(a.getApplSeq()));
+					taaApplMap.put("ifApplNo", a.getApplSeq());
 					
 					if(a.getApplSeq()!=null && !"".equals(a.getApplSeq())) {
 						rp = wtmInterfaceService.setTaaApplIf(taaApplMap);
