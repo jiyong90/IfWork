@@ -426,6 +426,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				Float paidBreakMin = 0f;
 				Float otMin = 0f;
 				Float otNightMin = 0f;
+				Float regaMin = 0f;
 				
 				for(Map<String, Object> r : dayResult) {
 					String timeTypeCd = r.get("timeTypeCd").toString();
@@ -546,6 +547,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}
 						
 						
+					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_REGA)) {
+						regaMin += min;
 					}
 				}
 				
@@ -553,6 +556,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				dayInfo.put("otHour", minToHHmmStr((otMin+otNightMin)+""));
 				dayInfo.put("otBasicHour", minToHHmmStr(otMin+""));
 				dayInfo.put("otNightHour", minToHHmmStr(otNightMin+""));
+				dayInfo.put("regaHour", minToHHmmStr(regaMin+""));
 				
 				Map<String, Object> taa = new HashMap<String, Object>();
 				if(taaMap!=null) {
