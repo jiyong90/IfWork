@@ -214,12 +214,12 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		
 		// 20200710 전영수과장 근무시간체크 해제요청(이효정메일전달)
 		// 20200713 현대ngv 연동시 벨리데이션 전부 해제(취소건 벨리데이션 분리 후 삭제예정)
-		
+		/*
 		if(tenantId == 22) {	
 			rp.setSuccess("");
 			return rp;
 		}
-		
+		*/
 		
 		if(works!=null && works.size()>0) {
 			for(Map<String, Object> w : works) {
@@ -324,6 +324,7 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 		
 		if(m!=null && m.get("cnt")!=null) {
 			int cnt = Integer.parseInt(m.get("cnt").toString());
+			logger.debug("checkDuplicateTaaAppl cnt : " + cnt);
 			if(cnt > 0) {
 				
 				rp.setFail(m.get("empNm").toString()+"("+sabun+") " + WtmUtil.parseDateStr(WtmUtil.toDate(symd,"yyyyMMdd"), "yyyy-MM-dd") + "~" +  WtmUtil.parseDateStr(WtmUtil.toDate(eymd,"yyyyMMdd"), "yyyy-MM-dd") +"의 신청중인 또는 이미 적용된 근무정보가 있습니다.");

@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
@@ -55,7 +57,8 @@ import com.isu.ifw.vo.ReturnParam;
 
 @Service("wtmInterfaceService")
 public class WtmInterfaceServiceImpl implements WtmInterfaceService {
-		
+	private static final Logger logger = LoggerFactory.getLogger("ifwFileLog");
+	
 	@Autowired
 	WtmInterfaceMapper wtmInterfaceMapper;
 	
@@ -1739,8 +1742,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	    		List<Map<String, Object>> works = (List<Map<String, Object>>)reqMap.get("works");
 	    		
 	    		rp = validatorService.worktimeValid(tenantId, reqMap.get("enterCd").toString(), reqMap.get("applNo").toString(), works, reqMap.get("applSabun").toString());
-	    		ObjectMapper mm = new ObjectMapper();
-	    		// System.out.println(mm.writeValueAsString(rp));
+	    		//ObjectMapper mm = new ObjectMapper();
+	    		logger.debug(rp.getStatus() + " : " + rp.get("message"));
 	    		if(rp!=null && rp.getStatus()!=null && !"OK".equals(rp.getStatus())) {
 					throw new RuntimeException((String) rp.get("message"));
 	    		}
