@@ -632,7 +632,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						eDate = limitEdate;
 					}
 					
-					if(sDate.compareTo(limitSdate) < 0 && eDate.compareTo(limitEdate) > -1) {
+					if(sDate.compareTo(limitSdate) < 0) { // && eDate.compareTo(limitEdate) > -1) {
 						sDate = limitSdate;
 					}
 					
@@ -1430,7 +1430,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						eDate = limitEdate;
 					}
 					
-					if(sDate.compareTo(limitSdate) < 0 && eDate.compareTo(limitEdate) > -1) {
+					if(sDate.compareTo(limitSdate) < 0) { // && eDate.compareTo(limitEdate) > -1) {
 						sDate = limitSdate;
 					}
 					

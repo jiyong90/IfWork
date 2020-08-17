@@ -27,17 +27,17 @@ import org.springframework.format.annotation.DateTimeFormat;
 query="SELECT E.FLEXIBLE_EMP_ID AS flexibleEmpId, E.SYMD AS symd, E.EYMD AS eymd, E.TENANT_ID AS tenantId, E.ENTER_CD AS enterCd, E.SABUN AS sabun, E.WORK_MINUTE AS workMinute \n" + 
 "			    	 , SUM(CASE WHEN R.TIME_TYPE_CD = 'BASE' THEN F_WTM_NVL(R.APPR_MINUTE,0)\n" +
 "		                        WHEN R.TIME_TYPE_CD = 'REGA' THEN F_WTM_NVL(R.APPR_MINUTE,R.PLAN_MINUTE)\n" +
-"		                        WHEN F_WTM_GET_EMP_DAY_OPTION(R.TENANT_ID, R.ENTER_CD, R.SABUN, R.YMD, 'TAA_TIME_YN') = 'Y' AND R.TIME_TYPE_CD = 'TAA' THEN F_WTM_NVL(R.APPR_MINUTE,R.PLAN_MINUTE)\n" +
+"		                        WHEN M.TAA_TIME_YN = 'Y' AND R.TIME_TYPE_CD = 'TAA' THEN F_WTM_NVL(R.APPR_MINUTE,R.PLAN_MINUTE)\n" +
 "		                        ELSE 0 END ) AS workHour\n" + 
 "		             , SUM(CASE WHEN R.TIME_TYPE_CD = 'EXCEPT' AND  T.TAA_INFO_CD = 'BREAK' THEN F_WTM_NVL(R.APPR_MINUTE,0) ELSE 0 END ) AS breakHour\n" + 
-"		      FROM WTM_FLEXIBLE_EMP E\n" + 
+"		      FROM WTM_FLEXIBLE_EMP E\n" +
+"			  JOIN WTM_FLEXIBLE_STD_MGR M\n" +
+"				ON E.FLEXIBLE_STD_MGR_ID = M.FLEXIBLE_STD_MGR_ID\n " +
 "			  LEFT OUTER JOIN WTM_WORK_DAY_RESULT R\n" + 
 "			    ON R.TENANT_ID = E.TENANT_ID\n" + 
 "			   AND R.ENTER_CD = E.ENTER_CD\n" + 
 "			   AND R.SABUN = E.SABUN\n" + 
 "			   AND R.YMD BETWEEN E.SYMD AND E.EYMD\n" + 
-"	 		   AND ((R.YMD = :symd AND R.TIME_TYPE_CD IN ('BASE', 'FIXOT'))\n" + 
-"	 		        OR R.YMD <> :symd)\n" +
 "		      LEFT OUTER JOIN WTM_TAA_CODE T ON T.TENANT_ID = R.TENANT_ID AND T.ENTER_CD = R.ENTER_CD AND T.TAA_CD = R.TAA_CD  \n" + 
 "             WHERE E.TENANT_ID = :tenantId\n" + 
 "               AND E.ENTER_CD = :enterCd\n" + 
