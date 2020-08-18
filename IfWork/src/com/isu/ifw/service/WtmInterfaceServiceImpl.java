@@ -2014,6 +2014,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										newTaa.setEnterCd(taaDetMap.get("enterCd").toString());
 										newTaa.setYmd(taaDetMap.get("ymd").toString());
 										newTaa.setSabun(taaDetMap.get("sabun").toString());
+										newTaa.setApplId(applId);
 										newTaa.setTimeTypeCd(timeTypeCd);
 										newTaa.setTaaCd(taaDetMap.get("taaCd").toString());
 										newTaa.setPlanSdate(dt.parse(taaSdate));

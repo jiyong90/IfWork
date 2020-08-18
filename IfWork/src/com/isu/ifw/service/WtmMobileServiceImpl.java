@@ -329,4 +329,13 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 
 		return calendarMapper.getTeamPlanList(paramMap);
 	}
+	
+	@Override
+	public List<Map<String, Object>> getTeamDayResultListNotInLLA(Map<String, Object> paramMap) throws Exception {
+	
+		//겸직 하위 조직 조회
+		paramMap.put("orgList", empService.getLowLevelOrgList(Long.parseLong(paramMap.get("tenantId").toString()), paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("ymd").toString()));
+
+		return calendarMapper.getTeamDayResultListNotInLLA(paramMap);
+	}
 }
