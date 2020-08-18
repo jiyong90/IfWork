@@ -2299,7 +2299,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							Map<String, Object> calcMap = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
 							int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
 							int breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
-							r.setApprMinute(apprMinute - breakMinute);
+							r.setApprMinute(apprMinute);
 							
 							r.setUpdateId("SELE_F_OT_NIGHT");
 							workDayResultRepo.save(r);
@@ -2356,7 +2356,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							Map<String, Object> calcMap = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
 							int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
 							int breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
-							r.setApprMinute(apprMinute - breakMinute);
+							r.setApprMinute(apprMinute);
 							
 							r.setUpdateId("findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd");
 							workDayResultRepo.save(r);
@@ -4392,5 +4392,90 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		return otParamMap;
 	}
 
+	
+	@Transactional
+	@Override
+	public ReturnParam finishDay(Map<String, Object> paramMap, Long tenantId, String enterCd, String empNo, String userId) throws Exception{
+		
+		/*
+		 *  WTM_WORK_DAY_RESULT_O 에 데이터가 있는지 확인
+		 *  데이터가 있으면 WTM_WORK_DAY_RESULT 의 appr_sdate, appr_edate, appr_minute 를 null로 업데이트 하고 
+		 *  재생성 한다
+		 */
+		
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("일마감 처리 완료 하였습니다. ");
+
+		if(paramMap != null) {
+			
+			String paramSdate = paramMap.get("paramSdate").toString();
+			String paramEdate = paramMap.get("paramEdate").toString();
+			String sabun = paramMap.get("sabun").toString();
+			
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+			
+			Date sDate = sdf.parse(paramSdate);
+			Date eDate = sdf.parse(paramEdate);
+			
+			ArrayList<String> dates = new ArrayList<String>();  //날짜를 담을 리스트
+			
+			Date curDate = sDate;
+			
+			while (curDate.compareTo(eDate) <= 0) {
+				dates.add(sdf.format(curDate));
+				Calendar c = Calendar.getInstance();
+				c.setTime(curDate);
+				c.add(Calendar.DAY_OF_MONTH, 1);
+				curDate = c.getTime();
+			}
+			
+			try {
+				for (String closeymd : dates) {
+					
+					paramMap.put("ymd", closeymd);				
+					paramMap.put("symd", closeymd);				
+					paramMap.put("eymd", closeymd);				
+					paramMap.put("pId", userId);
+					
+					Map<String, Object> reasultO = flexEmpMapper.getWorkDayResultO(paramMap);
+					
+					if(reasultO != null && reasultO.size() > 0) {
+						flexEmpMapper.deleteWorkDayResultBase(paramMap);
+						
+						Date sd = WtmUtil.toDate(reasultO.get("planSdate").toString(), "yyyyMMddHHmm");
+						Date ed = WtmUtil.toDate(reasultO.get("planEdate").toString(), "yyyyMMddHHmm");
+						
+						String sHm = WtmUtil.parseDateStr(sd, "HHmm");
+						String eHm = WtmUtil.parseDateStr(ed, "HHmm");
+						paramMap.put("shm", sHm);
+						paramMap.put("ehm", eHm);
+						
+						paramMap.put("symd", WtmUtil.parseDateStr(sd, "yyyyMMdd"));
+						paramMap.put("eymd", WtmUtil.parseDateStr(ed, "yyyyMMdd"));
+						
+						Map<String, Object> calcMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun);  // 휴개시간 제외 근무시간 조회
+						
+						paramMap.put("calcMinute", calcMinuteMap.get("calcMinute"));
+						
+						//BASE 재생성
+						flexEmpMapper.insertWorkDayRtBaseMinMax(paramMap);
+						
+					} 
+
+					calcApprDayInfo(tenantId, enterCd, closeymd, closeymd, sabun);
+					// 근무계획시간 합산
+					flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
+					
+				}
+			} catch (Exception e) {
+				rp.setFail("일마감 처리중 오류가 발생하였습니다.");
+				e.printStackTrace();
+				return rp;
+			}
+			
+		}
+		
+		return rp;
+	}
 	
 }
