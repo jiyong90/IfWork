@@ -2299,7 +2299,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							Map<String, Object> calcMap = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
 							int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
 							int breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
-							r.setApprMinute(apprMinute - breakMinute);
+							r.setApprMinute(apprMinute);
 							
 							r.setUpdateId("SELE_F_OT_NIGHT");
 							workDayResultRepo.save(r);
@@ -2356,7 +2356,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							Map<String, Object> calcMap = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
 							int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
 							int breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
-							r.setApprMinute(apprMinute - breakMinute);
+							r.setApprMinute(apprMinute);
 							
 							r.setUpdateId("findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd");
 							workDayResultRepo.save(r);
