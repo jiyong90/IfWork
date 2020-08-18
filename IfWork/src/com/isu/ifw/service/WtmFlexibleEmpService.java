@@ -376,4 +376,13 @@ public interface WtmFlexibleEmpService {
 	 */
 	public Map<String, Object> calcOtMinuteAddBreaktimeForElas(Long tenantId, String enterCd, Long TimeCdMgrId, String obDate, String otType, int otMinute, String userId);
 	
+	/**
+	 * 근무시간관리_일마감
+	 * @param dateMap
+	 * @param userId
+	 * @return
+	 * @throws Exception
+	 */
+	public ReturnParam finishDay(Map<String, Object> dateMap, Long tenantId, String enterCd, String empNo, String userId) throws Exception;
+	
 }

@@ -528,4 +528,25 @@ public interface WtmFlexibleEmpMapper {
 	//기준일자의 계획시간 min, max 가져오기
 	public Map<String, Object> getPlanMinMaxDate(Map<String, Object> paramMap);
 	
+	
+	/**
+	 * @param paramMap
+	 * @return
+	 */
+	public Map<String, Object> getWorkDayResultO(Map<String, Object> paramMap);
+	
+	
+	/**
+	 * @param paramMap
+	 * WORK_DAY_RESULT BASE 삭제
+	 */
+	public void deleteWorkDayResultBase(Map<String, Object> paramMap);
+	
+	/**
+	 * @param paramMap
+	 * BASE 재생성
+	 */
+	public void insertWorkDayRtBaseMinMax(Map<String, Object> paramMap);
+	
+	
 }
