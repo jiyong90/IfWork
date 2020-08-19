@@ -74,13 +74,20 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 			paramMap.put("tenantId", tenantId);
 			paramMap.put("enterCd", enterCd);
 			
-			String ymd = null;
+			String symd = null;
+			String eymd = null;
 			if(paramMap.get("sYmd")!=null && !"".equals(paramMap.get("sYmd"))) {
-				ymd = paramMap.get("sYmd").toString().replaceAll("-", "");
+				symd = paramMap.get("sYmd").toString().replaceAll("-", "");
 			} else {
-				ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
+				symd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 			}
-			paramMap.put("ymd", ymd);
+			if(paramMap.get("eYmd")!=null && !"".equals(paramMap.get("eYmd"))) {
+				eymd = paramMap.get("eYmd").toString().replaceAll("-", "");
+			} else {
+				eymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
+			}
+			paramMap.put("symd", symd);
+			paramMap.put("eymd", eymd);
 			
 			timeList = workteamEmpMapper.getWorkteamEmpList(paramMap);
 		} catch(Exception e) {
