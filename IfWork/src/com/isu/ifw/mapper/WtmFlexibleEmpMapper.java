@@ -548,5 +548,12 @@ public interface WtmFlexibleEmpMapper {
 	 */
 	public void insertWorkDayRtBaseMinMax(Map<String, Object> paramMap);
 	
+	/**
+	 * @param paramMap
+	 * @return
+	 * 근무제 종료일자 확인
+	 */
+	public Map<String, Object> checkFinDay(Map<String, Object> paramMap);
+	
 	
 }

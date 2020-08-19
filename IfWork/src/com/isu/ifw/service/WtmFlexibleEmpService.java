@@ -384,5 +384,17 @@ public interface WtmFlexibleEmpService {
 	 * @throws Exception
 	 */
 	public ReturnParam finishDay(Map<String, Object> dateMap, Long tenantId, String enterCd, String empNo, String userId) throws Exception;
+
+	/**
+	 * 일마감 종료일 체크
+	 * @param dateMap
+	 * @param tenantId
+	 * @param enterCd
+	 * @param empNo
+	 * @param userId
+	 * @return
+	 * @throws Exception
+	 */
+	public Map<String, Object> checkFinDay(Map<String, Object> dateMap, Long tenantId, String enterCd, String empNo, String userId) throws Exception;
 	
 }
