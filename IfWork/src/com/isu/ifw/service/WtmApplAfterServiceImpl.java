@@ -393,7 +393,7 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 							dayResult.setEnterCd(enterCd);
 							dayResult.setYmd(otAppl.getYmd());
 							dayResult.setSabun(otAppl.getSabun());
-							dayResult.setPlanSdate(otNightSdate);
+							dayResult.setPlanSdate(otNightEdate);
 							dayResult.setPlanEdate(otAppl.getOtEdate());
 							 
 							reCalc.put("shm", sdf.format(otNightEdate));
