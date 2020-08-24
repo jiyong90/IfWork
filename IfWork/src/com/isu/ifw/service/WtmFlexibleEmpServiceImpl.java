@@ -4478,7 +4478,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		return rp;
 	}
 	
-	@Transactional
 	@Override
 	public Map<String, Object> checkFinDay(Map<String, Object> paramMap, Long tenantId, String enterCd, String empNo, String userId) throws Exception{
 		

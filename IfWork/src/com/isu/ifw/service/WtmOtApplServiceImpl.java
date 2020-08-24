@@ -1472,9 +1472,15 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 							
 						//취소처리완료	
 						} else if(APPL_STATUS_CANCEL.equals(map.get("applStatusCd").toString())) {
-							rp = wtmApplAfterService.applyCanAfter(tenantId, enterCd, applId, map, sabun, userId);
+							rp = wtmApplAfterService.applyOtCanAdminAfter(tenantId, enterCd, applId, map, sabun, userId);
 						
 						}
+						
+						if(rp.getStatus().equals("FAIL")) {
+							throw new Exception(rp.get("message").toString());
+						}
+						
+						
 						//WTM_APPL 테이블 결재 상태값 변경
 						map.put("appr_status_cd", APPR_STATUS_APPLY);
 						wtmOtApplMapper.saveApplLineSts(map);
