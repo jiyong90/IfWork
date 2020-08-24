@@ -56,7 +56,7 @@ import com.isu.ifw.vo.ReturnParam;
 import com.isu.ifw.vo.WtmApplLineVO;
 
 @Service("wtmOtApplService")
-public class WtmOtApplServiceImpl implements WtmApplService {
+public class WtmApplAfterServiceImpl implements WtmApplService {
 	
 	private final Logger logger = LoggerFactory.getLogger("ifwFileLog");
 
