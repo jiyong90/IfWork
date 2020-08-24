@@ -25,4 +25,6 @@ public interface WtmApplAfterService {
 	public ReturnParam applyStsAfter(Long tenantId, String enterCd, Long applId, Map<String, Object> paramMap, String sabun, String userId) throws Exception;
 
 	public ReturnParam applyCanAfter(Long tenantId, String enterCd, Long applId, Map<String, Object> paramMap,String sabun, String userId) throws Exception;
+	
+	public ReturnParam applyOtCanAdminAfter(Long tenantId, String enterCd, Long applId, Map<String, Object> paramMap,String sabun, String userId) throws Exception;
 }
