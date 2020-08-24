@@ -31,8 +31,18 @@ import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
 
+<<<<<<< HEAD
 @Service("WtmApplAfterService")
 public class WtmApplAfterServiceImpl implements WtmApplAfterService {
+=======
+<<<<<<< HEAD
+@Service("WtmApplAfterService")
+public class WtmApplAfterServiceImpl implements WtmApplAfterService {
+=======
+@Service("wtmOtApplService")
+public class WtmApplAfterServiceImpl implements WtmApplService {
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
+>>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 	
 	private final Logger logger = LoggerFactory.getLogger("ifwFileLog");
 	
