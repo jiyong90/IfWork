@@ -2105,6 +2105,109 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		wtmInterfaceMapper.insertIfHis(reqMap);
 	}
 	
+	@Async("threadPoolTaskExecutor")
+	public void setTaaApplBatchIntf(Long tenantId) {
+		logger.debug("setTaaApplBatchIntf : " + tenantId);
+		
+		if(this.saveWtmIfTaaHisOnlyTaaApplPpType(tenantId)) {
+			//
+		}
+    	
+        logger.debug("WtmInterfaceServiceImpl setTaaApplBatchIf end");
+	}
+	@Transactional
+	public boolean saveWtmIfTaaHisOnlyTaaApplPpType(Long tenantId) {
+		
+		boolean isOK = true;
+		// 인터페이스 결과 저장용
+    	String retMsg = null;
+    	int resultCnt = 0;
+    	String ifType = "TAA_APPL_PP";
+    	Map<String, Object> ifHisMap = new HashMap<>();
+    	ifHisMap.put("tenantId", tenantId);
+    	ifHisMap.put("ifItem", ifType);
+    	ifHisMap.put("ifStatus", "OK");
+    	// 인터페이스용 변수
+    	String lastDataTime = null;
+    	String nowDataTime = null;
+    	HashMap<String, Object> getDateMap = null;
+    	HashMap<String, Object> getIfMap = null;
+    	List<Map<String, Object>> getIfList = null;
+    	
+    	// 최종 자료 if 시간 조회
+    	try {
+    		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
+    		lastDataTime = getDateMap.get("lastDate").toString();
+    		nowDataTime = getDateMap.get("nowDate").toString();
+    		
+    		try {
+        		String param = "?lastDataTime="+lastDataTime;
+	        	String ifUrl = setIfUrl(tenantId, "/taaAppl", param); 
+	        	getIfMap = getIfRt(ifUrl);
+		   		
+		   		if (getIfMap != null && getIfMap.size() > 0) {
+		   			String ifMsg = getIfMap.get("message").toString();
+		   			getIfList = (List<Map<String, Object>>) getIfMap.get("ifData");
+		   	    	if(retMsg == null && getIfList != null && getIfList.size() > 0) {
+		   	    		System.out.println("WtmInterfaceServiceImpl tot " + getIfList.size());
+		   	    		
+		   				SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+		   				sdf.format(new Date());
+		   				String yyyymmddhhmiss= sdf.format(new Date());
+		   				
+		   	    		for(int l=0; l<getIfList.size(); l++) {
+		   	    			WtmIfTaaHis data = new WtmIfTaaHis();
+		   	    			data.setTenantId(tenantId);
+		   	    			data.setEnterCd(getIfList.get(l).get("ENTER_CD").toString());
+		   	    			data.setSabun(getIfList.get(l).get("SABUN").toString());
+		   	    			data.setStartYmd(getIfList.get(l).get("S_YMD").toString());
+		   	    			data.setEndYmd(getIfList.get(l).get("E_YMD").toString());
+		   	    			data.setWorkTimeCode(getIfList.get(l).get("GNT_CD").toString());
+		   	    			//data.setIfYmdhis(yyyymmddhhmiss);
+		   	    			data.setIfYmdhis(getIfList.get(l).get("APPL_YMD").toString());
+		   	    			if(getIfList.get(l).get("REQ_S_HM") != null) {
+		   	    				data.setStartHm(getIfList.get(l).get("REQ_S_HM").toString());
+		   	    			} else {
+		   	    				data.setStartHm("");
+		   	    			}
+		   	    			if(getIfList.get(l).get("REQ_E_HM") != null) {
+		   	    				data.setEndHm(getIfList.get(l).get("REQ_E_HM").toString());
+		   	    			} else {
+		   	    				data.setEndHm("");
+		   	    			}
+		   	    			data.setApplNo(getIfList.get(l).get("APPL_SEQ").toString());
+		   	    			data.setStatus(getIfList.get(l).get("APPL_STATUS_CD").toString());
+		   	    			data.setIfStatus("");
+		   	    			data.setIfMsg("");
+		   	    			wtmIfTaaHisRepo.save(data);
+		   	    			System.out.println("WtmInterfaceServiceImpl get " + l + " "+ data.toString());
+		   	    		}
+		   	    	}
+		   		} else {
+		   			retMsg = "TAA_RESULT get : If 데이터 없음";
+		   			ifHisMap.put("ifStatus", "OK");
+		   		}
+        	} catch(Exception e) {
+        		retMsg = "TAA_RESULT get : If 서버통신 오류";
+        		ifHisMap.put("ifStatus", "ERR");
+        		isOK = false;
+        	}
+        	
+    	} catch(Exception e) {
+    		retMsg = "TAA_RESULT get : 최종갱신일 조회오류";
+    		ifHisMap.put("ifStatus", "ERR");
+    		isOK = false;
+    	} finally {
+			// WTM_IF_HIS 테이블에 결과저장
+			ifHisMap.put("updateDate", nowDataTime);
+   			ifHisMap.put("ifEndDate", lastDataTime);
+			ifHisMap.put("ifMsg", retMsg);
+			wtmInterfaceMapper.insertIfHis(ifHisMap);
+		} 
+    	
+    	return isOK;
+	}
+	
 	@Override
 	@Transactional
 	@Async("threadPoolTaskExecutor")

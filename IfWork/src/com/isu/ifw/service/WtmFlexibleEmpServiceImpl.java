@@ -2646,10 +2646,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					Map<String, Object> chkMap = new HashMap();
 					
 					if("BASE".equals(timeTypeCd)) {
+						/* 관리자는 일단 체크 하지 않는다. ....  .. . . . .  .
 						Map<String, Object> result2 = flexEmpMapper.checkBaseWorktimeMgr(l);
 						if(result2!=null && result2.get("isValid")!=null && result2.get("isValid").equals("0")) {
 							retMsg = l.get("sabun").toString() + "," + l.get("ymd").toString() + ", "+ result2.get("totalWorktime").toString() + "시간의 소정근로시간을 넘을 수 없습니다.";
 						}
+						*/
 					} else {
 						// ot시간검증
 						chkMap.put("ymd", l.get("ymd").toString());
