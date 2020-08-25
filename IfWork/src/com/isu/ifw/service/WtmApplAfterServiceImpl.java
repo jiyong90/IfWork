@@ -19,6 +19,8 @@ import com.isu.ifw.entity.WtmOtAppl;
 import com.isu.ifw.entity.WtmOtCanAppl;
 import com.isu.ifw.entity.WtmOtSubsAppl;
 import com.isu.ifw.entity.WtmPropertie;
+import com.isu.ifw.entity.WtmTimeCdMgr;
+import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
@@ -27,6 +29,8 @@ import com.isu.ifw.repository.WtmOtApplRepository;
 import com.isu.ifw.repository.WtmOtCanApplRepository;
 import com.isu.ifw.repository.WtmOtSubsApplRepository;
 import com.isu.ifw.repository.WtmPropertieRepository;
+import com.isu.ifw.repository.WtmTimeCdMgrRepository;
+import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
@@ -63,6 +67,11 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 	@Autowired
 	WtmOtCanApplRepository wtmOtCanApplRepo;
 	
+	@Autowired private WtmWorkCalendarRepository workCalendarRepo;
+	
+	@Autowired private WtmTimeCdMgrRepository timeCdMgrRepo;
+	
+
 	@Override
 	public ReturnParam applyStsAfter(Long tenantId, String enterCd, Long applId, Map<String, Object> paramMap, String sabun, String userId) throws Exception {
 		
@@ -101,6 +110,9 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 			}
 			
 			for(WtmOtAppl otA : otApplList) {
+				//otA.getYmd()
+				WtmWorkCalendar c = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, otA.getYmd());
+				WtmTimeCdMgr timeCdMgr = timeCdMgrRepo.findById(c.getTimeCdMgrId()).get();
 				WtmOtAppl otAppl = new WtmOtAppl();
 				otAppl.setApplId(otA.getApplId());
 				otAppl.setCancelYn(otA.getCancelYn());
@@ -204,7 +216,8 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 				}
 				boolean isOtSave = true;
 				//잔여소정근로시간이 있을 경우 BASE로 넣어줘야한다 나머지는 OT로 
-				if(restMin > 0) {
+				//유급 휴일은 무조건 OT로 인정해야한다.
+				if(restMin > 0 && !"Y".equals(timeCdMgr.getPaidYn())) {
 					//dayResult.setPlanMinute(Integer.parseInt(otAppl.getOtMinute()));
 					Map<String, Object> reCalc = new HashMap<>();
 					reCalc.put("tenentId", tenantId);

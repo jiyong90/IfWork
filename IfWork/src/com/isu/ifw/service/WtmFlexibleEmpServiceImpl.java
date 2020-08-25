@@ -1988,6 +1988,16 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					logger.debug("3. 간주근무의 경우 출근 타각데이터를 계획 데이터로 생성해 준다. maxPlanEdate : " +  maxPlanEdate_REGA); 
 				}
 			}
+			
+			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
+				if(minPlanSdate_BASE == null || minPlanSdate_BASE.compareTo(r.getPlanSdate()) > 0) {
+					minPlanSdate_BASE = r.getPlanSdate();
+				}
+				if(maxPlanEdate_BASE == null || maxPlanEdate_BASE.compareTo(r.getPlanEdate()) < 0 ) {
+					maxPlanEdate_BASE = r.getPlanEdate();
+				}
+			}
+			
 
 			
 			//출근 자동 생성
@@ -2360,6 +2370,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							
 							r.setUpdateId("findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd");
 							workDayResultRepo.save(r);
+							
 						}
 					}
 				}
@@ -2473,11 +2484,111 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			 * type이 plan이면 계획데이터를 생성한다. 
 			 * 인정 데이터 생성을 위함
 			 */
-			
-			paramMap.put("type", "APPR");paramMap.put("taaInfoCd", "BREAK");
-			try { logger.debug("16. Time타입 휴게시간 일 경우만 / type이 plan이면 계획데이터를 생성한다.  인정 데이터 생성을 위함  " + mapper.writeValueAsString(paramMap) + "call P_WTM_WORK_DAY_RESULT_TIME_C"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-			flexEmpMapper.createWorkDayResultOfTimeType(paramMap);
-			
+			if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
+				try { logger.debug("16. Time타입 휴게시간 일 경우만 / type이 plan이면 계획데이터를 생성한다.  인정 데이터 생성을 위함  " + mapper.writeValueAsString(paramMap) + "call P_WTM_WORK_DAY_RESULT_TIME_C"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+				
+				//찢어져서 생긴 데이터들을 합산해서 만들어준다. 
+				List<String> timeTypeCds = new ArrayList<String>();
+				timeTypeCds.add(WtmApplService.TIME_TYPE_BASE);
+				timeTypeCds.add(WtmApplService.TIME_TYPE_FIXOT);
+				timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
+				timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
+				List<WtmWorkDayResult> timeTypeResult = workDayResultRepo.findByTimeTypeCdInAndTenantIdAndEnterCdAndSabunAndYmdAndApprSdateIsNotNullOrderByApprSdateAsc(timeTypeCds, tenantId, enterCd, sabun, calendar.getYmd());
+				
+				int baseApprMinute = 0;
+				int fixotApprMinute = 0;
+				int otApprMinute = 0;
+				int nightApprMinute = 0;
+
+				int sumApprMinute = 0;
+				List<String> timeTypeOrd = new ArrayList<String>();
+				for(WtmWorkDayResult r : timeTypeResult) {
+					
+					if(timeTypeOrd.indexOf(r.getTimeTypeCd()) == -1 ) {
+						timeTypeOrd.add(r.getTimeTypeCd());
+					}
+					
+					if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
+						baseApprMinute += (r.getApprMinute() != null)?r.getApprMinute():0;
+					}else if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT)) {
+						fixotApprMinute += (r.getApprMinute() != null)?r.getApprMinute():0;
+					}else if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)) {
+						otApprMinute += (r.getApprMinute() != null)?r.getApprMinute():0;
+					}else if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)) {
+						nightApprMinute += (r.getApprMinute() != null)?r.getApprMinute():0;
+					}
+					
+					sumApprMinute += (r.getApprMinute() != null)?r.getApprMinute():0;
+				}
+				int breakMinute = 0;
+				if(sumApprMinute > 0) {
+					breakMinute = calcService.getBreakMinuteIfBreakTimeTIME(timeCdMgr.getTimeCdMgrId(), sumApprMinute);
+				}
+				if(breakMinute > 0) {
+					//총근무시간의 휴게시간을 구하고 이를.. 어떤 휴게시간으로 적용할지 선택한다. 
+					//BASE와 OT가 있는 날일 경우 
+					//breakMinute = 60분 이고BASE가 30분만 있다면 또 찢어야 한다. ㅠㅠ
+					// 30분씩.. 만들어야한다.
+					for(String ttc : timeTypeOrd) {
+						if(ttc.equals(WtmApplService.TIME_TYPE_BASE) && baseApprMinute > 0) {
+							String taaInfoCd = "BREAK";
+							if(baseApprMinute < breakMinute) {
+								int createMinute = baseApprMinute;
+								calcService.createWorkDayResultForBreakTime(tenantId, enterCd, sabun, calendar.getYmd(), taaInfoCd, "APPR", createMinute, "createWorkDayResultForBreakTime");
+								breakMinute = breakMinute - baseApprMinute;
+							}else {
+								int createMinute = breakMinute;
+								calcService.createWorkDayResultForBreakTime(tenantId, enterCd, sabun, calendar.getYmd(), taaInfoCd, "APPR", createMinute, "createWorkDayResultForBreakTime");
+								breakMinute = 0;
+								break;
+							}
+						}else if(ttc.equals(WtmApplService.TIME_TYPE_FIXOT) && fixotApprMinute > 0) {
+							
+							String taaInfoCd = "BREAK_FIXOT";
+							if(fixotApprMinute < breakMinute) {
+								int createMinute = fixotApprMinute;
+								calcService.createWorkDayResultForBreakTime(tenantId, enterCd, sabun, calendar.getYmd(), taaInfoCd, "APPR", createMinute, "createWorkDayResultForBreakTime");
+								breakMinute = breakMinute - fixotApprMinute;
+							}else {
+								int createMinute = breakMinute;
+								calcService.createWorkDayResultForBreakTime(tenantId, enterCd, sabun, calendar.getYmd(), taaInfoCd, "APPR", createMinute, "createWorkDayResultForBreakTime");
+								breakMinute = 0;
+								break;
+							}
+							
+						}else if(ttc.equals(WtmApplService.TIME_TYPE_OT)  && otApprMinute > 0) {
+
+							String taaInfoCd = "BREAK_OT";
+							if(otApprMinute < breakMinute) {
+								int createMinute = otApprMinute;
+								calcService.createWorkDayResultForBreakTime(tenantId, enterCd, sabun, calendar.getYmd(), taaInfoCd, "APPR", createMinute, "createWorkDayResultForBreakTime");
+								breakMinute = breakMinute - otApprMinute;
+							}else {
+								int createMinute = breakMinute;
+								calcService.createWorkDayResultForBreakTime(tenantId, enterCd, sabun, calendar.getYmd(), taaInfoCd, "APPR", createMinute, "createWorkDayResultForBreakTime");
+								breakMinute = 0;
+								break;
+							}
+							
+						}else if(ttc.equals(WtmApplService.TIME_TYPE_NIGHT)  && nightApprMinute > 0) {
+
+							String taaInfoCd = "BREAK_NIGHT";
+							if(nightApprMinute < breakMinute) {
+								int createMinute = nightApprMinute;
+								calcService.createWorkDayResultForBreakTime(tenantId, enterCd, sabun, calendar.getYmd(), taaInfoCd, "APPR", createMinute, "createWorkDayResultForBreakTime");
+								breakMinute = breakMinute - nightApprMinute;
+							}else {
+								int createMinute = breakMinute;
+								calcService.createWorkDayResultForBreakTime(tenantId, enterCd, sabun, calendar.getYmd(), taaInfoCd, "APPR", createMinute, "createWorkDayResultForBreakTime");
+								breakMinute = 0;
+								break;
+							}
+							
+						}
+					}
+				} 
+				
+			}
 			
 			/**
 			 * 대체휴일 생성 

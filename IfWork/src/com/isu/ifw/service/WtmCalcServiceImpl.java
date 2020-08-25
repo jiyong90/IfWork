@@ -950,10 +950,10 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					}
 				}
 				
-				if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
+				//if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
 					// workDayResult 에 휴게시간을 만들어 준다. 
-					this.createWorkDayResultForBreakTime(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), (timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE))?"BREAK":"BREAK_FIXOT", "APPR", sumBreakMinute, "createWorkDayResultForBreakTime");
-				}
+				//	this.createWorkDayResultForBreakTime(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), (timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE))?"BREAK":"BREAK_FIXOT", "APPR", sumBreakMinute, "createWorkDayResultForBreakTime");
+				//}
 				
 				logger.debug("createFixOt end");
 			}else {
@@ -1499,10 +1499,10 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			
 			workDayResultRepo.save(res);
 			
-			if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
+			//if(breakTypeCd.equals(WtmApplService.BREAK_TYPE_TIME)) {
 				// workDayResult 에 휴게시간을 만들어 준다. 
-				this.createWorkDayResultForBreakTime(tenantId, enterCd, sabun, ymd, (timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE))?"BREAK":"BREAK_FIXOT", "APPR", breakMinute, userId);
-			}
+			//	this.createWorkDayResultForBreakTime(tenantId, enterCd, sabun, ymd, (timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE))?"BREAK":"BREAK_FIXOT", "APPR", breakMinute, userId);
+			//}
 			
 		}
 		}catch(Exception e) {
@@ -1521,8 +1521,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	 */
 	@Override
 	public void createWorkDayResultForBreakTime(Long tenantId, String enterCd, String sabun, String ymd, String taaInfoCd, String type, int breakMinute, String userId ) {
-		WtmWorkCalendar workCalendar = workCalandarRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndBreakTypeCd(tenantId, enterCd, sabun, ymd, WtmApplService.BREAK_TYPE_TIME);
-		if(workCalendar != null) {
+		//WtmWorkCalendar workCalendar = workCalandarRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndBreakTypeCd(tenantId, enterCd, sabun, ymd, WtmApplService.BREAK_TYPE_TIME);
+		//if(workCalendar != null) {
 			WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, taaInfoCd);
 			String taaCd = taaCode.getTaaCd();
 			
@@ -1550,7 +1550,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				}
 			}
 			
-		}
+		//}
 	}
 	@Override
 	public int WtmCalcMinute(String shm, String ehm, String limitShm, String limitEhm, Integer unitMinute) {
