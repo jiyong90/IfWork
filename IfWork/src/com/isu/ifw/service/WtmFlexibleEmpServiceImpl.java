@@ -4247,8 +4247,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			Map<String, Object> searchMap = wtmFlexibleApplyMgrMapper.setApplyEmpId(searchSabun);
 			searchSabun.put("flexibleEmpId", Long.parseLong(searchMap.get("flexibleEmpId").toString()));
 			
+			//BASE 뿐만 아니라 WORKTEAM 도 가지고 와야 함.
+			List<String> workTypeCds = new ArrayList<String>();
+			workTypeCds.add("BASE");
+			workTypeCds.add("WORKTEAM");
+			
 			WtmFlexibleEmp emp = new WtmFlexibleEmp();
-			List<WtmFlexibleEmp> empList = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCd(tenantId, enterCd, sabun, sYmd, eYmd, "BASE");
+			List<WtmFlexibleEmp> empList = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCds(tenantId, enterCd, sabun, sYmd, eYmd, workTypeCds);
 			if(empList != null) {
 				for(WtmFlexibleEmp e : empList) {
 					//신청기간내에 시작 종료가 포함되어있을 경우

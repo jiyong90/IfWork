@@ -58,4 +58,7 @@ public interface WtmFlexibleEmpRepository extends JpaRepository<WtmFlexibleEmp, 
 	
 	@Query(nativeQuery = true)
 	public WtmFlexibleEmpCalc getTotalWorkMinuteAndRealWorkMinute(@Param("tenantId") Long tenantId, @Param("enterCd") String enterCd, @Param("sabun") String sabun, @Param("symd") String symd);
+	
+	@Query("SELECT E FROM WtmFlexibleEmp E WHERE E.tenantId = ?1 AND E.enterCd = ?2 AND E.sabun = ?3 AND (?4 BETWEEN E.symd AND E.eymd OR  ?5 BETWEEN E.symd AND E.eymd) AND E.workTypeCd IN ?6 ")
+	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCds(Long tenantId, String enterCd, String sabun, String symd, String eymd, List<String> workTypeCd);
 }
