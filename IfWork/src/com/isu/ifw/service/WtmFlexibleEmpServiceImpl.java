@@ -4557,28 +4557,33 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					paramMap.put("eymd", closeymd);				
 					paramMap.put("pId", userId);
 					
-					Map<String, Object> reasultO = flexEmpMapper.getWorkDayResultO(paramMap);
+					List<Map<String, Object>> reasultOList = flexEmpMapper.getWorkDayResultO(paramMap);
 					
-					if(reasultO != null && reasultO.size() > 0) {
-						flexEmpMapper.deleteWorkDayResultBase(paramMap);
-						
-						Date sd = WtmUtil.toDate(reasultO.get("planSdate").toString(), "yyyyMMddHHmm");
-						Date ed = WtmUtil.toDate(reasultO.get("planEdate").toString(), "yyyyMMddHHmm");
-						
-						String sHm = WtmUtil.parseDateStr(sd, "HHmm");
-						String eHm = WtmUtil.parseDateStr(ed, "HHmm");
-						paramMap.put("shm", sHm);
-						paramMap.put("ehm", eHm);
-						
-						paramMap.put("symd", WtmUtil.parseDateStr(sd, "yyyyMMdd"));
-						paramMap.put("eymd", WtmUtil.parseDateStr(ed, "yyyyMMdd"));
-						
-						Map<String, Object> calcMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun);  // 휴개시간 제외 근무시간 조회
-						
-						paramMap.put("calcMinute", calcMinuteMap.get("calcMinute"));
-						
-						//BASE 재생성
-						flexEmpMapper.insertWorkDayRtBaseMinMax(paramMap);
+					if(reasultOList != null && reasultOList.size() > 0) {
+						for(Map<String, Object> reasultO :  reasultOList) {
+							
+							paramMap.put("timeTypeCd", reasultO.get("timeTypeCd"));
+							
+							flexEmpMapper.deleteWorkDayResultWorkType(paramMap);
+							
+							Date sd = WtmUtil.toDate(reasultO.get("planSdate").toString(), "yyyyMMddHHmm");
+							Date ed = WtmUtil.toDate(reasultO.get("planEdate").toString(), "yyyyMMddHHmm");
+							
+							String sHm = WtmUtil.parseDateStr(sd, "HHmm");
+							String eHm = WtmUtil.parseDateStr(ed, "HHmm");
+							paramMap.put("shm", sHm);
+							paramMap.put("ehm", eHm);
+							
+							paramMap.put("symd", WtmUtil.parseDateStr(sd, "yyyyMMdd"));
+							paramMap.put("eymd", WtmUtil.parseDateStr(ed, "yyyyMMdd"));
+							
+							Map<String, Object> calcMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun);  // 휴개시간 제외 근무시간 조회
+							
+							paramMap.put("calcMinute", calcMinuteMap.get("calcMinute"));
+							
+							//BASE, FIXOT 재생성
+							flexEmpMapper.insertWorkDayRtBaseMinMax(paramMap);
+						}
 						
 					} 
 
