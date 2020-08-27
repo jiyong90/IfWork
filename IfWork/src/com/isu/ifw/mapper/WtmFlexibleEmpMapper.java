@@ -533,14 +533,14 @@ public interface WtmFlexibleEmpMapper {
 	 * @param paramMap
 	 * @return
 	 */
-	public Map<String, Object> getWorkDayResultO(Map<String, Object> paramMap);
+	public List<Map<String, Object>> getWorkDayResultO(Map<String, Object> paramMap);
 	
 	
 	/**
 	 * @param paramMap
-	 * WORK_DAY_RESULT BASE 삭제
+	 * WORK_DAY_RESULT 삭제
 	 */
-	public void deleteWorkDayResultBase(Map<String, Object> paramMap);
+	public void deleteWorkDayResultWorkType(Map<String, Object> paramMap);
 	
 	/**
 	 * @param paramMap
