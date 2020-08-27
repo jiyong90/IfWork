@@ -1274,11 +1274,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 	@Override
 	public void calcApprDayInfo1(Long tenantId, String enterCd, String sabun, String ymd) {
-		
+		WtmFlexibleStdMgr flexStdMgr = flexStdMgrRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, ymd);
 		List<String> timeTypeCd = new ArrayList<>();
 		timeTypeCd.add(WtmApplService.TIME_TYPE_LLA);
 		timeTypeCd.add(WtmApplService.TIME_TYPE_EXCEPT);
-		timeTypeCd.add(WtmApplService.TIME_TYPE_FIXOT); //20200805 jyp 추가
+		if(flexStdMgr.getFixotUseType().equals("ALL")) {
+			timeTypeCd.add(WtmApplService.TIME_TYPE_FIXOT); //20200805 jyp 추가
+		}
 		
 		logger.debug("1. 지각 조퇴 무단결근 고정 오티 데이터 삭제 ", "timeTypeCd : " + WtmApplService.TIME_TYPE_LLA + ", sabun : " + sabun);
 		//지각 조퇴 무단결근 데이터 삭제

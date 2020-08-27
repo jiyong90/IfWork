@@ -2,7 +2,6 @@ package com.isu.ifw.service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -1942,8 +1941,13 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	 * @param unitMinute
 	 * @return
 	 */
+	@Override
 	public Date P_WTM_DATE_ADD_FOR_BREAK_MGR(Date sDate, int addMinute, long timeCdMgrId, Integer unitMinute) {
 		
+		boolean isNegative = false;
+		if(addMinute < 0) {
+			isNegative = true;
+		}
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(sDate);
 		cal.add(Calendar.MINUTE, addMinute);
@@ -1955,7 +1959,14 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		
 		int breakMinute = 0; 
 		String maxEhm =  null;
-		Map<String, Object> breakMap = this.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgrId);
+		
+		Date cSdate = sDate;
+		Date cEdate = eDate;
+		if(isNegative) {
+			cSdate = eDate;
+			cEdate = sDate;
+		}
+		Map<String, Object> breakMap = this.getBreakMinuteIfBreakTimeMGR(cSdate, cEdate, timeCdMgrId);
 		if(breakMap != null) {
 			breakMinute = (int) breakMap.get("breakMinute");
 			if(breakMinute > 0) {
@@ -1964,10 +1975,17 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		}
 		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: breakMinute = "+ breakMinute);
 		cal = Calendar.getInstance();
-		cal.setTime(sDate);
-		cal.add(Calendar.MINUTE, addMinute+breakMinute);
+		cal.setTime(cSdate);
+		int calMinute = (isNegative)?addMinute-breakMinute:addMinute+breakMinute;
+		cal.add(Calendar.MINUTE, calMinute);
+		
 		Date calcEdate = cal.getTime();
-		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: calcEdate = "+ calcEdate);
+		
+		if(isNegative) {
+			cEdate = cSdate;
+			cSdate = calcEdate;
+		}
+		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: cSdate = "+ cSdate + " cEdate = " + cEdate);
 		
 		if(maxEhm != null) {
 			SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
@@ -1975,7 +1993,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			breakMap = null;
 			int addBreakMinute = 0;
 			try {
-				breakMap = this.getBreakMinuteIfBreakTimeMGR(ymdhm.parse(ymd.format(sDate)+maxEhm), calcEdate, timeCdMgrId);
+				breakMap = this.getBreakMinuteIfBreakTimeMGR(ymdhm.parse(ymd.format(cSdate)+maxEhm), cEdate, timeCdMgrId);
 			} catch (ParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -1985,9 +2003,17 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			}
 			logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: addBreakMinute = "+ addBreakMinute);
 			if(addBreakMinute > 0) {
-				return P_WTM_DATE_ADD_FOR_BREAK_MGR(calcEdate, addBreakMinute, timeCdMgrId, unitMinute);
+				if(isNegative) {
+					return P_WTM_DATE_ADD_FOR_BREAK_MGR(cSdate, addBreakMinute * -1, timeCdMgrId, unitMinute);
+				}else {
+					return P_WTM_DATE_ADD_FOR_BREAK_MGR(cEdate, addBreakMinute, timeCdMgrId, unitMinute);
+				}
 			}
 		}
-		return calcEdate;
+		if(isNegative) {
+			return cSdate;
+		}else {
+			return cEdate;
+		}
 	}
 }
