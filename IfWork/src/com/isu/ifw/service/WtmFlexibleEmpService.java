@@ -201,7 +201,7 @@ public interface WtmFlexibleEmpService {
 	 * @param sabun
 	 * @param ymd
 	 */
-	public void calcApprDayInfo1(Long tenantId, String enterCd, String sabun, String ymd, WtmFlexibleStdMgr flexStdMgr);
+	public void calcApprDayInfo1(Long tenantId, String enterCd, String sabun, String ymd);
 	public void calcApprDayInfo2(WtmWorkCalendar calendar,WtmFlexibleStdMgr flexStdMgr,WtmTimeCdMgr timeCdMgr);
 	/**
 	 * BASE,OT,FIXOT,NIGHT 근무시간에 대해 add 로 들어오는 타임 구간을 잘라서 만들어 준다. 
