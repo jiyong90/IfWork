@@ -660,16 +660,21 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		paramMap.put("sdate", sd);
 		paramMap.put("edate", ed);
 		
-		//연장근무 신청은 기준일 전/후일의 근무계획시간 사이에만 신청할 수 있음
-		Map<String, Object> chekPlan = wtmOtApplMapper.getCheckPlanDate(paramMap);
-		Date tempSd = WtmUtil.toDate(chekPlan.get("minPlan").toString(), "yyyyMMddHHmm");
-		Date tempEd = WtmUtil.toDate(chekPlan.get("maxPlan").toString(), "yyyyMMddHHmm");
-		//시작시각, 종료시각이 무조건 tempSd, tempEd 사이에 있어야 함, 조건문은 나중에 바꿔주시오~
-		if((tempSd.compareTo(sd) > 0 ) || (tempEd.compareTo(sd) < 0) || (tempSd.compareTo(ed) > 0) || (tempEd.compareTo(ed) < 0)) {
+//		//연장근무 신청은 기준일 전/후일의 근무계획시간 사이에만 신청할 수 있음
+//		Map<String, Object> chekPlan = wtmOtApplMapper.getCheckPlanDate(paramMap);
+//		Date tempSd = WtmUtil.toDate(chekPlan.get("minPlan").toString(), "yyyyMMddHHmm");
+//		Date tempEd = WtmUtil.toDate(chekPlan.get("maxPlan").toString(), "yyyyMMddHHmm");
+//		//시작시각, 종료시각이 무조건 tempSd, tempEd 사이에 있어야 함, 조건문은 나중에 바꿔주시오~
+//		if((tempSd.compareTo(sd) > 0 ) || (tempEd.compareTo(sd) < 0) || (tempSd.compareTo(ed) > 0) || (tempEd.compareTo(ed) < 0)) {
+//			rp.setFail("선택하신 근무일에 신청할 수 없는 연장근무 시간입니다.!!");
+//			return rp;
+//		}
+		
+		Map<String, Object> chekPlan = wtmOtApplMapper.getCheckPlanDateCnt(paramMap);
+		if(Integer.parseInt(chekPlan.get("cnt").toString()) > 0) {
 			rp.setFail("선택하신 근무일에 신청할 수 없는 연장근무 시간입니다.!!");
 			return rp;
 		}
-		
 		
 		Long applId = null;
 		if(paramMap.containsKey("applId") && paramMap.get("applId") != null && !paramMap.get("applId").equals("")) {
