@@ -168,10 +168,10 @@ public class WtmFlexibleEmpCalc {
     }
 	@Override
 	public String toString() {
-		return "WtmFlexibleEmp [flexibleEmpId=" + flexibleEmpId + ", tenantId=" + tenantId + ", enterCd=" + enterCd
+		return "WtmFlexibleEmpCalc [flexibleEmpId=" + flexibleEmpId + ", tenantId=" + tenantId + ", enterCd=" + enterCd
 				+ ", flexibleStdMgrId=" + flexibleStdMgrId + ", sabun=" + sabun + ", symd=" + symd + ", eymd=" + eymd
 				+ ", workTypeCd=" + workTypeCd + ", flexibleNm=" + flexibleNm + ", workMinute=" + workMinute
-				+ ", otMinute=" + otMinute + ", note=" + note + ", updateDate=" + updateDate + ", updateId=" + updateId
+				+ ", otMinute=" + otMinute + ", workHour=" + workHour + ", breakhour=" + breakhour + ", note=" + note + ", updateDate=" + updateDate + ", updateId=" + updateId
 				+ "]";
 	}
 	

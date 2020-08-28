@@ -1984,6 +1984,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		if(isNegative) {
 			cEdate = cSdate;
 			cSdate = calcEdate;
+		}else {
+			cEdate = calcEdate;
 		}
 		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: cSdate = "+ cSdate + " cEdate = " + cEdate);
 		

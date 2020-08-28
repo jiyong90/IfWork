@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.common.entity.CommTenantModule;
 import com.isu.ifw.common.repository.CommTenantModuleRepository;
 import com.isu.ifw.entity.WtmAppl;
@@ -2122,35 +2124,162 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	}
 	
 	@Async("threadPoolTaskExecutor")
-	public void setTaaApplBatchIntf(Long tenantId) {
-		logger.debug("setTaaApplBatchIntf : " + tenantId);
+	@Override
+	public void intfTaaAppl(Long tenantId) {
+		logger.debug("intfTaaAppl START ==================================== ");
+		logger.debug("intfTaaAppl : " + tenantId);
 		
 		if(this.saveWtmIfTaaHisOnlyTaaApplPpType(tenantId)) {
 
 			System.out.println("setTaaApplBatchIfPostProcess");
 			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn("OK"); 
 			if(list == null || list.size() == 0) {
-				System.out.println("setTaaApplBatchIfPostProcess 대상없음 종료");
+				logger.debug("setTaaApplBatchIfPostProcess 대상없음 종료");
 				return ;
 			}
-			System.out.println("setTaaApplBatchIfPostProcess 대상 " + list.size() + " 건");
+			logger.debug("intfTaaAppl 대상 " + list.size() + " 건");
+			Map<String, Map<String, List<WtmIfTaaHis>>> intfMap = new HashMap<String, Map<String, List<WtmIfTaaHis>>>();
+			//그룹핑을 한번 하자. 
 			for(WtmIfTaaHis data : list) {
-				try {
-					setTaaResult(data);
-					data.setIfStatus("OK");
-		    	} catch (Exception e) {
-		    		data.setIfStatus("FAIL");
-		    		data.setIfMsg(e.getMessage());
-				} finally {
-					wtmIfTaaHisRepo.save(data);
+				String key = ""+data.getTenantId()+data.getEnterCd()+data.getApplNo();
+				Map<String, List<WtmIfTaaHis>> s = null;
+				if(!intfMap.containsKey(key)) {
+					s = new HashMap<String, List<WtmIfTaaHis>>();
+					s.put(data.getSabun(), new ArrayList<WtmIfTaaHis>());
+					intfMap.put(key, s);
+				}else {
+					s = intfMap.get(key);
+					if(!s.containsKey(data.getSabun())) {
+						s.put(data.getSabun(), new ArrayList<WtmIfTaaHis>());
+					}
+				}
+				
+				List<WtmIfTaaHis> hiss = s.get(data.getSabun());
+				hiss.add(data);
+				s.put(data.getSabun(), hiss);
+				intfMap.put(key,s);
+			}
+			
+			ObjectMapper mapper = new ObjectMapper();
+			
+			try {
+				logger.debug("intfMap : " + mapper.writeValueAsString(intfMap));
+				
+			} catch (JsonProcessingException e1) {
+				e1.printStackTrace();
+			}
+			
+			if(intfMap != null && intfMap.size() > 0) {
+				//ifApplNo 묶음
+				for(String k : intfMap.keySet()) {
+					Map<String, List<WtmIfTaaHis>> empMap = intfMap.get(k);
+					Long tId = null;
+					String enterCd = null;
+					String applSabun = null;
+					String ifApplNo = null;
+					String status = null;
+					List<Map<String, Object>> works = new ArrayList<Map<String,Object>>();
+					//사원별 데이터 
+					for(String empSabun : empMap.keySet()) {
+						List<WtmIfTaaHis> taaHis = empMap.get(empSabun);
+					
+						/*
+						"worksDet" : [{ "workTimeCode" : ""
+										, "startYmd" : ""  //기준일이 없다.. 시작일을 기준일로  
+										, "endYmd" : ""
+										, "startHm" : ""
+										, "endHm" : ""
+									}]
+						 */
+						List<Map<String, Object>> worksDet = new ArrayList<Map<String,Object>>();
+						for(WtmIfTaaHis data : taaHis) {
+							//첫데이터를 담는다 기준이 없어서..
+							if(tId == null) { tId = data.getTenantId();}
+							if(enterCd == null) { enterCd = data.getEnterCd();}
+							if(applSabun == null) { applSabun = data.getSabun();}
+							if(ifApplNo == null) { ifApplNo = data.getApplNo();}
+							if(status == null) { status = data.getStatus();}
+							
+							SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+							Calendar cal1 = Calendar.getInstance();
+							Calendar cal2 = Calendar.getInstance();
+							try {
+								cal1.setTime(ymd.parse(data.getStartYmd()));
+								cal2.setTime(ymd.parse(data.getEndYmd()));
+							} catch (ParseException e) {
+								e.printStackTrace();
+							}
+							
+							while(cal1.compareTo(cal2) < 1) {
+								logger.debug("cal1 : " + cal1.getTime());
+								logger.debug("cal2 : " + cal2.getTime());
+								
+								Map<String, Object> det = new HashMap<>();
+								det.put("workTimeCode", data.getWorkTimeCode());
+								det.put("startYmd", ymd.format(cal1.getTime()));
+								det.put("endYmd", ymd.format(cal1.getTime()));
+								det.put("startHm", (data.getStartHm() != null)?data.getStartHm():"");
+								det.put("endHm", (data.getEndHm() != null)?data.getEndHm():"");
+								
+								worksDet.add(det);
+								
+								cal1.add(Calendar.DATE, 1);
+							}
+						}
+						Map<String, Object> empWork = new HashMap<String, Object>();
+						empWork.put("sabun", empSabun);
+						empWork.put("worksDet", worksDet);
+						works.add(empWork);
+					}
+					 
+					try {
+						
+						/*
+						 works [ 
+		  					{ "sabun " : "",
+		  					  "worksDet" : [{ "workTimeCode" : ""
+											, "startYmd" : ""  //기준일이 없다.. 시작일을 기준일로  
+											, "endYmd" : ""
+											, "startHm" : ""
+											, "endHm" : ""
+											}]
+							}
+						] 
+						 */
+						//setTaaResult(data);
+						
+						
+						logger.debug("intfTaaAppl tenantId : " + tId);
+						logger.debug("intfTaaAppl enterCd : " + enterCd);
+						logger.debug("intfTaaAppl applSabun : " + applSabun);
+						logger.debug("intfTaaAppl status : " + status);
+						logger.debug("intfTaaAppl ifApplNo : " + ifApplNo);
+						logger.debug("intfTaaAppl works : " + mapper.writeValueAsString(works));
+						
+						this.taaResult(tenantId, enterCd, applSabun, ifApplNo, status, works);
+						
+						List<WtmIfTaaHis> ifTaaHisList = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndApplNo(tId, enterCd, ifApplNo);
+						for(WtmIfTaaHis h : ifTaaHisList) {
+							h.setIfStatus("OK");
+						}
+						wtmIfTaaHisRepo.saveAll(ifTaaHisList);
+			    	} catch (Exception e) {
+			    		e.printStackTrace();
+			    		List<WtmIfTaaHis> ifTaaHisList = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndApplNo(tId, enterCd, ifApplNo);
+						for(WtmIfTaaHis h : ifTaaHisList) {
+				    		h.setIfStatus("FAIL");
+				    		h.setIfMsg(e.getMessage());
+						}
+						wtmIfTaaHisRepo.saveAll(ifTaaHisList);
+					}
 				}
 			}
 	    	
-	        System.out.println("setTaaApplBatchIfPostProcess end");
+			logger.debug("intfTaaAppl end");
 	        
 		}
-    	
-        logger.debug("WtmInterfaceServiceImpl setTaaApplBatchIf end");
+
+		logger.debug("intfTaaAppl END ==================================== ");
 	}
 	
 	/**
@@ -2173,7 +2302,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	 * @throws Exception
 	 */
 	@Transactional
-	public void taaResult(Long tenantId, String enterCd, String Applsabun, String ifApplNo, String status, List<Map<String, Object>> works) throws Exception {
+	@Override
+	public void taaResult(Long tenantId, String enterCd, String applSabun, String ifApplNo, String status, List<Map<String, Object>> works) throws Exception {
 		List<String> statusList = new ArrayList<String>();
 		statusList.add(WtmApplService.APPL_STATUS_APPLY_ING);
 		statusList.add(WtmApplService.APPL_STATUS_APPLY_REJECT);
@@ -2210,7 +2340,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				//신청 또는 승인 완료 건에 대해서만
 				if(WtmApplService.APPL_STATUS_APPLY_ING.equals(status) || WtmApplService.APPL_STATUS_APPR.equals(status)) {
 					appl = wtmApplRepo.findByTenantIdAndEnterCdAndIfApplNo(tenantId, enterCd, ifApplNo);
-					if(appl != null) {
+					if(appl == null) {
 						appl = new WtmAppl();
 						appl.setTenantId(tenantId);
 						appl.setEnterCd(enterCd);
@@ -2221,8 +2351,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						preApplStatus = appl.getApplStatusCd();
 					}
 					appl.setApplCd(WtmApplService.TIME_TYPE_TAA);
-					appl.setApplSabun(Applsabun);
-					appl.setApplInSabun(Applsabun);
+					appl.setApplSabun(applSabun);
+					appl.setApplInSabun(applSabun);
 					appl.setApplStatusCd(status);
 					appl.setUpdateId("TAA_INTF");
 					
@@ -2628,8 +2758,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		   	    			data.setStartYmd(getIfList.get(l).get("S_YMD").toString());
 		   	    			data.setEndYmd(getIfList.get(l).get("E_YMD").toString());
 		   	    			data.setWorkTimeCode(getIfList.get(l).get("GNT_CD").toString());
-		   	    			//data.setIfYmdhis(yyyymmddhhmiss);
-		   	    			data.setIfYmdhis(getIfList.get(l).get("APPL_YMD").toString());
+		   	    			data.setIfYmdhis(yyyymmddhhmiss);
+		   	    			//data.setIfYmdhis(getIfList.get(l).get("APPL_YMD").toString());
 		   	    			if(getIfList.get(l).get("REQ_S_HM") != null) {
 		   	    				data.setStartHm(getIfList.get(l).get("REQ_S_HM").toString());
 		   	    			} else {
@@ -2672,7 +2802,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     	
     	return isOK;
 	}
-	
+
 	@Override
 	@Transactional
 	@Async("threadPoolTaskExecutor")
