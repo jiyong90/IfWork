@@ -2258,14 +2258,14 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						
 						this.taaResult(tenantId, enterCd, applSabun, ifApplNo, status, works);
 						
-						List<WtmIfTaaHis> ifTaaHisList = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndApplNo(tId, enterCd, ifApplNo);
+						List<WtmIfTaaHis> ifTaaHisList = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndApplNoAndIfStatusNotIn(tId, enterCd, ifApplNo, "OK");
 						for(WtmIfTaaHis h : ifTaaHisList) {
 							h.setIfStatus("OK");
 						}
 						wtmIfTaaHisRepo.saveAll(ifTaaHisList);
 			    	} catch (Exception e) {
 			    		e.printStackTrace();
-			    		List<WtmIfTaaHis> ifTaaHisList = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndApplNo(tId, enterCd, ifApplNo);
+			    		List<WtmIfTaaHis> ifTaaHisList = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndApplNoAndIfStatusNotIn(tId, enterCd, ifApplNo, "OK");
 						for(WtmIfTaaHis h : ifTaaHisList) {
 				    		h.setIfStatus("FAIL");
 				    		h.setIfMsg(e.getMessage());
@@ -2304,6 +2304,13 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	@Transactional
 	@Override
 	public void taaResult(Long tenantId, String enterCd, String applSabun, String ifApplNo, String status, List<Map<String, Object>> works) throws Exception {
+		logger.debug("===============================taaResult======================================= ");
+		logger.debug("tenantId : " + tenantId);
+		logger.debug("enterCd : " + enterCd);
+		logger.debug("applSabun : " + applSabun);
+		logger.debug("ifApplNo : " + ifApplNo);
+		logger.debug("status : " + status);
+		
 		List<String> statusList = new ArrayList<String>();
 		statusList.add(WtmApplService.APPL_STATUS_APPLY_ING);
 		statusList.add(WtmApplService.APPL_STATUS_APPLY_REJECT);
@@ -2336,9 +2343,10 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
 		//기신청 데이터 
 		if(taaAppls == null || taaAppls.size() == 0) {
+			logger.debug("works.size() : " + works.size());
 			if(works != null && works.size() > 0) {
 				//신청 또는 승인 완료 건에 대해서만
-				if(WtmApplService.APPL_STATUS_APPLY_ING.equals(status) || WtmApplService.APPL_STATUS_APPR.equals(status)) {
+				if(WtmApplService.APPL_STATUS_APPLY_ING.equals(status) || WtmApplService.APPL_STATUS_APPR.equals(status) || WtmApplService.APPL_STATUS_CANCEL.equals(status)) {
 					appl = wtmApplRepo.findByTenantIdAndEnterCdAndIfApplNo(tenantId, enterCd, ifApplNo);
 					if(appl == null) {
 						appl = new WtmAppl();
@@ -2420,7 +2428,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 									taaApplDet.setTaaApplId(taaAppl.getTaaApplId());
 									taaApplDet.setTaaCd(taaCd);
 									taaApplDet.setSymd(symd);
-									taaApplDet.setEhm(ehm);
+									taaApplDet.setEymd(eymd);
 									taaApplDet.setShm(shm);
 									taaApplDet.setEhm(ehm); 
 									taaApplDet.setUpdateId("TAA_INTF");
@@ -2446,20 +2454,25 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			if(appl != null) {
 				preApplStatus = appl.getApplStatusCd();
 				if(!preApplStatus.equals(status)) {
+					/*
 					if(preApplStatus.equals(WtmApplService.APPL_STATUS_APPR) 
 							&& !status.equals(WtmApplService.APPL_STATUS_APPR_REJECT) 
 							&& !status.equals(WtmApplService.APPL_STATUS_CANCEL)) {
 						//기존 신청서의 상태가 완료일때 반려 또는 취소건이 아니면 상태 갱신을 할 수 없다 .
 						throw new RuntimeException("완료된 신청 건의 상태를 변경 시에는 취소(44) 또는 반려(22)일 때만 가능합니다.");
 					}
+					*/
 					appl.setApplStatusCd(status);
 					wtmApplRepo.save(appl);
 				}
 			}
 		}
 			
+		logger.debug("============================== HIS END ");
+		logger.debug("============================== preApplStatus : " + preApplStatus);
+		logger.debug("============================== status : " + status);
 		//이건 상태랑 같으면 무시
-		if(!preApplStatus.equals(status)) {
+		if(preApplStatus == null || !preApplStatus.equals(status)) {
 
 			if(status.equals(WtmApplService.APPL_STATUS_APPR) 
 					|| status.equals(WtmApplService.APPL_STATUS_APPR_REJECT) 
@@ -2467,6 +2480,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				for(Map<String, Object> w : works) {
 					List<Map<String, Object>> worksDet = (List<Map<String, Object>>) w.get("worksDet");
 					for(Map<String, Object> work : worksDet) {
+
+						logger.debug("============================== resetTaaResult : " + w.get("sabun")+" : " + work.get("startYmd")+"");
 						this.resetTaaResult(tenantId, enterCd, w.get("sabun")+"", work.get("startYmd")+"");
 					}
 					
@@ -2497,7 +2512,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			if(taaResults != null && taaResults.size() > 0 ) {
 				for(WtmWorkDayResult delResult : taaResults) {
 					logger.debug("resetTaaResult remove result : " + delResult.toString());
-					wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(tenantId, enterCd, ymd, sabun, delResult.getTimeTypeCd(), delResult.getTaaCd(), delResult.getPlanSdate(), delResult.getPlanEdate(), delResult.getApplId(), "remove");
+					if(delResult.getPlanSdate() == null) {
+						workDayResultRepo.delete(delResult);
+					}else {
+						wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(tenantId, enterCd, ymd, sabun, delResult.getTimeTypeCd(), delResult.getTaaCd(), delResult.getPlanSdate(), delResult.getPlanEdate(), delResult.getApplId(), "remove");
+					}
 				}
 			}
 			for(WtmTaaApplDet det : dets) {
@@ -2734,7 +2753,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
     		lastDataTime = getDateMap.get("lastDate").toString();
     		nowDataTime = getDateMap.get("nowDate").toString();
-    		
+    		lastDataTime = "20200801010101";
     		try {
         		String param = "?lastDataTime="+lastDataTime;
 	        	String ifUrl = setIfUrl(tenantId, "/taaAppl", param); 
@@ -2751,6 +2770,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		   				String yyyymmddhhmiss= sdf.format(new Date());
 		   				
 		   	    		for(int l=0; l<getIfList.size(); l++) {
+		   	    			if(!"15003".equals(getIfList.get(l).get("SABUN").toString())){
+		   	    				continue;
+		   	    			}
 		   	    			WtmIfTaaHis data = new WtmIfTaaHis();
 		   	    			data.setTenantId(tenantId);
 		   	    			data.setEnterCd(getIfList.get(l).get("ENTER_CD").toString());
