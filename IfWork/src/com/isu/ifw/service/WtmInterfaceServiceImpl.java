@@ -2709,11 +2709,14 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			String chkYmd = WtmUtil.parseDateStr(new Date(), null);
 			// 오늘 이전이면 근무마감을 다시 돌려야함.
 			if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd)) {
+				wtmFlexibleEmpService.resetCalcApprDayInfo(tenantId, enterCd, chkYmd, sabun, null);
+				/*
 				wtmFlexibleEmpService.calcApprDayInfo(tenantId
         											 , enterCd
         											 , ymd
         											 , ymd
         											 , sabun);
+				 */
 			}
 			
 			// 근무시간합산은 재정산한다
@@ -2753,7 +2756,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
     		lastDataTime = getDateMap.get("lastDate").toString();
     		nowDataTime = getDateMap.get("nowDate").toString();
-    		lastDataTime = "20200801010101";
+    		lastDataTime = "20200827010101";
     		try {
         		String param = "?lastDataTime="+lastDataTime;
 	        	String ifUrl = setIfUrl(tenantId, "/taaAppl", param); 
@@ -2770,7 +2773,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		   				String yyyymmddhhmiss= sdf.format(new Date());
 		   				
 		   	    		for(int l=0; l<getIfList.size(); l++) {
-		   	    			if(!"15003".equals(getIfList.get(l).get("SABUN").toString())){
+		   	    			if(!"19001".equals(getIfList.get(l).get("SABUN").toString())){
 		   	    				continue;
 		   	    			}
 		   	    			WtmIfTaaHis data = new WtmIfTaaHis();

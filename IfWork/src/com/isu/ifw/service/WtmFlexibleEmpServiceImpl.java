@@ -4623,7 +4623,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			timeTypeCds.add(WtmApplService.TIME_TYPE_BASE);
 			timeTypeCds.add(WtmApplService.TIME_TYPE_FIXOT);
 		}
-		List<WtmWorkDayResultO> resultOs = workDayResultORepository.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdIN(tenantId, enterCd, sabun, ymd, timeTypeCds);
+		List<WtmWorkDayResultO> resultOs = workDayResultORepository.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdIn(tenantId, enterCd, sabun, ymd, timeTypeCds);
 		if(resultOs != null && resultOs.size() > 0) {
 			for(WtmWorkDayResultO reasultO :  resultOs) {
 				List<WtmWorkDayResult> delResult =  workDayResultRepo.findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmd(reasultO.getTimeTypeCd(), tenantId, enterCd, sabun, ymd);
