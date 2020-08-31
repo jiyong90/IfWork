@@ -686,14 +686,8 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 		
 		if(otApplList!=null && otApplList.size()>0) {
 			for(WtmOtAppl otCanAppl : otApplList) {
-				Long deletedApplId = null;
 				
-				//휴게시간도 지워줌
-				List<String> deleteTimeTypeCds = new ArrayList<String>();
-				deleteTimeTypeCds.add("OT");
-				deleteTimeTypeCds.add("BREAK_OT");
-				deleteTimeTypeCds.add("BREAK_NIGHT");
-				List<WtmWorkDayResult> results =  wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, otCanAppl.getSabun(), deleteTimeTypeCds, otCanAppl.getYmd(), otCanAppl.getYmd());
+				List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndApplId(tenantId, enterCd, otCanAppl.getSabun(), otCanAppl.getApplId());
 				wtmWorkDayResultRepo.deleteAll(results);
 				
 			}
