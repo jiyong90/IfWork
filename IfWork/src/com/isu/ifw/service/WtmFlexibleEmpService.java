@@ -397,4 +397,6 @@ public interface WtmFlexibleEmpService {
 	 */
 	public Map<String, Object> checkFinDay(Map<String, Object> dateMap, Long tenantId, String enterCd, String empNo, String userId) throws Exception;
 	
+	public void resetCalcApprDayInfo(Long tenantId, String enterCd, String ymd, String sabun, List<String> timeTypeCds) ;
+	
 }

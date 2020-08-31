@@ -164,6 +164,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	
 	@Autowired private WtmTaaCodeRepository wtmTaaCodeRepository;
 
+	@Autowired private WtmWorkDayResultORepository workDayResultORepository;
 	
 	@Override
 	public List<Map<String, Object>> getFlexibleEmpList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
@@ -4513,7 +4514,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 
 	
-	@Transactional
+	//@Transactional
 	@Override
 	public ReturnParam finishDay(Map<String, Object> paramMap, Long tenantId, String enterCd, String empNo, String userId) throws Exception{
 		
@@ -4551,7 +4552,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 			try {
 				for (String closeymd : dates) {
-					
+					/*
 					paramMap.put("ymd", closeymd);				
 					paramMap.put("symd", closeymd);				
 					paramMap.put("eymd", closeymd);				
@@ -4588,6 +4589,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					} 
 
 					calcApprDayInfo(tenantId, enterCd, closeymd, closeymd, sabun);
+					*/
+					
+					resetCalcApprDayInfo(tenantId, enterCd, closeymd, sabun, null);
 					// 근무계획시간 합산
 					flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
 					
@@ -4609,6 +4613,42 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		Map<String, Object> returnMap = flexEmpMapper.checkFinDay(paramMap);
 		
 		return returnMap;
+	}
+	
+	@Transactional
+	@Override
+	public void resetCalcApprDayInfo(Long tenantId, String enterCd, String ymd, String sabun, List<String> timeTypeCds) {
+		if(timeTypeCds == null) {
+			timeTypeCds = new ArrayList<String>();
+			timeTypeCds.add(WtmApplService.TIME_TYPE_BASE);
+			timeTypeCds.add(WtmApplService.TIME_TYPE_FIXOT);
+		}
+		List<WtmWorkDayResultO> resultOs = workDayResultORepository.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdIN(tenantId, enterCd, sabun, ymd, timeTypeCds);
+		if(resultOs != null && resultOs.size() > 0) {
+			for(WtmWorkDayResultO reasultO :  resultOs) {
+				List<WtmWorkDayResult> delResult =  workDayResultRepo.findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmd(reasultO.getTimeTypeCd(), tenantId, enterCd, sabun, ymd);
+				
+				workDayResultRepo.deleteAll(delResult);
+
+				WtmWorkDayResult result = new WtmWorkDayResult();
+				result.setTenantId(reasultO.getTenantId());
+				result.setEnterCd(reasultO.getEnterCd());
+				result.setYmd(reasultO.getYmd());
+				result.setSabun(reasultO.getSabun());
+				result.setApplId(reasultO.getApplId());
+				result.setTaaCd(reasultO.getTaaCd());
+				result.setTimeTypeCd(reasultO.getTimeTypeCd());
+				result.setPlanSdate(reasultO.getPlanSdate());
+				result.setPlanEdate(reasultO.getPlanEdate());
+				result.setPlanMinute(reasultO.getPlanMinute());
+				result.setWorkYn(reasultO.getWorkYn());
+				
+				workDayResultRepo.save(result);
+			}
+			
+		}
+		
+		calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
 	}
 	
 }
