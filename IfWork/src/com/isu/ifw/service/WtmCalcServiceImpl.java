@@ -1856,7 +1856,10 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					if(maxEhm == null || Integer.parseInt(maxEhm) < Integer.parseInt(timeBreakMgr.getEhm())){
 						maxEhm = timeBreakMgr.getEhm();
 					}
-					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null, null, null);
+					//20~60 일 경우 40분이 나와야하는데 60분이 나와서 수정함.
+					//20200901 
+					//sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null, null, null);
+					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(shm, ehm, timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null);
 				}
 					
 			}
@@ -1970,6 +1973,33 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			cSdate = eDate;
 			cEdate = sDate;
 		}
+
+		// 1220 ~ 1250
+		// 30
+		// 1250 ~ 1320
+		// 10
+		// 1320 ~ 1330
+		// 0 이럼 되는데.
+
+		SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddhhmm");
+		Map<String, Object> breakMap = this.getBreakMinuteIfBreakTimeMGR(cSdate, cEdate, timeCdMgrId);
+		int addBreakMinute = 0;
+		if(breakMap != null) {
+			addBreakMinute = (int) breakMap.get("breakMinute");
+		}
+		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: addBreakMinute = "+ addBreakMinute);
+		if(addBreakMinute > 0) {
+			if(isNegative) {
+				return P_WTM_DATE_ADD_FOR_BREAK_MGR(cSdate, addBreakMinute * -1, timeCdMgrId, unitMinute);
+			}else {
+				return P_WTM_DATE_ADD_FOR_BREAK_MGR(cEdate, addBreakMinute, timeCdMgrId, unitMinute);
+			}
+		}
+		// 주석 처리 위 로직으로 변경 20200901JYP
+		
+		
+		/*
 		Map<String, Object> breakMap = this.getBreakMinuteIfBreakTimeMGR(cSdate, cEdate, timeCdMgrId);
 		if(breakMap != null) {
 			breakMinute = (int) breakMap.get("breakMinute");
@@ -1977,6 +2007,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				maxEhm =  (String) breakMap.get("maxEhm");
 			}
 		}
+		// 20~60 40분의 휴게 시간이 나와야하는데 휴게시간 전체가 나왔구나
 		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: breakMinute = "+ breakMinute);
 		cal = Calendar.getInstance();
 		cal.setTime(cSdate);
@@ -1999,6 +2030,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			breakMap = null;
 			int addBreakMinute = 0;
 			try {
+				// 이상하다 반복된다 여기가 수정이
 				breakMap = this.getBreakMinuteIfBreakTimeMGR(ymdhm.parse(ymd.format(cSdate)+maxEhm), cEdate, timeCdMgrId);
 			} catch (ParseException e) {
 				// TODO Auto-generated catch block
@@ -2016,6 +2048,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				}
 			}
 		}
+		*/
 		if(isNegative) {
 			return cSdate;
 		}else {
