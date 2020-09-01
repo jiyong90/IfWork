@@ -3157,8 +3157,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								//뒤에 데이터가 없으면
 								logger.debug("workDayResults loop : " + cnt);
 								res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
-								res.setTaaCd("");	// base 수정시 근태코드 클리어
+								res.setTaaCd(null);	// base 수정시 근태코드 클리어
 								res.setApplId(applId);
+								res.setApprSdate(null);
+								res.setApprEdate(null);
+								res.setApprMinute(null);
 								res.setUpdateId("removeWtmDayResultInBaseTimeType");
 								workDayResultRepo.save(res);
 								break;
@@ -3193,7 +3196,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 									// SUBS(지우려는 데이터) -> BASE 로 변
 									res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
 									//res.setApplId(applId);
-
+									res.setTaaCd("");	// base 수정시 근태코드 클리어
+									res.setApplId(applId);
+									res.setApprSdate(null);
+									res.setApprEdate(null);
+									res.setApprMinute(null);
+									res.setUpdateId("removeWtmDayResultInBaseTimeType2");
+									
 									workDayResultRepo.save(res);
 									break;
 								}
