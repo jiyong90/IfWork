@@ -2984,9 +2984,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			addDayResult.setTaaCd(addTaaCd);
 			addDayResult.setUpdateId(userId);
 			
-			addDayResult.setApprSdate(null);
-			addDayResult.setApprEdate(null);
-			addDayResult.setApprMinute(null);
+			addDayResult.setApprSdate((addTimeTypeCd.equals(WtmApplService.TIME_TYPE_REGA) || addTimeTypeCd.equals(WtmApplService.TIME_TYPE_TAA) )?addSdate:null);
+			addDayResult.setApprEdate((addTimeTypeCd.equals(WtmApplService.TIME_TYPE_REGA) || addTimeTypeCd.equals(WtmApplService.TIME_TYPE_TAA) )?addEdate:null);
+			addDayResult.setApprMinute((addTimeTypeCd.equals(WtmApplService.TIME_TYPE_REGA) || addTimeTypeCd.equals(WtmApplService.TIME_TYPE_TAA) )?Integer.parseInt(addPlanMinuteMap.get("calcMinute")+""):null);
 			logger.debug("********************** r addDayResult save " + addDayResult.toString());
 			workDayResultRepo.save(addDayResult); 
 		}
@@ -3155,9 +3155,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							//시작시간이 대체휴일이면 다음 데이터 여부를 판단하고 다음데이터가 SUBS BASE로 변경하자
 							if(workDayResults.size() == (cnt+1) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) ) {
 								//뒤에 데이터가 없으면
+								logger.debug("workDayResults loop : " + cnt);
 								res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
 								res.setTaaCd("");	// base 수정시 근태코드 클리어
-								//res.setApplId(applId);
+								res.setApplId(applId);
+								res.setUpdateId("removeWtmDayResultInBaseTimeType");
 								workDayResultRepo.save(res);
 								break;
 							}else { 
@@ -4590,12 +4592,19 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
 					calcApprDayInfo(tenantId, enterCd, closeymd, closeymd, sabun);
 					*/
-					
+					//먼저 구간내 데이터를 초기화 후에 계산해야한다.
 					resetCalcApprDayInfo(tenantId, enterCd, closeymd, sabun, null);
-					// 근무계획시간 합산
-					flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
-					
 				}
+				for (String closeymd : dates) {
+					calcApprDayInfo(tenantId, enterCd, closeymd, closeymd, sabun);
+				}
+				paramMap.put("tenantId", tenantId);
+				paramMap.put("enterCd", enterCd);
+				paramMap.put("sabun", sabun);
+				paramMap.put("symd", sdf.format(sDate));
+				paramMap.put("eymd", sdf.format(eDate));
+				paramMap.put("pId", "finishDay");
+				flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
 			} catch (Exception e) {
 				rp.setFail("일마감 처리중 오류가 발생하였습니다.");
 				e.printStackTrace();
@@ -4648,7 +4657,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 		}
 		
-		calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
+		//calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
 	}
 	
 }

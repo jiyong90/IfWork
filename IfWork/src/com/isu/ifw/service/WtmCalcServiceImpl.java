@@ -1753,10 +1753,14 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				int namerge = m%unitMinute;
 				//단위 시간 적용
 				int calcM = m - m%unitMinute;
+
+				logger.debug("calcM : " + calcM);
+				logger.debug("namerge : " + namerge);
+				/*
 				if(namerge > 0)
 					calcM += unitMinute;
 				logger.debug("calcM : " + calcM);
-				
+				*/
 				Calendar cal = Calendar.getInstance();
 				try {
 					cal.setTime(df.parse(dYmd.format(rDt)+String.format("%02d",h)+String.format("%02d",calcM)));

@@ -2210,20 +2210,25 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 								e.printStackTrace();
 							}
 							
-							while(cal1.compareTo(cal2) < 1) {
-								logger.debug("cal1 : " + cal1.getTime());
-								logger.debug("cal2 : " + cal2.getTime());
+							Date d1 = cal1.getTime();
+							Date d2 = cal2.getTime();
+							while(d1.compareTo(d2) < 1) {
+								logger.debug("cal1 : " + d1);
+								logger.debug("cal2 : " + d2);
 								
 								Map<String, Object> det = new HashMap<>();
 								det.put("workTimeCode", data.getWorkTimeCode());
-								det.put("startYmd", ymd.format(cal1.getTime()));
-								det.put("endYmd", ymd.format(cal1.getTime()));
+								det.put("startYmd", ymd.format(d1));
+								det.put("endYmd", ymd.format(d1));
 								det.put("startHm", (data.getStartHm() != null)?data.getStartHm():"");
 								det.put("endHm", (data.getEndHm() != null)?data.getEndHm():"");
 								
 								worksDet.add(det);
 								
 								cal1.add(Calendar.DATE, 1);
+								
+								d1 = cal1.getTime();
+								
 							}
 						}
 						Map<String, Object> empWork = new HashMap<String, Object>();
@@ -2472,7 +2477,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		logger.debug("============================== preApplStatus : " + preApplStatus);
 		logger.debug("============================== status : " + status);
 		//이건 상태랑 같으면 무시
-		if(preApplStatus == null || !preApplStatus.equals(status)) {
+		//if(preApplStatus == null || !preApplStatus.equals(status)) {
 
 			if(status.equals(WtmApplService.APPL_STATUS_APPR) 
 					|| status.equals(WtmApplService.APPL_STATUS_APPR_REJECT) 
@@ -2487,7 +2492,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					
 				}
 			}
-		}
+		//}
 		 
 	}
 	/**
@@ -2509,6 +2514,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			
 			List<WtmWorkDayResult> taaResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCds, ymd, ymd);
 			//workDayResultRepo.deleteAll(taaResults);
+			logger.debug("taaResults : " + taaResults.size());
 			if(taaResults != null && taaResults.size() > 0 ) {
 				for(WtmWorkDayResult delResult : taaResults) {
 					logger.debug("resetTaaResult remove result : " + delResult.toString());
@@ -2530,6 +2536,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				WtmAppl appl = wtmApplRepo.findById(taaAppl.getApplId()).get();
 				
 				//위에서 다 지웠기 때문에 승인건만 적용하면 된다. 
+				logger.debug("det appl.getApplStatusCd(): " + appl.getApplStatusCd());
 				if(appl.getApplStatusCd().equals(WtmApplService.APPL_STATUS_APPR)) {
 					logger.debug("flexibleStdMgr.getUnplannedYn() : " + flexibleStdMgr.getUnplannedYn());
 					if("Y".equals(flexibleStdMgr.getUnplannedYn())) {
@@ -2709,14 +2716,12 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			String chkYmd = WtmUtil.parseDateStr(new Date(), null);
 			// 오늘 이전이면 근무마감을 다시 돌려야함.
 			if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd)) {
-				wtmFlexibleEmpService.resetCalcApprDayInfo(tenantId, enterCd, chkYmd, sabun, null);
-				/*
+				wtmFlexibleEmpService.resetCalcApprDayInfo(tenantId, enterCd, ymd, sabun, null);
 				wtmFlexibleEmpService.calcApprDayInfo(tenantId
         											 , enterCd
         											 , ymd
         											 , ymd
         											 , sabun);
-				 */
 			}
 			
 			// 근무시간합산은 재정산한다
@@ -2726,7 +2731,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     		setTermMap.put("sabun", sabun);
     		setTermMap.put("symd", ymd);
     		setTermMap.put("eymd", ymd);
-    		setTermMap.put("pId", "TAAIF");
+    		setTermMap.put("pId", "resetTaaResult");
     		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 		}else {
 			throw new RuntimeException("신청정보가 없습니다.");
@@ -2756,7 +2761,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
     		lastDataTime = getDateMap.get("lastDate").toString();
     		nowDataTime = getDateMap.get("nowDate").toString();
-    		lastDataTime = "20200827010101";
+    		lastDataTime = "20200821010101";
     		try {
         		String param = "?lastDataTime="+lastDataTime;
 	        	String ifUrl = setIfUrl(tenantId, "/taaAppl", param); 
@@ -2773,7 +2778,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		   				String yyyymmddhhmiss= sdf.format(new Date());
 		   				
 		   	    		for(int l=0; l<getIfList.size(); l++) {
-		   	    			if(!"19001".equals(getIfList.get(l).get("SABUN").toString())){
+		   	    			if(!"06001".equals(getIfList.get(l).get("SABUN").toString())){
 		   	    				continue;
 		   	    			}
 		   	    			WtmIfTaaHis data = new WtmIfTaaHis();
