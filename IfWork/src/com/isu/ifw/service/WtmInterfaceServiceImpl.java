@@ -2477,7 +2477,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		logger.debug("============================== preApplStatus : " + preApplStatus);
 		logger.debug("============================== status : " + status);
 		//이건 상태랑 같으면 무시
-		//if(preApplStatus == null || !preApplStatus.equals(status)) {
+		if(preApplStatus == null || !preApplStatus.equals(status)) {
 
 			if(status.equals(WtmApplService.APPL_STATUS_APPR) 
 					|| status.equals(WtmApplService.APPL_STATUS_APPR_REJECT) 
@@ -2492,7 +2492,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					
 				}
 			}
-		//}
+		}
 		 
 	}
 	/**
@@ -2761,7 +2761,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
     		lastDataTime = getDateMap.get("lastDate").toString();
     		nowDataTime = getDateMap.get("nowDate").toString();
-    		lastDataTime = "20200821010101";
+    		//lastDataTime = "20200821010101";
     		try {
         		String param = "?lastDataTime="+lastDataTime;
 	        	String ifUrl = setIfUrl(tenantId, "/taaAppl", param); 
@@ -2778,9 +2778,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		   				String yyyymmddhhmiss= sdf.format(new Date());
 		   				
 		   	    		for(int l=0; l<getIfList.size(); l++) {
+		   	    			/*
 		   	    			if(!"06001".equals(getIfList.get(l).get("SABUN").toString())){
 		   	    				continue;
 		   	    			}
+		   	    			*/
 		   	    			WtmIfTaaHis data = new WtmIfTaaHis();
 		   	    			data.setTenantId(tenantId);
 		   	    			data.setEnterCd(getIfList.get(l).get("ENTER_CD").toString());
