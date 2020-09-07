@@ -1,16 +1,14 @@
 package com.isu.ifw.repository;
 
-import java.util.List;
-
-import javax.transaction.Transactional;
-
+import com.isu.ifw.entity.WtmEmpHis;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.isu.ifw.entity.WtmEmpHis;
+import javax.transaction.Transactional;
+import java.util.List;
 
 @Repository
 public interface WtmEmpHisRepository extends JpaRepository<WtmEmpHis, Long> {
@@ -37,4 +35,7 @@ public interface WtmEmpHisRepository extends JpaRepository<WtmEmpHis, Long> {
 	@Transactional
 	@Query("DELETE FROM WtmEmpHis E WHERE E.empHisId IN :empHisIds ")
 	public void deleteByEmpHisIdsIn(@Param("empHisIds")List<Long> empHisIds);
+
+	@Query(nativeQuery = true, value = "SELECT f_wtm_get_emp_org_nm( :tenantId, :enterCd , :sabun, :ymd) FROM Dual")
+	public String getFWtmGetEmpOrgNm(@Param(value="tenantId")Long tenantId, @Param(value="enterCd")String enterCd, @Param(value="sabun")String sabun, @Param(value="ymd")String ymd);
 }
