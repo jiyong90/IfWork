@@ -261,5 +261,7 @@ public interface WtmInterfaceService {
 	 * @throws Exception 
 	 */
 	public ReturnParam setCloseWorkIfN(HashMap reqMap);
+	public void intfTaaAppl(Long tenantId) ;
+	public void taaResult(Long tenantId, String enterCd, String Applsabun, String ifApplNo, String status, List<Map<String, Object>> works) throws Exception;
 	
 }

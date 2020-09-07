@@ -83,6 +83,9 @@ public class WtmFlexibleStdMgr {
 	private String dayOpenType;
 	@Column(name="DAY_CLOSE_TYPE")
 	private String dayCloseType;
+	@Column(name="UNPLANNED_YN")
+	private String unplannedYn;
+	
 	@Column(name="ELAS_APPL_EDIT_YN")
 	private String elasApplEditYn;
 	@Column(name="APPL_YN")
@@ -353,6 +356,14 @@ public class WtmFlexibleStdMgr {
 
 	public void setDayCloseType(String dayCloseType) {
 		this.dayCloseType = dayCloseType;
+	}
+	
+	public String getUnplannedYn() {
+		return unplannedYn;
+	}
+	
+	public void setUnplannedYn(String unplannedYn) {
+		this.unplannedYn = unplannedYn;
 	}
 	
 	public String getElasApplEditYn() {

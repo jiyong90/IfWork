@@ -60,6 +60,21 @@ public class Aes256 {
 
 	        this.keySpec = keySpec;
 	    }
+	    
+	    public Aes256(String key, int keyByte) throws UnsupportedEncodingException {
+	        this.iv = key.substring(0, 16);
+	        byte[] keyBytes = new byte[keyByte];
+	        byte[] b = key.getBytes("UTF-8");
+	        int len = b.length;
+	        if(len > keyBytes.length){
+	            len = keyBytes.length;
+	        }
+	        System.arraycopy(b, 0, keyBytes, 0, len);
+	        SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
+
+	        this.keySpec = keySpec;
+	    }
+	    
 
 	    /**
 	     * AES256 으로 암호화 한다.

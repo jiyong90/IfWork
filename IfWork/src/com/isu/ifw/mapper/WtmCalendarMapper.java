@@ -131,4 +131,7 @@ public interface WtmCalendarMapper {
 	 * @throws Exception
 	 */
 	public List<Map<String, Object>> getTeamPlanList(Map<String, Object> paramMap);
+	
+	public List<Map<String, Object>> getTeamDayResultListNotInLLA(Map<String, Object> paramMap);
+	
 }

@@ -321,17 +321,20 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 				rp.setSuccess("연장근무 시작/종료 일자는 기준일과 근무일자가 다른경우에 변경하시면 됩니다. (근무일이 자정을 넘어서는경우, 주/야 교대 근무자인경우)");
 			}
 			
+			Date sdate = null;
+			Date edate = null;
+					
 			if(!dataMap.get("shm").equals("") && !dataMap.get("ehm").equals("")) {
 				String otSdate = dataMap.get("otSymd").toString().replace(".", "")+dataMap.get("shm").toString();
 				String otEdate = dataMap.get("otEymd").toString().replace(".", "")+dataMap.get("ehm").toString();
 				
-				Date sd = WtmUtil.toDate(otSdate, "yyyyMMddHHmm");
-				Date ed = WtmUtil.toDate(otEdate, "yyyyMMddHHmm");
+				sdate = WtmUtil.toDate(otSdate, "yyyyMMddHHmm");
+				edate = WtmUtil.toDate(otEdate, "yyyyMMddHHmm");
 				
-				Date chkD = WtmUtil.addDate(sd, 1);
+				Date chkD = WtmUtil.addDate(sdate, 1);
 
 				//연장근무 신청 기간이 1일 이상이어서도 안된다! 미쳐가지고..
-				int compare = chkD.compareTo(ed);
+				int compare = chkD.compareTo(edate);
 				//시작일보다 하루 더한 날과 비교하여 크면 안됨
 				if(compare < 0) {
 					rp.setFail("연장근무 신청을 하루 이상 신청할 수 없습니다.");
@@ -343,10 +346,8 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 				Date tempSd = WtmUtil.toDate(chekPlan.get("minPlan").toString(), "yyyyMMddHHmm");
 				Date tempEd = WtmUtil.toDate(chekPlan.get("maxPlan").toString(), "yyyyMMddHHmm");
 				//시작시각, 종료시각이 무조건 tempSd, tempEd 사이에 있어야 함, 조건문은 나중에 바꿔주시오~
-				if(tempSd.compareTo(sd) < 0 && tempEd.compareTo(sd) > 0 &&
-						tempSd.compareTo(ed) < 0 && tempEd.compareTo(ed) > 0) {
-				} else {
-					rp.setFail("선택하신 근무일에 신청할 수 없는 연장근무 시간입니다.");
+				if((tempSd.compareTo(sdate) > 0 ) || (tempEd.compareTo(sdate) < 0) || (tempSd.compareTo(edate) > 0) || (tempEd.compareTo(edate) < 0)) {
+					rp.setFail("선택하신 근무일에 신청할 수 없는 연장근무 시간입니다.!!");
 					return rp;
 				}
 			}
@@ -359,6 +360,9 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 					
 					//SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
 					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmm");
+					
+					otWorkTime = calcService.calcApprMinute(sdate, edate, timeCdMgr.getBreakTypeCd(), calendars.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+					/*
 					int apprMinute = calcService.WtmCalcMinute(dataMap.get("shm").toString(), dataMap.get("ehm").toString(), null, null, null);
 					int breakMinute = 0;
 					if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
@@ -371,28 +375,27 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 						apprMinute = apprMinute - breakMinute;
 					//}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
 					}
-					otWorkTime.put("calcMinute", apprMinute);
-					otWorkTime.put("breakMinute", breakMinute);
+					*/
+					int apprMinute = Integer.parseInt(otWorkTime.get("apprMinute").toString());
+					int breakMinute =  Integer.parseInt(otWorkTime.get("breakMinute").toString());
+					otWorkTime.put("calcMinute", apprMinute - breakMinute);
 					System.out.println("otWorkTime" + otWorkTime.toString()); //{breakMinuteNoPay=30, calcMinute=-30, breakMinutePaid=0, breakMinute=30}
 					
 					
-					otWorkTime = flexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, dataMap, sabun);									
+					//otWorkTime = flexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, dataMap, sabun);									
 					
 					if(otWorkTime != null) {
-						int calMin = Integer.parseInt(otWorkTime.get("calcMinute").toString());
-						int breakMin = Integer.parseInt(otWorkTime.get("breakMinute").toString());
-						int workMin = calMin - breakMin;
-						dataMap.put("desc", "근로시간 : "+ String.valueOf(workMin) + "분 휴게시간 : " + (!otWorkTime.containsKey("breakMinute")?"0":otWorkTime.get("breakMinute").toString()) + "분");
+						dataMap.put("desc", "근로시간 : "+ apprMinute + "분 휴게시간 : " + breakMinute + "분");
 						dataMap.put("breakMinute", otWorkTime.get("breakMinute"));
 //						totalMinute = Integer.parseInt(calcMap.get("calcMinute").toString()) + Integer.parseInt(calcMap.get("breakMinute").toString());
-						totalMinute = Integer.parseInt(otWorkTime.get("calcMinute").toString());
+						totalMinute = apprMinute - breakMinute ;
 					}
 				}
 			}
 			
 			
 			//{applSabun=18014, sYmd=20200718, otSymd=20200725, eYmd=20200801, subsShm=, breakTypeCd=TIME, applLevelCd=1, tenantId=2, symd=20200720, desc=근로시간 : 600분 휴게시간 : 120분, eymd=20200726, ehm=1900, shm=0900, ymd=20200725, gubun=40, holidayYn=Y, d=20200725, subsSymd=, subsEhm=, calcMinute=600, applCd=OT, timeCdMgrId=26, sabun=18014, applNm=연장/휴일근로신청, otEymd=20200725, subYn=, enterCd=ISU_ST, payTargetYn=false, subsYn=Y}
-			dataMap.put("calcMinute", calcMap != null ? totalMinute : "0");
+			dataMap.put("calcMinute", otWorkTime != null ? totalMinute : "0");
 			dataMap.put("subYn", dataMap.containsKey("subYn") ? dataMap.get("subYn").toString():"");
 			
 			Map<String, Object> val = applMapper.getApplValidation(dataMap);
@@ -421,16 +424,25 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 				temp.put("shm", dataMap.get("subsShm"));
 				temp.put("ehm", dataMap.get("subsEhm"));
 				
-				Map<String, Object> subWork = flexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, temp, sabun);
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmm");
+				
+				Date sDate = sdf.parse( dataMap.get("subsSymd").toString()+dataMap.get("subsShm").toString());
+				Date eDate = sdf.parse( dataMap.get("subsSymd").toString()+dataMap.get("subsEhm").toString());
+				
+				//Map<String, Object> subWork = flexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, temp, sabun);
+				Map<String, Object> subWork = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendars.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+				
+				subWork.put("calcMinute", Integer.parseInt(subWork.get("apprMinute").toString()) - Integer.parseInt(subWork.get("breakMinute").toString()));
+				
 				if(subWork != null && !subWork.get("calcMinute").toString().equals(dataMap.get("calcMinute").toString())) {
-					throw new Exception("대체 휴일 휴게시간은 " + subWork.get("breakMinute") + "분입니다. 신청해야 하는 휴게 시간은 " + dataMap.get("calcMinute") + "분입니다.");
+					throw new Exception("대체 휴일 휴게시간은 " + subWork.get("breakMinute") + "분입니다. 신청해야 하는 근로 시간은 " + dataMap.get("calcMinute") + "분입니다.");
 				}
 				
 				System.out.println("otWorkTime" + otWorkTime.toString()); //{breakMinuteNoPay=30, calcMinute=-30, breakMinutePaid=0, breakMinute=30}
 				
-				if(otWorkTime != null && !otWorkTime.get("breakMinute").equals("")) {
-					dataMap.put("desc", "근로시간 : "+otWorkTime.get("calcMinute").toString() + "분 휴게시간 : " + otWorkTime.get("breakMinute").toString() + "분");
-				}
+//				if(otWorkTime != null && !otWorkTime.get("breakMinute").equals("")) {
+//					dataMap.put("desc", "근로시간 : "+otWorkTime.get("calcMinute").toString() + "분 휴게시간 : " + otWorkTime.get("breakMinute").toString() + "분");
+//				}
 			}
 		} catch(Exception e) {
 			if(e.getMessage() != null && !"".equals(e.getMessage())) {

@@ -167,11 +167,10 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 						code.setNote(l.get("note").toString());
 						code.setUpdateId(userId);
 						
-						WtmFlexibleApplyMgr flexibleApply = null;
-						flexibleApply = flexibleApplyRepository.save(code);
 						
 						// 복사 기능 추가--start
 						if(l.get("copyApplyId") != null && !"".equals(l.get("copyApplyId").toString())) {
+							WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.save(code);
 							Map<String, Object> paramMap = new HashMap(); 
 							
 							//복사 대상 flexibleApplyId를 담은 copyApplyId를 paramMap에 flexibleApplyId로 설정
@@ -184,16 +183,26 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 							wtmFlexibleApplyMgrMapper.copyWtmApplyGroup(paramMap);
 							wtmFlexibleApplyMgrMapper.copyWtmApplyEmp(paramMap);
 							wtmFlexibleApplyMgrMapper.copyWtmApplyEmpTemp(paramMap);
+							
+							if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {
+								createElasPlan(tenantId, enterCd, flexibleApply.getFlexibleStdMgrId(), flexibleApply.getFlexibleApplyId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), userId);
+								cnt += 1;
+							} else {
+								codes.add(code);
+							}
+							
+						} else {
+							if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {
+								WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.save(code);
+								createElasPlan(tenantId, enterCd, flexibleApply.getFlexibleStdMgrId(), flexibleApply.getFlexibleApplyId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), userId);
+								cnt += 1;
+							} else {
+								codes.add(code);
+							}
+							
 						}
 						// End						
-
-						if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {	
-							createElasPlan(tenantId, enterCd, flexibleApply.getFlexibleStdMgrId(), flexibleApply.getFlexibleApplyId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), userId);
-							cnt += 1;
-						} else {
-							codes.add(code);
-						}
-						
+ 						
 					}
 					
 					codes = flexibleApplyRepository.saveAll(codes);
@@ -364,10 +373,10 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 			}
 		}
 		
+		wtmFlexibleApplyMgrMapper.updateFlexibleApplyAll(flexibleApplyId);
+		
 		//전체성공
-		if(cnt == searchList.size()) {
-			wtmFlexibleApplyMgrMapper.updateFlexibleApplyAll(flexibleApplyId);
-			
+		if(cnt == searchList.size()) {			
 			// 20200507 이효정추가 근무확정시 선반영된 근태건이 있으면 재갱신 대상으로 변경해야함.
 			wtmFlexibleApplyMgrMapper.updateFlexibleTaaReset(flexibleApplyId);
 			

@@ -11,4 +11,5 @@ import com.isu.ifw.entity.WtmWorkDayResultO;
 public interface WtmWorkDayResultORepository extends JpaRepository<WtmWorkDayResultO, Long> {
 	
 	public List<WtmWorkDayResultO> findByTenantIdAndEnterCdAndSabunAndYmd(Long tenantId, String enterCd, String sabun, String ymd);
+	public List<WtmWorkDayResultO> findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdIn(Long tenantId, String enterCd, String sabun, String ymd, List<String> timeTypeCd);
 }

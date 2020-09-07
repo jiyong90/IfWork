@@ -37,4 +37,6 @@ public interface WtmCalcService {
 	 * @return
 	 */
 	public Map<String, Object> calcApprMinute(Date sDate, Date eDate, String breakTypeCd, long timeCdMgrId, int unitMinute);
+	
+	public Date P_WTM_DATE_ADD_FOR_BREAK_MGR(Date sDate, int addMinute, long timeCdMgrId, Integer unitMinute);
 }

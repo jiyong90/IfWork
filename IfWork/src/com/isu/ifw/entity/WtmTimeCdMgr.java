@@ -41,6 +41,8 @@ public class WtmTimeCdMgr {
 	private String workEhm;
 	@Column(name="HOL_YN")
 	private String holYn;
+	@Column(name="PAID_YN")
+	private String paidYn;
 	@Column(name="BREAK_TYPE_CD")
 	private String breakTypeCd;
 	@Column(name="HOL_TIME_CD_MGR_ID")
@@ -160,6 +162,13 @@ public class WtmTimeCdMgr {
 		this.holYn = holYn;
 	}
 
+	public String getPaidYn() {
+		return paidYn;
+	}
+	
+	public void setPaidYn(String paidYn) {
+		this.paidYn = paidYn;
+	}
 	
 	public String getBreakTypeCd() {
 		return breakTypeCd;
