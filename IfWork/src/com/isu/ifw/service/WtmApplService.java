@@ -1,15 +1,9 @@
 package com.isu.ifw.service;
 
-import java.util.HashMap;
+import com.isu.ifw.vo.ReturnParam;
+
 import java.util.List;
 import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
-
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.vo.WtmApplLineVO;
-import com.isu.ifw.vo.ReturnParam;
 
 /**
  * 
