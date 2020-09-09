@@ -2895,6 +2895,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			if(r.getPlanSdate().compareTo(addSdate) == 0 && r.getPlanEdate().compareTo(addEdate) == 0) {
 				logger.debug("********************** r IF 1"); 
 				isDelete = true;
+			//감싸고 있으면 지워야지..
+			}else if(r.getPlanSdate().compareTo(addSdate) >= 0 && r.getPlanEdate().compareTo(addEdate) <= 0) {
+					logger.debug("********************** r IF 1-1"); 
+					isDelete = true;
 			// 타켓 시간 8~11의 시간에서 휴게시간이 13~15시가 왔을 때는 패쓰 || 반대의케이스도 ㅋ
 			}else if(r.getPlanEdate().compareTo(addSdate) <= 0 || r.getPlanSdate().compareTo(addEdate) >= 0) {
 				logger.debug("********************** r IF 2");
