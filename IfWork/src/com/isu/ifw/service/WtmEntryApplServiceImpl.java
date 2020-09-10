@@ -228,7 +228,7 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 		//신청서 메인 상태값 업데이트
 		WtmAppl appl = wtmApplRepo.findById(applId).get();
 		appl.setApplStatusCd((lastAppr)?APPL_STATUS_APPR:APPL_STATUS_APPLY_ING);
-		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
+//		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
 		appl.setUpdateId(userId);
 		
 		appl = wtmApplRepo.save(appl);

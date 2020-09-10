@@ -230,7 +230,7 @@ public class WtmApplServiceImpl implements WtmApplService {
 		
 		WtmAppl appl = wtmApplRepo.findById(applId).get();
 		appl.setApplStatusCd(APPL_STATUS_APPLY_REJECT);
-		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
+//		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
 		appl.setUpdateId(userId);	
 		wtmApplRepo.save(appl);
 		
