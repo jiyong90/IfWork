@@ -37,4 +37,7 @@ public interface WtmEmpHisRepository extends JpaRepository<WtmEmpHis, Long> {
 	@Transactional
 	@Query("DELETE FROM WtmEmpHis E WHERE E.empHisId IN :empHisIds ")
 	public void deleteByEmpHisIdsIn(@Param("empHisIds")List<Long> empHisIds);
+
+	@Query(nativeQuery = true, value = "SELECT f_wtm_get_emp_org_nm( :tenantId, :enterCd , :sabun, :ymd) FROM Dual")
+	public String getFWtmGetEmpOrgNm(@Param(value="tenantId")Long tenantId, @Param(value="enterCd")String enterCd, @Param(value="sabun")String sabun, @Param(value="ymd")String ymd);
 }
