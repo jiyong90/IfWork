@@ -2130,7 +2130,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		logger.debug("intfTaaAppl : " + tenantId);
 		
 		if(this.saveWtmIfTaaHisOnlyTaaApplPpType(tenantId)) {
-
+		//if(true) {
 			System.out.println("setTaaApplBatchIfPostProcess");
 			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn("OK"); 
 			if(list == null || list.size() == 0) {
@@ -2660,7 +2660,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 									}
 								}
 								if("D".equals(taaCode.getRequestTypeCd())
-										&& "N".equals(flexibleStdMgr.getTaaWorkYn())
+										&& (flexibleStdMgr.getTaaWorkYn() == null || "N".equals(flexibleStdMgr.getTaaWorkYn()) || "".equals(flexibleStdMgr.getTaaWorkYn()) )
 										) {
 									logger.debug("종일근무이면서 근무가능여부가 N이면 근무계획을 삭제하고 근태만 남겨둬야함.");
 									List<String> timeType = new ArrayList<String>();
@@ -2761,7 +2761,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
     		lastDataTime = getDateMap.get("lastDate").toString();
     		nowDataTime = getDateMap.get("nowDate").toString();
-    		//lastDataTime = "20200821010101";
+    		lastDataTime = "20200801010101";
     		try {
         		String param = "?lastDataTime="+lastDataTime;
 	        	String ifUrl = setIfUrl(tenantId, "/taaAppl", param); 
@@ -2778,11 +2778,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		   				String yyyymmddhhmiss= sdf.format(new Date());
 		   				
 		   	    		for(int l=0; l<getIfList.size(); l++) {
-		   	    			/*
-		   	    			if(!"06001".equals(getIfList.get(l).get("SABUN").toString())){
+		   	    			
+		   	    			if(!"15003".equals(getIfList.get(l).get("SABUN").toString())){
 		   	    				continue;
 		   	    			}
-		   	    			*/
+		   	    			
 		   	    			WtmIfTaaHis data = new WtmIfTaaHis();
 		   	    			data.setTenantId(tenantId);
 		   	    			data.setEnterCd(getIfList.get(l).get("ENTER_CD").toString());
