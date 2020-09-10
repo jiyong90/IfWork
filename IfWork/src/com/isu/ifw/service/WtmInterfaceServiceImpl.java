@@ -2778,11 +2778,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		   				String yyyymmddhhmiss= sdf.format(new Date());
 		   				
 		   	    		for(int l=0; l<getIfList.size(); l++) {
-		   	    			
-		   	    			if(!"15003".equals(getIfList.get(l).get("SABUN").toString())){
+		   	    			/*
+		   	    			if(!"1".equals(getIfList.get(l).get("SABUN").toString())){
 		   	    				continue;
 		   	    			}
-		   	    			
+		   	    			*/
 		   	    			WtmIfTaaHis data = new WtmIfTaaHis();
 		   	    			data.setTenantId(tenantId);
 		   	    			data.setEnterCd(getIfList.get(l).get("ENTER_CD").toString());
