@@ -2044,11 +2044,15 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		if(!isTaaWork) {
 			//완/부 선근제 이며
+			WtmTaaCode taaCode = wtmTaaCodeRepository.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, taaCd);
 			if(flexStdMgr.getWorkTypeCd().startsWith("SELE_")) {
-				WtmTaaCode taaCode = wtmTaaCodeRepository.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, taaCd);
 				if(taaCode.getRequestTypeCd().equals("D") && flexStdMgr.getTaaWorkYn().equals("Y")){
 					isTaaWork = true;
 				}else if(taaCode.getRequestTypeCd().equals("P") || taaCode.getRequestTypeCd().equals("A") || taaCode.getRequestTypeCd().equals("H")){
+					isTaaWork = true;
+				}
+			}else {
+				if(!"D".equals(taaCode.getRequestTypeCd())) {
 					isTaaWork = true;
 				}
 			}
