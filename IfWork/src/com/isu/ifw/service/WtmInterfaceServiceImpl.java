@@ -1784,7 +1784,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					appl.setApplInSabun(reqMap.get("applSabun").toString());
 					appl.setIfApplNo(reqMap.get("applNo").toString());
 					appl.setApplStatusCd(nowApplStatusCd);
-//					appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
+					appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
 					appl.setUpdateId("TAAIF");
 					wtmApplRepo.save(appl);
 				}
