@@ -1926,12 +1926,15 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("eYmd", calendar.getYmd());
 		paramMap.put("ymd", calendar.getYmd());
 		
+		
 		List<String> timeTypeCd = new ArrayList<>();
 		timeTypeCd.add(WtmApplService.TIME_TYPE_LLA);
+		/*
 		List<WtmWorkDayResult> rrr = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCd, calendar.getYmd(), calendar.getYmd());
 		for(WtmWorkDayResult rr : rrr) {
 			System.out.println("================================== " + rr.getTimeTypeCd());
 		}
+		*/
 		ObjectMapper mapper = new ObjectMapper();
 				 
 		
@@ -2106,7 +2109,19 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("taaCd", absenceTaaCode.getTaaCd());
 		paramMap.put("userId", "SYSTEM");
 		boolean isAbsence =  false;
-		if(calendar.getEntrySdate() == null && calendar.getEntryEdate() == null && timeCdMgr.getAbsenceChkYn().equals("Y")) {
+		
+		boolean isCreateAbsence = true;
+
+		/*
+		 * 선근제가 아니며 BASE정보가 없을 경우에는 결근으로 보지 않는다.
+		 */
+		if(!flexStdMgr.getWorkTypeCd().startsWith("SELE_")) {
+			if(minPlanSdate_BASE == null) {
+				isCreateAbsence = false; 
+			}
+		}
+		
+		if(isCreateAbsence && calendar.getEntrySdate() == null && calendar.getEntryEdate() == null && timeCdMgr.getAbsenceChkYn().equals("Y")) {
 			//try { logger.debug("6. ABSENCE_CHK_YN = Y 일때 출/퇴근 타각 정보가 없을 경우 결근 데이터 생성 " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndEntryDateIsNull"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 			logger.debug("6. ABSENCE_CHK_YN = Y 일때 출/퇴근 타각 정보가 없을 경우 결근 데이터 생성 " );
 			//flexEmpMapper.createDayResultByTimeTypeAndEntryDateIsNull(paramMap);
@@ -2601,7 +2616,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			 * 대체휴일 생성 
 			 */
 			List<Map<String, Object>> subsCreateTarget = otApplMapper.subsCreateTarget(paramMap);
-			logger.debug("17. subsCreateTarget ","subsCreateTarget : " + subsCreateTarget.size() + "subsCreateTarget"); 
+			logger.debug("17. subsCreateTarget " + subsCreateTarget.size() + "subsCreateTarget"); 
 			if(subsCreateTarget!=null && subsCreateTarget.size()>0) {
 				logger.debug("calcApprDayInfo 18 ");
 				
@@ -4021,7 +4036,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						logger.debug("otPlanMinute : " + otPlanMinute + "/otApprMinute : " + otApprMinute);
 						System.out.println("otPlanMinute : " + otPlanMinute + "/otApprMinute : " + otApprMinute);
 						
-						if(otPlanMinute == otApprMinute) {
+						if(otPlanMinute <= otApprMinute) {
 							resultParam.put("otApplId", otAppl.getOtApplId());
 							
 							List<Map<String, Object>> subsCreateTarget = otApplMapper.subsCreateTarget(resultParam);
