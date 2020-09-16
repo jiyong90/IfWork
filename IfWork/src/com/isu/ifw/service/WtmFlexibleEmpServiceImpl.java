@@ -2115,7 +2115,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		/*
 		 * 선근제가 아니며 BASE정보가 없을 경우에는 결근으로 보지 않는다.
 		 */
-		if(!flexStdMgr.getWorkTypeCd().startsWith("SELE_")) {
+		//if(!flexStdMgr.getWorkTypeCd().startsWith("SELE_")) {
+		if(!flexStdMgr.getUnplannedYn().equals("Y")) {
 			if(minPlanSdate_BASE == null) {
 				isCreateAbsence = false; 
 			}
