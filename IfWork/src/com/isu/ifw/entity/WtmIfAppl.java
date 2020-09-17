@@ -20,7 +20,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 public class WtmIfAppl {
 
 	@Id
-	@GeneratedValue(strategy= GenerationType.IDENTITY)
+//	@GeneratedValue(strategy= GenerationType.IDENTITY)
 	@Column(name="APPL_ID")
 	private Long applId;
 	@Column(name="APPL_CD")
