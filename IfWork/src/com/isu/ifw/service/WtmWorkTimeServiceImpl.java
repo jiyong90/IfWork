@@ -242,7 +242,6 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 		return workplan;
 	}
 	
-	@Transactional
 	@Override
 	public void changeWorktime(Long tenantId, String enterCd, Map<String, Object> paramMap, String userId) {
 		

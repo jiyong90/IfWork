@@ -4586,8 +4586,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			}
 			
 			try {
+				/*
 				for (String closeymd : dates) {
-					/*
 					paramMap.put("ymd", closeymd);				
 					paramMap.put("symd", closeymd);				
 					paramMap.put("eymd", closeymd);				
@@ -4624,10 +4624,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					} 
 
 					calcApprDayInfo(tenantId, enterCd, closeymd, closeymd, sabun);
-					*/
+					
 					//먼저 구간내 데이터를 초기화 후에 계산해야한다.
 					resetCalcApprDayInfo(tenantId, enterCd, closeymd, sabun, null);
 				}
+				*/
 				for (String closeymd : dates) {
 					calcApprDayInfo(tenantId, enterCd, closeymd, closeymd, sabun);
 				}

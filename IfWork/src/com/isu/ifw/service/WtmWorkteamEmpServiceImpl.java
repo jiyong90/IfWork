@@ -239,54 +239,58 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 				flexibleEmp.setNote(l.get("note").toString());
 				flexEmpRepo.save(flexibleEmp);
 				flexEmpRepo.flush();
-				//
-				WtmFlexibleEmp emp = new WtmFlexibleEmp();
-				List<WtmFlexibleEmp> empList = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCd(tenantId, enterCd, workteam.getSabun(), l.get("symd").toString(), l.get("eymd").toString(), "BASE");
+				
+				List<String> workTypeCds = new ArrayList<String>();
+				workTypeCds.add("BASE");
+				workTypeCds.add("WORKTEAM");
+				List<WtmFlexibleEmp> empList = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCds(tenantId, enterCd, workteam.getSabun(), l.get("symd").toString(), l.get("eymd").toString(), workTypeCds);
 				if(empList != null) {
 					for(WtmFlexibleEmp e : empList) {
-						//신청기간내에 시작 종료가 포함되어있을 경우
-						if(Integer.parseInt(sYmd) <= Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) >= Integer.parseInt(e.getEymd())) {
-							flexEmpRepo.delete(e);
-							flexEmpRepo.flush();
-						//신청 시작일과 종료일이 기존 근무정보 내에 있을 경우 
-						} else if(Integer.parseInt(sYmd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(e.getEymd())) {
-							String meymd = e.getEymd();
-							
-							e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
-							// System.out.println("save 1 : " + e.toString());
-							flexEmpRepo.save(e);
-							flexEmpRepo.flush();
-							
-							WtmFlexibleEmp newEmp = new WtmFlexibleEmp();
-							newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
-							newEmp.setTenantId(e.getTenantId());
-							newEmp.setEnterCd(e.getEnterCd());
-							newEmp.setSabun(e.getSabun());
-							newEmp.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(eYmd, ""), 1),null));
-							newEmp.setEymd(meymd);
-							newEmp.setUpdateId(sabun);
-							newEmp.setWorkTypeCd(e.getWorkTypeCd());
-							newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
-							// System.out.println("save 2 : " + newEmp.toString());
-							flexEmpRepo.save(newEmp);
-							flexEmpRepo.flush();
-							
-
-						//시작일만 포함되어있을 경우 
-						}else if(Integer.parseInt(sYmd) >= Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(e.getEymd())) {
-							//시작일을 신청종료일 다음날로 업데이트 해주자
-							e.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(eYmd, ""), 1),null));
-							// System.out.println("save 3 : " + e.toString());
-							flexEmpRepo.save(e);
-							flexEmpRepo.flush();
-							
-						//종료일만 포함되어있을 경우
-						}else if(Integer.parseInt(sYmd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) <= Integer.parseInt(e.getEymd())) {
-							//종료일을 신청시작일 전날로 업데이트 해주자
-							e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
-							// System.out.println("save 4 : " + e.toString());
-							flexEmpRepo.save(e);
-							flexEmpRepo.flush();
+						//신규로 넣은 값을 제외한 다른 값들은 비교하여 처리한다.
+						if(flexibleEmp.getFlexibleEmpId() != e.getFlexibleEmpId() ) {
+							//신청기간내에 시작 종료가 포함되어있을 경우
+							if(Integer.parseInt(sYmd) <= Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) >= Integer.parseInt(e.getEymd())) {
+								flexEmpRepo.delete(e);
+								flexEmpRepo.flush();
+								//신청 시작일과 종료일이 기존 근무정보 내에 있을 경우 
+							} else if(Integer.parseInt(sYmd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(e.getEymd())) {
+								String meymd = e.getEymd();
+								
+								e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
+								// System.out.println("save 1 : " + e.toString());
+								flexEmpRepo.save(e);
+								flexEmpRepo.flush();
+								
+								WtmFlexibleEmp newEmp = new WtmFlexibleEmp();
+								newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
+								newEmp.setTenantId(e.getTenantId());
+								newEmp.setEnterCd(e.getEnterCd());
+								newEmp.setSabun(e.getSabun());
+								newEmp.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(eYmd, ""), 1),null));
+								newEmp.setEymd(meymd);
+								newEmp.setUpdateId(sabun);
+								newEmp.setWorkTypeCd(e.getWorkTypeCd());
+								newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
+								// System.out.println("save 2 : " + newEmp.toString());
+								flexEmpRepo.save(newEmp);
+								flexEmpRepo.flush();
+								
+								//시작일만 포함되어있을 경우 
+							}else if(Integer.parseInt(sYmd) >= Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(e.getEymd())) {
+								//시작일을 신청종료일 다음날로 업데이트 해주자
+								e.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(eYmd, ""), 1),null));
+								// System.out.println("save 3 : " + e.toString());
+								flexEmpRepo.save(e);
+								flexEmpRepo.flush();
+								
+								//종료일만 포함되어있을 경우
+							}else if(Integer.parseInt(sYmd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) <= Integer.parseInt(e.getEymd())) {
+								//종료일을 신청시작일 전날로 업데이트 해주자
+								e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
+								// System.out.println("save 4 : " + e.toString());
+								flexEmpRepo.save(e);
+								flexEmpRepo.flush();
+							}
 						}
 					}
 				}
