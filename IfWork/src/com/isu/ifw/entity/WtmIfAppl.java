@@ -1,12 +1,20 @@
 package com.isu.ifw.entity;
 
-import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
-
-import javax.persistence.*;
 import java.util.Date;
 
-@Data
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
 @Entity
 @Table(name="WTM_IF_APPL")
 public class WtmIfAppl {
@@ -48,4 +56,94 @@ public class WtmIfAppl {
 	protected void onUpdate() {
 		this.updateDate = new Date();
 	}
+
+	public Long getApplId() {
+		return applId;
+	}
+
+	public void setApplId(Long applId) {
+		this.applId = applId;
+	}
+
+	public String getApplCd() {
+		return applCd;
+	}
+
+	public void setApplCd(String applCd) {
+		this.applCd = applCd;
+	}
+
+	public String getApplSabun() {
+		return applSabun;
+	}
+
+	public void setApplSabun(String applSabun) {
+		this.applSabun = applSabun;
+	}
+
+	public String getApplInSabun() {
+		return applInSabun;
+	}
+
+	public void setApplInSabun(String applInSabun) {
+		this.applInSabun = applInSabun;
+	}
+
+	public String getApplStatusCd() {
+		return applStatusCd;
+	}
+
+	public void setApplStatusCd(String applStatusCd) {
+		this.applStatusCd = applStatusCd;
+	}
+
+	public String getApplYmd() {
+		return applYmd;
+	}
+
+	public void setApplYmd(String applYmd) {
+		this.applYmd = applYmd;
+	}
+
+	public String getApplTitle() {
+		return applTitle;
+	}
+
+	public void setApplTitle(String applTitle) {
+		this.applTitle = applTitle;
+	}
+
+	public String getApplBody() {
+		return applBody;
+	}
+
+	public void setApplBody(String applBody) {
+		this.applBody = applBody;
+	}
+
+	public String getIfApplNo() {
+		return ifApplNo;
+	}
+
+	public void setIfApplNo(String ifApplNo) {
+		this.ifApplNo = ifApplNo;
+	}
+
+	public Date getUpdateDate() {
+		return updateDate;
+	}
+
+	public void setUpdateDate(Date updateDate) {
+		this.updateDate = updateDate;
+	}
+
+	public String getUpdateId() {
+		return updateId;
+	}
+
+	public void setUpdateId(String updateId) {
+		this.updateId = updateId;
+	}
+	
+	
 }
