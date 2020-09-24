@@ -389,7 +389,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 	        	//exchangeService.exchange(url, HttpMethod.POST, null, eParam);
 	        	
 	    		HttpHeaders headers = new HttpHeaders();
-	    		headers.set("Content-Type", MediaType.APPLICATION_JSON_VALUE);
+	    		headers.add("Content-Type", "application/json; charset=UTF-8");
 	    	
 	    		HttpEntity<Map<String, Object>> entity = new HttpEntity<>(eParam, headers);
 
