@@ -1,23 +1,5 @@
 package com.isu.ifw.service;
 
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.isu.ifw.common.entity.CommUser;
 import com.isu.ifw.common.repository.WtmCommUserRepository;
 import com.isu.ifw.common.service.TenantConfigManagerService;
@@ -29,14 +11,22 @@ import com.isu.ifw.mapper.EncryptionMapper;
 import com.isu.ifw.mapper.WtmEmpAddrMapper;
 import com.isu.ifw.mapper.WtmEmpHisMapper;
 import com.isu.ifw.mapper.WtmIfEmpMsgMapper;
-import com.isu.ifw.repository.WtmEmpAddrRepository;
-import com.isu.ifw.repository.WtmEmpHisRepository;
-import com.isu.ifw.repository.WtmIfEmpMsgRepository;
-import com.isu.ifw.repository.WtmOtpRepository;
-import com.isu.ifw.repository.WtmPropertieRepository;
+import com.isu.ifw.repository.*;
 import com.isu.ifw.util.Sha256;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 
 
 @Service("empMgrService")
@@ -55,7 +45,7 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 	
 	@Autowired
 	WtmEmpHisMapper wtmEmpHisMapper;
-	
+
 	@Autowired
 	WtmFlexibleEmpService empService;
 	
