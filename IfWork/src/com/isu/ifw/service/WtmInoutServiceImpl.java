@@ -7,6 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -23,9 +24,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmEmpHis;
 import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
+import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmCalendarMapper;
@@ -34,6 +38,7 @@ import com.isu.ifw.mapper.WtmInoutHisMapper;
 import com.isu.ifw.repository.WtmEmpHisRepository;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
+import com.isu.ifw.repository.WtmTimeCdMgrRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.util.WtmUtil;
@@ -83,6 +88,9 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	@Autowired
 	WtmFlexibleStdMgrRepository flexStdMgrRepo;
 	
+	//@Autowired private WtmTimeCdMgrRepository timeCdMgrRepo;
+	@Autowired private WtmFlexibleEmpRepository flexibleEmpRepo;
+	@Autowired private WtmFlexibleStdMgrRepository flexibleStdMgrRepo;
 //	@Autowired   
 //	SqlSessionFactory sqlSessionFactory;
 	
@@ -968,6 +976,9 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			if(cnt <= 0) {
 				throw new Exception("타각데이터 저장에 실패하였습니다.");
 			}
+			ObjectMapper mapper =new ObjectMapper();
+			
+			logger.debug(mapper.writeValueAsString(paramMap));
 			
 			WtmEmpHis emp = empRepository.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()), 
 					paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
@@ -1117,5 +1128,273 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		if(cnt <= 0) {
 			throw new Exception("캘린더 정보 업데이트에 실패하였습니다.");
 		}
+	}
+
+	@Override
+	public void updEntryDate(Long tenantId, String enterCd, String sabun, String inoutType, String inoutDate,
+			String entryNote, String entryType) throws Exception {
+				Map<String, Object> paramMap = new HashMap<String, Object>();
+				paramMap.put("tenantId", tenantId);
+				paramMap.put("enterCd", enterCd);
+				paramMap.put("sabun", sabun);
+				paramMap.put("inoutType", inoutType);
+				paramMap.put("entryType", entryType);
+				paramMap.put("entryType", entryType);
+				paramMap.put("inoutDate", inoutDate);
+				paramMap.put("entryNote", entryNote);
+				
+				//캘린더에 초가 들어가면 안된...
+				paramMap.put("inoutDateTime", inoutDate.substring(0,12)+"00");
+				
+				//1.무조건 타각 저장
+				try {
+					if(insertTimeStamp(paramMap)) {
+						logger.debug("insertTimeStampSuccess : " + paramMap.toString());
+					} else {
+						logger.debug("insertTimeStampFail : " + paramMap.toString());
+						throw new Exception("저장에 실패하였습니다.");
+					}
+				} catch(Exception e) {
+					logger.debug("insertTimeStampFail : " +e.getMessage());
+					throw new Exception("저장에 실패하였습니다.");
+				}
+				
+				//2.근무일과 타각상태 가져오기
+				List<Map<String, Object>> list = inoutHisMapper.getInoutStatus(paramMap);
+				logger.debug("inoutStatus : " + list.toString());
+				
+				String today = paramMap.get("inoutDate").toString().substring(0, 8);
+				
+				//근무일
+				String stdYmd = "";
+				//타각시각
+				String entrySdate = null;
+				String entryEdate = null;
+				/*
+				 * 1. 근무일의 경우 출근타각의 년월일 기준으로 판단한다.
+				 * 2. IN 출근 타각이 20200901 09:00 일 경우 2020.09.01 의 근무정보에 갱신을 한다. 
+				 * 3. IN 출근 타각이 같은 날 2020.09.01 11:00 가 또 들어왔을 경우 
+				 * 2020.09.01의 근무일 정보를 체크한다. 출근 타각 확인 / 퇴근 타각 확인 / 
+				 * (확인 필요)기퇴근 타각보다 클 경우 다음날의 근무의 출근은로 본다? 같은 날에 출근 케이스가 있는지 확인 필요.
+				 *  
+				 */ 
+				SimpleDateFormat ymdshm = new SimpleDateFormat("yyyyMMddHHmmss");
+				SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+				Date inoutDt = ymdshm.parse(paramMap.get("inoutDateTime")+"");
+				WtmWorkCalendar cal = calendarRepository.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, today);
+				if("IN".equals(paramMap.get("inoutType").toString())) {
+					/** -- 출근 시간이 들어왔다. 
+					 *  출근타각 여부 확인 (2020.09.24)
+					 *   - 출근 정보가 없다 (2020.09.24)
+					 *   	- 휴일인지 판단하고 휴일일 경우 근무계획이 있는지 확인한다(휴일근무신청에 따른 계획시간) 
+					 *   - 근무계획이 있으면 출근데이터를 기록한다. (여부만 판단) 계획시간 구간 을 체크하진 않는다.    
+					 */
+					if(cal.getEntrySdate() == null) {
+						//근무일 여부 확인
+						WtmFlexibleEmp flexibleEmp = flexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, ymd.format(inoutDt));
+						WtmFlexibleStdMgr flexibleStdMgr = flexibleStdMgrRepo.findByFlexibleStdMgrId(flexibleEmp.getFlexibleStdMgrId());
+						List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, cal.getYmd());
+						//boolean isPass = false;
+						if(cal.getHolidayYn().equals("N") && (flexibleStdMgr.getUnplannedYn().equals("N") || flexibleStdMgr.getUnplannedYn()== null || flexibleStdMgr.getUnplannedYn().equals("")) ) {
+							//unplanned일때 계획이 없으면 안됨
+							if(results == null || results.size() <= 0) {
+								logger.debug("근무계획시간이 존재하지 않습니다.");
+								throw new Exception("근무계획시간이 존재하지 않습니다.");
+							}else {
+								cal.setEntrySdate(inoutDt);
+								cal.setEntryStypeCd(paramMap.get("entryType")+"");
+								calendarRepository.save(cal);
+							}
+						}else {
+							if(cal.getHolidayYn().equals("Y")) {
+								//휴일일 경우 계획정보가 있어야 한다. 
+								List<String> timeTypeCds = new ArrayList<>();
+								timeTypeCds.add(WtmApplService.TIME_TYPE_BASE);
+								timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
+								timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
+								results = wtmWorkDayResultRepo.findByTimeTypeCdInAndTenantIdAndEnterCdAndSabunAndYmdAndApprSdateIsNotNullOrderByApprSdateAsc(timeTypeCds, tenantId, enterCd, sabun, ymd.format(inoutDt));
+								if(results != null && results.size() > 0) {
+									cal.setEntrySdate(inoutDt);
+									cal.setEntryStypeCd(paramMap.get("entryType")+"");
+									calendarRepository.save(cal);
+								}else {
+									throw new Exception("휴일입니다. 휴일 근무계획시간이 존재하지 않습니다.");
+								}
+							}else {
+								cal.setEntrySdate(inoutDt);
+								cal.setEntryStypeCd(paramMap.get("entryType")+"");
+								calendarRepository.save(cal);
+							}
+						}
+
+						
+					}else {
+						//이미 출근 기록이 있으면 무시한다. 
+						logger.debug("출근 타각시간이 존재하므로 반영하지 않습니다." + paramMap.toString());
+						return;
+					}
+				}else if("OUT".equals(paramMap.get("inoutType").toString())) {
+					/** ** 필수 조건 출근이 없는 퇴근은 없다. 늦게라도 출근 데이터는 들어와야한다.(추후 관리자를 통해 출근데이터 변경) 
+					 *  -- 퇴근 시간이 들어왔다. 
+					 *  퇴근 시각의 해당 일에 근무정보 확인 (2020.09.24)
+					 *   - 출근 정보가 없다 (2020.09.24)
+					 *   	- 전날의 근무 정보를 확인한다. (2020.09.23) 
+					 *        - 전날의 근무 여부를 확인한다 (마감 여부, 휴일, 휴일근무)
+					 *        -- 전날 마감, 즉 인정시간이 계산된 경우(지각 조퇴 결근 등) 전날에 출/퇴근 타각으로 갱신할 수 없다. 
+					 *        - 휴일이 아니고 마감이 안 돌았을 경우 
+					 *        - 이미 출퇴근 정보가 있다
+					 *        - 전날의 근무는 이미 종료되었고 2020.09.24의 출근정보가 없기 때문에 데이터를 기록하지 않는다. 
+					 *   - 출근 정보가 있고 퇴근 정보가 없을 경우 (2020.09.24 의 퇴근 정보로 입력한다. 
+					 */
+					
+					if(cal.getEntryEdate() == null) {
+						
+						if(cal.getEntrySdate() != null) {
+							// - 출근 정보가 있고 퇴근 정보가 없을 경우 : 2020.09.24 의 퇴근 정보로 입력한다.
+							cal.setEntryEdate(inoutDt);
+							cal.setEntryEtypeCd(paramMap.get("entryType")+"");
+							calendarRepository.save(cal);
+						}else {
+							// - 출근 정보가 없다 (2020.09.24)
+							// - 전날의 근무 정보를 확인한다. (2020.09.23) 
+							//전날의 캘린더 정보를 조회한다.
+							Calendar calendar = Calendar.getInstance();
+							calendar.setTime(inoutDt);
+							calendar.add(Calendar.DATE, -1);
+							Date preDt = calendar.getTime();
+							String preDtYmd = ymd.format(preDt);
+							WtmWorkCalendar preCal = calendarRepository.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, preDtYmd);
+
+							//전날의 근무 여부를 확인하자
+							//전날의 근무의 출/퇴근 타각 기록을 확인한다.
+							if(preCal.getEntrySdate() != null && preCal.getEntryEdate() != null) {
+								logger.debug("전날 출/퇴근 타각시간이 존재.");
+								return;
+							}else {
+								if(preCal.getEntrySdate() != null && preCal.getEntryEdate() == null) {
+									List<WtmWorkDayResult> preResults = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, preCal.getYmd());
+									boolean isPass = false;
+									if(preResults != null) {
+										for(WtmWorkDayResult preResult: preResults) {
+											//지각 조퇴 결근 데이터가 있다는 것은 마감된 날이라고 판단한다. 
+											//전날 퇴근이 없고 다음날 실제로 출근
+											if(preResult.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA)) {
+												isPass = true;
+											}
+										}
+										if(!isPass) {
+											preCal.setEntryEdate(inoutDt);
+											preCal.setEntryEtypeCd(paramMap.get("entryType")+"");
+											calendarRepository.save(preCal);
+										}
+									}else {
+										//WtmTimeCdMgr timeCdMgr = timeCdMgrRepo.findById(preCal.getTimeCdMgrId()).get();
+										WtmFlexibleEmp flexibleEmp = flexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, preDtYmd);
+										WtmFlexibleStdMgr flexibleStdMgr = flexibleStdMgrRepo.findByFlexibleStdMgrId(flexibleEmp.getFlexibleStdMgrId());
+										if(preCal.getHolidayYn().equals("N") && flexibleStdMgr.getUnplannedYn().equals("N")) {
+											//unplanned일때 계획이 없으면 안됨
+											throw new Exception("근무계획시간이 존재하지 않습니다.");
+										}
+											
+										logger.debug("전날 근무일이 아니다.");
+									}
+								}else {
+									logger.debug("전날 출근 기록이 없다.");
+								}
+							}
+							
+						}
+					}else {
+						logger.debug("퇴근 타각시간이 존재하므로 반영하지 않습니다." + paramMap.toString());
+						return;
+					}
+				}
+				/*
+				//계획시간 안에 들어온 타각 먼저 처리(지각, 조퇴), 다음날 퇴근자들이 문제가 많음
+				for(Map<String, Object> time : list) {
+					if(time.get("cYmd") != null) {
+						if(time.get("cYmd").equals(time.get("ymd"))) {
+							stdYmd = time.get("ymd").toString();
+							entrySdate = time.get("entrySdate")!=null?time.get("entrySdate").toString():null;
+							entryEdate = time.get("entryEdate")!=null?time.get("entryEdate").toString():null;
+							break;
+						} else {
+							continue;
+						}
+					}
+				}
+				logger.debug("############ stdYmd1 " + stdYmd);
+				
+				if(stdYmd.equals("")) {
+					stdYmd = today;
+
+					for(Map<String, Object> time : list) {
+						entrySdate = time.get("entrySdate")!=null?time.get("entrySdate").toString():null;
+						entryEdate = time.get("entryEdate")!=null?time.get("entryEdate").toString():null;
+						
+						if(time.get("pSymd") == null && time.get("pEymd") == null &&
+								time.get("holydayYn").equals("N") && time.get("unplanned").equals("N")) {
+							//unplanned일때 계획이 없으면 안됨
+							throw new Exception("근무계획시간이 존재하지 않습니다.");
+						} else if(time.get("pSymd") != null && time.get("pSymd").equals(today) && paramMap.get("inoutType").equals("IN")) {
+							stdYmd = time.get("ymd").toString();
+							break;
+						}else if(time.get("pEymd") != null && time.get("pEymd").equals(today) && paramMap.get("inoutType").equals("OUT")) {
+							stdYmd = time.get("ymd").toString();
+							break;
+						}
+					}
+				}
+				logger.debug("############ stdYmd2 " + stdYmd);
+
+				//3.출근타각이 있으면 반영안됨(삼화 인터페이스 두번 들어올 수 있음)
+				if("IN".equals(paramMap.get("inoutType").toString()) && entrySdate !=null) {
+					
+					if(Long.parseLong(entrySdate) > Long.parseLong(paramMap.get("inoutDateTime").toString())) {
+						
+					} else {
+						logger.debug("출근 타각시간이 존재하므로 반영하지 않습니다." + paramMap.toString());
+						return;
+					}
+				}
+				
+				if("OUT".equals(paramMap.get("inoutType").toString()) && entryEdate !=null) {
+					
+					if(Long.parseLong(entryEdate) < Long.parseLong(paramMap.get("inoutDateTime").toString())) {
+						
+					} else {
+						logger.debug("퇴근 타각시간이 존재하므로 반영하지 않습니다." + paramMap.toString());
+						return;
+					}
+				}
+				*/
+				String gobackType = "GO";
+				//3.외출 복귀 마지막 상태 가져오기
+				Map<String, Object> goback = inoutHisMapper.getGoBackStatus(paramMap);
+				if(goback == null || "GO".equals(goback.get("inoutType").toString())) {
+					gobackType = "GO";
+				} else {
+					gobackType = "BACK";
+					paramMap.put("exceptSYmd", goback.get("exceptSYmd"));
+				}
+
+				//4.퇴근일때 복귀도 강제로 생성
+				if("OUT".equals(paramMap.get("inoutType").toString()) && gobackType.equals("BACK")) {
+					Map<String, Object> tempMap = new HashMap();
+					tempMap.putAll(paramMap);
+					tempMap.put("entryTypeCd", "API");
+					tempMap.put("inoutType", gobackType);
+					logger.debug("퇴근할때 강제 복귀 생성 " + paramMap.toString());
+					updateTimecardExcept(tempMap);
+				}
+				//paramMap.put("stdYmd", stdYmd);
+				//6.캘린더 업데이트
+				/*
+				int cnt = wtmCalendarMapper.updateEntryDateCalendar(paramMap);
+				if(cnt <= 0) {
+					throw new Exception("캘린더 정보 업데이트에 실패하였습니다.");
+				}
+				*/
+		
 	}
 }
