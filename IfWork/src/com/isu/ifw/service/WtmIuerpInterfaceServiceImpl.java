@@ -502,7 +502,8 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		int expireCnt = 0;
 		int updateCnt = 0;
 		int insertCnt = 0;
-		
+		int errorCnt = 0;
+		StringBuilder sb = new StringBuilder();
 		try {
 			
 			ObjectMapper mapper = new ObjectMapper();
@@ -561,6 +562,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 					String empId = intfEmp.get("empId") != null?intfEmp.get("empId").toString():"";
 					
 					WtmEmpHis empHis = wtmEmpHisRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, symd);
+
 					if(empHis != null) {
 						if(empHis.getSymd().equals(symd)) {
 							if(!empHis.getEmpNm().equals(empNm)
@@ -592,8 +594,15 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 								empHis.setEmpId(empId);
 								empHis.setUpdateId(updateId);
 								
-								wtmEmpHisRepo.save(empHis);
-								updateCnt++;
+								try {
+									wtmEmpHisRepo.save(empHis);
+									updateCnt++;
+								} catch(Exception e) {
+									errorCnt++;
+									sb.append(" | "+sabun);
+								}
+								
+									
 							}
 							
 						}else {
@@ -625,8 +634,13 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 								newEmp.setEmpId(empId);
 								newEmp.setUpdateId(updateId);
 								
-								wtmEmpHisRepo.save(newEmp);
-								insertCnt++;
+								try {
+									wtmEmpHisRepo.save(newEmp);
+									insertCnt++;
+								} catch(Exception e) {
+									errorCnt++;
+									sb.append(" | "+sabun);
+								}
 							}
 						}
 					}else {
@@ -651,9 +665,14 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 						newEmp.setEmpId(empId);
 						newEmp.setUpdateId(updateId);
 						
-						wtmEmpHisRepo.save(newEmp);
-						insertCnt++;
-						isNew = true;
+						try {
+							wtmEmpHisRepo.save(newEmp);
+							insertCnt++;
+							isNew = true;
+						} catch(Exception e) {
+							errorCnt++;
+							sb.append(" | "+sabun);
+						}
 						
 					}
 					
@@ -763,7 +782,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		
 		int applyCnt = updateCnt+insertCnt;
 		if(applyCnt!=0)
-			rp.setSuccess(applyCnt+"건(update:"+updateCnt+",insert:"+insertCnt+") 반영완료");
+			rp.setSuccess(applyCnt+"건(update:"+updateCnt+",insert:"+insertCnt+",error:"+errorCnt+"["+sb+"]) 반영완료");
 		else
 			rp.setSuccess("반영완료");
 		

@@ -31,7 +31,7 @@ public class WtmAppl {
 	private String applCd;
 	@Column(name="APPL_SABUN")
 	private String applSabun;
-	@Column(name="APPL_YMD")
+	@Column(name="APPL_YMD", updatable=false)
 	private String applYmd;
 	@Column(name="IF_APPL_NO")
 	private String ifApplNo;

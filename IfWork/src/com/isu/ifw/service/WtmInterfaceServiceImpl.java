@@ -2636,26 +2636,26 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 									}
 									// 근무시간이 없으면 근태코드별 시간을 조정해야함.
 									logger.debug("반차는 근무시간을 변경함 : " + taaCode.getRequestTypeCd());
-									if("A".equals(taaCode.getRequestTypeCd())) {
+									if("P".equals(taaCode.getRequestTypeCd())) {
 										if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
 											//반차는 근무시간을 변경함
-											sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, -240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-										}else {
-											Calendar calendar = Calendar.getInstance();
-											calendar.setTime(edate);
-											calendar.add(Calendar.MINUTE, -240);
-											sdate = calendar.getTime();
-										}
-										
-										//calcService.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgrId, null)
-									}else if("P".equals(taaCode.getRequestTypeCd())) {
-										if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
-											sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, 240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+											sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 										}else {
 											Calendar calendar = Calendar.getInstance();
 											calendar.setTime(sdate);
 											calendar.add(Calendar.MINUTE, 240);
 											sdate = calendar.getTime();
+										}
+										
+										//calcService.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgrId, null)
+									}else if("A".equals(taaCode.getRequestTypeCd())) {
+										if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+											edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, -240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+										}else {
+											Calendar calendar = Calendar.getInstance();
+											calendar.setTime(edate);
+											calendar.add(Calendar.MINUTE, -240);
+											edate = calendar.getTime();
 										}
 									}
 								}
@@ -2761,7 +2761,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
     		lastDataTime = getDateMap.get("lastDate").toString();
     		nowDataTime = getDateMap.get("nowDate").toString();
-    		lastDataTime = "20200801010101";
+    		lastDataTime = "20200201010101";
     		try {
         		String param = "?lastDataTime="+lastDataTime;
 	        	String ifUrl = setIfUrl(tenantId, "/taaAppl", param); 
@@ -2778,11 +2778,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		   				String yyyymmddhhmiss= sdf.format(new Date());
 		   				
 		   	    		for(int l=0; l<getIfList.size(); l++) {
-		   	    			/*
-		   	    			if(!"1".equals(getIfList.get(l).get("SABUN").toString())){
-		   	    				continue;
-		   	    			}
-		   	    			*/
+		   	    			
+//		   	    			if(!"15003".equals(getIfList.get(l).get("SABUN").toString())){
+//		   	    				continue;
+//		   	    			}
+		   	    			
 		   	    			WtmIfTaaHis data = new WtmIfTaaHis();
 		   	    			data.setTenantId(tenantId);
 		   	    			data.setEnterCd(getIfList.get(l).get("ENTER_CD").toString());

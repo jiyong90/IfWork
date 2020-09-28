@@ -14,5 +14,7 @@ public interface WtmTaaApplRepository extends JpaRepository<WtmTaaAppl, Long> {
 	
 	public List<WtmTaaAppl> findByTenantIdAndEnterCdAndIfApplNo(Long tenantId, String enterCd, String ifApplNo);
 	
+	public List<WtmTaaAppl> findByApplId(Long applId);
+	
 	
 }
