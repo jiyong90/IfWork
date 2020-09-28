@@ -174,8 +174,33 @@
 	    	<artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
 	    	<version>1.16</version>
 		</dependency>    
-	</dependencies>
+		
+			
+		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt -->
+		<dependency>
+		    <groupId>io.jsonwebtoken</groupId>
+		    <artifactId>jjwt</artifactId>
+		    <version>0.9.1</version>
+		</dependency>
+				
+		<!-- https://mvnrepository.com/artifact/org.json/json -->
+		<dependency>
+		    <groupId>org.json</groupId>
+		    <artifactId>json</artifactId>
+		    <version>20190722</version>
+		</dependency>
 
+		<!-- lombok
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.8</version>
+			<scope>provided</scope>
+		</dependency>
+		-->
+
+	</dependencies>
+	 
 	<repositories>
 		<repository>
 			<id>thirdparty</id>
@@ -184,6 +209,7 @@
 	</repositories>
 	
   <build>
+  	<finalName>IfWork</finalName>
     <sourceDirectory>src</sourceDirectory>
     <plugins>
       <plugin>
