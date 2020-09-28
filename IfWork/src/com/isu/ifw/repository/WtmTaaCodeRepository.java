@@ -18,6 +18,6 @@ public interface WtmTaaCodeRepository extends JpaRepository<WtmTaaCode, Long> {
 	
 	public WtmTaaCode findByTenantIdAndEnterCdAndTaaInfoCd(Long tenantId, String enterCd, String taaInfoCd);
 
-	@Query(value="SELECT * FROM WTM_TAA_CODE WHERE TENANT_ID = :tenantId AND ENTER_CD = :enterCd AND WORK_YN = :workYn AND REQUEST_TYPE_CD IN (:taas)", nativeQuery = true)
-	List<WtmTaaCode> findByTenantIdAndEnterCdAndRequestTypeCdAndWorkYn(Long tenantId, String enterCd, @Param("taas")List<String> taas, String workYn);
+	@Query(value="SELECT * FROM WTM_TAA_CODE WHERE TENANT_ID = :tenantId AND ENTER_CD = :enterCd AND WORK_YN = :workYn AND REQUEST_TYPE_CD IN (:taas) AND TAA_TYPE_CD = :taaTypeCd", nativeQuery = true)
+	List<WtmTaaCode> findByTenantIdAndEnterCdAndRequestTypeCdAndWorkYn(Long tenantId, String enterCd, @Param("taas") List<String> taas, String taaTypeCd, String workYn);
 }

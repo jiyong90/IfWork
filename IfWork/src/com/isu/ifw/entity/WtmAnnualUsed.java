@@ -1,8 +1,9 @@
 package com.isu.ifw.entity;
 
-import org.hibernate.validator.constraints.NotEmpty;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
+import javax.validation.constraints.Max;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -18,72 +19,87 @@ public class WtmAnnualUsed implements Serializable {
      */
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @Column(name = "ANN_USED_ID")
     private Long annUsedId;
 
     /**
      * 테넌트아이디
      */
-    @NotEmpty
+    @Column(name = "TENANT_ID")
     private Long tenantId;
 
     /**
      * 회사구분
      */
-    @NotEmpty
+    @Column(name = "ENTER_CD")
     private String enterCd;
 
     /**
      * 근태타입코드
      */
-    @NotEmpty
+    @Column(name = "TAA_TYPE_CD")
     private String taaTypeCd;
 
     /**
      * 사번
      */
-    @NotEmpty
+    @Column(name = "SABUN")
     private String sabun;
 
     /**
      * 년도
      */
-    @NotEmpty
+    @Column(name = "YY")
     private String yy;
 
     /**
      * 시작일
      */
-    @NotEmpty
+    @Column(name = "SYMD")
     private String symd;
 
     /**
      * 종료일
      */
-    @NotEmpty
+    @Column(name = "EYMD")
     private String eymd;
 
     /**
      * 발생일수
      */
-    @NotEmpty
+    @Max(999)
+    @Column(name = "CREATE_CNT")
     private Integer createCnt;
 
     /**
      * 비고
      */
+    @Column(name = "NOTE")
     private String note;
 
     /**
      * 최종수정시간
      */
-    @NotEmpty
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name="UPDATE_DATE", columnDefinition="DATETIME")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date updateDate;
 
     /**
      * 최종수정자
      */
-    @NotEmpty
+    @Column(name = "UPDATE_ID")
     private String updateId;
+
+    @PrePersist
+    protected void onCreate() {
+        this.updateDate = new Date();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updateDate = new Date();
+    }
 
     private static final long serialVersionUID = 1L;
 
