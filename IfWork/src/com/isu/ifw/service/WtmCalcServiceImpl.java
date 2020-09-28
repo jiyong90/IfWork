@@ -16,8 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.WtmDayMgr;
 import com.isu.ifw.entity.WtmFlexibleEmpCalc;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
+import com.isu.ifw.entity.WtmHolidayMgr;
 import com.isu.ifw.entity.WtmTaaCode;
 import com.isu.ifw.entity.WtmTimeBreakMgr;
 import com.isu.ifw.entity.WtmTimeBreakTime;
@@ -26,8 +28,10 @@ import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmCalcMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.repository.WtmDayMgrRepository;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
+import com.isu.ifw.repository.WtmHolidayMgrRepository;
 import com.isu.ifw.repository.WtmTaaCodeRepository;
 import com.isu.ifw.repository.WtmTimeBreakMgrRepository;
 import com.isu.ifw.repository.WtmTimeBreakTimeRepository;
@@ -67,6 +71,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	private WtmTaaCodeRepository taaCodeRepo;
 	
 	@Autowired private WtmFlexibleEmpMapper wtmFlexibleEmpMapper;
+	
+	@Autowired private WtmDayMgrRepository dayMgrRepo;
+	@Autowired private WtmHolidayMgrRepository holidayMgrRepo;
 	
 	@Transactional
 	public void P_WTM_WORK_DAY_RESULT_CREATE_F(Long tenantId, String enterCd,  String sabun, String ymd, WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr, String userId) {
@@ -2058,5 +2065,48 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		}else {
 			return cEdate;
 		}
+	}
+
+	@Override
+	public Map<String, Integer> calcDayCnt(Long tenantId, String enterCd, String symd, String eymd) {
+		Map<String, Integer> resMap = new HashMap<String, Integer>();
+		List<WtmDayMgr> days = dayMgrRepo.findBySunYmdBetween(symd, eymd);
+		List<WtmHolidayMgr> holDays = holidayMgrRepo.findByTenantIdAndEnterCdAndHolidayYmdBetween(tenantId, enterCd, symd, eymd);
+
+		int totCnt = 0;
+		int holCnt = 0;
+		
+		if(days != null && days.size() > 0) {
+			boolean isHol = false;
+			for(WtmDayMgr day : days) {
+				
+				if("Y".equals(day.getHolidayYn())){
+					isHol = true;
+				}else {
+					isHol = false;
+				}
+				logger.debug("day.getHolidayYn() : " + day.getHolidayYn());
+				logger.debug("holDays.size() : " + holDays.size());
+				if(holDays != null && holDays.size() > 0) {
+					for(WtmHolidayMgr holiday : holDays) {
+						if(holiday.getId().getHolidayYmd().equals(day.getSunYmd())){
+							logger.debug("holiday.getSunYn() : " + holiday.getSunYn());
+							if("Y".equals(holiday.getSunYn())) {
+								isHol = true;
+							}
+						}
+					}
+				}
+				totCnt++;
+				if(isHol) {
+					holCnt++;
+				}
+				
+			}
+			
+		}
+		resMap.put("totDays", totCnt);
+		resMap.put("holDays", holCnt);
+		return resMap;
 	}
 }
