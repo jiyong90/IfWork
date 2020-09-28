@@ -1,5 +1,6 @@
 package com.isu.ifw.service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -49,5 +50,8 @@ public interface WtmInoutService {
 	public List<Map<String, Object>> getInoutMonitorList(Map<String, Object> paramMap) throws Exception;
 
 	public Map<String, Object> getMenuContext3(Long tenantId, String enterCd, String sabun, String ymd) throws Exception;
+	
+	//출퇴근 타각정보 갱신
+	public void updEntryDate(Long tenantId, String enterCd, String sabun, String inoutType, String inoutDate, String entryNote, String entryType) throws Exception;
 
 }

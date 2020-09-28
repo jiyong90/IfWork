@@ -1853,13 +1853,17 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						&&
 						Integer.parseInt(ehm) > Integer.parseInt(timeBreakMgr.getShm())
 				) {
+
+					logger.debug("getBreakMinuteIfBreakTimeMGR maxEhm :: "+ maxEhm);
+					logger.debug("getBreakMinuteIfBreakTimeMGR timeBreakMgr.getEhm :: "+ timeBreakMgr.getEhm());
 					if(maxEhm == null || Integer.parseInt(maxEhm) < Integer.parseInt(timeBreakMgr.getEhm())){
 						maxEhm = timeBreakMgr.getEhm();
 					}
 					//20~60 일 경우 40분이 나와야하는데 60분이 나와서 수정함.
 					//20200901 
 					//sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null, null, null);
-					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(shm, ehm, timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null);
+					//sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(shm, ehm, timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null);
+					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(),shm, ehm, null);
 				}
 					
 			}
