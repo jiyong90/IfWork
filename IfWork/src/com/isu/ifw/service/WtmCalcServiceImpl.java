@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmDayMgr;
+import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleEmpCalc;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmHolidayMgr;
@@ -26,6 +27,7 @@ import com.isu.ifw.entity.WtmTimeBreakTime;
 import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
+import com.isu.ifw.entity.WtmWorkTermTime;
 import com.isu.ifw.mapper.WtmCalcMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.repository.WtmDayMgrRepository;
@@ -37,6 +39,7 @@ import com.isu.ifw.repository.WtmTimeBreakMgrRepository;
 import com.isu.ifw.repository.WtmTimeBreakTimeRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
+import com.isu.ifw.repository.WtmWorkTermTimeRepository;
 import com.isu.ifw.vo.WtmFlexibleInfoVO;
 
 @Service
@@ -74,6 +77,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	
 	@Autowired private WtmDayMgrRepository dayMgrRepo;
 	@Autowired private WtmHolidayMgrRepository holidayMgrRepo;
+	
+	@Autowired private WtmWorkTermTimeRepository workTermTimeRepo;
+	
 	
 	@Transactional
 	public void P_WTM_WORK_DAY_RESULT_CREATE_F(Long tenantId, String enterCd,  String sabun, String ymd, WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr, String userId) {
@@ -298,7 +304,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						cal.setTime(limitEdate);
 						cal.add(Calendar.DATE, 1);
 						limitEdate = cal.getTime();
-					}
+					} 
 	
 					if(calcSdate.compareTo(limitSdate) < 0) {
 						logger.debug("시작일 근무 제한 시간 적용. calcSdate : " + calcSdate + " limitSdate : " + limitSdate);
@@ -1843,6 +1849,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	@Override
 	public Map<String, Object> getBreakMinuteIfBreakTimeMGR(Date sDate, Date eDate, long timeCdMgrId) {
 		int sumBreakMinute = 0;
+		int breakMinute = 0;
 		String maxEhm = null;
 		
 		Map<String, Object> resMap = new HashMap<>();
@@ -1869,8 +1876,12 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					//20~60 일 경우 40분이 나와야하는데 60분이 나와서 수정함.
 					//20200901 
 					//sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null, null, null);
-					//sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(shm, ehm, timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null);
-					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(),shm, ehm, null);
+					//if(Integer.parseInt(timeBreakMgr.getShm()) <= Integer.parseInt(shm) && Integer.parseInt(timeBreakMgr.getEhm()) >= Integer.parseInt(ehm)) {
+					//	sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(shm, ehm, null, null, null);
+					//}else {
+						breakMinute = breakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null, null, null);
+						sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(),shm, ehm, null);
+					//}
 				}
 					
 			}
@@ -1879,7 +1890,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		}
 		logger.debug("sumBreakMinute :: "+ sumBreakMinute);
 		resMap.put("maxEhm", maxEhm);
+		//마지막에 적용된 휴게시간 정보를 보내자
 		resMap.put("breakMinute", sumBreakMinute);
+		resMap.put("totBreakMinute", breakMinute);
 		return resMap;
 	}
 	/**
@@ -1966,10 +1979,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		if(addMinute < 0) {
 			isNegative = true;
 		}
+		
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(sDate);
 		cal.add(Calendar.MINUTE, addMinute);
-
+		
 		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: sDate = "+ sDate);
 		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: addMinute = "+ addMinute);
 		Date eDate = cal.getTime();
@@ -1995,11 +2009,43 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
 		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddhhmm");
 		Map<String, Object> breakMap = this.getBreakMinuteIfBreakTimeMGR(cSdate, cEdate, timeCdMgrId);
-		int addBreakMinute = 0;
+		int totBreakMinute = 0;
 		if(breakMap != null) {
-			addBreakMinute = (int) breakMap.get("breakMinute");
+			totBreakMinute = (int) breakMap.get("totBreakMinute");
+			maxEhm = breakMap.get("maxEhm") + "";
 		}
-		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: addBreakMinute = "+ addBreakMinute);
+		Date maxBreakDate = null;
+		if(maxEhm != null) {
+			try {
+				maxBreakDate = ymdhm.parse(ymd.format(cSdate)+maxEhm);
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		//Date reCalcEdate = null;
+		if(totBreakMinute > 0) {
+			cal.setTime(cEdate);
+			if(isNegative) {
+				cal.add(Calendar.MINUTE, totBreakMinute * -1);
+			}else {
+				cal.add(Calendar.MINUTE, totBreakMinute);
+			}
+			cEdate = cal.getTime();
+		}
+		int addBreakMinute = 0;
+		Map<String, Object> reBreakMap = null;
+		if(isNegative) {
+			//reBreakMap = this.getBreakMinuteIfBreakTimeMGR(cSdate, maxBreakDate, timeCdMgrId);
+			//이건 망인데..
+		}else {
+			reBreakMap = this.getBreakMinuteIfBreakTimeMGR(maxBreakDate, cEdate, timeCdMgrId);
+		}
+		if(breakMap != null) {
+			addBreakMinute = (int) reBreakMap.get("breakMinute");
+		}else {
+			addBreakMinute = 0;
+		}
 		if(addBreakMinute > 0) {
 			if(isNegative) {
 				return P_WTM_DATE_ADD_FOR_BREAK_MGR(cSdate, addBreakMinute * -1, timeCdMgrId, unitMinute);
@@ -2108,5 +2154,284 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		resMap.put("totDays", totCnt);
 		resMap.put("holDays", holCnt);
 		return resMap;
+	}
+	
+	@Transactional
+	@Override
+	public void P_WTM_FLEXIBLE_EMP_WORKTERM_C(Long tenantId, String enterCd, String sabun, String ymd) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("ymd", ymd);
+		//주간 시작 종료일을 구한다. 
+		logger.debug(tenantId + " : " + enterCd + " : " + ymd + " 의 주간 시작 종료일을 구한다.");
+		Map<String, Object> weekInfoMap = wtmFlexibleEmpMapper.getWeekStartEndYmd(paramMap);
+		
+		if(weekInfoMap != null && weekInfoMap.containsKey("weekSymd") && weekInfoMap.get("weekSymd") != null && !"".equals(weekInfoMap.get("weekSymd")+"") 
+				&& weekInfoMap.containsKey("weekEymd")  && weekInfoMap.get("weekEymd") != null && !"".equals(weekInfoMap.get("weekEymd")+"")) {
+			String symd = weekInfoMap.get("weekSymd") + "";
+			String eymd = weekInfoMap.get("weekEymd") + "";
+			
+			List<WtmTaaCode> taaCodes = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCdLike(tenantId, enterCd, "BREAK%");
+			
+			/*
+			 * MAX(CASE WHEN  TAA_INFO_CD = 'BREAK' THEN TAA_CD ELSE '' END) AS M
+			 , MAX(CASE WHEN  TAA_INFO_CD = 'BREAK_FIXOT' THEN TAA_CD ELSE '' END) AS F
+			 , MAX(CASE WHEN  TAA_INFO_CD = 'BREAK_OT' THEN TAA_CD ELSE '' END) AS O
+			 , MAX(CASE WHEN  TAA_INFO_CD = 'BREAK_REGA' THEN TAA_CD ELSE '' END) AS R
+			 */
+			String M = "";
+			String F = "";
+			String O = "";
+			String R = "";
+			
+			for(WtmTaaCode taaCode : taaCodes) {
+				switch (taaCode.getTaaInfoCd()) {
+					case "BREAK":
+						M = taaCode.getTaaCd();
+						break;
+					case "BREAK_FIXOT":
+						F = taaCode.getTaaCd();
+						break;
+					case "BREAK_OT":
+						O = taaCode.getTaaCd();
+						break;
+					case "BREAK_REGA":
+						R = taaCode.getTaaCd();
+						break;
+					default:
+						break;
+				}
+			}
+			
+			List<WtmWorkTermTime> times = workTermTimeRepo.findByTenantIdAndEnterCdAndSabunAndWeekEdateGreaterThanEqualAndWeekSdateLessThanEqual(tenantId, enterCd, sabun, symd, eymd);
+			if(times != null && times.size() > 0) {
+				workTermTimeRepo.deleteAll(times);
+				workTermTimeRepo.flush();
+			}
+			
+			List<WtmFlexibleEmp> emps = flexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndEymdGreaterThanEqualAndSymdLessThanEqual(tenantId, enterCd, sabun, symd, eymd);
+			for(WtmFlexibleEmp emp : emps) {
+				String weekSdate = "";
+				if(Integer.parseInt(emp.getSymd()) >= Integer.parseInt(symd) && Integer.parseInt(emp.getSymd()) <= Integer.parseInt(eymd) ) {
+					weekSdate = emp.getSymd();
+				}else if(Integer.parseInt(symd) >= Integer.parseInt(emp.getSymd()) && Integer.parseInt(symd) <= Integer.parseInt(emp.getEymd()) ) {
+					weekSdate = symd;
+				}
+				
+				String weekEdate = "";
+				if(Integer.parseInt(emp.getEymd()) >= Integer.parseInt(symd) && Integer.parseInt(emp.getEymd()) <= Integer.parseInt(eymd) ) {
+					weekEdate = emp.getEymd();
+				}else if(Integer.parseInt(eymd) >= Integer.parseInt(emp.getSymd()) && Integer.parseInt(eymd) <= Integer.parseInt(emp.getEymd()) ) {
+					weekEdate = eymd;
+				}
+				if(!"".equals(weekSdate) && !"".equals(weekEdate)) {
+					WtmFlexibleStdMgr flexibleStdMgr = flexibleStdMgrRepo.findById(emp.getFlexibleStdMgrId()).get();
+					List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenOrderByYmdAsc(tenantId, enterCd, sabun, symd, eymd);
+					if(results != null && results.size() > 0) {
+						int workDayCnt = 0;
+
+						int avlMinute = 0;
+						int planWorkMinute = 0;
+						int planOtMinute = 0;
+						
+						int apprWorkMinute = 0;
+						int apprOtMinute = 0;
+						
+						int planExMinute = 0;
+						int planOtExMinute = 0;
+						
+						int apprExMinute = 0;
+						int apprOtExMinute = 0;
+						
+						int nowWorkMinute = 0;
+						int nowOtMinute = 0;
+						
+						SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+						String today = sdf.format(new Date());
+						
+						for(WtmWorkDayResult result : results) {
+							//주 기간내에 여러개의 근무제가 속할 수 있다. 근무제 기간별로 계산되어야한다. 
+							if(Integer.parseInt(result.getYmd()) >= Integer.parseInt(emp.getSymd()) && Integer.parseInt(result.getYmd()) <= Integer.parseInt(emp.getEymd()) ) {
+								/*
+								 *  SUM(CASE WHEN (X.TIME_TYPE_CD IN ('BASE', 'REGA')) OR (X.TIME_TYPE_CD IN ('TAA') AND X.TAA_TIME_YN = 'Y') THEN F_WTM_NVL(X.PLAN_MINUTE,0) ELSE 0 END) AS PLAN_WORK_MINUTE
+								, SUM(CASE WHEN X.TIME_TYPE_CD IN ('OT', 'FIXOT', 'NIGHT') THEN F_WTM_NVL(X.PLAN_MINUTE,0) ELSE 0 END) AS PLAN_OT_MINUTE
+								, SUM(CASE WHEN (X.TIME_TYPE_CD IN ('BASE', 'REGA')) OR (X.TIME_TYPE_CD IN ('TAA') AND X.TAA_TIME_YN = 'Y') THEN F_WTM_NVL(X.APPR_MINUTE,0) ELSE 0 END) AS APPR_WORK_MINUTE
+								, SUM(CASE WHEN X.TIME_TYPE_CD IN ('OT', 'FIXOT', 'NIGHT') THEN F_WTM_NVL(X.APPR_MINUTE,0) ELSE 0 END) AS APPR_OT_MINUTE 
+								 */
+								if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)
+									|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA)
+									|| (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) && "Y".equals(flexibleStdMgr.getTaaTimeYn()) )
+									){
+									if(result.getPlanMinute() == null){
+										planWorkMinute = planWorkMinute + 0;
+									}else {
+										planWorkMinute = planWorkMinute + result.getPlanMinute();
+									}
+									
+									if(result.getApprMinute() == null){
+										apprWorkMinute = apprWorkMinute + 0;
+									}else {
+										apprWorkMinute = apprWorkMinute + result.getApprMinute();
+									}
+								}
+								
+								if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)
+									|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT)
+									|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)
+										) {
+									
+									if(result.getPlanMinute() == null){
+										planOtMinute = planOtMinute + 0;
+									}else {
+										planOtMinute = planOtMinute + result.getPlanMinute();
+									}
+									
+									if(result.getApprMinute() == null){
+										apprOtMinute = apprOtMinute + 0;
+									}else {
+										apprOtMinute = apprOtMinute + result.getApprMinute();
+									}
+									
+								}
+								
+								if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EXCEPT)) {
+									/*
+									 * , SUM(CASE WHEN X.TIME_TYPE_CD IN ('EXCEPT') AND X.TAA_CD IN (v_m, v_r) THEN F_WTM_NVL(X.PLAN_MINUTE,0) ELSE 0 END) AS PLAN_EX_MINUTE 
+	                            	   , SUM(CASE WHEN X.TIME_TYPE_CD IN ('EXCEPT') AND X.TAA_CD IN (v_m, v_r) THEN F_WTM_NVL(X.APPR_MINUTE,0) ELSE 0 END) AS APPR_EX_MINUTE
+									 */
+									if(result.getTaaCd().equals(M) || result.getTaaCd().equals(R)) {
+										if(result.getPlanMinute() == null){
+											planExMinute = planExMinute + 0;
+										}else {
+											planExMinute = planExMinute + result.getPlanMinute();
+										}
+										
+										if(result.getApprMinute() == null){
+											apprExMinute = apprExMinute + 0;
+										}else {
+											apprExMinute = apprExMinute + result.getApprMinute();
+										}
+									}
+									/*
+		                            	, SUM(CASE WHEN X.TIME_TYPE_CD IN ('EXCEPT') AND X.TAA_CD IN (v_f, v_o) THEN F_WTM_NVL(X.PLAN_MINUTE,0) ELSE 0 END) AS PLAN_OT_EX_MINUTE 
+	                            		, SUM(CASE WHEN X.TIME_TYPE_CD IN ('EXCEPT') AND X.TAA_CD IN (v_f, v_o) THEN F_WTM_NVL(X.APPR_MINUTE,0) ELSE 0 END) AS APPR_OT_EX_MINUTE 
+									 */
+									if(result.getTaaCd().equals(F) || result.getTaaCd().equals(O)) {
+										if(result.getPlanMinute() == null){
+											planOtExMinute = planOtExMinute + 0;
+										}else {
+											planOtExMinute = planOtExMinute + result.getPlanMinute();
+										}
+										
+										if(result.getApprMinute() == null){
+											apprOtExMinute = apprOtExMinute + 0;
+										}else {
+											apprOtExMinute = apprOtExMinute + result.getApprMinute();
+										}
+									}
+									
+								}
+								/*
+								 * , SUM(CASE WHEN X.TIME_TYPE_CD IN ('BASE', 'REGA') AND F_WTM_DATE_FORMAT(NOW(), 'YMD') <= X.YMD THEN IFNULL(X.APPR_MINUTE, X.PLAN_MINUTE) 
+							  				 WHEN X.TIME_TYPE_CD IN ('BASE', 'REGA') AND F_WTM_DATE_FORMAT(NOW(), 'YMD') > X.YMD THEN IFNULL(X.APPR_MINUTE, 0) 
+							             ELSE 0 END) AS NOW_WORK_MINUTE
+					   		  	  , SUM(CASE WHEN X.TIME_TYPE_CD IN ('OT', 'FIXOT', 'NIGHT') AND F_WTM_DATE_FORMAT(NOW(), 'YMD') <= X.YMD THEN IFNULL(X.APPR_MINUTE, X.PLAN_MINUTE) 
+							  	  				 WHEN X.TIME_TYPE_CD IN ('OT', 'FIXOT', 'NIGHT') AND F_WTM_DATE_FORMAT(NOW(), 'YMD') > X.YMD THEN IFNULL(X.APPR_MINUTE, 0) 
+									          ELSE 0 END) AS NOW_OT_MINUTE
+								 */
+								if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA))
+									) {
+									//오늘 포함 미래일
+									if(Integer.parseInt(today) <= Integer.parseInt(result.getYmd())) {
+										//인정시간 우선
+										if(result.getApprMinute() == null) {
+											if(result.getPlanMinute() == null) {
+												nowWorkMinute = nowWorkMinute + 0;
+											}else {
+												nowWorkMinute = nowWorkMinute + result.getPlanMinute();
+											}
+										}else {
+											nowWorkMinute = nowWorkMinute + result.getApprMinute();
+										}
+									}else {
+										//과거는 인정시간만
+										if(result.getApprMinute() == null) {
+											nowWorkMinute = nowWorkMinute + 0;
+										}else {
+											nowWorkMinute = nowWorkMinute + result.getApprMinute();
+										}
+									}
+											
+								}
+								if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT))
+										) {
+										//오늘 포함 미래일
+										if(Integer.parseInt(today) <= Integer.parseInt(result.getYmd())) {
+											//인정시간 우선
+											if(result.getApprMinute() == null) {
+												if(result.getPlanMinute() == null) {
+													nowOtMinute = nowOtMinute + 0;
+												}else {
+													nowOtMinute = nowOtMinute + result.getPlanMinute();
+												}
+											}else {
+												nowOtMinute = nowOtMinute + result.getApprMinute();
+											}
+										}else {
+											//과거는 인정시간만
+											if(result.getApprMinute() == null) {
+												nowOtMinute = nowOtMinute + 0;
+											}else {
+												nowOtMinute = nowOtMinute + result.getApprMinute();
+											}
+										}
+												
+									}
+									
+							}
+							workDayCnt++;
+						}
+						/*
+						(XX.APPR_WORK_MINUTE + XX.APPR_OT_MINUTE - XX.APPR_EX_MINUTE) / XX.WORK_DAYS
+						, XX.PLAN_WORK_MINUTE - XX.PLAN_EX_MINUTE
+						, XX.PLAN_OT_MINUTE- XX.PLAN_OT_EX_MINUTE 
+						, XX.APPR_WORK_MINUTE- XX.APPR_EX_MINUTE
+						, XX.APPR_OT_MINUTE - XX.APPR_OT_EX_MINUTE
+						, XX.NOW_WORK_MINUTE - XX.PLAN_EX_MINUTE
+						, XX.NOW_OT_MINUTE- XX.PLAN_OT_EX_MINUTE
+						*/
+						avlMinute = (apprWorkMinute + apprOtMinute - apprExMinute) / workDayCnt;
+						
+						
+						WtmWorkTermTime workTermTime = new WtmWorkTermTime();
+						workTermTime.setTenantId(tenantId);
+						workTermTime.setEnterCd(enterCd);
+						workTermTime.setSabun(sabun);
+						workTermTime.setWorkTypeCd(emp.getWorkTypeCd());
+						workTermTime.setFlexibleSdate(emp.getSymd());
+						workTermTime.setFlexibleEdate(emp.getEymd());
+						workTermTime.setWeekSdate(weekSdate);
+						workTermTime.setWeekEdate(weekEdate);
+						workTermTime.setAvlMinute(avlMinute);
+						workTermTime.setPlanWorkMinute(planWorkMinute - planExMinute);
+						workTermTime.setPlanOtMinute(planOtMinute - planOtExMinute);
+						workTermTime.setApprWorkMinute(apprWorkMinute - apprExMinute);
+						workTermTime.setApprOtMinute(apprOtMinute - apprOtExMinute);
+						workTermTime.setNowWorkMinute(nowWorkMinute - planExMinute);
+						workTermTime.setNowOtMinute(nowOtMinute - planOtExMinute);
+						workTermTime.setUpdateDate(new Date());
+						workTermTime.setUpdateId("workTermTime");
+						logger.debug("workTermTime : " + workTermTime.toString());
+						workTermTimeRepo.save(workTermTime);
+					}
+					
+				}
+				
+			}
+		}else {
+			logger.debug("[ERR] 주간 정보를 구하지 못했습니다.");
+		}
+		
 	}
 }
