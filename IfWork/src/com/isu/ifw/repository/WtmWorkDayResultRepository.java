@@ -119,4 +119,8 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 	 */
 	@Query("SELECT D FROM WtmWorkDayResult D WHERE D.tenantId = :tenantId AND D.enterCd = :enterCd AND D.sabun = :sabun AND D.ymd = :ymd AND D.apprMinute IS NOT NULL AND D.apprMinute > :greaterMinute AND D.apprSdate < :eDate AND D.apprEdate > :sDate ORDER BY apprSdate ASC")
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndYmdAndSabunAndApprEdateAfterAndApprSdateBeforeAndApprMinuteGreaterThenAndApprMinuteIsNotNullOrderByApprSdateAsc(Long tenantId, String enterCd, String ymd, String sabun, Date sDate, Date eDate, int greaterMinute);
+	
+	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndYmdBetweenOrderByYmdAsc(Long tenantId, String enterCd, String sabun, String symd, String eymd );
+	
+	
 }

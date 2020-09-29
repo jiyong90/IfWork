@@ -555,5 +555,11 @@ public interface WtmFlexibleEmpMapper {
 	 */
 	public Map<String, Object> checkFinDay(Map<String, Object> paramMap);
 	
+	/**
+	 * 특정일의 주간 시작 종료일을 구한다. 
+	 * @param paramMap { tenantId, enterCd, ymd}
+	 * @return
+	 */
+	public Map<String, Object> getWeekStartEndYmd(Map<String, Object> paramMap);
 	
 }

@@ -1240,13 +1240,14 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		List<WtmWorkCalendar> works = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenOrderByYmdAsc(tenantId, enterCd, sabun, sYmd, eYmd);
 		
-		//Result -> Result_O		
-		calcApprDayInfo0(tenantId, enterCd, sabun, "BASE", sYmd, eYmd);
-
-		//인정시간 초기화
-		calcApprDayInfoApprReset(tenantId, enterCd, sabun, "BASE", sYmd, eYmd);
 		
 		if(works != null) {
+			//Result -> Result_O		
+			calcApprDayInfo0(tenantId, enterCd, sabun, "BASE", sYmd, eYmd);
+			
+			//인정시간 초기화
+			calcApprDayInfoApprReset(tenantId, enterCd, sabun, "BASE", sYmd, eYmd);
+			
 			for(WtmWorkCalendar calendar : works) {
 				
 				WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, calendar.getYmd());
@@ -1276,6 +1277,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				calcApprDayInfo2(calendar, flexStdMgr, timeCdMgr);
 				
 			}
+			
+			
 		}
 	}
 	@Override
@@ -3781,12 +3784,22 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	// 근무제 통계 데이터 생성
 	@Override
 	public Map<String, Object> createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
+		/*
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
 		paramMap.put("sabun", sabun);
 		paramMap.put("pId", userId);
 		flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
-		
+		*/
+		String ymd = "";
+		if(paramMap.containsKey("symd")) {
+			ymd = paramMap.get("symd")+"";
+		}else if(paramMap.containsKey("sYmd")) {
+			ymd = paramMap.get("sYmd")+"";
+		}else if(paramMap.containsKey("ymd")) {
+			ymd = paramMap.get("ymd")+"";
+		}
+		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, ymd);
 		return flexEmpMapper.getWorkTermMinute(paramMap);
 	}
 	
@@ -4609,8 +4622,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			Date sDate = sdf.parse(paramSymd);
 			Date eDate = sdf.parse(paramEymd);
 			
-			ArrayList<String> dates = new ArrayList<String>();  //날짜를 담을 리스트
-			
 			try {
 
 				//마감데이터 재생성
@@ -4623,13 +4634,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				paramMap.put("eymd", sdf.format(eDate));
 				paramMap.put("pId", "finishDay");
 				
-				
 				flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
 			} catch (Exception e) {
 				rp.setFail("일마감 처리중 오류가 발생하였습니다.");
 				e.printStackTrace();
 				return rp;
 			}
+			
 			
 		}
 		
