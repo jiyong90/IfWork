@@ -2132,7 +2132,12 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		if(this.saveWtmIfTaaHisOnlyTaaApplPpType(tenantId)) {
 		//if(true) {
 			System.out.println("setTaaApplBatchIfPostProcess");
-			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn("OK"); 
+
+			List<String> statusList = new ArrayList<String>();
+			statusList.add("OK");
+			statusList.add("FAIL");
+			statusList.add("ERR");
+			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(statusList); 
 			if(list == null || list.size() == 0) {
 				logger.debug("setTaaApplBatchIfPostProcess 대상없음 종료");
 				return ;
@@ -3252,7 +3257,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	@Override
 	public void setTaaApplBatchIfPostProcess(){
 		System.out.println("setTaaApplBatchIfPostProcess");
-		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn("OK"); 
+		List<String> status = new ArrayList<String>();
+		status.add("OK");
+		status.add("FAIL");
+		status.add("ERR");
+		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(status); 
 		if(list == null || list.size() == 0) {
 			System.out.println("setTaaApplBatchIfPostProcess 대상없음 종료");
 			return ;
