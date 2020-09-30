@@ -22,5 +22,8 @@ public interface WtmTaaApplDetRepository extends JpaRepository<WtmTaaApplDet, Lo
 	@Query("SELECT T FROM WtmTaaApplDet T WHERE T.taaApplId = :taaApplId")
 	WtmTaaApplDet findByTaaApplId(@Param(value = "taaApplId") Long taaApplId);
 
+	@Query("SELECT D FROM WtmTaaAppl A JOIN WtmTaaApplDet D ON D.taaApplId = A.taaApplId WHERE A.applId = :applId ")
+	public List<WtmTaaApplDet> findByApplId(@Param(value="applId") Long applId);
+	
 }
  
