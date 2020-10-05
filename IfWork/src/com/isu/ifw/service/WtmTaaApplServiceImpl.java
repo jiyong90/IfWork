@@ -48,6 +48,9 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 
 	@Autowired
 	WtmFlexibleStdMgrRepository flexStdMgrRepo;
+
+	@Autowired
+	WtmCalcServiceImpl calcService;
 	
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
@@ -267,6 +270,8 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 
 			String workTimeCode = work.get("workTimeCode")
 			                          .toString();
+			String requestCd = work.get("requestCd")
+			                          .toString();
 
 			String symd = work.get("startYmd")
 			                  .toString();
@@ -289,6 +294,25 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 			if (sd.compareTo(ed) > 0) {
 				rp.setFail("시작일자가 종료일자보다 큽니다.");
 				return rp;
+			}
+
+			//  totDays, holDays
+			Map<String, Integer> calMap = calcService.calcDayCnt(tenantId, enterCd, symd, eymd);
+			logger.debug("calMap.toString() : " + calMap.toString());
+
+			//  발생일수, 사용일수
+			Integer totalCnt = calMap.get("totDays");
+			Integer usedCnt = calMap.get("totDays") - calMap.get("holDays");
+
+			//  오전반차 오후반차 여부 체크, 공휴일인경우에 에러
+			switch (requestCd){
+				case "A" :
+				case "P" :
+					if(usedCnt == 0){
+						rp.setFail("반차사용일이 공휴일입니다");
+						return rp;
+					}
+					break;
 			}
 
 			String shm = "";
