@@ -38,34 +38,8 @@ public class WtmAsyncService {
 	@Autowired
 	WtmOtSubsApplRepository otSubsApplRepo;
 		
-		/*@Async("threadPoolTaskExecutor")
-		@Transactional
-		private void createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, String symd, String eymd, String userId) {
-			Map<String, Object> paramMap = new HashMap<>();
-			paramMap.put("tenantId", tenantId);
-			paramMap.put("enterCd", enterCd);
-			paramMap.put("sabun", sabun);
-			paramMap.put("symd", symd);
-			paramMap.put("eymd", eymd);
-			paramMap.put("pId", userId);
-			wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
-		}
-		
-		@Async("threadPoolTaskExecutor")
-		@Transactional
-		private void initWtmFlexibleEmpOfWtmWorkDayResult(Long tenantId, String enterCd, String sabun, String symd, String eymd, String userId) {
-			Map<String, Object> paramMap = new HashMap<>();
-			paramMap.put("tenantId", tenantId);
-			paramMap.put("enterCd", enterCd);
-			paramMap.put("sabun", sabun);
-			paramMap.put("symd", symd);
-			paramMap.put("eymd", eymd);
-			paramMap.put("userId", userId);
-			paramMap.put("pId", userId); 
-			
-			wtmFlexibleEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(paramMap);
-		}*/
-		
+	@Autowired private WtmCalcService calcService;
+	
 		@Async("threadPoolTaskExecutor")
 		@Transactional
 		public void createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, String symd, String eymd, String userId, boolean initResult) {
@@ -80,7 +54,8 @@ public class WtmAsyncService {
 			
 			if(initResult)
 				wtmFlexibleEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(paramMap);
-			wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
+
+			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, symd);
 		}
 		
 		/**

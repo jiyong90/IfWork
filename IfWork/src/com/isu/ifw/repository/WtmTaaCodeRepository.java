@@ -20,4 +20,6 @@ public interface WtmTaaCodeRepository extends JpaRepository<WtmTaaCode, Long> {
 
 	@Query(value="SELECT * FROM WTM_TAA_CODE WHERE TENANT_ID = :tenantId AND ENTER_CD = :enterCd AND WORK_YN = :workYn AND REQUEST_TYPE_CD IN (:taas) AND TAA_TYPE_CD = :taaTypeCd", nativeQuery = true)
 	List<WtmTaaCode> findByTenantIdAndEnterCdAndRequestTypeCdAndWorkYn(Long tenantId, String enterCd, @Param("taas") List<String> taas, String taaTypeCd, String workYn);
+	
+	public List<WtmTaaCode> findByTenantIdAndEnterCdAndTaaInfoCdLike(Long tenantId, String enterCd, String taaInfoCd);
 }

@@ -303,6 +303,9 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 			}
 
 			String applId = ""; //  IF 소스 참조로 빈값으로 대체함.
+			if(work.containsKey("applId")) {
+				applId = work.get("applId")+"";
+			}
 
 			//신청서 중복 체크
 			rp = checkDuplicateTaaAppl(tenantId, enterCd, sabun, workTimeCode, symd, eymd, shm, ehm, applId);

@@ -99,6 +99,8 @@ public class WtmCompCanApplServiceImpl implements WtmApplService {
 	@Autowired
 	private WtmFlexibleEmpService WtmFlexibleEmpService;
 
+	@Autowired private WtmCalcService calcService;
+	
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
 		
@@ -517,14 +519,7 @@ public class WtmCompCanApplServiceImpl implements WtmApplService {
 						}
 						
 						// 근무시간합산은 재정산한다
-		        		HashMap<String, Object> setTermMap = new HashMap();
-		        		setTermMap.put("tenantId", tenantId);
-		        		setTermMap.put("enterCd", enterCd);
-		        		setTermMap.put("sabun", compMap.get("sabun").toString());
-		        		setTermMap.put("symd", compMap.get("ymd").toString());
-		        		setTermMap.put("eymd", compMap.get("ymd").toString());
-		        		setTermMap.put("pId", "TAAIF");
-		        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
+		        		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, compMap.get("ymd").toString());
 					}
 				} 
 			}

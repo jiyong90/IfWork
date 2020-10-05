@@ -2132,7 +2132,12 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		if(this.saveWtmIfTaaHisOnlyTaaApplPpType(tenantId)) {
 		//if(true) {
 			System.out.println("setTaaApplBatchIfPostProcess");
-			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn("OK"); 
+
+			List<String> statusList = new ArrayList<String>();
+			statusList.add("OK");
+			statusList.add("FAIL");
+			statusList.add("ERR");
+			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(statusList); 
 			if(list == null || list.size() == 0) {
 				logger.debug("setTaaApplBatchIfPostProcess 대상없음 종료");
 				return ;
@@ -2499,6 +2504,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	 * 특정일의 result 정보를 근태신청서 기준으로 재구성한다. 
 	 */
 	@Transactional
+	@Override
 	public void resetTaaResult(Long tenantId, String enterCd, String sabun,String ymd) {
 		List<WtmTaaApplDet> dets = wtmTaaApplDetRepo.findByMaxApplInfo(tenantId, enterCd, sabun, ymd);
 		logger.debug("dets : " + dets);
@@ -2724,15 +2730,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
         											 , sabun);
 			}
 			
-			// 근무시간합산은 재정산한다
-    		HashMap<String, Object> setTermMap = new HashMap();
-    		setTermMap.put("tenantId", tenantId);
-    		setTermMap.put("enterCd", enterCd);
-    		setTermMap.put("sabun", sabun);
-    		setTermMap.put("symd", ymd);
-    		setTermMap.put("eymd", ymd);
-    		setTermMap.put("pId", "resetTaaResult");
-    		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
+			// 근무시간합산은 재정산한다 
+    		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, ymd);
 		}else {
 			throw new RuntimeException("신청정보가 없습니다.");
 		}
@@ -3252,7 +3251,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	@Override
 	public void setTaaApplBatchIfPostProcess(){
 		System.out.println("setTaaApplBatchIfPostProcess");
-		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn("OK"); 
+		List<String> status = new ArrayList<String>();
+		status.add("OK");
+		status.add("FAIL");
+		status.add("ERR");
+		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(status); 
 		if(list == null || list.size() == 0) {
 			System.out.println("setTaaApplBatchIfPostProcess 대상없음 종료");
 			return ;
