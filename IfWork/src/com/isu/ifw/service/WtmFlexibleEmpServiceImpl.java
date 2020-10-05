@@ -3784,13 +3784,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	// 근무제 통계 데이터 생성
 	@Override
 	public Map<String, Object> createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
-		/*
+		
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
 		paramMap.put("sabun", sabun);
 		paramMap.put("pId", userId);
-		flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
-		*/
+		//flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
+		
 		String ymd = "";
 		if(paramMap.containsKey("symd")) {
 			ymd = paramMap.get("symd")+"";

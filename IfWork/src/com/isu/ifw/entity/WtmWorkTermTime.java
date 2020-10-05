@@ -44,24 +44,24 @@ public class WtmWorkTermTime {
 	private String weekEdate;	
 	
 	@Column(name="AVL_MINUTE")
-	private int avlMinute;
+	private Integer avlMinute;
 	@Column(name="PLAN_WORK_MINUTE")
-	private int planWorkMinute;
+	private Integer planWorkMinute;
 	
 	@Column(name="PLAN_OT_MINUTE")
-	private int planOtMinute;
+	private Integer planOtMinute;
 
 	@Column(name="APPR_WORK_MINUTE")
-	private int apprWorkMinute;
+	private Integer apprWorkMinute;
 	
 	@Column(name="APPR_OT_MINUTE")
-	private int apprOtMinute;
+	private Integer apprOtMinute;
 	
 	@Column(name="NOW_WORK_MINUTE")
-	private int nowWorkMinute;
+	private Integer nowWorkMinute;
 	
 	@Column(name="NOW_OT_MINUTE")
-	private int nowOtMinute;
+	private Integer nowOtMinute;
 	
 	@Column(name="NOTE")
 	private String note;
@@ -128,46 +128,46 @@ public class WtmWorkTermTime {
 		this.weekEdate = weekEdate;
 	} 
 	
-	public int getAvlMinute() {
+	public Integer getAvlMinute() {
 		return avlMinute;
 	}
-	public void setAvlMinute(int avlMinute) {
+	public void setAvlMinute(Integer avlMinute) {
 		this.avlMinute = avlMinute;
 	}
-	public int getPlanWorkMinute() {
+	public Integer getPlanWorkMinute() {
 		return planWorkMinute;
 	}
-	public void setPlanWorkMinute(int planWorkMinute) {
+	public void setPlanWorkMinute(Integer planWorkMinute) {
 		this.planWorkMinute = planWorkMinute;
 	}
-	public int getPlanOtMinute() {
+	public Integer getPlanOtMinute() {
 		return planOtMinute;
 	}
-	public void setPlanOtMinute(int planOtMinute) {
+	public void setPlanOtMinute(Integer planOtMinute) {
 		this.planOtMinute = planOtMinute;
 	}
-	public int getApprWorkMinute() {
+	public Integer getApprWorkMinute() {
 		return apprWorkMinute;
 	}
-	public void setApprWorkMinute(int apprWorkMinute) {
+	public void setApprWorkMinute(Integer apprWorkMinute) {
 		this.apprWorkMinute = apprWorkMinute;
 	}
-	public int getApprOtMinute() {
+	public Integer getApprOtMinute() {
 		return apprOtMinute;
 	}
-	public void setApprOtMinute(int apprOtMinute) {
+	public void setApprOtMinute(Integer apprOtMinute) {
 		this.apprOtMinute = apprOtMinute;
 	}
-	public int getNowWorkMinute() {
+	public Integer getNowWorkMinute() {
 		return nowWorkMinute;
 	}
-	public void setNowWorkMinute(int nowWorkMinute) {
+	public void setNowWorkMinute(Integer nowWorkMinute) {
 		this.nowWorkMinute = nowWorkMinute;
 	}
-	public int getNowOtMinute() {
+	public Integer getNowOtMinute() {
 		return nowOtMinute;
 	}
-	public void setNowOtMinute(int nowOtMinute) {
+	public void setNowOtMinute(Integer nowOtMinute) {
 		this.nowOtMinute = nowOtMinute;
 	}
 	public String getNote() {
