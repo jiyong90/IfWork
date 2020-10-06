@@ -939,7 +939,8 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			tempTimeMap.put("eymd", paramMap.get("stdYmd").toString());
 			tempTimeMap.put("pId", paramMap.get("sabun").toString());
 
-			wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(tempTimeMap);
+			//wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(tempTimeMap);
+			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(Long.parseLong(paramMap.get("tenantId").toString()), paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
 			logger.debug("inoutPostProcess9 워크텀 끗 " + tempTimeMap.toString());
 
 		} catch(Exception e) {
