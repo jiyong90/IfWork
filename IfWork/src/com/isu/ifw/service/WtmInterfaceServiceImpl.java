@@ -2826,7 +2826,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
     		lastDataTime = getDateMap.get("lastDate").toString();
     		nowDataTime = getDateMap.get("nowDate").toString();
-    		lastDataTime = "20200201010101";
+    		//lastDataTime = "20200201010101";
     		try {
         		String param = "?lastDataTime="+lastDataTime;
 	        	String ifUrl = setIfUrl(tenantId, "/taaAppl", param); 
