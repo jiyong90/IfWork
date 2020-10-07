@@ -977,9 +977,6 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			if(cnt <= 0) {
 				throw new Exception("타각데이터 저장에 실패하였습니다.");
 			}
-			ObjectMapper mapper =new ObjectMapper();
-			
-			logger.debug(mapper.writeValueAsString(paramMap));
 			
 			WtmEmpHis emp = empRepository.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()), 
 					paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
