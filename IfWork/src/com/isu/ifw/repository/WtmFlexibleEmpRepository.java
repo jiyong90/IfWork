@@ -40,9 +40,6 @@ public interface WtmFlexibleEmpRepository extends JpaRepository<WtmFlexibleEmp, 
 	@Query("SELECT E FROM WtmFlexibleEmp E WHERE E.tenantId = ?1 AND E.enterCd = ?2 AND ?3 <= E.eymd AND  ?4 >= E.symd")
 	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndSymdAndEymd(Long tenantId, String enterCd, String symd, String eymd);
 
-	@Query("SELECT E FROM WtmFlexibleEmp E WHERE E.tenantId = ?1 AND E.enterCd = ?2 AND ?3 <= E.eymd AND  ?4 >= E.symd")
-	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndSymdAndEymdAnd(Long tenantId, String enterCd, String symd, String eymd);
-	
 	@Query("SELECT E FROM WtmFlexibleEmp E JOIN WtmFlexibleStdMgr M ON E.flexibleStdMgrId = M.flexibleStdMgrId WHERE E.tenantId = ?1 AND E.enterCd = ?2 AND ?3 <= E.eymd AND  ?4 >= E.symd AND M.defaultWorkUseYn = 'Y' AND M.fixotUseType = 'ALL' ")
 	public List<WtmFlexibleEmp> findAllTypeFixotByTenantIdAndEnterCdAndSymdAndEymdAnd(Long tenantId, String enterCd, String symd, String eymd);
 	
@@ -61,4 +58,7 @@ public interface WtmFlexibleEmpRepository extends JpaRepository<WtmFlexibleEmp, 
 	
 	@Query("SELECT E FROM WtmFlexibleEmp E WHERE E.tenantId = ?1 AND E.enterCd = ?2 AND E.sabun = ?3 AND (?4 BETWEEN E.symd AND E.eymd OR  ?5 BETWEEN E.symd AND E.eymd) AND E.workTypeCd IN ?6 ")
 	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCds(Long tenantId, String enterCd, String sabun, String symd, String eymd, List<String> workTypeCd);
+	
+	//'20200928' <= EYMD AND '20201004' >= SYMD
+	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndSabunAndEymdGreaterThanEqualAndSymdLessThanEqual(Long tenantId, String enterCd, String sabun, String symd, String eymd);
 }

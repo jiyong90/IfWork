@@ -9,7 +9,7 @@ import com.isu.ifw.entity.WtmIfTaaHis;
 
 @Repository
 public interface WtmIfTaaHisRepository extends JpaRepository<WtmIfTaaHis, Long> {
-	public List<WtmIfTaaHis> findByIfStatusNotIn(String ifStatus);
+	public List<WtmIfTaaHis> findByIfStatusNotIn(List<String> ifStatus);
 	
 	public List<WtmIfTaaHis> findByTenantIdAndEnterCdAndApplNoAndIfStatusNotIn(Long tenantId, String enterCd, String applNo, String ifStatus);
 	

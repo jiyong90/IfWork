@@ -939,7 +939,8 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			tempTimeMap.put("eymd", paramMap.get("stdYmd").toString());
 			tempTimeMap.put("pId", paramMap.get("sabun").toString());
 
-			wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(tempTimeMap);
+			//wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(tempTimeMap);
+			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(Long.parseLong(paramMap.get("tenantId").toString()), paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("stdYmd").toString());
 			logger.debug("inoutPostProcess9 워크텀 끗 " + tempTimeMap.toString());
 
 		} catch(Exception e) {
@@ -976,9 +977,6 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			if(cnt <= 0) {
 				throw new Exception("타각데이터 저장에 실패하였습니다.");
 			}
-			ObjectMapper mapper =new ObjectMapper();
-			
-			logger.debug(mapper.writeValueAsString(paramMap));
 			
 			WtmEmpHis emp = empRepository.findByTenantIdAndEnterCdAndSabunAndYmd(Long.parseLong(paramMap.get("tenantId").toString()), 
 					paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));

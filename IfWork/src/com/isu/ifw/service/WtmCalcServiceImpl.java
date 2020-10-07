@@ -1875,11 +1875,6 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					}
 					//20~60 일 경우 40분이 나와야하는데 60분이 나와서 수정함.
 					//20200901 
-<<<<<<< HEAD
-					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null, null, null);
-					//sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(shm, ehm, timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null);
-					//sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(),shm, ehm, null);
-=======
 					//sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null, null, null);
 					//if(Integer.parseInt(timeBreakMgr.getShm()) <= Integer.parseInt(shm) && Integer.parseInt(timeBreakMgr.getEhm()) >= Integer.parseInt(ehm)) {
 					//	sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(shm, ehm, null, null, null);
@@ -1887,7 +1882,6 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						breakMinute = breakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null, null, null);
 						sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(),shm, ehm, null);
 					//}
->>>>>>> branch 'master' of https://github.com/isusys/if-auth.git
 				}
 					
 			}

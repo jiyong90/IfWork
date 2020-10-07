@@ -2132,7 +2132,12 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		if(this.saveWtmIfTaaHisOnlyTaaApplPpType(tenantId)) {
 		//if(true) {
 			System.out.println("setTaaApplBatchIfPostProcess");
-			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn("OK"); 
+
+			List<String> statusList = new ArrayList<String>();
+			statusList.add("OK");
+			statusList.add("FAIL");
+			statusList.add("ERR");
+			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(statusList); 
 			if(list == null || list.size() == 0) {
 				logger.debug("setTaaApplBatchIfPostProcess 대상없음 종료");
 				return ;
@@ -2499,240 +2504,300 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	 * 특정일의 result 정보를 근태신청서 기준으로 재구성한다. 
 	 */
 	@Transactional
+	@Override
 	public void resetTaaResult(Long tenantId, String enterCd, String sabun,String ymd) {
 		List<WtmTaaApplDet> dets = wtmTaaApplDetRepo.findByMaxApplInfo(tenantId, enterCd, sabun, ymd);
 		logger.debug("dets : " + dets);
 		if(dets != null && dets.size() > 0) {
 			SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
-			
+			/*
 			WtmFlexibleStdMgr flexibleStdMgr = flexStdMgrRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, ymd);
 			WtmWorkCalendar cal = workCalendarRepo.findByTenantIdAndEnterCdAndYmdAndSabun(tenantId, enterCd, ymd, sabun);
 			WtmTimeCdMgr timeCdMgr = timeCdMgrRepo.findById(cal.getTimeCdMgrId()).get();
+			*/
 			List<String> timeTypeCds = new ArrayList<String>();
 			timeTypeCds.add(WtmApplService.TIME_TYPE_REGA);
 			timeTypeCds.add(WtmApplService.TIME_TYPE_TAA);
 			
-			List<WtmWorkDayResult> taaResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCds, ymd, ymd);
-			//workDayResultRepo.deleteAll(taaResults);
-			logger.debug("taaResults : " + taaResults.size());
-			if(taaResults != null && taaResults.size() > 0 ) {
-				for(WtmWorkDayResult delResult : taaResults) {
-					logger.debug("resetTaaResult remove result : " + delResult.toString());
-					if(delResult.getPlanSdate() == null) {
-						workDayResultRepo.delete(delResult);
-					}else {
-						wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(tenantId, enterCd, ymd, sabun, delResult.getTimeTypeCd(), delResult.getTaaCd(), delResult.getPlanSdate(), delResult.getPlanEdate(), delResult.getApplId(), "remove");
+
+			/**
+			 * 초기화
+			 */
+
+			SimpleDateFormat ymdFt = new SimpleDateFormat("yyyyMMdd");
+			
+			for(WtmTaaApplDet det : dets) {
+				List<WtmWorkDayResult> taaResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCds, det.getSymd(),  det.getEymd());
+				//workDayResultRepo.deleteAll(taaResults);
+				logger.debug("taaResults : " + taaResults.size());
+				if(taaResults != null && taaResults.size() > 0 ) {
+					for(WtmWorkDayResult delResult : taaResults) {
+						logger.debug("resetTaaResult remove result : " + delResult.toString());
+						if(delResult.getPlanSdate() == null) {
+							workDayResultRepo.delete(delResult);
+						}else {
+							wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(tenantId, enterCd, delResult.getYmd(), sabun, delResult.getTimeTypeCd(), delResult.getTaaCd(), delResult.getPlanSdate(), delResult.getPlanEdate(), delResult.getApplId(), "remove");
+						}
 					}
 				}
 			}
+			
 			for(WtmTaaApplDet det : dets) {
-				WtmTaaCode taaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, det.getTaaCd());
-				String timeTypeCd = WtmApplService.TIME_TYPE_TAA;
-				//간주근무 여부 
-				if("Y".equals(taaCode.getWorkYn())){
-					timeTypeCd = WtmApplService.TIME_TYPE_REGA;
+				Calendar cal1 = Calendar.getInstance();
+				Calendar cal2 = Calendar.getInstance();
+				try {
+					cal1.setTime(ymdFt.parse(det.getSymd()));
+					cal2.setTime(ymdFt.parse(det.getEymd()));
+				} catch (ParseException e) {
+					e.printStackTrace();
 				}
-				WtmTaaAppl taaAppl = wtmTaaApplRepo.findById(det.getTaaApplId()).get();
-				WtmAppl appl = wtmApplRepo.findById(taaAppl.getApplId()).get();
 				
-				//위에서 다 지웠기 때문에 승인건만 적용하면 된다. 
-				logger.debug("det appl.getApplStatusCd(): " + appl.getApplStatusCd());
-				if(appl.getApplStatusCd().equals(WtmApplService.APPL_STATUS_APPR)) {
-					logger.debug("flexibleStdMgr.getUnplannedYn() : " + flexibleStdMgr.getUnplannedYn());
-					if("Y".equals(flexibleStdMgr.getUnplannedYn())) {
-						WtmWorkDayResult dayResult = new WtmWorkDayResult();
-						Integer workMinute = 0;
-						if(taaCode.getWorkApprHour()!=null) {
-							workMinute = Integer.parseInt(taaCode.getWorkApprHour().toString()) * 60;
-						}
-						/*
-						  CASE WHEN IFNULL(B.SHM, '') != '' AND IFNULL(B.EHM, '') != ''
-				 		  THEN timestampdiff(MINUTE, F_WTM_TO_DATE(CONCAT(C.YMD, B.SHM), 'YMDHI'), F_WTM_TO_DATE(CONCAT(C.YMD, B.EHM), 'YMDHI'))
-				 		  WHEN IFNULL(B.TAA_MINUTE,0) > 0 THEN B.TAA_MINUTE
-				 		  ELSE 0 END AS workMinute				 		  
-						*/
-						if(det.getShm() != null && !"".equals(det.getShm())
-								&& det.getEhm() != null && !"".equals(det.getEhm())
-								) {
-							workMinute = calcService.WtmCalcMinute(det.getShm(), det.getEhm(), null, null, null);
-						}else if(det.getTaaMinute() != null && !"".equals(det.getTaaMinute())) {
-							workMinute = Integer.parseInt(det.getTaaMinute());
-						}
-
-						dayResult.setTenantId(tenantId);
-						dayResult.setEnterCd(enterCd);
-						dayResult.setYmd(ymd);
-						dayResult.setSabun(sabun);
-						dayResult.setApplId(appl.getApplId());
-						dayResult.setTimeTypeCd(timeTypeCd);
-						dayResult.setTaaCd(det.getTaaCd());
-						dayResult.setPlanMinute(workMinute);
-						dayResult.setApprMinute(workMinute);
-						dayResult.setUpdateId("TAAIF");
-						dayResultRepo.save(dayResult);
-						
-						/*
-						if(!"0".equals(taaDetMap.get("workMinute").toString())) {
-							workMinute = Integer.parseInt(taaDetMap.get("workMinute").toString());
-						}
-						*/
-					}else {
-						logger.debug("taaCode.getHolInclYn() : " + taaCode.getHolInclYn());
-						logger.debug("taaCode.getRequestTypeCd() : " + taaCode.getRequestTypeCd());
-						logger.debug("cal.getHolidayYn() : " + cal.getHolidayYn());
-						logger.debug("taaCode.getHolInclYn() : " + taaCode.getHolInclYn());
-						
-						//근태코드 기준이 휴일 포함 이거나 휴일포함이 아니면 해당일의 휴일이 아니어야한다. 
-						if("Y".equals(taaCode.getHolInclYn())
-								|| ( "N".equals(taaCode.getHolInclYn()) && "N".equals(cal.getHolidayYn()))
-								) {
-							if("D".equals(taaCode.getRequestTypeCd())
-									&& "Y".equals(taaCode.getHolInclYn())
-									&& "Y".equals(cal.getHolidayYn())
+				Date d1 = cal1.getTime();
+				Date d2 = cal2.getTime();
+				while(d1.compareTo(d2) < 1) {
+					logger.debug("cal1 : " + d1);
+					logger.debug("cal2 : " + d2);
+					 
+					String d = ymdFt.format(d1);
+					WtmFlexibleStdMgr flexibleStdMgr = flexStdMgrRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, d);
+					WtmWorkCalendar cal = workCalendarRepo.findByTenantIdAndEnterCdAndYmdAndSabun(tenantId, enterCd, d, sabun);
+					WtmTimeCdMgr timeCdMgr = timeCdMgrRepo.findById(cal.getTimeCdMgrId()).get();
+					
+					
+				
+					WtmTaaCode taaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, det.getTaaCd());
+					String timeTypeCd = WtmApplService.TIME_TYPE_TAA;
+					//간주근무 여부 
+					if("Y".equals(taaCode.getWorkYn())){
+						timeTypeCd = WtmApplService.TIME_TYPE_REGA;
+					}
+					WtmTaaAppl taaAppl = wtmTaaApplRepo.findById(det.getTaaApplId()).get();
+					WtmAppl appl = wtmApplRepo.findById(taaAppl.getApplId()).get();
+					
+					//위에서 다 지웠기 때문에 승인건만 적용하면 된다. 
+					logger.debug("det appl.getApplStatusCd(): " + appl.getApplStatusCd());
+					if(appl.getApplStatusCd().equals(WtmApplService.APPL_STATUS_APPR)) {
+						logger.debug("flexibleStdMgr.getUnplannedYn() : " + flexibleStdMgr.getUnplannedYn());
+						if("Y".equals(flexibleStdMgr.getUnplannedYn())) {
+							WtmWorkDayResult dayResult = new WtmWorkDayResult();
+							Integer workMinute = 0;
+							if(taaCode.getWorkApprHour()!=null) {
+								workMinute = Integer.parseInt(taaCode.getWorkApprHour().toString()) * 60;
+							}
+							/*
+							  CASE WHEN IFNULL(B.SHM, '') != '' AND IFNULL(B.EHM, '') != ''
+					 		  THEN timestampdiff(MINUTE, F_WTM_TO_DATE(CONCAT(C.YMD, B.SHM), 'YMDHI'), F_WTM_TO_DATE(CONCAT(C.YMD, B.EHM), 'YMDHI'))
+					 		  WHEN IFNULL(B.TAA_MINUTE,0) > 0 THEN B.TAA_MINUTE
+					 		  ELSE 0 END AS workMinute				 		  
+							*/
+							if(det.getShm() != null && !"".equals(det.getShm())
+									&& det.getEhm() != null && !"".equals(det.getEhm())
 									) {
-								//휴일포함이면서 휴일이면서 종일근무이면
-								WtmWorkDayResult dayResult = new WtmWorkDayResult();
-								dayResult.setTenantId(tenantId);
-								dayResult.setEnterCd(enterCd);
-								dayResult.setYmd(ymd);
-								dayResult.setSabun(sabun);
-								dayResult.setApplId(appl.getApplId());
-								dayResult.setTimeTypeCd(timeTypeCd);
-								dayResult.setTaaCd(det.getTaaCd());
-								dayResult.setUpdateId("TAAIF");
-								dayResultRepo.save(dayResult);
-							}else {
-
-								Date sdate = null;
-								Date edate = null;
-								
-								Integer workMinute = 0;
-								if(det.getShm() != null && !"".equals(det.getShm())
-										&& det.getEhm() != null && !"".equals(det.getEhm())
-										) {
-									workMinute = calcService.WtmCalcMinute(det.getShm(), det.getEhm(), null, null, null);
-								//}else if(det.getTaaMinute() != null && !"".equals(det.getTaaMinute())) {
-								//	workMinute = Integer.parseInt(det.getTaaMinute());
-								}
-								
-								logger.debug("workMinute : " + workMinute);
-								if(workMinute > 0) {
-									//근무시간이 있으면
-									try {
-										sdate = ymdhm.parse(ymd+det.getShm());
-										edate = ymdhm.parse(ymd+det.getEhm());
-									} catch (ParseException e) {
-										e.printStackTrace();
-										sdate = null; edate = null;
-									}
-								}else {
-									//기본근무시간
-									try {
-										sdate = ymdhm.parse(ymd+timeCdMgr.getWorkShm());
-										edate = ymdhm.parse(ymd+timeCdMgr.getWorkEhm());
-									} catch (ParseException e) {
-										e.printStackTrace();
-										sdate = null; edate = null;
-									}
-									// 근무시간이 없으면 근태코드별 시간을 조정해야함.
-									logger.debug("반차는 근무시간을 변경함 : " + taaCode.getRequestTypeCd());
-									if("P".equals(taaCode.getRequestTypeCd())) {
-										if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
-											//반차는 근무시간을 변경함
-											sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-										}else {
-											Calendar calendar = Calendar.getInstance();
-											calendar.setTime(sdate);
-											calendar.add(Calendar.MINUTE, 240);
-											sdate = calendar.getTime();
-										}
-										
-										//calcService.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgrId, null)
-									}else if("A".equals(taaCode.getRequestTypeCd())) {
-										if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
-											edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, -240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-										}else {
-											Calendar calendar = Calendar.getInstance();
-											calendar.setTime(edate);
-											calendar.add(Calendar.MINUTE, -240);
-											edate = calendar.getTime();
-										}
-									}
-								}
+								workMinute = calcService.WtmCalcMinute(det.getShm(), det.getEhm(), null, null, null);
+							}else if(det.getTaaMinute() != null && !"".equals(det.getTaaMinute())) {
+								workMinute = Integer.parseInt(det.getTaaMinute());
+							}
+	
+							dayResult.setTenantId(tenantId);
+							dayResult.setEnterCd(enterCd);
+							dayResult.setYmd(d);
+							dayResult.setSabun(sabun);
+							dayResult.setApplId(appl.getApplId());
+							dayResult.setTimeTypeCd(timeTypeCd);
+							dayResult.setTaaCd(det.getTaaCd());
+							dayResult.setPlanMinute(workMinute);
+							dayResult.setApprMinute(workMinute);
+							dayResult.setUpdateId("TAAIF");
+							dayResultRepo.save(dayResult);
+							
+							/*
+							if(!"0".equals(taaDetMap.get("workMinute").toString())) {
+								workMinute = Integer.parseInt(taaDetMap.get("workMinute").toString());
+							}
+							*/
+						}else {
+							logger.debug("taaCode.getHolInclYn() : " + taaCode.getHolInclYn());
+							logger.debug("taaCode.getRequestTypeCd() : " + taaCode.getRequestTypeCd());
+							logger.debug("cal.getHolidayYn() : " + cal.getHolidayYn());
+							logger.debug("taaCode.getHolInclYn() : " + taaCode.getHolInclYn());
+							
+							//근태코드 기준이 휴일 포함 이거나 휴일포함이 아니면 해당일의 휴일이 아니어야한다. 
+							if("Y".equals(taaCode.getHolInclYn())
+									|| ( "N".equals(taaCode.getHolInclYn()) && "N".equals(cal.getHolidayYn()))
+									) {
 								if("D".equals(taaCode.getRequestTypeCd())
-										&& (flexibleStdMgr.getTaaWorkYn() == null || "N".equals(flexibleStdMgr.getTaaWorkYn()) || "".equals(flexibleStdMgr.getTaaWorkYn()) )
+										&& "Y".equals(taaCode.getHolInclYn())
+										&& "Y".equals(cal.getHolidayYn())
 										) {
-									logger.debug("종일근무이면서 근무가능여부가 N이면 근무계획을 삭제하고 근태만 남겨둬야함.");
-									List<String> timeType = new ArrayList<String>();
-									timeType.add(WtmApplService.TIME_TYPE_BASE);
-									timeType.add(WtmApplService.TIME_TYPE_LLA);
-									
-									List<WtmWorkDayResult> delResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeType, ymd, ymd);
-									if(delResults != null && delResults.size() > 0) {
-										workDayResultRepo.deleteAll(delResults);
-									}
-									WtmWorkDayResult newTaa = new WtmWorkDayResult();
-									newTaa.setTenantId(tenantId);
-									newTaa.setEnterCd(enterCd);
-									newTaa.setYmd(ymd);
-									newTaa.setSabun(sabun);
-									newTaa.setApplId(appl.getApplId());
-									newTaa.setTimeTypeCd(timeTypeCd);
-									newTaa.setTaaCd(det.getTaaCd());
-									newTaa.setPlanSdate(sdate);
-									newTaa.setPlanEdate(edate);
-									Map<String, Object> calcMap = calcService.calcApprMinute(sdate, edate, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-									int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
-									
-									newTaa.setPlanMinute(apprMinute);
-									newTaa.setApprSdate(sdate);
-									newTaa.setApprEdate(edate);
-									newTaa.setApprMinute(apprMinute);
-									newTaa.setUpdateDate(new Date());
-									newTaa.setUpdateId("taa if");
-									dayResultRepo.save(newTaa);
-									
+									//휴일포함이면서 휴일이면서 종일근무이면
+									WtmWorkDayResult dayResult = new WtmWorkDayResult();
+									dayResult.setTenantId(tenantId);
+									dayResult.setEnterCd(enterCd);
+									dayResult.setYmd(d);
+									dayResult.setSabun(sabun);
+									dayResult.setApplId(appl.getApplId());
+									dayResult.setTimeTypeCd(timeTypeCd);
+									dayResult.setTaaCd(det.getTaaCd());
+									dayResult.setUpdateId("TAAIF");
+									dayResultRepo.save(dayResult);
 								}else {
-									wtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
-											tenantId
-											, enterCd
-											, ymd
-											, sabun
-											, timeTypeCd
-											, det.getTaaCd()
-											, sdate
-											, edate
-											, appl.getApplId()
-											, "TAAIF");
+	
+									Date sdate = null;
+									Date edate = null;
+									
+									Integer workMinute = 0;
+									if(det.getShm() != null && !"".equals(det.getShm())
+											&& det.getEhm() != null && !"".equals(det.getEhm())
+											) {
+										workMinute = calcService.WtmCalcMinute(det.getShm(), det.getEhm(), null, null, null);
+									//}else if(det.getTaaMinute() != null && !"".equals(det.getTaaMinute())) {
+									//	workMinute = Integer.parseInt(det.getTaaMinute());
+									}
+									
+									logger.debug("workMinute : " + workMinute);
+									if(workMinute > 0) {
+										//근무시간이 있으면
+										try {
+											sdate = ymdhm.parse(d+det.getShm());
+											edate = ymdhm.parse(d+det.getEhm());
+										} catch (ParseException e) {
+											e.printStackTrace();
+											sdate = null; edate = null;
+										}
+									}else {
+										//기본근무시간
+										try {
+											sdate = ymdhm.parse(d+timeCdMgr.getWorkShm());
+											edate = ymdhm.parse(d+timeCdMgr.getWorkEhm());
+										} catch (ParseException e) {
+											e.printStackTrace();
+											sdate = null; edate = null;
+										}
+										// 근무시간이 없으면 근태코드별 시간을 조정해야함.
+										logger.debug("반차는 근무시간을 변경함 : " + taaCode.getRequestTypeCd());
+										if("P".equals(taaCode.getRequestTypeCd())) {
+											if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+												//반차는 근무시간을 변경함
+												sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+											}else {
+												Calendar calendar = Calendar.getInstance();
+												calendar.setTime(sdate);
+												calendar.add(Calendar.MINUTE, 240);
+												sdate = calendar.getTime();
+											}
+											
+											//calcService.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgrId, null)
+										}else if("A".equals(taaCode.getRequestTypeCd())) {
+											if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+												edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, -240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+											}else {
+												Calendar calendar = Calendar.getInstance();
+												calendar.setTime(edate);
+												calendar.add(Calendar.MINUTE, -240);
+												edate = calendar.getTime();
+											}
+										}
+									}
+									if("D".equals(taaCode.getRequestTypeCd())
+											&& (flexibleStdMgr.getTaaWorkYn() == null || "N".equals(flexibleStdMgr.getTaaWorkYn()) || "".equals(flexibleStdMgr.getTaaWorkYn()) )
+											) {
+										logger.debug("종일근무이면서 근무가능여부가 N이면 근무계획을 삭제하고 근태만 남겨둬야함.");
+										List<String> timeType = new ArrayList<String>();
+										timeType.add(WtmApplService.TIME_TYPE_BASE);
+										timeType.add(WtmApplService.TIME_TYPE_LLA);
+										
+										List<WtmWorkDayResult> delResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeType, d, d);
+										if(delResults != null && delResults.size() > 0) {
+											workDayResultRepo.deleteAll(delResults);
+										}
+										WtmWorkDayResult newTaa = new WtmWorkDayResult();
+										newTaa.setTenantId(tenantId);
+										newTaa.setEnterCd(enterCd);
+										newTaa.setYmd(d);
+										newTaa.setSabun(sabun);
+										newTaa.setApplId(appl.getApplId());
+										newTaa.setTimeTypeCd(timeTypeCd);
+										newTaa.setTaaCd(det.getTaaCd());
+										newTaa.setPlanSdate(sdate);
+										newTaa.setPlanEdate(edate);
+										Map<String, Object> calcMap = calcService.calcApprMinute(sdate, edate, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+										int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+										
+										newTaa.setPlanMinute(apprMinute);
+										newTaa.setApprSdate(sdate);
+										newTaa.setApprEdate(edate);
+										newTaa.setApprMinute(apprMinute);
+										newTaa.setUpdateDate(new Date());
+										newTaa.setUpdateId("taa if");
+										dayResultRepo.save(newTaa);
+										
+									}else {
+										wtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
+												tenantId
+												, enterCd
+												, d
+												, sabun
+												, timeTypeCd
+												, det.getTaaCd()
+												, sdate
+												, edate
+												, appl.getApplId()
+												, "TAAIF");
+									}
 								}
 							}
+								
 						}
-							
 					}
+
+					cal1.add(Calendar.DATE, 1);
+					
+					d1 = cal1.getTime();
 				}
 				
 			}
 			
 			String chkYmd = WtmUtil.parseDateStr(new Date(), null);
-			// 오늘 이전이면 근무마감을 다시 돌려야함.
-			if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd)) {
-				wtmFlexibleEmpService.resetCalcApprDayInfo(tenantId, enterCd, ymd, sabun, null);
-				wtmFlexibleEmpService.calcApprDayInfo(tenantId
-        											 , enterCd
-        											 , ymd
-        											 , ymd
-        											 , sabun);
-			}
 			
-			// 근무시간합산은 재정산한다
-    		HashMap<String, Object> setTermMap = new HashMap();
-    		setTermMap.put("tenantId", tenantId);
-    		setTermMap.put("enterCd", enterCd);
-    		setTermMap.put("sabun", sabun);
-    		setTermMap.put("symd", ymd);
-    		setTermMap.put("eymd", ymd);
-    		setTermMap.put("pId", "resetTaaResult");
-    		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
+
+			for(WtmTaaApplDet det : dets) {
+
+
+				Calendar cal1 = Calendar.getInstance();
+				Calendar cal2 = Calendar.getInstance();
+				try {
+					cal1.setTime(ymdFt.parse(det.getSymd()));
+					cal2.setTime(ymdFt.parse(det.getEymd()));
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+				
+				Date d1 = cal1.getTime();
+				Date d2 = cal2.getTime();
+				while(d1.compareTo(d2) < 1) {
+					logger.debug("cal1 : " + d1);
+					logger.debug("cal2 : " + d2);
+					 
+					String d = ymdFt.format(d1);
+					
+					// 오늘 이전이면 근무마감을 다시 돌려야함.
+					if (Integer.parseInt(chkYmd) > Integer.parseInt(d)) {
+						wtmFlexibleEmpService.resetCalcApprDayInfo(tenantId, enterCd, d, sabun, null);
+						wtmFlexibleEmpService.calcApprDayInfo(tenantId
+		        											 , enterCd
+		        											 , d
+		        											 , d
+		        											 , sabun);
+					}
+					
+					// 근무시간합산은 재정산한다 
+		    		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, d);
+	
+					cal1.add(Calendar.DATE, 1);
+					
+					d1 = cal1.getTime();
+				}
+			}
 		}else {
 			throw new RuntimeException("신청정보가 없습니다.");
 		}
@@ -2761,7 +2826,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
     		lastDataTime = getDateMap.get("lastDate").toString();
     		nowDataTime = getDateMap.get("nowDate").toString();
-    		lastDataTime = "20200201010101";
+    		//lastDataTime = "20200201010101";
     		try {
         		String param = "?lastDataTime="+lastDataTime;
 	        	String ifUrl = setIfUrl(tenantId, "/taaAppl", param); 
@@ -3252,7 +3317,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	@Override
 	public void setTaaApplBatchIfPostProcess(){
 		System.out.println("setTaaApplBatchIfPostProcess");
-		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn("OK"); 
+		List<String> status = new ArrayList<String>();
+		status.add("OK");
+		status.add("FAIL");
+		status.add("ERR");
+		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(status); 
 		if(list == null || list.size() == 0) {
 			System.out.println("setTaaApplBatchIfPostProcess 대상없음 종료");
 			return ;

@@ -68,8 +68,8 @@ public class WtmAnnualUsed implements Serializable {
      * 발생일수
      */
     @Max(999)
-    @Column(name = "CREATE_CNT")
-    private Integer createCnt;
+    @Column(name = "CREATE_CNT", columnDefinition="Decimal(10,2)")
+    private Double createCnt;
 
     /**
      * 비고
@@ -167,11 +167,11 @@ public class WtmAnnualUsed implements Serializable {
         this.eymd = eymd;
     }
 
-    public Integer getCreateCnt() {
+    public Double getCreateCnt() {
         return createCnt;
     }
 
-    public void setCreateCnt(Integer createCnt) {
+    public void setCreateCnt(Double createCnt) {
         this.createCnt = createCnt;
     }
 
@@ -197,5 +197,9 @@ public class WtmAnnualUsed implements Serializable {
 
     public void setUpdateId(String updateId) {
         this.updateId = updateId;
+    }
+
+    public static long getSerialVersionUID() {
+        return serialVersionUID;
     }
 }
