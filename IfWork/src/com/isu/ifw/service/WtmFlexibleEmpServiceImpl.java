@@ -554,10 +554,15 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				}
 				
 				dayInfo.put("workHour", minToHHmmStr(workMin+""));
+				dayInfo.put("workMinute", workMin);
 				dayInfo.put("otHour", minToHHmmStr((otMin+otNightMin)+""));
+				dayInfo.put("otMinute", (otMin+otNightMin));
 				dayInfo.put("otBasicHour", minToHHmmStr(otMin+""));
+				dayInfo.put("otBasicMinute", otMin);
 				dayInfo.put("otNightHour", minToHHmmStr(otNightMin+""));
+				dayInfo.put("otNightMinute", otNightMin);
 				dayInfo.put("regaHour", minToHHmmStr(regaMin+""));
+				dayInfo.put("regaMinute", regaMin);
 				
 				Map<String, Object> taa = new HashMap<String, Object>();
 				if(taaMap!=null) {
@@ -569,6 +574,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				dayInfo.put("taa", taa);
 				dayInfo.put("breakHour", minToHHmmStr(noPayBreakMin+""));
 				dayInfo.put("paidHour", minToHHmmStr(paidBreakMin+""));
+				
+				dayInfo.put("breakMinute", noPayBreakMin);
+				dayInfo.put("paidMinute", paidBreakMin);
+				
 			}
 		}
 		
