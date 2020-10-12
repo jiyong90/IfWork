@@ -114,7 +114,7 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 	public ReturnParam imsi(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap, String status, String sabun, String userId) throws Exception {
 		ReturnParam rp = new ReturnParam();
 		rp.setFail("");
-		String           applSabun = paramMap.get("sabun").toString();
+		String           applSabun = sabun;
 		WtmAppl          appl      = null;
 		List<WtmTaaAppl> taaAppls  = wtmTaaApplRepo.findByApplId(applId);
 		SimpleDateFormat ymd       = new SimpleDateFormat("yyyyMMdd");
@@ -245,6 +245,7 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 			rp.setSuccess("");
 		}catch (Exception e){
 			rp.setFail("출장/긴급근무 신청시 에러가 발생하였습니다, 신청데이터를 확인해주세요");
+			e.printStackTrace();
 			throw new RuntimeException("근태정보가 부족합니다.");
 		}
 
@@ -275,7 +276,7 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 
 		List<HashMap<String, Date>> dateList = new ArrayList<HashMap<String, Date>>();
 
-		SimpleDateFormat inFormat = new SimpleDateFormat("yyyyMMddhhMM");
+		SimpleDateFormat inFormat = new SimpleDateFormat("yyyyMMddHHmm");
 
 		boolean isDuplicateDt = false;
 
@@ -297,7 +298,7 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 
 				HashMap<String, Date> dateMap = new HashMap<String, Date>();
 				dateMap.put("startDt", inFormat.parse(taaDate+startHm));
-				dateMap.put("entDt", inFormat.parse(taaDate+startHm));
+				dateMap.put("entDt", inFormat.parse(taaDate+endHm));
 				dateList.add(dateMap);
 
 				ReturnParam valiRp = new ReturnParam();
@@ -310,6 +311,37 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 			}
 
 
+			for (int i = 1; i < dateList.size(); i++) {
+
+				HashMap<String, Date> dateMap1 = dateList.get(i);
+
+				Date dtt1 = dateList.get(i - 1).get("startDt");
+				Date dtt2 = dateList.get(i - 1).get("entDt");
+
+				if (checkBetween(dtt1, dateMap1.get("startDt"), dateMap1.get("entDt"))) {
+					isDuplicateDt = true;
+				}
+				if (checkBetween(dtt2, dateMap1.get("startDt"), dateMap1.get("entDt"))) {
+					isDuplicateDt = true;
+				}
+
+				for (int j = i + 1; j < dateList.size(); j++) {
+
+					HashMap<String, Date> dateMap2 = dateList.get(j);
+
+					if (checkBetween(dtt1, dateMap2.get("startDt"), dateMap2.get("entDt"))) {
+						isDuplicateDt = true;
+					}
+					if (checkBetween(dtt2, dateMap2.get("startDt"), dateMap2.get("entDt"))) {
+						isDuplicateDt = true;
+					}
+				}
+			}
+
+			if(isDuplicateDt){
+				rp.setFail("출장/긴급근무 신청기간이 중복됩니다.");
+			}
+
 			
 		} else {
 			rp.setFail("출장/긴급근무 신청데이터가 존재하지 않습니다.");
@@ -318,6 +350,13 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 		return rp;
 	}
 
+	/**
+	 * WTM_TAA_APPL_DET 기간 중복 벨리데이션 체크
+	 * @param dateToCheck
+	 * @param startDate
+	 * @param endDate
+	 * @return
+	 */
 	public boolean checkBetween(Date dateToCheck, Date startDate, Date endDate) {
 		return dateToCheck.compareTo(startDate) >= 0 && dateToCheck.compareTo(endDate) <=0;
 	}
