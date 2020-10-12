@@ -35,6 +35,7 @@ import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.entity.WtmWorkDayResultO;
+import com.isu.ifw.entity.WtmWorkPattDet;
 import com.isu.ifw.mapper.WtmAuthMgrMapper;
 import com.isu.ifw.mapper.WtmEmpHisMapper;
 import com.isu.ifw.mapper.WtmFlexibleApplMapper;
@@ -59,6 +60,7 @@ import com.isu.ifw.repository.WtmTimeCdMgrRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultORepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
+import com.isu.ifw.repository.WtmWorkPattDetRepository;
 import com.isu.ifw.repository.WtmWorkteamEmpRepository;
 import com.isu.ifw.repository.WtmWorkteamMgrRepository;
 import com.isu.ifw.util.WtmUtil;
@@ -4692,4 +4694,17 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
 	}
 	
+	@Autowired private WtmWorkPattDetRepository workPattRepo;
+	
+	public void createDayResultAsPattern(Long applId, Long flexibleStdMgrId) {
+		WtmFlexibleStdMgr flexibleStdMgr = flexStdMgrRepo.findByFlexibleStdMgrId(flexibleStdMgrId);
+		List<WtmWorkPattDet> pattDets = workPattRepo.findByFlexibleStdMgrId(flexibleStdMgrId);
+		int pattSize = 0;
+		if(pattDets != null)
+			pattSize = pattDets.size();
+		
+		
+		
+		
+	}
 }

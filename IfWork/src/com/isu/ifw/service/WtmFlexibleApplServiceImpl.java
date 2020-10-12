@@ -611,10 +611,13 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		if(propertie != null)
 			maxAdd = propertie.getInfoValue();
 		
-		if(workTypeCd.startsWith("SELE")) {
+		/**
+		 * 선근제도 DET 없지만 있으면 탄근제 처럼 만들어주면 될것 같다. 
+		 */
+		if(workTypeCd.startsWith("SELE") || workTypeCd.equals("ELAS")) {
 			//선근제
 			
-		}else if(workTypeCd.equals("ELAS")) {
+		//}else if(workTypeCd.equals("ELAS")) {
 			//탄근제
 			//근로시간은 평균 40 시간, OT시간은 주 12시간 초과 시 신청할 수 없고
 			//2주 이내 탄근제는 주간 최대 근무시간은 48시간, 2주 이상 탄근제는 주간 최대 근무시간 52시간 
@@ -654,15 +657,20 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 						if(w.get("workMinute")!=null && !"".equals(w.get("workMinute"))) {
 							workMinute = Integer.parseInt(w.get("workMinute").toString());
 							sumWorkMinute += workMinute;
+							/**
+							 * 수정
+							 */
+							if(workTypeCd.equals("ELAS")) {
+								if(day>14 && ((float)workMinute/60) > Integer.parseInt(max2weekMorethen)) {
+									rp.setFail("2주 이상 탄근제는 주간 최대 "+max2weekMorethen+"시간을 초과할 수 없습니다.");
+									return rp;
+								}
+								if(day<=14 && ((float)workMinute/60) > Integer.parseInt(max2weekWithin)) {
+									rp.setFail("2주 이내 탄근제는 주간 최대 "+max2weekWithin+"시간을 초과할 수 없습니다.");
+									return rp;
+								}
+							}
 							
-							if(day>14 && ((float)workMinute/60) > Integer.parseInt(max2weekMorethen)) {
-								rp.setFail("2주 이상 탄근제는 주간 최대 "+max2weekMorethen+"시간을 초과할 수 없습니다.");
-								return rp;
-							}
-							if(day<=14 && ((float)workMinute/60) > Integer.parseInt(max2weekWithin)) {
-								rp.setFail("2주 이내 탄근제는 주간 최대 "+max2weekWithin+"시간을 초과할 수 없습니다.");
-								return rp;
-							}
 						}
 						
 						int otMinute = 0;
