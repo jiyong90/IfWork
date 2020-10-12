@@ -119,7 +119,7 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 			String status, String sabun, String userId) throws Exception {
 		ReturnParam rp = new ReturnParam();
 		rp.setFail("");
-		String applSabun = paramMap.get("applSabun")+ "";
+		String applSabun = sabun;
 		String note = paramMap.get("note").toString();
 		WtmAppl appl = null;
 		List<WtmTaaAppl> taaAppls = wtmTaaApplRepo.findByApplId(applId);
