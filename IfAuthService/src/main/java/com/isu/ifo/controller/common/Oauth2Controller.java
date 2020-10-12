@@ -56,7 +56,8 @@ public class Oauth2Controller {
         params.add("grant_type", "authorization_code");
         params.add("redirect_uri", "http://localhost:8081/oauth2/callback");
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
-        ResponseEntity<String> response = restTemplate.postForEntity("http://localhost:8081/oauth/token", request, String.class);
+        ResponseEntity<String> response = new RestTemplate().postForEntity("http://localhost:8081/oauth/token", request,
+                String.class);
         if (response.getStatusCode() == HttpStatus.OK) {
         	ObjectMapper mapper = new ObjectMapper();
             try {
@@ -89,13 +90,13 @@ public class Oauth2Controller {
         params.add("refresh_token", refreshToken);
         params.add("grant_type", "refresh_token");
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
-        ResponseEntity<String> response = restTemplate.postForEntity("http://localhost:8081/oauth/token", request, String.class);
+        ResponseEntity<String> response = restTemplate.postForEntity("http://localhost:8081/oauth/token", new HttpEntity<>(params, headers), String.class);
         
         
         if (response.getStatusCode() == HttpStatus.OK) {
         	ObjectMapper mapper = new ObjectMapper();
             try {
-				return mapper.readValue(response.getBody(), OAuthToken.class);
+				return new ObjectMapper().readValue(response.getBody(), OAuthToken.class);
 			} catch (JsonMappingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

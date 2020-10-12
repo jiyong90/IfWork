@@ -66,8 +66,7 @@ public class ClientDetailsServiceImpl extends JdbcClientDetailsService{
  
     @Override
     public List<ClientDetails> listClientDetails() {
-        List<ClientDetails> list = super.listClientDetails();
-        return list;
+        return super.listClientDetails();
     }
     
 }

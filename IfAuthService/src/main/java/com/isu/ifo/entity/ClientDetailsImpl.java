@@ -18,6 +18,10 @@ import lombok.ToString;
 @Entity(name="oauth_client_details")
 public class ClientDetailsImpl implements ClientDetails{
 
+	public static enum ClientType {
+		PUBLIC,CONFIDENTIAL
+	}
+
 	@Id
 	@Column(name="client_id")
 	String clientId;
