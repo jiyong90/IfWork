@@ -554,10 +554,15 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				}
 				
 				dayInfo.put("workHour", minToHHmmStr(workMin+""));
+				dayInfo.put("workMinute", workMin);
 				dayInfo.put("otHour", minToHHmmStr((otMin+otNightMin)+""));
+				dayInfo.put("otMinute", (otMin+otNightMin));
 				dayInfo.put("otBasicHour", minToHHmmStr(otMin+""));
+				dayInfo.put("otBasicMinute", otMin);
 				dayInfo.put("otNightHour", minToHHmmStr(otNightMin+""));
+				dayInfo.put("otNightMinute", otNightMin);
 				dayInfo.put("regaHour", minToHHmmStr(regaMin+""));
+				dayInfo.put("regaMinute", regaMin);
 				
 				Map<String, Object> taa = new HashMap<String, Object>();
 				if(taaMap!=null) {
@@ -569,6 +574,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				dayInfo.put("taa", taa);
 				dayInfo.put("breakHour", minToHHmmStr(noPayBreakMin+""));
 				dayInfo.put("paidHour", minToHHmmStr(paidBreakMin+""));
+				
+				dayInfo.put("breakMinute", noPayBreakMin);
+				dayInfo.put("paidMinute", paidBreakMin);
+				
 			}
 		}
 		
@@ -1249,7 +1258,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			calcApprDayInfoApprReset(tenantId, enterCd, sabun, "BASE", sYmd, eYmd);
 			
 			for(WtmWorkCalendar calendar : works) {
-				
 				WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, calendar.getYmd());
 				if(flexEmp == null) {
 					continue;
@@ -1652,7 +1660,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						try {
 							if(flexStdMgr.getWorkShm() != null && !"".equals(flexStdMgr.getWorkShm()) && flexStdMgr.getWorkEhm() != null && !"".equals(flexStdMgr.getWorkEhm())) {
 								// 20200803 선택근무제가 아니면 근무시각 옵션이 비활성화됨. 그리고 선근제도 근무제한이 없을수있음.
-								// logger.debug("****************** HJ ***************** result.getYmd() : " + result.getYmd() + ", flexStdMgr.getWorkShm() : " + flexStdMgr.getWorkShm());
 								Date limitSdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkShm());
 								Date limitEdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkEhm());
 							
@@ -1815,7 +1822,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			try {
 				if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE) && flexStdMgr.getWorkShm() != null && !"".equals(flexStdMgr.getWorkShm()) && flexStdMgr.getWorkEhm() != null && !"".equals(flexStdMgr.getWorkEhm())) {
 					// 20200803 선택근무제가 아니면 근무시각 옵션이 비활성화됨. 그리고 선근제도 근무제한이 없을수있음.
-					// logger.debug("****************** HJ ***************** result.getYmd() : " + result.getYmd() + ", flexStdMgr.getWorkShm() : " + flexStdMgr.getWorkShm());
 					Date limitSdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkShm());
 					Date limitEdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkEhm());
 				
@@ -1885,7 +1891,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			try {
 				if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE) && flexStdMgr.getWorkShm() != null && !"".equals(flexStdMgr.getWorkShm()) && flexStdMgr.getWorkEhm() != null && !"".equals(flexStdMgr.getWorkEhm())) {
 					// 20200803 선택근무제가 아니면 근무시각 옵션이 비활성화됨. 그리고 선근제도 근무제한이 없을수있음.
-					// logger.debug("****************** HJ ***************** result.getYmd() : " + result.getYmd() + ", flexStdMgr.getWorkShm() : " + flexStdMgr.getWorkShm());
 					Date limitSdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkShm());
 					Date limitEdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkEhm());
 				
@@ -2043,8 +2048,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				}
 			}
 			
-
-			
 			//출근 자동 생성
 			if(!flexStdMgr.getDayOpenType().equals("N") && calendar.getEntrySdate() == null
 				&& (
@@ -2128,7 +2131,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//flexEmpMapper.updateEntrySdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
 			calendar.setEntrySdate(dayPlanSdate);
 			calendar.setEntryStypeCd("AUTO");
-			workCalendarRepo.save(calendar);
+			calendar = workCalendarRepo.save(calendar);
 		}
 		
 		//출근타각이 있을 경우에만
@@ -2140,7 +2143,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//flexEmpMapper.updateEntryEdateByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
 			calendar.setEntryEdate(dayPlanEdate);
 			calendar.setEntryEtypeCd("AUTO");
-			workCalendarRepo.save(calendar);
+			calendar = workCalendarRepo.save(calendar);
 		}
 		// 출근 타각이 없을 경우
 		// 출근 또는 출/퇴근 타각이 모두 없을 경우 무단결근
@@ -2451,7 +2454,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//}
 	
 			//결근은 최상단에서 제외
-			logger.debug("10. ********************************** ");
 			if(calendar.getEntrySdate() != null && calendar.getEntryEdate() != null && timeCdMgr.getLeaveChkYn().equals("Y")) {
 				
 				dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
@@ -2859,7 +2861,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						result.setPlanEdate(sdf.parse(l.get("planEdate").toString()));
 						result.setPlanMinute(Integer.parseInt(l.get("planMinute").toString()));
 						result.setUpdateId(userId);	
-						// System.out.println("*******************hj ********** : " +result.toString());
 						workDayResultRepo.save(result);	
 						
 						//오늘 이전인 경우만 돌려주기, 오늘은 일마감에서
@@ -3784,13 +3785,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	// 근무제 통계 데이터 생성
 	@Override
 	public Map<String, Object> createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
-		/*
+		
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
 		paramMap.put("sabun", sabun);
 		paramMap.put("pId", userId);
-		flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
-		*/
+		//flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
+		
 		String ymd = "";
 		if(paramMap.containsKey("symd")) {
 			ymd = paramMap.get("symd")+"";

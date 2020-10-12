@@ -1,16 +1,25 @@
 package com.isu.ifw.entity;
 
-import org.springframework.format.annotation.DateTimeFormat;
-
-import javax.persistence.*;
-import java.io.Serializable;
 import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+import org.springframework.format.annotation.DateTimeFormat;
 
 @Entity
 @Table(name="WTM_EMP_HIS")
-public class WtmEmpHis implements Serializable {
+public class WtmEmpHis { //implements Serializable {
 
-
+/*
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumns({@JoinColumn(name = "TENANT_ID",
 	                          referencedColumnName = "TENANT_ID",
@@ -31,6 +40,7 @@ public class WtmEmpHis implements Serializable {
 	public void setWtmOrgCode(WtmOrgCode wtmOrgCode) {
 		this.wtmOrgCode = wtmOrgCode;
 	}
+	*/
 
 	public Long getEmpHisId() {
 		return empHisId;

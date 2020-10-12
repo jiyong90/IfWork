@@ -2010,12 +2010,14 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddhhmm");
 		Map<String, Object> breakMap = this.getBreakMinuteIfBreakTimeMGR(cSdate, cEdate, timeCdMgrId);
 		int totBreakMinute = 0;
+		int addBreakMinute = 0;
+		
 		if(breakMap != null) {
 			totBreakMinute = (int) breakMap.get("totBreakMinute");
 			maxEhm = breakMap.get("maxEhm") + "";
 		}
 		Date maxBreakDate = null;
-		if(maxEhm != null) {
+		if(maxEhm != null && !"null".equals(maxEhm) && !"".equals(maxEhm)) {
 			try {
 				maxBreakDate = ymdhm.parse(ymd.format(cSdate)+maxEhm);
 			} catch (ParseException e) {
@@ -2032,19 +2034,21 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				cal.add(Calendar.MINUTE, totBreakMinute);
 			}
 			cEdate = cal.getTime();
-		}
-		int addBreakMinute = 0;
-		Map<String, Object> reBreakMap = null;
-		if(isNegative) {
-			//reBreakMap = this.getBreakMinuteIfBreakTimeMGR(cSdate, maxBreakDate, timeCdMgrId);
-			//이건 망인데..
-		}else {
-			reBreakMap = this.getBreakMinuteIfBreakTimeMGR(maxBreakDate, cEdate, timeCdMgrId);
-		}
-		if(breakMap != null) {
-			addBreakMinute = (int) reBreakMap.get("breakMinute");
-		}else {
-			addBreakMinute = 0;
+			
+
+			Map<String, Object> reBreakMap = null;
+			if(isNegative) {
+				//reBreakMap = this.getBreakMinuteIfBreakTimeMGR(cSdate, maxBreakDate, timeCdMgrId);
+				//이건 망인데..
+			}else {
+				reBreakMap = this.getBreakMinuteIfBreakTimeMGR(maxBreakDate, cEdate, timeCdMgrId);
+			}
+
+			if(reBreakMap != null) {
+				addBreakMinute = (int) reBreakMap.get("breakMinute");
+			}else {
+				addBreakMinute = 0;
+			}
 		}
 		if(addBreakMinute > 0) {
 			if(isNegative) {
@@ -2421,6 +2425,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						workTermTime.setNowWorkMinute(nowWorkMinute - planExMinute);
 						workTermTime.setNowOtMinute(nowOtMinute - planOtExMinute);
 						workTermTime.setUpdateDate(new Date());
+						workTermTime.setNote("");
 						workTermTime.setUpdateId("workTermTime");
 						logger.debug("workTermTime : " + workTermTime.toString());
 						workTermTimeRepo.save(workTermTime);
