@@ -4656,17 +4656,4 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
 	}
 	
-	@Autowired private WtmWorkPattDetRepository workPattRepo;
-	
-	public void createDayResultAsPattern(Long applId, Long flexibleStdMgrId) {
-		WtmFlexibleStdMgr flexibleStdMgr = flexStdMgrRepo.findByFlexibleStdMgrId(flexibleStdMgrId);
-		List<WtmWorkPattDet> pattDets = workPattRepo.findByFlexibleStdMgrId(flexibleStdMgrId);
-		int pattSize = 0;
-		if(pattDets != null)
-			pattSize = pattDets.size();
-		
-		
-		
-		
-	}
 }

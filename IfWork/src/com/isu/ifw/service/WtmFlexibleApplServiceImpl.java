@@ -1,12 +1,16 @@
 package com.isu.ifw.service; 
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,12 +20,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmApplLine;
+import com.isu.ifw.entity.WtmDayMgr;
 import com.isu.ifw.entity.WtmFlexibleAppl;
 import com.isu.ifw.entity.WtmFlexibleApplDet;
 import com.isu.ifw.entity.WtmFlexibleApplyDet;
 import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
+import com.isu.ifw.entity.WtmHolidayMgr;
 import com.isu.ifw.entity.WtmPropertie;
+import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.entity.WtmWorkPattDet;
 import com.isu.ifw.mapper.WtmApplMapper;
@@ -33,6 +40,7 @@ import com.isu.ifw.mapper.WtmOtCanApplMapper;
 import com.isu.ifw.repository.WtmApplCodeRepository;
 import com.isu.ifw.repository.WtmApplLineRepository;
 import com.isu.ifw.repository.WtmApplRepository;
+import com.isu.ifw.repository.WtmDayMgrRepository;
 import com.isu.ifw.repository.WtmEntryApplRepository;
 import com.isu.ifw.repository.WtmFlexibleApplDetRepository;
 import com.isu.ifw.repository.WtmFlexibleApplRepository;
@@ -40,8 +48,10 @@ import com.isu.ifw.repository.WtmFlexibleApplyDetRepository;
 import com.isu.ifw.repository.WtmFlexibleDayPlanRepository;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
+import com.isu.ifw.repository.WtmHolidayMgrRepository;
 import com.isu.ifw.repository.WtmOtSubsApplRepository;
 import com.isu.ifw.repository.WtmPropertieRepository;
+import com.isu.ifw.repository.WtmTimeCdMgrRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.repository.WtmWorkPattDetRepository;
@@ -53,6 +63,8 @@ import com.isu.ifw.vo.WtmFlexibleApplDetVO;
 @Service("wtmFlexibleApplService")
 public class WtmFlexibleApplServiceImpl implements WtmApplService {
 
+	private static final Logger logger = LoggerFactory.getLogger("ifwFileLog");
+	
 	@Autowired
 	WtmValidatorService validatorService;
 	
@@ -133,6 +145,8 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 	
 	@Autowired
 	WtmInboxService inbox;
+	
+	@Autowired private WtmCalcService calcService;
 	
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
@@ -918,6 +932,197 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			Map<String, Object> convertMap) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	
+	@Autowired private WtmWorkPattDetRepository workPattRepo;
+	@Autowired private WtmTimeCdMgrRepository timeCdMgrRepo;
+	@Autowired private WtmDayMgrRepository dayMgrRepo;
+	@Autowired private WtmHolidayMgrRepository holidayMgrRepo;
+	
+	public void createWtmFlexibleApplDetAsPattern(Long tenantId, String enterCd, WtmFlexibleAppl flexibleAppl) {
+		logger.debug("call createWtmFlexibleApplDetAsPattern ::");
+		if(flexibleAppl == null)
+			return;
+		
+		List<WtmFlexibleApplDet> ds = wtmFlexibleApplDetRepo.findByFlexibleApplId(flexibleAppl.getFlexibleApplId());
+		logger.debug("ds size : " + ds.size());
+		if(ds != null && ds.size() > 0) {
+			logger.debug("return");
+			return;
+		}
+		logger.debug("????");
+		
+		Long flexibleStdMgrId = flexibleAppl.getFlexibleStdMgrId();
+		logger.debug("flexibleStdMgrId :: " + flexibleStdMgrId);
+		List<WtmWorkPattDet> pattDets = workPattRepo.findByFlexibleStdMgrId(flexibleStdMgrId);
+		int pattSize = 0;
+		if(pattDets != null)
+			pattSize = pattDets.size();
+		
+		logger.debug("pattSize :: " + pattSize);
+		
+		// 패턴이 없으면 생성하지 않는다. 
+		if(pattSize > 0) {
+			WtmFlexibleStdMgr flexibleStdMgr = flexStdMgrRepo.findByFlexibleStdMgrId(flexibleStdMgrId);
+			//근무제도 시작일 부터 신청일의 시작일의 일수를 구한다. 근무제도 패턴 기준은 근무제도의 생성일 부터이다. 
+			
+			SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+			SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
+			
+			Date stdMgrSdate = null, applSDate = null, applEDate = null;
+			try {
+				stdMgrSdate = ymd.parse(flexibleStdMgr.getUseSymd());
+				applSDate = ymd.parse(flexibleAppl.getSymd());
+				applEDate = ymd.parse(flexibleAppl.getEymd());
+					 
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			long diff = applSDate.getTime() - stdMgrSdate.getTime();
+			long days = diff / (24*60*60*1000) + 1;
+			
+			logger.debug("days : " + days);
+			
+			Integer startPattSeq = (int) (days % pattSize);
+			
+			Map<Integer, WtmWorkPattDet> pattDetMap = new HashMap<>();
+			Map<Integer, WtmTimeCdMgr> timeCdMgrMap = new HashMap<>();
+			for(WtmWorkPattDet pattDet : pattDets) {
+				pattDetMap.put(pattDet.getSeq(), pattDet);
+				WtmTimeCdMgr timeCdMgr = timeCdMgrRepo.findById(pattDet.getTimeCdMgrId()).get();
+				timeCdMgrMap.put(pattDet.getSeq(), timeCdMgr);
+			}
+			
+			List<WtmDayMgr> dayMgrs = dayMgrRepo.findBySunYmdBetween(flexibleAppl.getSymd(), flexibleAppl.getEymd());
+			List<WtmHolidayMgr> hols = holidayMgrRepo.findByTenantIdAndEnterCdAndHolidayYmdBetween(tenantId, enterCd, flexibleAppl.getSymd(), flexibleAppl.getEymd());
+			
+			List<String> holList = new ArrayList<String>();
+			if(dayMgrs != null && dayMgrs.size() > 0) {
+				for(WtmDayMgr d : dayMgrs) {
+					if(!"".equals(d.getHolidayYn()) && "Y".equals(d.getHolidayYn())) {
+						holList.add(d.getSunYmd());
+					}
+				}
+			}
+			if(hols != null && hols.size() > 0) {
+				for(WtmHolidayMgr d : hols) {
+					holList.add(d.getId().getHolidayYmd());
+				}
+			}
+			
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(applSDate);
+			
+			Date chkDate = applSDate;
+			List<WtmFlexibleApplDet> saveDetList = new ArrayList<>();
+			logger.debug("chkDate.compareTo(applEDate) : " + chkDate.compareTo(applEDate));
+			ObjectMapper mapper = new ObjectMapper();
+			if(startPattSeq == 0) {
+				startPattSeq = pattSize;
+			}
+			while(chkDate.compareTo(applEDate) <= 0) {
+				logger.debug("chkDate : " + chkDate);
+				logger.debug("applEDate : " + applEDate);
+				cal.setTime(chkDate);
+				logger.debug("flexibleStdMgr.getHolExceptYn() :" + flexibleStdMgr.getHolExceptYn());
+				
+				logger.debug("startPattSeq : " + startPattSeq);
+				try {
+					logger.debug("pattDetMap : " + mapper.writeValueAsString(pattDetMap));
+					logger.debug("timeCdMgrMap : " + mapper.writeValueAsString(timeCdMgrMap));
+				} catch (JsonProcessingException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				WtmWorkPattDet det = pattDetMap.get(startPattSeq);
+				WtmTimeCdMgr timeCdMgr = timeCdMgrMap.get(startPattSeq); 
+				startPattSeq++;
+				if(startPattSeq > pattSize) {
+					startPattSeq = 1;
+				}
+				
+				try {
+					logger.debug("flexibleStdMgr : " + mapper.writeValueAsString(flexibleStdMgr));
+					logger.debug("det : " + mapper.writeValueAsString(det));
+				} catch (JsonProcessingException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+
+				String sYmd = ymd.format(chkDate);
+				
+				if("Y".equals(flexibleStdMgr.getHolExceptYn()) && holList.indexOf(sYmd) > -1 ) {
+					cal.add(Calendar.DATE, 1);
+					//기준일이기때문에 다음날에 대한 일자 정보를 담아야한다.
+					chkDate = cal.getTime();
+				}else {
+					//휴일이면
+					if(!"".equals(timeCdMgr.getHolYn()) &&  "Y".equals(timeCdMgr.getHolYn())) {
+						logger.debug("timeCdMgr is null ");
+						cal.add(Calendar.DATE, 1);
+						//기준일이기때문에 다음날에 대한 일자 정보를 담아야한다.
+						chkDate = cal.getTime();
+					}else {
+						if(timeCdMgr.getWorkShm() != null && timeCdMgr.getWorkEhm() != null
+								&& !"".equals(timeCdMgr.getWorkShm()) && !"".equals(timeCdMgr.getWorkEhm())) {
+							logger.debug("timeCdMgr is not null ");
+							String shm = timeCdMgr.getWorkShm();
+							String ehm = timeCdMgr.getWorkEhm();
+							
+							String eYmd = sYmd;
+							Date sd = null, ed = null;
+							try {
+								sd = ymdhm.parse(sYmd+shm);
+								//종료시분이 시작시분보다 작으면 기준일을 다음날로 본다. 
+								if(Integer.parseInt(shm) > Integer.parseInt(ehm)) {
+									cal.add(Calendar.DATE, 1);
+									eYmd = ymd.format(cal.getTime());
+									//기준일이기때문에 다음날에 대한 일자 정보를 담아야한다.
+									chkDate = cal.getTime();
+								}else {
+									cal.add(Calendar.DATE, 1);
+									//기준일이기때문에 다음날에 대한 일자 정보를 담아야한다.
+									chkDate = cal.getTime();
+								}
+								ed = ymdhm.parse(eYmd+ehm);
+							} catch (ParseException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							WtmFlexibleApplDet applDet = new WtmFlexibleApplDet();
+							
+							applDet.setFlexibleApplId(flexibleAppl.getFlexibleApplId());
+							applDet.setTimeCdMgrId(det.getTimeCdMgrId());
+							applDet.setHolidayYn(det.getHolidayYn());
+							applDet.setYmd(sYmd);
+							applDet.setPlanSdate(sd);
+							applDet.setPlanEdate(ed);
+							
+							Map<String, Object> resMap = calcService.calcApprMinute(sd, ed, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+							if(resMap.containsKey("apprMinute")) {
+								applDet.setPlanMinute(Integer.parseInt(resMap.get("apprMinute")+""));
+							}
+							
+							saveDetList.add(applDet);
+						}else {
+							logger.debug("timeCdMgr is null ");
+							cal.add(Calendar.DATE, 1);
+							//기준일이기때문에 다음날에 대한 일자 정보를 담아야한다.
+							chkDate = cal.getTime();
+						}
+					}
+					
+				}
+			}
+			
+			logger.debug("saveDetList.size( : " + saveDetList.size());
+			wtmFlexibleApplDetRepo.saveAll(saveDetList);
+			
+		}		
+		
+		
 	}
 
 }
