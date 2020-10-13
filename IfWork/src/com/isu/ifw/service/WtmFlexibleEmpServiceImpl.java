@@ -4459,6 +4459,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 //		wtmFlexibleApplyMgrMapper.updateApplyEmp(searchSabun);
 //		logger.debug("[setApply] updateApplyEmp ");
 		} catch(Exception e) {
+			e.printStackTrace();
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return 0;
 		}
