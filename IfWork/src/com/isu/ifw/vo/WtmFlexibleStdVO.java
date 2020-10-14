@@ -28,6 +28,14 @@ public class WtmFlexibleStdVO {
 	private List<Map<String, Object>> usedTermOpt;
 	private String applShowYn;
 	private String weekDay;
+	
+	private Long applId;
+	private String applStatusCd;
+	private String applCd;
+	private String sYmd;
+	private String eYmd;
+	private Long flexibleApplId;
+	
 	public Long getFlexibleStdMgrId() {
 		return flexibleStdMgrId;
 	}
@@ -164,6 +172,50 @@ public class WtmFlexibleStdVO {
 	public void setWeekDay(String weekDay) {
 		this.weekDay = weekDay;
 	}
+	public Long getApplId() {
+		return applId;
+	}
+	public void setApplId(Long applId) {
+		this.applId = applId;
+	}
+	public String getApplStatusCd() {
+		return applStatusCd;
+	}
+	public void setApplStatusCd(String applStatusCd) {
+		this.applStatusCd = applStatusCd;
+	}
+	public String getApplCd() {
+		return applCd;
+	}
+	public void setApplCd(String applCd) {
+		this.applCd = applCd;
+	}
+	public String getsYmd() {
+		return sYmd;
+	}
+	public void setsYmd(String sYmd) {
+		this.sYmd = sYmd;
+	}
+	public String geteYmd() {
+		return eYmd;
+	}
+	public void seteYmd(String eYmd) {
+		this.eYmd = eYmd;
+	}
+	public Long getFlexibleApplId() {
+		return flexibleApplId;
+	}
+	public void setFlexibleApplId(Long flexibleApplId) {
+		this.flexibleApplId = flexibleApplId;
+	}
+	public void setWorkDaysOpt(Map<String, Object> workDaysOpt) {
+		this.workDaysOpt = workDaysOpt;
+	}
+	public void setUsedTermOpt(List<Map<String, Object>> usedTermOpt) {
+		this.usedTermOpt = usedTermOpt;
+	}
+	
+	
 	
 	
 	
