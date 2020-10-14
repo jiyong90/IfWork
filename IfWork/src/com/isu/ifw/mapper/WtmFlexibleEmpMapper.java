@@ -9,7 +9,7 @@ import java.util.Map;
 
 public interface WtmFlexibleEmpMapper {
 	
-	/** 
+	/**
 	 * 해당 월의 근무제 정보 조회
 	 * @param paramMap
 	 * @return
@@ -567,5 +567,13 @@ public interface WtmFlexibleEmpMapper {
 	 * @return
 	 */
 	public Map<String, Object> getAnnualUsed(Map<String, Object> paramMap);
+
+
+	/**
+	 * 해당 월의 근무제 정보 조회
+	 * @param paramMap
+	 * @return
+	 */
+	public List<Map<String, Object>> getFlexibleEmpImsiList(Map<String, Object> paramMap);
 
 }

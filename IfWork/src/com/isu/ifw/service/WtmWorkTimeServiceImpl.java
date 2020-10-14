@@ -1,9 +1,7 @@
 package com.isu.ifw.service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +52,8 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 	
 	@Autowired
 	WtmBaseWorkMgrRepository baseWorkMgrRepo;
-	
+	private SimpleDateFormat dateFormat;
+
 	@Override
 	public List<Map<String, Object>> getWorktimeCheckList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
 		List<Map<String, Object>> WorktimeCheckList = null;
@@ -364,5 +363,76 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 		}
 		
 		
+	}
+
+	@Override
+	public List<Map<String, Object>> getWorkTimeList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
+		List<Map<String, Object>> workTimeList = null;
+		try {
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+
+			Date date = new Date();
+			SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd");
+			String now = sdf.format(date);
+
+			String ymd = "";
+			if(paramMap.get("ymd") != null && !"".equals((String)paramMap.get("ymd"))) {
+				ymd = ((String) paramMap.get("ymd")).replace("-", "");
+				paramMap.put("ymd", ((String) paramMap.get("ymd")).replace("-", ""));
+			}
+
+			List<String> auths = empService.getAuth(tenantId, enterCd, sabun);
+			if(auths!=null && !auths.contains("FLEX_SETTING") && auths.contains("FLEX_SUB")) {
+				//하위 조직 조회
+				paramMap.put("orgList", empService.getLowLevelOrgList(tenantId, enterCd, sabun, now));
+			}
+
+			workTimeList = worktimeMapper.getWorkTimeList(paramMap);
+		} catch(Exception e) {
+			e.printStackTrace();
+			logger.debug(e.toString(), e);
+		} finally {
+			MDC.clear();
+			logger.debug("workTimeList End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
+
+		}
+
+		return workTimeList;
+	}
+
+	@Override
+	public List<Map<String, Object>> getCloseDayList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
+		List<Map<String, Object>> closeDayList = null;
+		try {
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+
+			Date date = new Date();
+			SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd");
+			String now = sdf.format(date);
+			String ymd = "";
+			if(paramMap.get("ymd") != null && !"".equals((String)paramMap.get("ymd"))) {
+				ymd = ((String) paramMap.get("ymd")).replace("-", "");
+				paramMap.put("ymd", ((String) paramMap.get("ymd")).replace("-", ""));
+			}
+
+			List<String> auths = empService.getAuth(tenantId, enterCd, sabun);
+			if(auths!=null && !auths.contains("FLEX_SETTING") && auths.contains("FLEX_SUB")) {
+				//하위 조직 조회
+				paramMap.put("orgList", empService.getLowLevelOrgList(tenantId, enterCd, sabun, now));
+			}
+
+			closeDayList = worktimeMapper.getCloseDayList(paramMap);
+		} catch(Exception e) {
+			e.printStackTrace();
+			logger.debug(e.toString(), e);
+		} finally {
+			MDC.clear();
+			logger.debug("workTimeList End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
+
+		}
+
+		return closeDayList;
 	}
 }

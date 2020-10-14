@@ -34,4 +34,7 @@ public interface WtmWorkCalendarRepository extends JpaRepository<WtmWorkCalendar
 	
 	@Query("SELECT C FROM WtmWorkCalendar C JOIN WtmFlexibleEmp F ON C.tenantId = F.tenantId AND C.enterCd = F.enterCd AND C.sabun = F.sabun AND C.ymd BETWEEN F.symd AND F.eymd WHERE C.tenantId = :tenantId AND C.enterCd = :enterCd AND C.ymd BETWEEN :sYmd AND :eYmd Order By C.ymd")
 	public List<WtmWorkCalendar> findByTenantIdAndEnterCdAndYmdBetweenOrderByYmd(@Param("tenantId") Long tenantId,@Param("enterCd") String enterCd,@Param("sYmd") String sYmd,@Param("eYmd")  String eYmd);
+	
+	@Query("SELECT C FROM WtmWorkCalendar C JOIN WtmFlexibleEmp F ON C.tenantId = F.tenantId AND C.enterCd = F.enterCd AND C.sabun = F.sabun AND C.ymd BETWEEN F.symd AND F.eymd WHERE F.flexibleEmpId = :flexibleEmpId AND F.workTypeCd IN :workTypeCd ")
+	public List<WtmWorkCalendar> findByFlexibleEmpIdAndWorkTypeCdIn(@Param("flexibleEmpId") Long flexibleEmpId,@Param("workTypeCd") List<String> workTypeCd);
 }

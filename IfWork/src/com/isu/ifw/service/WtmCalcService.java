@@ -3,6 +3,7 @@ package com.isu.ifw.service;
 import java.util.Date;
 import java.util.Map;
 
+import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
@@ -43,4 +44,11 @@ public interface WtmCalcService {
 	public Map<String, Integer> calcDayCnt(Long tenantId, String enterCd, String symd, String eymd);
 	
 	public void P_WTM_FLEXIBLE_EMP_WORKTERM_C(Long tenantId, String enterCd, String sabun, String ymd);
+	
+	/**
+	 * 선근제 workMinute otMinute 값을 구한다. 
+	 * @param flexibleEmpId
+	 * @return
+	 */
+	public Map<String, Integer> calcFlexibleMinuteByTypeForWorkTypeFlex(WtmFlexibleEmp flexEmp);
 }

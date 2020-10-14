@@ -124,4 +124,24 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 	
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndApprMinuteIsNull(Long tenantId, String enterCd, String sabun, String symd, String eymd);
 	
+	/*
+	SUBS를 빼자 APPL_ID 를 찾아 연장근무 일이 현재 근무기간에 속하지 않을 경우 빼야한다. 
+    SELECT F_WTM_NVL(SUM(F_WTM_NVL(R.PLAN_MINUTE,0)),0) INTO v_subs_minute
+	FROM WTM_FLEXIBLE_EMP E
+	JOIN WTM_WORK_DAY_RESULT R
+	ON E.TENANT_ID = R.TENANT_ID
+	AND E.ENTER_CD = R.ENTER_CD
+	AND E.SABUN = R.SABUN
+	AND R.YMD BETWEEN E.SYMD AND E.EYMD
+	JOIN WTM_OT_APPL O
+	ON R.APPL_ID = O.APPL_ID
+	WHERE E.FLEXIBLE_EMP_ID = P_SABUN
+	AND R.TIME_TYPE_CD = 'SUBS'
+	AND O.YMD NOT BETWEEN E.SYMD AND E.EYMD 
+	;
+    */
+	@Query("SELECT r FROM  WtmWorkDayResult r JOIN WtmFlexibleEmp e ON e.tenantId = r.tenantId AND e.enterCd = r.enterCd AND e.sabun = r.sabun AND r.ymd BETWEEN e.symd AND e.eymd  WHERE e.flexibleEmpId = ?1 AND r.timeTypeCd = 'SUBS' AND r.planMinute IS NOT NULL ")
+	public List<WtmWorkDayResult> findByFlexibleEmpIdToSubsPlanMinute(Long flexibleEmpId);
+	
+	
 }

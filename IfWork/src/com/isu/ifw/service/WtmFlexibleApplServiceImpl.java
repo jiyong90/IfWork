@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -298,7 +299,11 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 	protected WtmAppl saveWtmAppl(Long tenantId, String enterCd, Long applId, String workTypeCd, String applStatusCd, String sabun, String userId) {
 		WtmAppl appl = null;
 		if(applId != null && !applId.equals("")) {
-			appl = wtmApplRepo.findById(applId).get();
+			Optional<WtmAppl> oa = wtmApplRepo.findById(applId);
+			if(oa != null)
+				appl = oa.get();
+			else
+				appl = new WtmAppl();
 		}else {
 			appl = new WtmAppl();
 		}

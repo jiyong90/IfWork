@@ -2,6 +2,7 @@ package com.isu.ifw.service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,6 +22,8 @@ import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleEmpCalc;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmHolidayMgr;
+import com.isu.ifw.entity.WtmOtAppl;
+import com.isu.ifw.entity.WtmPropertie;
 import com.isu.ifw.entity.WtmTaaCode;
 import com.isu.ifw.entity.WtmTimeBreakMgr;
 import com.isu.ifw.entity.WtmTimeBreakTime;
@@ -34,6 +37,8 @@ import com.isu.ifw.repository.WtmDayMgrRepository;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmHolidayMgrRepository;
+import com.isu.ifw.repository.WtmOtApplRepository;
+import com.isu.ifw.repository.WtmPropertieRepository;
 import com.isu.ifw.repository.WtmTaaCodeRepository;
 import com.isu.ifw.repository.WtmTimeBreakMgrRepository;
 import com.isu.ifw.repository.WtmTimeBreakTimeRepository;
@@ -79,6 +84,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	@Autowired private WtmHolidayMgrRepository holidayMgrRepo;
 	
 	@Autowired private WtmWorkTermTimeRepository workTermTimeRepo;
+	
+	@Autowired private WtmPropertieRepository propertieRepo;
+	
+	@Autowired private WtmOtApplRepository otApplRepo;
+	
 	
 	
 	@Transactional
@@ -752,12 +762,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				loopSdate = sDate;
 				logger.debug("createLimitMinute 만큼만 만들자 : " + createLimitMinute);
 				for(WtmWorkDayResult r : results) {
-					
 					//잔여시간이 있어야한다. 
 					if(calcWorkMinute > 0) {
-					
 						if(nextDataCheck) {
-			
 							//다음 데이터가 eDate 보다 시작 인정시각이 뒤 일수 없다 그럼 쿼리가 이상
 							if(preEdate.compareTo(r.getApprSdate()) < 0 && eDate.compareTo(r.getApprSdate()) > 0) {
 								Date calcSdate = preEdate; 
@@ -2437,6 +2444,120 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		}else {
 			logger.debug("[ERR] 주간 정보를 구하지 못했습니다.");
 		}
+		
+	}
+
+	@Override
+	public Map<String, Integer> calcFlexibleMinuteByTypeForWorkTypeFlex(WtmFlexibleEmp flexEmp) {
+		logger.debug("call calcFlexibleMinuteByTypeForWorkTypeFlex");
+		/*
+		SUBS를 빼자 APPL_ID 를 찾아 연장근무 일이 현재 근무기간에 속하지 않을 경우 빼야한다. 
+	    SELECT F_WTM_NVL(SUM(F_WTM_NVL(R.PLAN_MINUTE,0)),0) INTO v_subs_minute
+		FROM WTM_FLEXIBLE_EMP E
+		JOIN WTM_WORK_DAY_RESULT R
+		ON E.TENANT_ID = R.TENANT_ID
+		AND E.ENTER_CD = R.ENTER_CD
+		AND E.SABUN = R.SABUN
+		AND R.YMD BETWEEN E.SYMD AND E.EYMD
+		JOIN WTM_OT_APPL O
+		ON R.APPL_ID = O.APPL_ID
+		WHERE E.FLEXIBLE_EMP_ID = P_SABUN
+		AND R.TIME_TYPE_CD = 'SUBS'
+		AND O.YMD NOT BETWEEN E.SYMD AND E.EYMD 
+		;
+	    */
+		Map<String, Integer> resMap = new HashMap<String, Integer>();
+		
+		Integer subsPlanMinute = 0;
+		
+		List<WtmWorkDayResult> subsResult = workDayResultRepo.findByFlexibleEmpIdToSubsPlanMinute(flexEmp.getFlexibleEmpId());
+		if(subsResult != null && subsResult.size() > 0) {
+			for(WtmWorkDayResult r : subsResult) {
+				Long applId = r.getApplId();
+				if(applId != null && !"".equals(applId)) {
+					List<WtmOtAppl> otAppls = otApplRepo.findByApplId(applId);
+					if(otAppls != null && otAppls.size() > 0) {
+						for(WtmOtAppl oa : otAppls) {
+							if(Integer.parseInt(oa.getYmd()) < Integer.parseInt(flexEmp.getSymd())
+									|| Integer.parseInt(oa.getYmd()) > Integer.parseInt(flexEmp.getEymd())) {
+								if(r.getPlanMinute() != null && !"".equals(r.getPlanMinute())) {
+									subsPlanMinute = subsPlanMinute + r.getPlanMinute();
+								}
+							}
+						}
+					}
+				}
+						
+			}
+		}
+		 //workDayResultRepo.findByFlexibleEmpIdToSubsPlanMinute(flexEmp.getFlexibleEmpId());
+		if(subsPlanMinute == null)
+			subsPlanMinute = 0;
+		
+		WtmPropertie prop1 = propertieRepo.findByTenantIdAndEnterCdAndInfoKey(flexEmp.getTenantId(), flexEmp.getEnterCd(), "OPTION_MAX_WORKTIME_1WEEK");
+		Integer weekWorkMinite = Integer.parseInt(prop1.getInfoValue());
+		WtmPropertie prop2 = propertieRepo.findByTenantIdAndEnterCdAndInfoKey(flexEmp.getTenantId(), flexEmp.getEnterCd(), "OPTION_MAX_WORKTIME_1WEEK_CALC_TYPE");
+		String calcType = prop2.getInfoValue();
+		WtmPropertie prop3 = propertieRepo.findByTenantIdAndEnterCdAndInfoKey(flexEmp.getTenantId(), flexEmp.getEnterCd(), "OPTION_MAX_WORKTIME_ADD");
+		Integer weekOtMinute = Integer.parseInt(prop3.getInfoValue());
+		
+		List<String> workTypeCd =new ArrayList<String>();
+		workTypeCd.add("SELE_C");
+		workTypeCd.add("SELE_F");
+		List<WtmWorkCalendar> cals = workCalandarRepo.findByFlexibleEmpIdAndWorkTypeCdIn(flexEmp.getFlexibleEmpId(), workTypeCd);
+		
+		int workDayCnt = 0;
+		if(cals != null && cals.size() > 0) {
+			for(WtmWorkCalendar c : cals) {
+				if(c.getHolidayYn() == null || "".equals(c.getHolidayYn()) || "N".equals(c.getHolidayYn())) {
+					workDayCnt++;
+				}
+			}
+		}
+		logger.debug("휴일을 제외한 근무일은 " + workDayCnt + " / " + cals.size());
+			
+		/*
+		 * SELECT FLOOR(X.C) + ( ( X.C -  FLOOR(X.C)) * 60 ) FROM (
+			SELECT CASE WHEN PP.INFO_VALUE = 'B' THEN SUM(CASE C.HOLIDAY_YN WHEN 'Y' THEN 0 WHEN 'N' THEN 1 END) * 8 * 60
+							ELSE FLOOR(SUM(CASE C.HOLIDAY_YN WHEN 'Y' THEN 0 WHEN 'N' THEN 1 END) * F_WTM_TO_NUMBER(P.INFO_VALUE, 'Y') / 7) * 60 END 
+									AS C
+		 */
+		Double workMinute = 0.0;
+		Double otMinute = 0.0;
+		if(workDayCnt > 0) {
+			logger.debug("workMinute : " + workMinute);
+			if(workTypeCd.equals("B")) {
+				workMinute = (double) (workDayCnt * 8 * 60);
+			}else {
+				workMinute = (Math.floor((workDayCnt * weekWorkMinite / 7)) * 60);
+			}
+
+			/*
+			 * SELECT FLOOR(X.C) + ( ( X.C -  FLOOR(X.C)) * 60 ) FROM (
+				SELECT  FLOOR(SUM(CASE C.HOLIDAY_YN WHEN 'Y' THEN 1 WHEN 'N' THEN 1 END) * F_WTM_TO_NUMBER(P.INFO_VALUE, 'Y') / 7) * 60  
+										AS C
+			 */
+			
+			
+			logger.debug("workDayCnt : " + workDayCnt);
+			logger.debug("weekWorkMinite : " + weekWorkMinite);
+			logger.debug("workMinute : " + workMinute);
+			
+			workMinute = (Math.floor(workMinute) + ((workMinute - Math.floor(workMinute)) * 60)) - subsPlanMinute	;
+			logger.debug("*** calc workMinute : " + workMinute);
+			
+			logger.debug("weekOtMinute : " + weekOtMinute);
+			otMinute = Math.floor(workDayCnt * weekOtMinute / 7) * 60;
+			logger.debug("otMinute : " + otMinute);
+			otMinute = Math.floor(otMinute) + ( ( otMinute -  Math.floor(otMinute))  * 60 );
+			logger.debug("*** calc otMinute : " + otMinute);
+			
+			
+		}
+		resMap.put("workMinute", workMinute.intValue());
+		resMap.put("otMinute", otMinute.intValue());
+		
+		return resMap;
 		
 	}
 }
