@@ -207,16 +207,7 @@ public class WtmFlexibleStdVO {
 	}
 	public void setFlexibleApplId(Long flexibleApplId) {
 		this.flexibleApplId = flexibleApplId;
-	}
-	public void setWorkDaysOpt(Map<String, Object> workDaysOpt) {
-		this.workDaysOpt = workDaysOpt;
-	}
-	public void setUsedTermOpt(List<Map<String, Object>> usedTermOpt) {
-		this.usedTermOpt = usedTermOpt;
-	}
-	
-	
-	
+	} 
 	
 	
 	
