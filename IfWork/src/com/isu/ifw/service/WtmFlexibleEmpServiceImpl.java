@@ -2301,57 +2301,55 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				
 				List<WtmWorkDayResult> apprResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCd, calendar.getYmd(), calendar.getYmd());
 				for(WtmWorkDayResult r : apprResults) {
-					if(calendar.getEntrySdate() != null && calendar.getEntryEdate() != null) {
-						Date sDate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
-						Date eDate = calcService.WorkTimeCalcApprDate(calendar.getEntryEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
-						if(sDate.compareTo(eDate) < 0) {
-							
-							boolean isAppr = true;
-							/**
-							 *  구간내 외출 복귀 구간을 제외하자 
-							 */
-							if(gobackResults != null) {
-								for(WtmWorkDayResult gbr : gobackResults) {
-	
-									logger.debug("gbr.getApprSdate() : " + gbr.getApprSdate());
-									logger.debug("gbr.getApprEdate() : " + gbr.getApprEdate());
-									logger.debug("sDate : " + sDate);
-									logger.debug("eDate : " + eDate);
+					Date sDate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
+					Date eDate = calcService.WorkTimeCalcApprDate(calendar.getEntryEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
+					if(sDate.compareTo(eDate) < 0) {
+						
+						boolean isAppr = true;
+						/**
+						 *  구간내 외출 복귀 구간을 제외하자 
+						 */
+						if(gobackResults != null) {
+							for(WtmWorkDayResult gbr : gobackResults) {
+
+								logger.debug("gbr.getApprSdate() : " + gbr.getApprSdate());
+								logger.debug("gbr.getApprEdate() : " + gbr.getApprEdate());
+								logger.debug("sDate : " + sDate);
+								logger.debug("eDate : " + eDate);
+								
+								if(gbr.getApprSdate().compareTo(eDate) == -1
+										&& gbr.getApprEdate().compareTo(sDate) == 1) {
 									
-									if(gbr.getApprSdate().compareTo(eDate) == -1
-											&& gbr.getApprEdate().compareTo(sDate) == 1) {
-										
-										//시종 시간이 외/복귀 시간에 완전 속해 있으면 인정시간을 계산하지 않는다. 
-										if(gbr.getApprSdate().compareTo(sDate) < 1 
-												&& gbr.getApprEdate().compareTo(eDate) > -1) {
-											logger.debug("제외: " + gbr);
-											isAppr = false;
-										}
-										//외출 복귀 내 속해 있으면.
-										if(gbr.getApprEdate().compareTo(sDate) == 1) {
-											sDate = gbr.getApprEdate();
-										}
-										if(gbr.getApprSdate().compareTo(eDate) == -1) {
-											eDate = gbr.getApprSdate();
-										}
+									//시종 시간이 외/복귀 시간에 완전 속해 있으면 인정시간을 계산하지 않는다. 
+									if(gbr.getApprSdate().compareTo(sDate) < 1 
+											&& gbr.getApprEdate().compareTo(eDate) > -1) {
+										logger.debug("제외: " + gbr);
+										isAppr = false;
+									}
+									//외출 복귀 내 속해 있으면.
+									if(gbr.getApprEdate().compareTo(sDate) == 1) {
+										sDate = gbr.getApprEdate();
+									}
+									if(gbr.getApprSdate().compareTo(eDate) == -1) {
+										eDate = gbr.getApprSdate();
 									}
 								}
-										
 							}
-							logger.debug("isAppr : " + isAppr);
-	
-							if(isAppr) {	
-								r.setApprSdate(sDate);
-								r.setApprEdate(eDate);
-								
-								Map<String, Object> calcMap = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
-								int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
-								int breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
-								r.setApprMinute(apprMinute);
-								
-								r.setUpdateId("SELE_F_OT_NIGHT");
-								workDayResultRepo.save(r);
-							}
+									
+						}
+						logger.debug("isAppr : " + isAppr);
+
+						if(isAppr) {	
+							r.setApprSdate(sDate);
+							r.setApprEdate(eDate);
+							
+							Map<String, Object> calcMap = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+							int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+							int breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
+							r.setApprMinute(apprMinute);
+							
+							r.setUpdateId("SELE_F_OT_NIGHT");
+							workDayResultRepo.save(r);
 						}
 					}
 				}
