@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.isu.ifw.vo.WtmFlexibleApplDetVO;
+import com.isu.ifw.vo.WtmFlexibleStdVO;
 
 
 public interface WtmFlexibleApplMapper {
@@ -42,5 +43,5 @@ public interface WtmFlexibleApplMapper {
 	 * @param paramMap
 	 * @return
 	 */
-	public List<Map<String, Object>> getImsiFlexAppl(Map<String, Object> paramMap);
+	public List<WtmFlexibleStdVO> getImsiFlexAppl(Map<String, Object> paramMap);
 }
