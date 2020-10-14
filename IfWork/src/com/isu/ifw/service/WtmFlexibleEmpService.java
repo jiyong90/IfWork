@@ -398,5 +398,15 @@ public interface WtmFlexibleEmpService {
 	public Map<String, Object> checkFinDay(Map<String, Object> dateMap, Long tenantId, String enterCd, String empNo, String userId) throws Exception;
 	
 	public void resetCalcApprDayInfo(Long tenantId, String enterCd, String ymd, String sabun, List<String> timeTypeCds) ;
+
+	/**
+	 * 해당 월의 근무제 정보 조회
+	 * @param tenantId
+	 * @param enterCd
+	 * @param empNo
+	 * @param paramMap
+	 * @return
+	 */
+	public List<Map<String, Object>> getFlexibleEmpImsiList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId);
 	
 }

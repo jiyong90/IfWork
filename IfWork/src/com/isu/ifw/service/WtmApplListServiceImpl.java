@@ -145,4 +145,5 @@ public class WtmApplListServiceImpl implements WtmApplListService{
 
 		return applList;
 	}
+
 }

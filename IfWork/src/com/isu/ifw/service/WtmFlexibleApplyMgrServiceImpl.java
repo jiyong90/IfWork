@@ -94,6 +94,9 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 	
 	@Autowired
 	WtmRuleRepository ruleRepo;
+
+	@Autowired
+	WtmWorkPattDetRepository wtmWorkPattDetRepository;
 	
 	@Override
 	public List<Map<String, Object>> getApplyList(Long tenantId, String enterCd, String sYmd) {
@@ -138,6 +141,13 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 									mgrSymd.substring(0,4) +"/" + mgrSymd.substring(4,6) +"/"+ mgrSymd.substring(6,8) + " ~ " + 
 									mgrEymd.substring(0,4) +"/" + mgrEymd.substring(4,6) +"/"+ mgrEymd.substring(6,8) + "입니다.");
 						}
+						WtmWorkPattDet workPattDet = (WtmWorkPattDet) workPattDetRepo.findByFlexibleStdMgrId(Long.parseLong(l.get("flexibleStdMgrId").toString()));
+
+						Long sumPlanMinute = 0l;
+						Long sumPlanOtMinute = 0l;
+
+
+
 						/* 20200731 이효정 주석
 						//20200708 안흥규 근무제 적용 관리 --start
 						if(mgr.getRegardTimeCdId() == null || mgr.getUnitMinute() ==  null) {
