@@ -540,9 +540,18 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
 		//  연차현황 조회
 		Map<String, Object> annudalInfo = flexEmpMapper.getAnnualUsed(paramMap);
-		dayInfo.put("annualTotalCnt", annudalInfo.get("totalCnt").toString());
-		dayInfo.put("annualUsedCnt", annudalInfo.get("usedCnt").toString());
-		dayInfo.put("annualNoUsedCnt", annudalInfo.get("noUsedCnt").toString());
+		String totalCnt = "0" , usedCnt = "0", noUsedCnt = "0";
+
+
+		if(annudalInfo != null){
+			totalCnt = annudalInfo.get("totalCnt") != null ? annudalInfo.get("totalCnt").toString() : "0";
+			usedCnt = annudalInfo.get("usedCnt") != null ? annudalInfo.get("usedCnt").toString() : "0";
+			noUsedCnt = annudalInfo.get("noUsedCnt") != null ? annudalInfo.get("noUsedCnt").toString() : "0";
+		}
+
+		dayInfo.put("annualTotalCnt", totalCnt);
+		dayInfo.put("annualUsedCnt", usedCnt);
+		dayInfo.put("annualNoUsedCnt", noUsedCnt);
 
 		return dayInfo;
 	}
@@ -4459,6 +4468,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 //		wtmFlexibleApplyMgrMapper.updateApplyEmp(searchSabun);
 //		logger.debug("[setApply] updateApplyEmp ");
 		} catch(Exception e) {
+			e.printStackTrace();
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return 0;
 		}
@@ -4650,8 +4660,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				workDayResultRepo.save(result);
 			}
 			
-		}
-		
+		} 
 		//calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
 	}
 

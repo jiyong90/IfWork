@@ -32,4 +32,6 @@ public interface WtmWorkteamEmpRepository extends JpaRepository<WtmWorkteamEmp, 
 			+ "WHERE A.SABUN=:sabun AND (:sYmd BETWEEN A.SYMD AND A.EYMD OR :eYmd BETWEEN A.SYMD AND A.EYMD) AND :workteamEmpId != A.WORKTEAM_EMP_ID ", nativeQuery = true)
 	public List<Map<String, Object>> dupCheckByYmd(@Param(value="tenantId")Long tenantId, @Param(value="enterCd")String enterCd, @Param(value="sabun")String sabun, @Param(value="workteamEmpId")String workteamEmpId, @Param(value="sYmd")String sYmd, @Param(value="eYmd")String eYmd);
 */
+	@Query("SELECT e FROM WtmWorkteamEmp e JOIN WtmWorkteamMgr m ON e.workteamMgrId = m.workteamMgrId WHERE m.tenantId = :tenantId AND m.enterCd = :enterCd AND e.sabun = :sabun AND e.symd <= :eYmd AND e.eymd >= :sYmd ORDER BY e.symd")
+	public List<WtmWorkteamEmp> findByTenantIdAndEnterCdAndSabunAndEymdGreaterThanEqualAndSymdLessThanEqualOrderBySymdAsc(@Param("tenantId") Long tenantId, @Param("enterCd") String enterCd, @Param("sabun") String sabun, @Param("sYmd") String sYmd, @Param("eYmd") String eYmd);
 }
