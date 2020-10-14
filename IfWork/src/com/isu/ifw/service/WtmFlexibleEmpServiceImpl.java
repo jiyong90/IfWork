@@ -4660,8 +4660,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				workDayResultRepo.save(result);
 			}
 			
-		}
-		
+		} 
 		//calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
 	}
 	
