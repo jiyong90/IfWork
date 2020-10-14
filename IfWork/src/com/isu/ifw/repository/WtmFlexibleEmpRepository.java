@@ -61,4 +61,7 @@ public interface WtmFlexibleEmpRepository extends JpaRepository<WtmFlexibleEmp, 
 	
 	//'20200928' <= EYMD AND '20201004' >= SYMD
 	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndSabunAndEymdGreaterThanEqualAndSymdLessThanEqual(Long tenantId, String enterCd, String sabun, String symd, String eymd);
+	 
+	@Query("SELECT e FROM WtmFlexibleEmp e JOIN WtmFlexibleStdMgr m ON e.flexibleStdMgrId = m.flexibleStdMgrId WHERE e.tenantId = :tenantId AND e.enterCd = :enterCd AND e.sabun = :sabun AND e.symd <= :eYmd AND e.eymd >= :sYmd AND m.baseWorkYn = 'Y' AND e.workTypeCd = 'BASE' ")
+	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndEymdGreaterThanEqualAndSymdLessThanEqualAndBaseWorkYnIsYAndWorkTypeCdIsBASE(@Param("tenantId") Long tenantId, @Param("enterCd") String enterCd, @Param("sabun") String sabun, @Param("sYmd") String sYmd, @Param("eYmd") String eYmd);
 }

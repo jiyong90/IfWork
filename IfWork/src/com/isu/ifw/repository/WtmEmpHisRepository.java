@@ -40,4 +40,7 @@ public interface WtmEmpHisRepository extends JpaRepository<WtmEmpHis, Long> {
 
 	@Query(nativeQuery = true, value = "SELECT f_wtm_get_emp_org_nm( :tenantId, :enterCd , :sabun, :ymd) FROM Dual")
 	public String getFWtmGetEmpOrgNm(@Param(value="tenantId")Long tenantId, @Param(value="enterCd")String enterCd, @Param(value="sabun")String sabun, @Param(value="ymd")String ymd);
+	
+	@Query("SELECT MAX(e.empYmd) FROM WtmEmpHis e WHERE e.tenantId = :tenantId AND e.enterCd = :enterCd AND e.sabun = :sabun ")
+	public String findMaxEmpYmdByTenantIdAndEnterCdAndSabun(@Param(value="tenantId")Long tenantId, @Param(value="enterCd")String enterCd, @Param(value="sabun")String sabun);
 }

@@ -1,16 +1,15 @@
 package com.isu.ifw.mapper;
 
+import com.isu.ifw.vo.WtmWorkTermTimeVO;
+import org.apache.ibatis.annotations.Param;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.ibatis.annotations.Param;
-
-import com.isu.ifw.vo.WtmWorkTermTimeVO;
-
 public interface WtmFlexibleEmpMapper {
 	
-	/** 
+	/**
 	 * 해당 월의 근무제 정보 조회
 	 * @param paramMap
 	 * @return
@@ -561,5 +560,20 @@ public interface WtmFlexibleEmpMapper {
 	 * @return
 	 */
 	public Map<String, Object> getWeekStartEndYmd(Map<String, Object> paramMap);
-	
+
+	/**
+	 * 연차 사용내역 조회
+	 * @param paramMap
+	 * @return
+	 */
+	public Map<String, Object> getAnnualUsed(Map<String, Object> paramMap);
+
+
+	/**
+	 * 해당 월의 근무제 정보 조회
+	 * @param paramMap
+	 * @return
+	 */
+	public List<Map<String, Object>> getFlexibleEmpImsiList(Map<String, Object> paramMap);
+
 }

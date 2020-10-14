@@ -22,10 +22,15 @@ public interface WtmWorktimeMapper {
 
 	//모바일 부서원 근태현황  : 기간별 부서원 근태 현황 조회
 	public List<Map<String, Object>> getTeamList(Map<String, Object> paramMap);
-	
+
 	//근무계획 변경 대상자의 근무 계획 조회
 	public List<Map<String, Object>> getWorkPlan(Map<String, Object> paramMap);
-	
+
 	//근무계획 변경 대상자 조회
 	public List<Map<String, Object>> getWorkTimeChangeTarget(Map<String, Object> paramMap);
+
+	//근무시간조회
+	public List<Map<String, Object>> getWorkTimeList(Map<String, Object> paramMap);
+	
+	public List<Map<String, Object>> getCloseDayList(Map<String, Object> paramMap);
 }

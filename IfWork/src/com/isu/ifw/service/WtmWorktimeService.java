@@ -49,7 +49,7 @@ public interface WtmWorktimeService{
 	 * @return
 	 */
 	public List<Map<String, Object>> getEntryDiffList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap);
-	
+
 	
 	/**
 	 * 근무 계획(시간코드) 변경 대상자 조회
@@ -81,4 +81,16 @@ public interface WtmWorktimeService{
 	 * @param userId
 	 */
 	public void changeWorktime(Long tenantId, String enterCd, Map<String, Object> paramMap, String userId);
+
+	/**
+	 * @param tenantId
+	 * @param enterCd
+	 * @param sabun
+	 * @param paramMap
+	 * @return
+	 */
+	public List<Map<String, Object>> getWorkTimeList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap);
+
+
+	public List<Map<String, Object>> getCloseDayList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap);
 }

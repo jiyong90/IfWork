@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.isu.ifw.entity.WtmBaseWorkMgr;
@@ -17,4 +18,6 @@ public interface WtmBaseWorkMgrRepository extends JpaRepository<WtmBaseWorkMgr, 
 	
 	@Query("SELECT M FROM WtmBaseWorkMgr M WHERE M.tenantId = ?1 AND M.enterCd = ?2 AND M.flexibleStdMgrId = ?3 AND (?4 BETWEEN M.symd AND M.eymd)")
 	public WtmBaseWorkMgr findByTenantIdAndEnterCdAndFlexibleStdMgrIdAndYmd(Long tenantId, String enterCd, Long flexibleStdMgrId, String ymd);
+	
+	public List<WtmBaseWorkMgr> findByTenantIdAndEnterCdAndEymdGreaterThanEqualAndSymdLessThanEqualOrderBySymdAsc(Long tenantId, String enterCd, String sYmd, String eYmd);
 }

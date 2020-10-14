@@ -19,11 +19,10 @@ public interface WtmTaaApplDetRepository extends JpaRepository<WtmTaaApplDet, Lo
 	@Query("SELECT D FROM WtmTaaAppl A JOIN WtmTaaApplDet D ON D.taaApplId = A.taaApplId WHERE A.tenantId = :tenantId AND A.enterCd = :enterCd AND A.sabun = :sabun AND  :ymd BETWEEN D.symd AND D.eymd AND A.ifApplNo in (SELECT MAX(W.ifApplNo)  FROM WtmTaaAppl W JOIN WtmTaaApplDet T ON W.taaApplId = T.taaApplId WHERE W.tenantId = A.tenantId AND W.enterCd = A.enterCd AND W.sabun = A.sabun AND T.taaCd = D.taaCd AND  T.symd = D.symd GROUP BY W.tenantId, W.enterCd, W.sabun, T.taaCd,  T.symd ) ")
 	public List<WtmTaaApplDet> findByMaxApplInfo(@Param(value="tenantId") Long tenantId, @Param(value="enterCd") String enterCd, @Param(value="sabun") String sabun, @Param(value="ymd") String ymd);
 
-	@Query("SELECT T FROM WtmTaaApplDet T WHERE T.taaApplId = :taaApplId")
-	WtmTaaApplDet findByTaaApplId(@Param(value = "taaApplId") Long taaApplId);
+	public List<WtmTaaApplDet> findByTaaApplId(Long taaApplId);
 
 	@Query("SELECT D FROM WtmTaaAppl A JOIN WtmTaaApplDet D ON D.taaApplId = A.taaApplId WHERE A.applId = :applId ")
 	public List<WtmTaaApplDet> findByApplId(@Param(value="applId") Long applId);
-	
+	 
 }
  

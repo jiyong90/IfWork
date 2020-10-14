@@ -119,7 +119,7 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 			String status, String sabun, String userId) throws Exception {
 		ReturnParam rp = new ReturnParam();
 		rp.setFail("");
-		String applSabun = paramMap.get("applSabun")+ "";
+		String applSabun = sabun;
 		String note = paramMap.get("note").toString();
 		WtmAppl appl = null;
 		List<WtmTaaAppl> taaAppls = wtmTaaApplRepo.findByApplId(applId);
@@ -130,7 +130,7 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 			//logger.debug("works.size() : " + works.size());
 			//if(works != null && works.size() > 0) {
 				//신청 또는 승인 완료 건에 대해서만
-				if(WtmApplService.APPL_STATUS_APPLY_ING.equals(status) || WtmApplService.APPL_STATUS_APPR.equals(status) || WtmApplService.APPL_STATUS_CANCEL.equals(status)) {
+				if(WtmApplService.APPL_STATUS_IMSI.equals(status) || WtmApplService.APPL_STATUS_APPLY_ING.equals(status) || WtmApplService.APPL_STATUS_APPR.equals(status) || WtmApplService.APPL_STATUS_CANCEL.equals(status)) {
 					//appl = wtmApplRepo.findByTenantIdAndEnterCdAndIfApplNo(tenantId, enterCd, ifApplNo);
 					if(appl == null) {
 						appl = new WtmAppl();

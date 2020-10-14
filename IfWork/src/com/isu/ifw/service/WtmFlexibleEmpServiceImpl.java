@@ -1,15 +1,15 @@
 package com.isu.ifw.service;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.common.service.TenantConfigManagerService;
+import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.*;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.vo.WtmDayPlanVO;
+import com.isu.ifw.vo.WtmDayWorkVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,53 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.common.service.TenantConfigManagerService;
-import com.isu.ifw.entity.WtmEmpHis;
-import com.isu.ifw.entity.WtmFlexibleAppl;
-import com.isu.ifw.entity.WtmFlexibleApplDet;
-import com.isu.ifw.entity.WtmFlexibleApplyDet;
-import com.isu.ifw.entity.WtmFlexibleEmp;
-import com.isu.ifw.entity.WtmFlexibleStdMgr;
-import com.isu.ifw.entity.WtmOrgConc;
-import com.isu.ifw.entity.WtmOtAppl;
-import com.isu.ifw.entity.WtmOtSubsAppl;
-import com.isu.ifw.entity.WtmTaaCode;
-import com.isu.ifw.entity.WtmTimeCdMgr;
-import com.isu.ifw.entity.WtmWorkCalendar;
-import com.isu.ifw.entity.WtmWorkDayResult;
-import com.isu.ifw.entity.WtmWorkDayResultO;
-import com.isu.ifw.mapper.WtmAuthMgrMapper;
-import com.isu.ifw.mapper.WtmEmpHisMapper;
-import com.isu.ifw.mapper.WtmFlexibleApplMapper;
-import com.isu.ifw.mapper.WtmFlexibleApplyMgrMapper;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmFlexibleStdMapper;
-import com.isu.ifw.mapper.WtmOrgChartMapper;
-import com.isu.ifw.mapper.WtmOtApplMapper;
-import com.isu.ifw.mapper.WtmScheduleMapper;
-import com.isu.ifw.repository.WtmApplRepository;
-import com.isu.ifw.repository.WtmEmpHisRepository;
-import com.isu.ifw.repository.WtmFlexibleApplDetRepository;
-import com.isu.ifw.repository.WtmFlexibleApplRepository;
-import com.isu.ifw.repository.WtmFlexibleApplyDetRepository;
-import com.isu.ifw.repository.WtmFlexibleEmpRepository;
-import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
-import com.isu.ifw.repository.WtmOrgConcRepository;
-import com.isu.ifw.repository.WtmOtApplRepository;
-import com.isu.ifw.repository.WtmOtSubsApplRepository;
-import com.isu.ifw.repository.WtmTaaCodeRepository;
-import com.isu.ifw.repository.WtmTimeCdMgrRepository;
-import com.isu.ifw.repository.WtmWorkCalendarRepository;
-import com.isu.ifw.repository.WtmWorkDayResultORepository;
-import com.isu.ifw.repository.WtmWorkDayResultRepository;
-import com.isu.ifw.repository.WtmWorkteamEmpRepository;
-import com.isu.ifw.repository.WtmWorkteamMgrRepository;
-import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.ReturnParam;
-import com.isu.ifw.vo.WtmDayPlanVO;
-import com.isu.ifw.vo.WtmDayWorkVO;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service("flexibleEmpService")
 public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
@@ -580,7 +537,22 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				
 			}
 		}
-		
+
+		//  연차현황 조회
+		Map<String, Object> annudalInfo = flexEmpMapper.getAnnualUsed(paramMap);
+		String totalCnt = "0" , usedCnt = "0", noUsedCnt = "0";
+
+
+		if(annudalInfo != null){
+			totalCnt = annudalInfo.get("totalCnt") != null ? annudalInfo.get("totalCnt").toString() : "0";
+			usedCnt = annudalInfo.get("usedCnt") != null ? annudalInfo.get("usedCnt").toString() : "0";
+			noUsedCnt = annudalInfo.get("noUsedCnt") != null ? annudalInfo.get("noUsedCnt").toString() : "0";
+		}
+
+		dayInfo.put("annualTotalCnt", totalCnt);
+		dayInfo.put("annualUsedCnt", usedCnt);
+		dayInfo.put("annualNoUsedCnt", noUsedCnt);
+
 		return dayInfo;
 	}
 	
@@ -4496,6 +4468,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 //		wtmFlexibleApplyMgrMapper.updateApplyEmp(searchSabun);
 //		logger.debug("[setApply] updateApplyEmp ");
 		} catch(Exception e) {
+			e.printStackTrace();
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return 0;
 		}
@@ -4687,9 +4660,30 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				workDayResultRepo.save(result);
 			}
 			
-		}
-		
+		} 
 		//calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
+	}
+
+
+	@Override
+	public List<Map<String, Object>> getFlexibleEmpImsiList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
+		// TODO Auto-generated method stub 
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("sabun", sabun);
+
+		List<Map<String, Object>> flexibleList = flexEmpMapper.getFlexibleEmpList(paramMap);
+		if(flexibleList!=null && flexibleList.size()>0) {
+			for(Map<String, Object> flex : flexibleList) {
+				if(flex.containsKey("flexibleEmpId") && flex.get("flexibleEmpId")!=null && !"".equals(flex.get("flexibleEmpId"))) {
+					paramMap.put("flexibleEmpId", Long.valueOf(flex.get("flexibleEmpId").toString()));
+					List<Map<String, Object>> plans = flexEmpMapper.getFlexibleEmpImsiList(paramMap);
+					flex.put("flexibleEmp", getDayWorks(plans, userId));
+				}
+			}
+		}
+
+		return flexibleList;
 	}
 	
 }
