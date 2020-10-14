@@ -540,9 +540,18 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
 		//  연차현황 조회
 		Map<String, Object> annudalInfo = flexEmpMapper.getAnnualUsed(paramMap);
-		dayInfo.put("annualTotalCnt", annudalInfo.get("totalCnt").toString());
-		dayInfo.put("annualUsedCnt", annudalInfo.get("usedCnt").toString());
-		dayInfo.put("annualNoUsedCnt", annudalInfo.get("noUsedCnt").toString());
+		String totalCnt = "0" , usedCnt = "0", noUsedCnt = "0";
+
+
+		if(annudalInfo != null){
+			totalCnt = annudalInfo.get("totalCnt") != null ? annudalInfo.get("totalCnt").toString() : "0";
+			usedCnt = annudalInfo.get("usedCnt") != null ? annudalInfo.get("usedCnt").toString() : "0";
+			noUsedCnt = annudalInfo.get("noUsedCnt") != null ? annudalInfo.get("noUsedCnt").toString() : "0";
+		}
+
+		dayInfo.put("annualTotalCnt", totalCnt);
+		dayInfo.put("annualUsedCnt", usedCnt);
+		dayInfo.put("annualNoUsedCnt", noUsedCnt);
 
 		return dayInfo;
 	}
@@ -2292,55 +2301,57 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				
 				List<WtmWorkDayResult> apprResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCd, calendar.getYmd(), calendar.getYmd());
 				for(WtmWorkDayResult r : apprResults) {
-					Date sDate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
-					Date eDate = calcService.WorkTimeCalcApprDate(calendar.getEntryEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
-					if(sDate.compareTo(eDate) < 0) {
-						
-						boolean isAppr = true;
-						/**
-						 *  구간내 외출 복귀 구간을 제외하자 
-						 */
-						if(gobackResults != null) {
-							for(WtmWorkDayResult gbr : gobackResults) {
-
-								logger.debug("gbr.getApprSdate() : " + gbr.getApprSdate());
-								logger.debug("gbr.getApprEdate() : " + gbr.getApprEdate());
-								logger.debug("sDate : " + sDate);
-								logger.debug("eDate : " + eDate);
-								
-								if(gbr.getApprSdate().compareTo(eDate) == -1
-										&& gbr.getApprEdate().compareTo(sDate) == 1) {
+					if(calendar.getEntrySdate() != null && calendar.getEntryEdate() != null) {
+						Date sDate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
+						Date eDate = calcService.WorkTimeCalcApprDate(calendar.getEntryEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
+						if(sDate.compareTo(eDate) < 0) {
+							
+							boolean isAppr = true;
+							/**
+							 *  구간내 외출 복귀 구간을 제외하자 
+							 */
+							if(gobackResults != null) {
+								for(WtmWorkDayResult gbr : gobackResults) {
+	
+									logger.debug("gbr.getApprSdate() : " + gbr.getApprSdate());
+									logger.debug("gbr.getApprEdate() : " + gbr.getApprEdate());
+									logger.debug("sDate : " + sDate);
+									logger.debug("eDate : " + eDate);
 									
-									//시종 시간이 외/복귀 시간에 완전 속해 있으면 인정시간을 계산하지 않는다. 
-									if(gbr.getApprSdate().compareTo(sDate) < 1 
-											&& gbr.getApprEdate().compareTo(eDate) > -1) {
-										logger.debug("제외: " + gbr);
-										isAppr = false;
-									}
-									//외출 복귀 내 속해 있으면.
-									if(gbr.getApprEdate().compareTo(sDate) == 1) {
-										sDate = gbr.getApprEdate();
-									}
-									if(gbr.getApprSdate().compareTo(eDate) == -1) {
-										eDate = gbr.getApprSdate();
+									if(gbr.getApprSdate().compareTo(eDate) == -1
+											&& gbr.getApprEdate().compareTo(sDate) == 1) {
+										
+										//시종 시간이 외/복귀 시간에 완전 속해 있으면 인정시간을 계산하지 않는다. 
+										if(gbr.getApprSdate().compareTo(sDate) < 1 
+												&& gbr.getApprEdate().compareTo(eDate) > -1) {
+											logger.debug("제외: " + gbr);
+											isAppr = false;
+										}
+										//외출 복귀 내 속해 있으면.
+										if(gbr.getApprEdate().compareTo(sDate) == 1) {
+											sDate = gbr.getApprEdate();
+										}
+										if(gbr.getApprSdate().compareTo(eDate) == -1) {
+											eDate = gbr.getApprSdate();
+										}
 									}
 								}
+										
 							}
-									
-						}
-						logger.debug("isAppr : " + isAppr);
-
-						if(isAppr) {	
-							r.setApprSdate(sDate);
-							r.setApprEdate(eDate);
-							
-							Map<String, Object> calcMap = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
-							int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
-							int breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
-							r.setApprMinute(apprMinute);
-							
-							r.setUpdateId("SELE_F_OT_NIGHT");
-							workDayResultRepo.save(r);
+							logger.debug("isAppr : " + isAppr);
+	
+							if(isAppr) {	
+								r.setApprSdate(sDate);
+								r.setApprEdate(eDate);
+								
+								Map<String, Object> calcMap = calcService.calcApprMinute(sDate, eDate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+								int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+								int breakMinute = Integer.parseInt(calcMap.get("breakMinute")+"");
+								r.setApprMinute(apprMinute);
+								
+								r.setUpdateId("SELE_F_OT_NIGHT");
+								workDayResultRepo.save(r);
+							}
 						}
 					}
 				}
@@ -4459,6 +4470,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 //		wtmFlexibleApplyMgrMapper.updateApplyEmp(searchSabun);
 //		logger.debug("[setApply] updateApplyEmp ");
 		} catch(Exception e) {
+			e.printStackTrace();
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return 0;
 		}
