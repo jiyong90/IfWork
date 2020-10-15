@@ -115,12 +115,12 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 	
 	@Transactional
 	@Override
-	public void P_WTM_FLEXIBLE_EMP_RESET(Long tenantId, String enterCd, String sabun, String year, String userId) throws Exception {
+	public void P_WTM_FLEXIBLE_EMP_RESET(Long tenantId, String enterCd, String sabun, String sYmd, String eYmd, String userId) throws Exception {
 		//년단위로 생성하자
 		//기본근무는 년단위로 생성한다. 
 		//공휴일 정보 적용 등 필요
-		String sYmd = year + "0101"; 
-		String eYmd = year + "1231";
+		sYmd = "2020" + "0101"; 
+		eYmd = "2020" + "1231";
 		
 		String empYmd = empHisRepo.findMaxEmpYmdByTenantIdAndEnterCdAndSabun(tenantId, enterCd, sabun);
 		logger.debug("입사일 : " + empYmd);
