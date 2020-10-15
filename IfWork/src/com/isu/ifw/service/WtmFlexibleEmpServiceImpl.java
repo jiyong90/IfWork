@@ -121,7 +121,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	
 	@Autowired private WtmTaaCodeRepository wtmTaaCodeRepository;
 
-	@Autowired private WtmWorkDayResultORepository workDayResultORepository;
 	
 	@Autowired private WtmFlexibleEmpResetService flexibleEmpResetSerevice;
 	
@@ -4284,7 +4283,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		String sabun = searchSabun.get("sabun").toString();
 		String workTypeCd = searchSabun.get("workTypeCd").toString();
 		Long flexibleApplyId = Long.parseLong(searchSabun.get("flexibleApplyId").toString());
-				
+		
+		WtmFlexibleEmp saveFlexibleEmp = null;
+		
 		for(int i = 0; i < ymdList.size(); i++) {
 			String sYmd = ymdList.get(i).get("symd").toString();
 			String eYmd = ymdList.get(i).get("eymd").toString();
@@ -4304,7 +4305,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			flexibleEmp.setFlexibleNm(searchSabun.get("flexibleNm").toString());
 			flexibleEmp.setNote(searchSabun.get("note").toString());
 			System.out.println(flexibleEmp.toString());
-			flexEmpRepo.save(flexibleEmp);
+			saveFlexibleEmp = flexEmpRepo.save(flexibleEmp);
 			flexEmpRepo.flush();
 //			int cnt = wtmFlexibleApplyMgrMapper.insertApplyEmp(searchSabun);
 			Map<String, Object> searchMap = wtmFlexibleApplyMgrMapper.setApplyEmpId(searchSabun);
@@ -4473,6 +4474,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, searchSabun.get("useSymd")+"");
 		//flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(searchSabun);
 		logger.debug("[setApply] createWorkTermBySabunAndSymdAndEymd ");
+		if(saveFlexibleEmp != null)
+			this.createWtmWorkDayResultAsCalendar(saveFlexibleEmp);
 //			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 //		wtmFlexibleApplyMgrMapper.updateApplyEmp(searchSabun);
 //		logger.debug("[setApply] updateApplyEmp ");
@@ -4646,7 +4649,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			timeTypeCds.add(WtmApplService.TIME_TYPE_BASE);
 			timeTypeCds.add(WtmApplService.TIME_TYPE_FIXOT);
 		}
-		List<WtmWorkDayResultO> resultOs = workDayResultORepository.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdIn(tenantId, enterCd, sabun, ymd, timeTypeCds);
+		List<WtmWorkDayResultO> resultOs = workDayResultORepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdIn(tenantId, enterCd, sabun, ymd, timeTypeCds);
 		if(resultOs != null && resultOs.size() > 0) {
 			for(WtmWorkDayResultO reasultO :  resultOs) {
 				List<WtmWorkDayResult> delResult =  workDayResultRepo.findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmd(reasultO.getTimeTypeCd(), tenantId, enterCd, sabun, ymd);
@@ -4696,9 +4699,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	
 	
 	
-
+	@Override
+	@Transactional
 	public void createWtmWorkDayResultAsCalendar(WtmFlexibleEmp flexibleEmp) {
 		
+		WtmFlexibleStdMgr flexibleStdMgr = flexStdMgrRepo.findByFlexibleStdMgrId(flexibleEmp.getFlexibleStdMgrId());
 		logger.debug("call createWtmWorkDayResultAsPattern ::");
 		List<WtmWorkPattDet> pattDets = workPattDetRepo.findByFlexibleStdMgrId(flexibleEmp.getFlexibleStdMgrId());
 		Map<Long, WtmTimeCdMgr> timeCdMgrMap = new HashMap<Long, WtmTimeCdMgr>();
@@ -4712,12 +4717,132 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		List<WtmWorkCalendar> calendars = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(flexibleEmp.getTenantId(), flexibleEmp.getEnterCd(), flexibleEmp.getSabun(), flexibleEmp.getSymd(), flexibleEmp.getEymd());
 		if(calendars != null && calendars.size() > 0) {
 			Calendar cal = Calendar.getInstance();
+			SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+			SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+			SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
 			for(WtmWorkCalendar calendar : calendars) {
 				if(calendar.getHolidayYn() == null || "".equals(calendar.getHolidayYn()) || !"Y".equals(calendar.getHolidayYn())) {
 					logger.debug("마감된 즉 인정된 근무정보가 있으면 해당일은 생성하지 않는다.");
 					List<WtmWorkDayResult> apprResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndApprMinuteIsNotNull(flexibleEmp.getTenantId(), flexibleEmp.getEnterCd(), flexibleEmp.getSabun(), calendar.getYmd(), calendar.getYmd());
+					if(apprResults != null &&  apprResults.size() > 0 ) {
+						continue;
+					}
+					WtmTimeCdMgr timeCdMgr = timeCdMgrMap.get(calendar.getTimeCdMgrId());
+					if(timeCdMgr.getWorkShm() != null && timeCdMgr.getWorkEhm() != null
+						&& !"".equals(timeCdMgr.getWorkShm()) && !"".equals(timeCdMgr.getWorkEhm())) {
+						logger.debug("timeCdMgr is not null ");
+						String shm = timeCdMgr.getWorkShm();
+						String ehm = timeCdMgr.getWorkEhm();
+						String sYmd = calendar.getYmd();
+						String eYmd = calendar.getYmd();
+						Date sd = null, ed = null;
+						try {
+							sd = ymdhm.parse(sYmd+shm);
+							//종료시분이 시작시분보다 작으면 기준일을 다음날로 본다. 
+							if(Integer.parseInt(shm) > Integer.parseInt(ehm)) {
+								cal.add(Calendar.DATE, 1);
+								eYmd = ymd.format(cal.getTime());
+							}
+							ed = ymdhm.parse(eYmd+ehm);
+						} catch (ParseException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						WtmWorkDayResult insRes = new WtmWorkDayResult();
+						insRes.setTenantId(calendar.getTenantId());
+						insRes.setEnterCd(calendar.getEnterCd());
+						insRes.setYmd(calendar.getYmd());
+						insRes.setSabun(calendar.getSabun());
+						insRes.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
+						insRes.setPlanSdate(sd);
+						insRes.setPlanEdate(ed);
+						
+						int breakMinute = 0;						
+						Map<String, Object> resMap = calcService.calcApprMinute(sd, ed, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+						if(resMap.containsKey("apprMinute")) {
+							insRes.setPlanMinute(Integer.parseInt(resMap.get("apprMinute")+""));
+							breakMinute = Integer.parseInt(resMap.get("breakMinute")+"");
+						}
+						workDayResultRepo.save(insRes);
+						
+						
+						if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
+							String taaInfoCd = "BREAK";
+							Integer createMinute = breakMinute;
+							if(createMinute != null && createMinute > 0) {
+								calcService.createWorkDayResultForBreakTime(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), taaInfoCd, "PLAN", createMinute, "createWorkDayResultForBreakTime");
+							}
+						}
+
+						
+						List<String> timeTypeCds = new ArrayList<String>();
+						timeTypeCds.add(WtmApplService.TIME_TYPE_FIXOT);
+						List<WtmWorkDayResult> delFixResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(flexibleStdMgr.getTenantId(), flexibleStdMgr.getEnterCd(), calendar.getSabun(), timeTypeCds, calendar.getYmd(), calendar.getYmd());
+						if(delFixResults != null && delFixResults.size() > 0) {
+							logger.debug("fixOt를 삭제한다 : " + delFixResults.size() );
+							workDayResultRepo.deleteAll(delFixResults);
+						}
+						
+						if(flexibleStdMgr.getFixotUseType().equals("DAY")) {
+							Date calcEdate = null;
+							Integer fixOtMinute = 0;
+							if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+								
+								calcEdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(ed, flexibleStdMgr.getFixotUseLimit(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+
+								if(flexibleStdMgr.getWorkShm() != null && !"".equals(flexibleStdMgr.getWorkShm())
+										&& flexibleStdMgr.getWorkEhm() != null && !"".equals(flexibleStdMgr.getWorkEhm())
+										) {
+									try {
+										Date limitSdate = ymdhm.parse(calendar.getYmd()+flexibleStdMgr.getWorkShm());
+										Date limitEdate = ymdhm.parse(calendar.getYmd()+flexibleStdMgr.getWorkEhm());
+									
+										if(limitSdate.compareTo(limitEdate) > 0) {
+											logger.debug("제한시간 셋팅이 종료시간 보다 시작시간이 늦을 경우 종료시간을 1일 더해서 다음날로 만든다. sHm : " + flexibleStdMgr.getWorkShm() + " eHm : " + flexibleStdMgr.getWorkEhm());
+											Calendar cal1 = Calendar.getInstance();
+											cal1.setTime(limitEdate);
+											cal1.add(Calendar.DATE, 1);
+											limitEdate = cal1.getTime();
+										} 
+						 
+										if(calcEdate.compareTo(limitEdate) > 0) {
+											logger.debug("종료일 근무 제한 시간 적용. eDate : " + calcEdate + " limitEdate : " + limitEdate);
+											calcEdate = limitEdate;
+										}
+
+									} catch (ParseException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
+								}
+								fixOtMinute = calcService.WtmCalcMinute(sdf.format(ed), sdf.format(calcEdate), null, null, flexibleStdMgr.getUnitMinute()) -  calcService.getBreakMinuteIfBreakTimeMGR(ed, calcEdate, timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+								logger.debug("fixOtMinute = " +  fixOtMinute);
+							}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
+								Calendar cal1 = Calendar.getInstance();
+								cal1.setTime(ed);
+								cal1.add(Calendar.MINUTE, flexibleStdMgr.getFixotUseLimit());
+								calcEdate = cal.getTime();
+								fixOtMinute = flexibleStdMgr.getFixotUseLimit();
+							}
+							
+							WtmWorkDayResult fixRes = new WtmWorkDayResult();
+							fixRes.setTenantId(calendar.getTenantId());
+							fixRes.setEnterCd(calendar.getEnterCd());
+							fixRes.setYmd(calendar.getYmd());
+							fixRes.setSabun(calendar.getSabun());
+							fixRes.setTimeTypeCd(WtmApplService.TIME_TYPE_FIXOT);
+							fixRes.setPlanSdate(ed);
+							fixRes.setPlanEdate(calcEdate);
+							fixRes.setPlanMinute(fixOtMinute);
+							fixRes.setUpdateId("ADMIN");
+							workDayResultRepo.save(fixRes);
+						}
+					}else {
+						logger.debug("timeCdMgr is null ");
+					} 
 				}else {
 					//휴일은 생성하지 않는다. 
+					continue;
 				}
 					/*
 				//logger.debug("chkDate : " + chkDate);

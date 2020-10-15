@@ -4,12 +4,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import com.isu.ifw.vo.WtmDayWorkVO;
+import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmOtAppl;
 import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.vo.WtmDayWorkVO;
 
 /**
  * 
@@ -409,4 +410,5 @@ public interface WtmFlexibleEmpService {
 	 */
 	public List<Map<String, Object>> getFlexibleEmpImsiList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId);
 	
+	public void createWtmWorkDayResultAsCalendar(WtmFlexibleEmp flexibleEmp);
 }

@@ -672,7 +672,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 
 							
 							List<String> timeTypeCds = new ArrayList<String>();
-							timeTypeCd.add(WtmApplService.TIME_TYPE_FIXOT);
+							timeTypeCds.add(WtmApplService.TIME_TYPE_FIXOT);
 							List<WtmWorkDayResult> delFixResults = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(flexStdMgr.getTenantId(), flexStdMgr.getEnterCd(), sabun, timeTypeCds, currYmd, currYmd);
 							if(delFixResults != null && delFixResults.size() > 0) {
 								logger.debug("fixOt를 삭제한다 : " + delFixResults.size() );
