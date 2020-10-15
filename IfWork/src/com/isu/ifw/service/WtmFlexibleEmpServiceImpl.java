@@ -123,6 +123,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
 	@Autowired private WtmWorkDayResultORepository workDayResultORepository;
 	
+	@Autowired private WtmFlexibleEmpResetService flexibleEmpResetSerevice;
+	
+	
 	@Override
 	public List<Map<String, Object>> getFlexibleEmpList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
 		// TODO Auto-generated method stub 
@@ -4274,6 +4277,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	
 	@Override
 	@Transactional
+	//public int setApplyForOne(Long tenantId, String enterCd, String sabun, String workTypeCd,Long flexibleApplyId, ) {
 	public int setApplyForOne(Map<String, Object> searchSabun, List<Map<String, Object>> ymdList) {
 		try {
 		Long tenantId =  Long.parseLong(searchSabun.get("tenantId").toString());
@@ -4308,6 +4312,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			searchSabun.put("flexibleEmpId", Long.parseLong(searchMap.get("flexibleEmpId").toString()));
 			
 			//BASE 뿐만 아니라 WORKTEAM 도 가지고 와야 함.
+			//2020.10.15JYP 기본근무 자르는건 리셋으로 넘기
 			List<String> workTypeCds = new ArrayList<String>();
 			workTypeCds.add("BASE");
 			workTypeCds.add("WORKTEAM");
@@ -4315,6 +4320,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			WtmFlexibleEmp emp = new WtmFlexibleEmp();
 			List<WtmFlexibleEmp> empList = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCds(tenantId, enterCd, sabun, sYmd, eYmd, workTypeCds);
 			if(empList != null) {
+				/* RESET 에서 하자 .JYP 20.10.15
 				for(WtmFlexibleEmp e : empList) {
 					//신청기간내에 시작 종료가 포함되어있을 경우
 					if(Integer.parseInt(sYmd) <= Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) >= Integer.parseInt(e.getEymd())) {
@@ -4362,6 +4368,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						
 					}
 				}
+				*/
 				
 				//탄근제의 경우 근무 계획까지 작성하여 신청을 하기 때문에 calendar, result 만들어준다.
 				if(workTypeCd.equals("ELAS")) {
@@ -4460,9 +4467,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
 		logger.debug("[setApply] updateStart " +searchSabun.toString());
 
-		flexEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(searchSabun);
+		//flexEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(searchSabun);
+		flexibleEmpResetSerevice.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, searchSabun.get("useSymd")+"", searchSabun.get("useEymd")+"", "ADMIN");
 		logger.debug("[setApply] initWtmFlexibleEmpOfWtmWorkDayResult ");
-		flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(searchSabun);
+		
+		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, searchSabun.get("useSymd")+"");
+		//flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(searchSabun);
 		logger.debug("[setApply] createWorkTermBySabunAndSymdAndEymd ");
 //			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 //		wtmFlexibleApplyMgrMapper.updateApplyEmp(searchSabun);

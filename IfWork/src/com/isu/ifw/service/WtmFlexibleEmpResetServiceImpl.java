@@ -119,8 +119,8 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 		//년단위로 생성하자
 		//기본근무는 년단위로 생성한다. 
 		//공휴일 정보 적용 등 필요
-		sYmd = "2020" + "0101"; 
-		eYmd = "2020" + "1231";
+		//sYmd = "2020" + "0101"; 
+		//eYmd = "2020" + "1231";
 		
 		String empYmd = empHisRepo.findMaxEmpYmdByTenantIdAndEnterCdAndSabun(tenantId, enterCd, sabun);
 		logger.debug("입사일 : " + empYmd);
@@ -128,7 +128,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 		if(Integer.parseInt(sYmd) < Integer.parseInt(empYmd)) {
 			sYmd = empYmd;
 		}
-		logger.debug("1. 초기화");
+		logger.debug("1. 초기화"); 
 		this.initWtmFlexibleEmp(tenantId, enterCd, sabun, sYmd, eYmd, userId);
 		logger.debug("1. 초기화 END");
 		wtmFlexibleEmpRepo.flush();
@@ -137,6 +137,9 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 		if(emps != null) {
 			logger.debug("2. 초기화 한 WTM_FLEXIBLE_EMP를 다시 조회 : " + emps.size());
 			for(WtmFlexibleEmp flexEmp : emps) {
+				//계산 구간을 정하자. 유연근무제는 근무제 전체 기간을 체크하지만 기본근무제들은 재생성하려는 구간만 돌자
+				String loopSymd = flexEmp.getSymd();
+				String loopEymd = flexEmp.getEymd();
 				logger.debug("flexEmp : " + flexEmp);
 				WtmFlexibleStdMgr flexStdMgr = flexStdMgrRepo.findByFlexibleStdMgrId(flexEmp.getFlexibleStdMgrId());
 				logger.debug("flexStdMgr : " + flexStdMgr);
@@ -151,13 +154,13 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 						) {
 					if(!flexEmp.getWorkTypeCd().equals("DIFF")) {
 						logger.debug("선택근무제이다.");
-						List<WtmWorkDayResult> delResults = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndApprMinuteIsNull(tenantId, enterCd, sabun, flexEmp.getSymd(), flexEmp.getEymd());
+						List<WtmWorkDayResult> delResults = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndApprMinuteIsNull(tenantId, enterCd, sabun, loopSymd, loopEymd);
 						if(delResults != null && delResults.size() > 0) {
 							logger.debug("기본근무가 아닌 근무제 기간엔 마감되지 않은 정보는 초기화한다 : " + delResults.size());
 							wtmWorkDayResultRepo.deleteAll(delResults);
 						}
 					}
-					this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), flexEmp.getSymd(), flexEmp.getEymd(), WtmFlexibleEmpResetService.WORK_TYPE_FLEX, null, userId);
+					this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), loopSymd, loopEymd, WtmFlexibleEmpResetService.WORK_TYPE_FLEX, null, userId);
 
 					if(flexEmp.getWorkTypeCd().equals("DIFF")) {
 						logger.debug("시차출퇴근이다. RESULT RESET GO");
@@ -166,14 +169,22 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				}else {
 					logger.debug("기본근무제이다.");
 					logger.debug("현재 근무제가 기본근무 일 경우 기본근무 인지 근무조 인지 알수가 없다. 시작일 기준으로 근무조정보가 있는지 확인한다.");
-					List<WtmWorkteamEmp> workteams = workteamEmpRepo.findByTenantIdAndEnterCdAndSabunAndEymdGreaterThanEqualAndSymdLessThanEqualOrderBySymdAsc(tenantId, enterCd, sabun, flexEmp.getSymd(), flexEmp.getEymd());
+					if(Integer.parseInt(sYmd) > Integer.parseInt(flexEmp.getSymd()) && Integer.parseInt(sYmd) < Integer.parseInt(flexEmp.getEymd())) {
+						logger.debug("시작일 체크 : " + flexEmp.getSymd() + " ~ " + flexEmp.getEymd() + " >> " + sYmd + " 로 시작일을 변경 한다. ");
+						loopSymd = sYmd;
+					}
+					if(Integer.parseInt(eYmd) > Integer.parseInt(flexEmp.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(flexEmp.getEymd())) {
+						logger.debug("종료일 체크 : " + flexEmp.getSymd() + " ~ " + flexEmp.getEymd() + " >> " + eYmd + " 로 종료일을 변경 한다. ");
+						loopEymd = eYmd;
+					}
+					List<WtmWorkteamEmp> workteams = workteamEmpRepo.findByTenantIdAndEnterCdAndSabunAndEymdGreaterThanEqualAndSymdLessThanEqualOrderBySymdAsc(tenantId, enterCd, sabun, loopSymd, loopEymd);
 					if(workteams != null && workteams.size() > 0){
 						logger.debug("근무조 : " + workteams.size() + " << 1 건이어야 한다.");
 						for(WtmWorkteamEmp workteam : workteams) {
-							this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), flexEmp.getSymd(), flexEmp.getEymd(), WtmFlexibleEmpResetService.WORK_TYPE_BASE_WORKTEAM, workteam.getWorkteamMgrId(), userId);
+							this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), loopSymd, loopEymd, WtmFlexibleEmpResetService.WORK_TYPE_BASE_WORKTEAM, workteam.getWorkteamMgrId(), userId);
 						}
 					}else {
-						this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), flexEmp.getSymd(), flexEmp.getEymd(), WtmFlexibleEmpResetService.WORK_TYPE_BASE, null, userId);
+						this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), loopSymd, loopEymd, WtmFlexibleEmpResetService.WORK_TYPE_BASE, null, userId);
 					}
 				}
 				
