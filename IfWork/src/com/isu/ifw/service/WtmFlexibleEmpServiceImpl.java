@@ -4684,8 +4684,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		List<Map<String, Object>> flexibleList = flexEmpMapper.getFlexibleEmpList(paramMap);
 		if(flexibleList!=null && flexibleList.size()>0) {
 			for(Map<String, Object> flex : flexibleList) {
-				if(flex.containsKey("flexibleEmpId") && flex.get("flexibleEmpId")!=null && !"".equals(flex.get("flexibleEmpId"))) {
-					paramMap.put("flexibleEmpId", Long.valueOf(flex.get("flexibleEmpId").toString()));
+				if(flex.get("applId").toString().equals(paramMap.get("applId"))) {
 					List<Map<String, Object>> plans = flexEmpMapper.getFlexibleEmpImsiList(paramMap);
 					flex.put("flexibleEmp", getDayWorks(plans, userId));
 				}

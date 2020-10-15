@@ -372,6 +372,12 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 			paramMap.put("tenantId", tenantId);
 			paramMap.put("enterCd", enterCd);
 
+			String searchType = "";
+			if((String)paramMap.get("searchType") != null && "person".equals((String)paramMap.get("searchType"))) {
+				paramMap.put("searchKeyword", sabun);
+			}
+
+
 			Date date = new Date();
 			SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd");
 			String now = sdf.format(date);
@@ -407,6 +413,11 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 		try {
 			paramMap.put("tenantId", tenantId);
 			paramMap.put("enterCd", enterCd);
+
+			String searchType = "";
+			if((String)paramMap.get("searchType") != null && "person".equals((String)paramMap.get("searchType"))) {
+				paramMap.put("searchKeyword", sabun);
+			}
 
 			Date date = new Date();
 			SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd");
