@@ -3825,7 +3825,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}
 						
 						Map<String, Object> weekInfo = flexEmpMapper.weekWorkTimeByEmp(paramMap);
-						System.out.println("aslkdjkslajdklsajdklsajdkljaskldjsakljdkalsdj");
 						System.out.println(mapper.writeValueAsString(weekInfo));
 						//신청중인 연장근무 시간과
 						if(weekInfo != null && weekInfo.get("applOtMinute") != null && !weekInfo.get("applOtMinute").equals("")) {
@@ -4685,8 +4684,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		List<Map<String, Object>> flexibleList = flexEmpMapper.getFlexibleEmpList(paramMap);
 		if(flexibleList!=null && flexibleList.size()>0) {
 			for(Map<String, Object> flex : flexibleList) {
-				if(flex.containsKey("flexibleEmpId") && flex.get("flexibleEmpId")!=null && !"".equals(flex.get("flexibleEmpId"))) {
-					paramMap.put("flexibleEmpId", Long.valueOf(flex.get("flexibleEmpId").toString()));
+				if(flex.get("applId").toString().equals(paramMap.get("applId"))) {
 					List<Map<String, Object>> plans = flexEmpMapper.getFlexibleEmpImsiList(paramMap);
 					flex.put("flexibleEmp", getDayWorks(plans, userId));
 				}
