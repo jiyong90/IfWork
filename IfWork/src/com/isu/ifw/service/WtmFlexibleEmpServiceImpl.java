@@ -125,6 +125,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	
 	@Autowired private WtmFlexibleEmpResetService flexibleEmpResetSerevice;
 	
+	@Autowired private WtmWorkPattDetRepository workPattDetRepo;
 	
 	@Override
 	public List<Map<String, Object>> getFlexibleEmpList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
@@ -3825,7 +3826,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}
 						
 						Map<String, Object> weekInfo = flexEmpMapper.weekWorkTimeByEmp(paramMap);
-						System.out.println("aslkdjkslajdklsajdklsajdkljaskldjsakljdkalsdj");
 						System.out.println(mapper.writeValueAsString(weekInfo));
 						//신청중인 연장근무 시간과
 						if(weekInfo != null && weekInfo.get("applOtMinute") != null && !weekInfo.get("applOtMinute").equals("")) {
@@ -4277,7 +4277,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	
 	@Override
 	@Transactional
-	//public int setApplyForOne(Long tenantId, String enterCd, String sabun, String workTypeCd,Long flexibleApplyId, ) {
 	public int setApplyForOne(Map<String, Object> searchSabun, List<Map<String, Object>> ymdList) {
 		try {
 		Long tenantId =  Long.parseLong(searchSabun.get("tenantId").toString());
@@ -4696,4 +4695,135 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		return flexibleList;
 	}
 	
+	
+	
+
+	public void createWtmWorkDayResultAsCalendar(WtmFlexibleEmp flexibleEmp) {
+		
+		logger.debug("call createWtmWorkDayResultAsPattern ::");
+		List<WtmWorkPattDet> pattDets = workPattDetRepo.findByFlexibleStdMgrId(flexibleEmp.getFlexibleStdMgrId());
+		Map<Long, WtmTimeCdMgr> timeCdMgrMap = new HashMap<Long, WtmTimeCdMgr>();
+		logger.debug("매번 조회할 수 없으니 패턴 정보를 맵에 담아두자.");
+		for(WtmWorkPattDet pattDet : pattDets) {
+			if(!timeCdMgrMap.containsKey(pattDet.getTimeCdMgrId())) {
+				timeCdMgrMap.put(pattDet.getTimeCdMgrId(), wtmTimeCdMgrRepo.findById(pattDet.getTimeCdMgrId()).get());
+			}
+		}
+		
+		List<WtmWorkCalendar> calendars = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(flexibleEmp.getTenantId(), flexibleEmp.getEnterCd(), flexibleEmp.getSabun(), flexibleEmp.getSymd(), flexibleEmp.getEymd());
+		if(calendars != null && calendars.size() > 0) {
+			Calendar cal = Calendar.getInstance();
+			for(WtmWorkCalendar calendar : calendars) {
+				if(calendar.getHolidayYn() == null || "".equals(calendar.getHolidayYn()) || !"Y".equals(calendar.getHolidayYn())) {
+					logger.debug("마감된 즉 인정된 근무정보가 있으면 해당일은 생성하지 않는다.");
+					List<WtmWorkDayResult> apprResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndApprMinuteIsNotNull(flexibleEmp.getTenantId(), flexibleEmp.getEnterCd(), flexibleEmp.getSabun(), calendar.getYmd(), calendar.getYmd());
+				}else {
+					//휴일은 생성하지 않는다. 
+				}
+					/*
+				//logger.debug("chkDate : " + chkDate);
+				//logger.debug("applEDate : " + applEDate);
+				cal.setTime(chkDate);
+				logger.debug("flexibleStdMgr.getHolExceptYn() :" + flexibleStdMgr.getHolExceptYn());
+				
+				logger.debug("startPattSeq : " + startPattSeq);
+				try {
+					logger.debug("pattDetMap : " + mapper.writeValueAsString(pattDetMap));
+					logger.debug("timeCdMgrMap : " + mapper.writeValueAsString(timeCdMgrMap));
+				} catch (JsonProcessingException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				WtmWorkPattDet det = pattDetMap.get(startPattSeq);
+				WtmTimeCdMgr timeCdMgr = timeCdMgrMap.get(startPattSeq); 
+				startPattSeq++;
+				if(startPattSeq > pattSize) {
+					startPattSeq = 1;
+				}
+				
+				try {
+					logger.debug("flexibleStdMgr : " + mapper.writeValueAsString(flexibleStdMgr));
+					logger.debug("det : " + mapper.writeValueAsString(det));
+				} catch (JsonProcessingException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+
+				String sYmd = ymd.format(chkDate);
+				
+				if("Y".equals(flexibleStdMgr.getHolExceptYn()) && holList.indexOf(sYmd) > -1 ) {
+					cal.add(Calendar.DATE, 1);
+					//기준일이기때문에 다음날에 대한 일자 정보를 담아야한다.
+					chkDate = cal.getTime();
+				}else {
+					//휴일이면
+					if(!"".equals(timeCdMgr.getHolYn()) &&  "Y".equals(timeCdMgr.getHolYn())) {
+						logger.debug("timeCdMgr is null ");
+						cal.add(Calendar.DATE, 1);
+						//기준일이기때문에 다음날에 대한 일자 정보를 담아야한다.
+						chkDate = cal.getTime();
+					}else {
+						if(timeCdMgr.getWorkShm() != null && timeCdMgr.getWorkEhm() != null
+								&& !"".equals(timeCdMgr.getWorkShm()) && !"".equals(timeCdMgr.getWorkEhm())) {
+							logger.debug("timeCdMgr is not null ");
+							String shm = timeCdMgr.getWorkShm();
+							String ehm = timeCdMgr.getWorkEhm();
+							
+							String eYmd = sYmd;
+							Date sd = null, ed = null;
+							try {
+								sd = ymdhm.parse(sYmd+shm);
+								//종료시분이 시작시분보다 작으면 기준일을 다음날로 본다. 
+								if(Integer.parseInt(shm) > Integer.parseInt(ehm)) {
+									cal.add(Calendar.DATE, 1);
+									eYmd = ymd.format(cal.getTime());
+									//기준일이기때문에 다음날에 대한 일자 정보를 담아야한다.
+									chkDate = cal.getTime();
+								}else {
+									cal.add(Calendar.DATE, 1);
+									//기준일이기때문에 다음날에 대한 일자 정보를 담아야한다.
+									chkDate = cal.getTime();
+								}
+								ed = ymdhm.parse(eYmd+ehm);
+							} catch (ParseException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							WtmFlexibleApplDet applDet = new WtmFlexibleApplDet();
+							
+							applDet.setFlexibleApplId(flexibleAppl.getFlexibleApplId());
+							applDet.setTimeCdMgrId(det.getTimeCdMgrId());
+							applDet.setHolidayYn(det.getHolidayYn());
+							applDet.setYmd(sYmd);
+							applDet.setPlanSdate(sd);
+							applDet.setPlanEdate(ed);
+							
+							Map<String, Object> resMap = calcService.calcApprMinute(sd, ed, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+							if(resMap.containsKey("apprMinute")) {
+								applDet.setPlanMinute(Integer.parseInt(resMap.get("apprMinute")+""));
+							}
+							
+							saveDetList.add(applDet);
+						}else {
+							logger.debug("timeCdMgr is null ");
+							cal.add(Calendar.DATE, 1);
+							//기준일이기때문에 다음날에 대한 일자 정보를 담아야한다.
+							chkDate = cal.getTime();
+						}
+					}
+				}
+				*/
+			}
+		}
+		/*
+			while(chkDate.compareTo(applEDate) <= 0) {
+				
+			}
+			
+			logger.debug("saveDetList.size( : " + saveDetList.size());
+			wtmFlexibleApplDetRepo.saveAll(saveDetList);
+		}		
+		*/	
+		
+	}
 }
