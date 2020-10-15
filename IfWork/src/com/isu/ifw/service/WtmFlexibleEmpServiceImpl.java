@@ -124,8 +124,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	@Autowired private WtmWorkDayResultORepository workDayResultORepository;
 	
 	@Autowired private WtmFlexibleEmpResetService flexibleEmpResetSerevice;
-	
-	
+	private List<Map<String, Object>> flexibleList;
+
+
 	@Override
 	public List<Map<String, Object>> getFlexibleEmpList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
 		// TODO Auto-generated method stub 
@@ -4684,7 +4685,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		List<Map<String, Object>> flexibleList = flexEmpMapper.getFlexibleEmpList(paramMap);
 		if(flexibleList!=null && flexibleList.size()>0) {
 			for(Map<String, Object> flex : flexibleList) {
-				if(flex.get("applId").toString().equals(paramMap.get("applId"))) {
+				if(flex.get("applId") != null && flex.get("applId").toString().equals(paramMap.get("applId"))) {
 					List<Map<String, Object>> plans = flexEmpMapper.getFlexibleEmpImsiList(paramMap);
 					flex.put("flexibleEmp", getDayWorks(plans, userId));
 				}
