@@ -196,6 +196,8 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 					flexEmp= wtmFlexibleEmpRepo.save(flexEmp);
 					logger.debug("update flexEmp : " + flexEmp);
 					
+					//flexibleEmpService.createWtmWorkDayResultAsCalendar(flexEmp);
+					
 				}
 			}
 		}

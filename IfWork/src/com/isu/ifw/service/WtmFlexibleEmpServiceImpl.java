@@ -4313,6 +4313,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 			//BASE 뿐만 아니라 WORKTEAM 도 가지고 와야 함.
 			//2020.10.15JYP 기본근무 자르는건 리셋으로 넘기
+			/*
 			List<String> workTypeCds = new ArrayList<String>();
 			workTypeCds.add("BASE");
 			workTypeCds.add("WORKTEAM");
@@ -4320,6 +4321,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			WtmFlexibleEmp emp = new WtmFlexibleEmp();
 			List<WtmFlexibleEmp> empList = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCds(tenantId, enterCd, sabun, sYmd, eYmd, workTypeCds);
 			if(empList != null) {
+			*/
 				/* RESET 에서 하자 .JYP 20.10.15
 				for(WtmFlexibleEmp e : empList) {
 					//신청기간내에 시작 종료가 포함되어있을 경우
@@ -4457,7 +4459,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						workDayResultRepo.flush();
 					}
 				}
-			}
+			//}
 		}
 		logger.debug("[setApply] updateWorkMinuteOfWtmFlexibleEmp " +tenantId+enterCd+sabun);
 		
@@ -4474,8 +4476,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, searchSabun.get("useSymd")+"");
 		//flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(searchSabun);
 		logger.debug("[setApply] createWorkTermBySabunAndSymdAndEymd ");
-		if(saveFlexibleEmp != null)
-			this.createWtmWorkDayResultAsCalendar(saveFlexibleEmp);
+		
 //			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 //		wtmFlexibleApplyMgrMapper.updateApplyEmp(searchSabun);
 //		logger.debug("[setApply] updateApplyEmp ");
