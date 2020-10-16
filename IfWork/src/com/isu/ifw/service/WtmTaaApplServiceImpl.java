@@ -315,6 +315,16 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 					break;
 			}
 
+			//  사용일수가 최대신청가능일수보다 큰지 체크
+			WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, workTimeCode);
+
+			if(taaCode.getApprMaxDays() != null && !"".equals(taaCode.getApprMaxDays())){
+				if(usedCnt > taaCode.getApprMaxDays()){
+					rp.setFail("사용일수가 최대신청일수 (" + taaCode.getApprMaxDays()  +"일) 보다 큽니다.");
+					return rp;
+				}
+			}
+
 			String shm = "";
 			String ehm = "";
 			if (work.get("startHm") != null && !"".equals(work.get("startHm"))) {

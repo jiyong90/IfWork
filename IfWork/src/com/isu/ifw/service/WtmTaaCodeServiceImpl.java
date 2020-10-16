@@ -1,21 +1,18 @@
 package com.isu.ifw.service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
+import com.isu.ifw.entity.WtmTaaCode;
+import com.isu.ifw.mapper.WtmTaaCodeMapper;
+import com.isu.ifw.repository.WtmTaaCodeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.isu.ifw.entity.WtmTaaCode;
-import com.isu.ifw.mapper.WtmTaaCodeMapper;
-import com.isu.ifw.repository.WtmTaaCodeRepository;
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service("taaCodeService")
 public class WtmTaaCodeServiceImpl implements WtmTaaCodeService{
@@ -49,6 +46,7 @@ public class WtmTaaCodeServiceImpl implements WtmTaaCodeService{
 				code.put("workApprHour", l.getWorkApprHour());
 				code.put("note", l.getNote());
 				code.put("taaTypeCd", l.getTaaTypeCd());
+				code.put("apprMaxDays", l.getApprMaxDays());
 				codeList.add(code);
 			}
 		} catch(Exception e) {
@@ -84,6 +82,7 @@ public class WtmTaaCodeServiceImpl implements WtmTaaCodeService{
 						code.setUpdateId(userId);
 						code.setNote(l.get("note").toString());
 						code.setWorkApprHour(l.get("workApprHour").toString().equals("") ? null : Integer.parseInt(l.get("workApprHour").toString()));
+						code.setApprMaxDays(l.get("apprMaxDays").toString().equals("") ? null : Integer.parseInt(l.get("apprMaxDays").toString()));
 						code.setWorkYn(l.get("workYn").toString());
 						codes.add(code);
 					}

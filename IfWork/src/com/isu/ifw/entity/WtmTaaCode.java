@@ -1,19 +1,9 @@
 package com.isu.ifw.entity;
 
-import java.util.Date;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-
 import org.springframework.format.annotation.DateTimeFormat;
+
+import javax.persistence.*;
+import java.util.Date;
 
 @Entity
 @Table(name="WTM_TAA_CODE")
@@ -60,8 +50,17 @@ public class WtmTaaCode {
 	private Date updateDate;
 	@Column(name="UPDATE_ID")
 	private String updateId;
+	@Column(name="APPR_MAX_DAYS")
+	private Integer apprMaxDays;
 
-	
+	public Integer getApprMaxDays() {
+		return apprMaxDays;
+	}
+
+	public void setApprMaxDays(Integer apprMaxDays) {
+		this.apprMaxDays = apprMaxDays;
+	}
+
 	public Long getTaaCodeId() {
 		return taaCodeId;
 	}
