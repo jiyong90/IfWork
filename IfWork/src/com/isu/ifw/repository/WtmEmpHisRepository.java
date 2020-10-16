@@ -1,16 +1,14 @@
 package com.isu.ifw.repository;
 
-import java.util.List;
-
-import javax.transaction.Transactional;
-
+import com.isu.ifw.entity.WtmEmpHis;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.isu.ifw.entity.WtmEmpHis;
+import javax.transaction.Transactional;
+import java.util.List;
 
 @Repository
 public interface WtmEmpHisRepository extends JpaRepository<WtmEmpHis, Long> {
@@ -32,7 +30,10 @@ public interface WtmEmpHisRepository extends JpaRepository<WtmEmpHis, Long> {
 
 	@Query(value="SELECT H FROM WtmEmpHis H WHERE H.tenantId = ?1 AND H.enterCd = ?2 AND H.sabun = ?3 AND H.statusCd IN ?4 ")
 	public List<WtmEmpHis> findByTenantIdAndEnterCdAndSabunAndStatusCdIn(Long tenantId, String enterCd, String sabun, List<String> statusCds);
-	
+
+	@Query(value="SELECT * FROM WTM_EMP_HIS WHERE TENANT_ID = :tenantId AND ENTER_CD = :enterCd AND SABUN NOT IN (SELECT SABUN FROM WTM_FLEXIBLE_EMP WHERE TENANT_ID = :tenantId AND ENTER_CD = :enterCd AND :ymd BETWEEN SYMD AND EYMD) ", nativeQuery = true)
+	public List<WtmEmpHis> findByTenantIdAndEnterCdAndYmdNotExistWtmFlexibleEmp(@Param(value="tenantId")Long tenantId, @Param(value="enterCd") String enterCd, @Param(value="ymd") String ymd);
+
 	@Modifying
 	@Transactional
 	@Query("DELETE FROM WtmEmpHis E WHERE E.empHisId IN :empHisIds ")
