@@ -1,15 +1,15 @@
 package com.isu.ifw.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.common.service.TenantConfigManagerService;
-import com.isu.ifw.entity.*;
-import com.isu.ifw.mapper.*;
-import com.isu.ifw.repository.*;
-import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.ReturnParam;
-import com.isu.ifw.vo.WtmDayPlanVO;
-import com.isu.ifw.vo.WtmDayWorkVO;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +18,55 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.common.service.TenantConfigManagerService;
+import com.isu.ifw.entity.WtmEmpHis;
+import com.isu.ifw.entity.WtmFlexibleAppl;
+import com.isu.ifw.entity.WtmFlexibleApplDet;
+import com.isu.ifw.entity.WtmFlexibleApplyDet;
+import com.isu.ifw.entity.WtmFlexibleEmp;
+import com.isu.ifw.entity.WtmFlexibleStdMgr;
+import com.isu.ifw.entity.WtmOrgConc;
+import com.isu.ifw.entity.WtmOtAppl;
+import com.isu.ifw.entity.WtmOtSubsAppl;
+import com.isu.ifw.entity.WtmTaaCode;
+import com.isu.ifw.entity.WtmTimeCdMgr;
+import com.isu.ifw.entity.WtmWorkCalendar;
+import com.isu.ifw.entity.WtmWorkDayResult;
+import com.isu.ifw.entity.WtmWorkDayResultO;
+import com.isu.ifw.entity.WtmWorkPattDet;
+import com.isu.ifw.mapper.WtmAuthMgrMapper;
+import com.isu.ifw.mapper.WtmEmpHisMapper;
+import com.isu.ifw.mapper.WtmFlexibleApplMapper;
+import com.isu.ifw.mapper.WtmFlexibleApplyMgrMapper;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmFlexibleStdMapper;
+import com.isu.ifw.mapper.WtmOrgChartMapper;
+import com.isu.ifw.mapper.WtmOtApplMapper;
+import com.isu.ifw.mapper.WtmScheduleMapper;
+import com.isu.ifw.repository.WtmApplRepository;
+import com.isu.ifw.repository.WtmEmpHisRepository;
+import com.isu.ifw.repository.WtmFlexibleApplDetRepository;
+import com.isu.ifw.repository.WtmFlexibleApplRepository;
+import com.isu.ifw.repository.WtmFlexibleApplyDetRepository;
+import com.isu.ifw.repository.WtmFlexibleEmpRepository;
+import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
+import com.isu.ifw.repository.WtmOrgConcRepository;
+import com.isu.ifw.repository.WtmOtApplRepository;
+import com.isu.ifw.repository.WtmOtSubsApplRepository;
+import com.isu.ifw.repository.WtmTaaCodeRepository;
+import com.isu.ifw.repository.WtmTimeCdMgrRepository;
+import com.isu.ifw.repository.WtmWorkCalendarRepository;
+import com.isu.ifw.repository.WtmWorkDayResultORepository;
+import com.isu.ifw.repository.WtmWorkDayResultRepository;
+import com.isu.ifw.repository.WtmWorkPattDetRepository;
+import com.isu.ifw.repository.WtmWorkteamEmpRepository;
+import com.isu.ifw.repository.WtmWorkteamMgrRepository;
+import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.vo.WtmDayPlanVO;
+import com.isu.ifw.vo.WtmDayWorkVO;
 
 @Service("flexibleEmpService")
 public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
@@ -1375,6 +1420,44 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//간주근무 정보가 있을 경우 타임블럭을 재배치한다.
 		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
 		//List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), WtmApplService.TIME_TYPE_BASE);
+		
+		//계획시간이 있으며, 타각시간 기준으로 잔여 시간을 연장근무 시간으로 만들어 준다.  
+		if(!"".equals(flexStdMgr.getCreateOtIfOutOfPlanYn()) && "Y".equals(flexStdMgr.getCreateOtIfOutOfPlanYn())) {
+			logger.debug("flexStdMgr.getCreateOtIfOutOfPlanYn() : " + flexStdMgr.getCreateOtIfOutOfPlanYn());
+			//사이 데이터는 무시한다. 앞위 데이터를 만들어 주고 이후 로직을 태워보자 .
+			//Result전체 체크
+			List<WtmWorkDayResult> results = null; //workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdOrderByPlanSdateASC(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd());
+			if(results != null && results.size() > 0) {
+				boolean hasBASE = false;
+				Date minPlanSdate = null, maxPlanEdate = null;
+				//반드시 계획은 있어야한다. 단 기본 근무 계획은 반드시 있어야 한다. - BASE
+				for(WtmWorkDayResult r : results) {
+					if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA)) {
+						continue;
+					}
+					if(minPlanSdate == null || minPlanSdate.compareTo(r.getPlanSdate()) > 0) {
+						minPlanSdate = r.getPlanSdate();
+					}
+					if(maxPlanEdate == null || maxPlanEdate.compareTo(r.getPlanEdate()) < 0 ) {
+						maxPlanEdate = r.getPlanEdate();
+					}
+					
+					if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
+						hasBASE = true;
+					}
+				}
+				if(hasBASE) {
+					logger.debug("");
+					//타각시간이 빨라야한다. 
+					if(calendar.getEntrySdate().compareTo(minPlanSdate) < 0) {
+						logger.debug("타각시간이 계획시간보다 빠르다.");
+						logger.debug("calendar.getEntrySdate() : " + calendar.getEntrySdate());
+						logger.debug("minPlanSdate : " + minPlanSdate);
+					}
+				}
+			}
+		}
+		
 		List<String> timeTypeCds = new ArrayList<String>();
 		timeTypeCds.add(WtmApplService.TIME_TYPE_BASE); 
 		timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
@@ -1385,6 +1468,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		timeTypeCds.add(WtmApplService.TIME_TYPE_TAA);	// 아래서 하고 있음
 		timeTypeCds.add(WtmApplService.TIME_TYPE_GOBACK); // 아래서 하고 있음
 		*/ 
+		
 		/**
 		 * 사이사이 비어있는 구간을 재생성 해줘야한다.타각시간 기준으로 계획 데이터가 변경 시 
 		 * 계획이 없고 타각이 있을 경우엔 생성해줘야하는건가. 계획이 무슨 의미가 있는것인가.. 

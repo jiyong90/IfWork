@@ -98,6 +98,9 @@ public class WtmFlexibleStdMgr {
 	@Column(name="APPLY_ENTRY_EDATE_YN")
 	private String applyEntryEdateYn;
 	
+	@Column(name="CREATE_OT_IF_OUT_OF_PLAN_YN")
+	private String createOtIfOutOfPlanYn;
+	
 	@Column(name="NOTE")
 	private String note;
 	@Temporal(TemporalType.TIMESTAMP)
@@ -405,6 +408,13 @@ public class WtmFlexibleStdMgr {
 	public void setApplyEntryEdateYn(String applyEntryEdateYn) {
 		this.applyEntryEdateYn = applyEntryEdateYn;
 	}
+	
+	public String getCreateOtIfOutOfPlanYn() {
+		return createOtIfOutOfPlanYn;
+	}
+	public void setCreateOtIfOutOfPlanYn(String createOtIfOutOfPlanYn) {
+		this.createOtIfOutOfPlanYn = createOtIfOutOfPlanYn;
+	}
 
 	public String getNote() {
 		return note;
@@ -452,7 +462,8 @@ public class WtmFlexibleStdMgr {
 				+ ", taaTimeYn=" + taaTimeYn + ", taaWorkYn=" + taaWorkYn + ", dayOpenType=" + dayOpenType
 				+ ", dayCloseType=" + dayCloseType + ", elasApplEditYn=" + elasApplEditYn + ", applYn=" + applYn
 				+ ", todayPlanEditYn=" + todayPlanEditYn + ", applyEntrySdateYn=" + applyEntrySdateYn
-				+ ", applyEntryEdateYn=" + applyEntryEdateYn + ", note=" + note + ", updateDate=" + updateDate
+				+ ", applyEntryEdateYn=" + applyEntryEdateYn + ", createOtIfOutOfPlanYn=" + createOtIfOutOfPlanYn  
+				+ ", note=" + note + ", updateDate=" + updateDate
 				+ ", updateId=" + updateId + "]";
 	}
 	

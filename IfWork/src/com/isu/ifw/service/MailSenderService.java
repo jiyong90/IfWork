@@ -68,6 +68,7 @@ public class MailSenderService {
 				return true;
 				
 			}catch(MailException me) {
+				me.printStackTrace();
 				logger.error("MailException", me);
 				return false;
 			}catch(Exception e) {
