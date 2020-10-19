@@ -1,11 +1,11 @@
 package com.isu.ifw.service;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.isu.ifw.entity.WtmEmpHis;
+import com.isu.ifw.entity.WtmFlexibleEmp;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.repository.WtmEmpHisRepository;
+import com.isu.ifw.repository.WtmFlexibleEmpRepository;
+import com.isu.ifw.repository.WtmOtSubsApplRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,10 +13,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.isu.ifw.entity.WtmFlexibleEmp;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.repository.WtmFlexibleEmpRepository;
-import com.isu.ifw.repository.WtmOtSubsApplRepository;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class WtmAsyncService {
@@ -39,6 +40,12 @@ public class WtmAsyncService {
 	WtmOtSubsApplRepository otSubsApplRepo;
 		
 	@Autowired private WtmCalcService calcService;
+
+	@Autowired
+	WtmEmpHisRepository wtmEmpHisRepo;
+
+	@Autowired
+	WtmFlexibleEmpResetService flexibleEmpResetService;
 	
 		@Async("threadPoolTaskExecutor")
 		@Transactional
@@ -88,5 +95,18 @@ public class WtmAsyncService {
 			}
 			
 		}
+
+	@Async("threadPoolTaskExecutor")
+	public void asyncFlexibleEmpRest(Long tenantId, String enterCd, String ymd) throws Exception {
+
+		List<WtmEmpHis> empList = wtmEmpHisRepo.findByTenantIdAndEnterCdAndYmdNotExistWtmFlexibleEmp(tenantId, enterCd, ymd);
+
+		for (WtmEmpHis empHis : empList){
+			flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, empHis.getSabun(), ymd.substring(0,4)+"0101", ymd.substring(0,4)+"1231", empHis.getSabun());
+		}
+	}
+
+
+
 		
 }
