@@ -44,8 +44,10 @@ public interface WtmApplService {
 	//고정 OT
 	final static String TIME_TYPE_FIXOT = "FIXOT";
 	//연장근무
+	final static String TIME_TYPE_EARLY_OT = "EARLYOT";
 	final static String TIME_TYPE_OT = "OT";
 	//연장근무
+	final static String TIME_TYPE_EARLY_NIGHT = "EARLYNIGHT";
 	final static String TIME_TYPE_NIGHT = "NIGHT";
 	//대체휴가
 	final static String TIME_TYPE_SUBS = "SUBS";
