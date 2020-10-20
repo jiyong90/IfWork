@@ -441,6 +441,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
 			timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
 			timeTypCds.add(WtmApplService.TIME_TYPE_OT);
+			timeTypCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 			
 			List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, appl.getApplSabun(), timeTypCds, flexibleAppl.getSymd(), flexibleAppl.getEymd());
 			if(results!=null && results.size()>0) {
@@ -633,10 +634,58 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		/**
 		 * 선근제도 DET 없지만 있으면 탄근제 처럼 만들어주면 될것 같다. 
 		 */
-		if(workTypeCd.startsWith("SELE") || workTypeCd.equals("ELAS")) {
+		if(workTypeCd.startsWith("SELE")) { // || workTypeCd.equals("ELAS")) {
 			//선근제
 			
-		//}else if(workTypeCd.equals("ELAS")) {
+			Map<String, Object> pMap = new HashMap<String, Object>();
+			int day = 0;
+			if(paramMap != null && paramMap.containsKey("adminYn") && "Y".equals(paramMap.get("adminYn"))) {
+				if(paramMap != null && paramMap.containsKey("flexibleApplyId") && !"".equals(paramMap.get("flexibleApplyId"))) {
+					Long flexibleApplyId = Long.parseLong(paramMap.get("flexibleApplyId").toString());
+					
+					pMap.put("tableName", "WTM_FLEXIBLE_APPLY_DET");
+					pMap.put("key", "FLEXIBLE_APPLY_ID");
+					pMap.put("value", flexibleApplyId);
+					
+					List<WtmFlexibleApplyDet> days = flexibleApplyDetRepo.findByFlexibleApplyId(flexibleApplyId);
+					day = days.size();
+				}
+			} else {
+				if(paramMap != null && paramMap.containsKey("flexibleApplId") && !"".equals(paramMap.get("flexibleApplId"))) {
+					Long flexibleApplId = Long.parseLong(paramMap.get("flexibleApplId").toString());
+					
+					pMap.put("tableName", "WTM_FLEXIBLE_APPL_DET");
+					pMap.put("key", "FLEXIBLE_APPL_ID");
+					pMap.put("value", flexibleApplId);
+					
+					List<WtmFlexibleApplDet> days = wtmFlexibleApplDetRepo.findByFlexibleApplId(flexibleApplId);
+					day = days.size();
+				}
+			}
+			
+			if(day!=0) {
+				int sumWorkMinute = 0;
+				List<Map<String, Object>> weekList = wtmFlexibleEmpMapper.getElasWeekHour(pMap);
+				
+				if(weekList!=null && weekList.size()>0) {
+					for(Map<String, Object> w : weekList) {
+						int workMinute = 0;
+						if(w.get("workMinute")!=null && !"".equals(w.get("workMinute"))) {
+							workMinute = Integer.parseInt(w.get("workMinute").toString());
+							sumWorkMinute += workMinute;
+						}
+					}
+					
+					logger.debug("sumWorkMinute : "+ sumWorkMinute);
+					logger.debug("day : "+ day);
+					if(sumWorkMinute>0 && sumWorkMinute>(day*8*60)) {
+						rp.setFail("소정 근무는 평균 40시간을 초과할 수 없습니다.");
+						return rp;
+					} 
+				}
+			}
+			
+		}else if(workTypeCd.equals("ELAS")) {
 			//탄근제
 			//근로시간은 평균 40 시간, OT시간은 주 12시간 초과 시 신청할 수 없고
 			//2주 이내 탄근제는 주간 최대 근무시간은 48시간, 2주 이상 탄근제는 주간 최대 근무시간 52시간 
@@ -702,6 +751,8 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 						}
 					}
 					
+					logger.debug("sumWorkMinute : "+ sumWorkMinute);
+					logger.debug("day : "+ day);
 					if(sumWorkMinute>0 && ((float)sumWorkMinute/day*7)/60>40) {
 						rp.setFail("소정 근무는 평균 40시간을 초과할 수 없습니다.");
 						return rp;
