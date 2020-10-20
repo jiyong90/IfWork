@@ -268,7 +268,7 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 
 
 		String workTimeCode = work.get("workTimeCode").toString();
-		String note         = work.get("note").toString();
+//		String note         = work.get("note").toString();
 
 		List<String> taaDateArr = (List<String>) work.get("taaDateArr");
 		List<String> startHmArr = (List<String>) work.get("startHmArr");
@@ -293,7 +293,6 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 				tmpMap.put("startHm", startHm);
 				tmpMap.put("endHm", endHm);
 				tmpMap.put("workTimeCode", workTimeCode);
-				tmpMap.put("note", note);
 				tmpMap.put("requestCd", "");    //  validation 기본 키값
 
 				HashMap<String, Date> dateMap = new HashMap<String, Date>();
