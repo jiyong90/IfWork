@@ -44,8 +44,10 @@ public interface WtmApplService {
 	//고정 OT
 	final static String TIME_TYPE_FIXOT = "FIXOT";
 	//연장근무
+	final static String TIME_TYPE_EARLY_OT = "EARLYOT";
 	final static String TIME_TYPE_OT = "OT";
 	//연장근무
+	final static String TIME_TYPE_EARLY_NIGHT = "EARLYNIGHT";
 	final static String TIME_TYPE_NIGHT = "NIGHT";
 	//대체휴가
 	final static String TIME_TYPE_SUBS = "SUBS";
@@ -57,8 +59,22 @@ public interface WtmApplService {
 	final static String TIME_TYPE_LLA = "LLA";
 	//외출
 	final static String TIME_TYPE_GOBACK = "GOBACK";
-	
+	//  근태사유서
+	final static String TIME_TYPE_ENTRY_CHG = "ENTRY_CHG";
+	//  유연근무제
+	final static String TIME_TYPE_SELE_F = "SELE_F";
+	//  연장 취소
+	final static String TIME_TYPE_OT_CAN = "OT_CAN";
+	//  대체휴가 정정
+	final static String TIME_TYPE_SUBS_CHG = "SUBS_CHG";
+	//  보상휴가취소
+	final static String TIME_TYPE_COMP = "COMP";
+	//  보상휴가취소
+	final static String TIME_TYPE_COMP_CAN = "COMP_CAN";
+
 	final static String TIME_TYPE_EXCEPT = "EXCEPT";
+
+
 	//현출 현퇴
 	final static String TIME_TYPE_ETC = "ETC";
 	
