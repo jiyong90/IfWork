@@ -385,16 +385,20 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 			String ymd = "";
 			if(paramMap.get("ymd") != null && !"".equals((String)paramMap.get("ymd"))) {
 				ymd = ((String) paramMap.get("ymd")).replace("-", "");
-				paramMap.put("ymd", ((String) paramMap.get("ymd")).replace("-", ""));
+				paramMap.put("ymd", ymd);
+				paramMap.put("sYmd", ymd+"01");
+				paramMap.put("eYmd", ymd+"31");
 			}
 
+			
 			List<String> auths = empService.getAuth(tenantId, enterCd, sabun);
 			if(auths!=null && !auths.contains("FLEX_SETTING") && auths.contains("FLEX_SUB")) {
 				//하위 조직 조회
 				paramMap.put("orgList", empService.getLowLevelOrgList(tenantId, enterCd, sabun, now));
 			}
 
-			workTimeList = worktimeMapper.getWorkTimeList(paramMap);
+			//workTimeList = worktimeMapper.getWorkTimeList(paramMap);
+			workTimeList = flexibleEmpMapper.getWorktermByYmd(paramMap); 
 		} catch(Exception e) {
 			e.printStackTrace();
 			logger.debug(e.toString(), e);
