@@ -160,6 +160,11 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 
 					//if(w.containsKey("worksDet") && w.get("worksDet") != null && !"".equals(w.get("worksDet")+"")) {
 
+					String taaCd = "";
+					if(paramMap.containsKey("workTimeCode") && paramMap.get("workTimeCode") != null ){
+						taaCd = paramMap.get("workTimeCode").toString();
+					}
+
 					WtmTaaAppl taaAppl = new WtmTaaAppl();
 					taaAppl.setTenantId(tenantId);
 					taaAppl.setEnterCd(enterCd);
@@ -167,6 +172,7 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 					taaAppl.setSabun(sabun);
 					taaAppl.setIfApplNo(null);
 					taaAppl.setUpdateId(userId);
+					taaAppl.setTaaCd(taaCd);
 
 					taaAppl = wtmTaaApplRepo.save(taaAppl);
 
@@ -183,7 +189,7 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 							String ehm = endHmArr.get(i).replaceAll(":", "");
 
 
-							String taaCd = paramMap.get("workTimeCode").toString();
+
 							String symd = taaDate;
 							String eymd = taaDate;
 

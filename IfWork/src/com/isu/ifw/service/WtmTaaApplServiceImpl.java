@@ -54,8 +54,33 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 	
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
-		// TODO Auto-generated method stub
-		return null;
+		WtmAppl wtmAppl =wtmApplRepo.findByApplId(applId);
+
+		WtmTaaAppl taaAppl =wtmTaaApplRepo.findByApplIdAndSabun(applId, sabun);
+
+		List<WtmTaaApplDet> taaApplDetList = wtmTaaApplDetRepo.findByTaaApplId(taaAppl.getTaaApplId());
+
+		Map<String, Object> resultMap =new HashMap<String, Object>();
+
+		if(taaApplDetList != null && taaApplDetList.size() >0){
+
+			/*resultMap.put("taaApplDetId", taaApplDet.getTaaApplDetId());
+			resultMap.put("taaApplId", taaApplDet.getTaaApplId());
+			resultMap.put("taaCd", taaApplDet.getTaaCd());
+			resultMap.put("symd", taaApplDet.getSymd());
+			resultMap.put("eymd", taaApplDet.getEymd());
+			resultMap.put("shm", taaApplDet.getShm());
+			resultMap.put("ehm", taaApplDet.getEhm());
+			resultMap.put("note", taaApplDet.getNote());
+			resultMap.put("updateDate", taaApplDet.getUpdateDate());
+			resultMap.put("updateId", taaApplDet.getUpdateId());
+			resultMap.put("taaMinute", taaApplDet.getTaaMinute());*/
+
+		}
+
+		resultMap.put("taaAppl", taaAppl);
+		resultMap.put("taaApplDetList", taaApplDetList);
+		return resultMap;
 	}
 
 	@Override
@@ -156,7 +181,13 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 						//String sabun = w.get("sabun")+"";
 						
 						//if(w.containsKey("worksDet") && w.get("worksDet") != null && !"".equals(w.get("worksDet")+"")) {
-							
+
+							String taaCd = "";
+
+							if(paramMap.containsKey("workTimeCode") && paramMap.get("workTimeCode") != null ){
+								taaCd = paramMap.get("workTimeCode").toString();
+							}
+
 							WtmTaaAppl taaAppl = new WtmTaaAppl();
 							taaAppl.setTenantId(tenantId);
 							taaAppl.setEnterCd(enterCd);
@@ -164,6 +195,7 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 							taaAppl.setSabun(sabun);
 							taaAppl.setIfApplNo(null);
 							taaAppl.setUpdateId(userId);
+							taaAppl.setTaaCd(taaCd);
 							
 							taaAppl = wtmTaaApplRepo.save(taaAppl);
 							
@@ -175,7 +207,7 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 										&& paramMap.get("startYmd") != null && !"".equals(paramMap.get("startYmd"))
 										&& paramMap.get("endYmd") != null && !"".equals(paramMap.get("endYmd"))
 										) {
-									String taaCd = paramMap.get("workTimeCode").toString();
+
 									String symd = paramMap.get("startYmd").toString();
 									String eymd = paramMap.get("endYmd").toString();
 									String shm = "";
@@ -234,7 +266,25 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 				}
 			//}
 		}else {
-			//
+
+			if(paramMap.containsKey("applCd") && paramMap.get("applCd") != null){
+
+				String taaCd = paramMap.get("applCd").toString();
+				appl = wtmApplRepo.findByApplId(applId);
+				appl.setApplCd(taaCd);
+				appl.setApplSabun(applSabun);
+				appl.setApplInSabun(applSabun);
+				appl.setApplStatusCd(status);
+				appl.setUpdateId("TAA_INTF");
+
+				appl = wtmApplRepo.save(appl);
+
+				applId = appl.getApplId();
+
+				rp.put("applId", applId);
+				rp.setSuccess("");
+			}
+
 		}
 
 
