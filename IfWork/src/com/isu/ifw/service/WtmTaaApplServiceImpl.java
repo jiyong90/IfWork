@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -42,6 +43,7 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 	private WtmTaaApplDetRepository wtmTaaApplDetRepo;
 	
 	@Autowired private WtmWorkCalendarRepository workCalendarRepo;
+	@Autowired private WtmFlexibleEmpRepository flexibleEmpRepo;
 
 	@Autowired
 	WtmPropertieRepository propertieRepo;
@@ -51,6 +53,8 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 
 	@Autowired
 	WtmCalcServiceImpl calcService;
+	
+	@Autowired private WtmTimeCdMgrRepository timeCdMgrRepo;
 	
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
@@ -390,25 +394,143 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 			if(work.containsKey("applId")) {
 				applId = work.get("applId")+"";
 			}
+			
+			
+			/*
+			if("P".equals(taaCode.getRequestTypeCd())) {
+				if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+					//반차는 근무시간을 변경함
+					sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+				}else {
+					Calendar calendar = Calendar.getInstance();
+					calendar.setTime(sdate);
+					calendar.add(Calendar.MINUTE, 240);
+					sdate = calendar.getTime();
+				}
+				
+				//calcService.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgrId, null)
+			}else if("A".equals(taaCode.getRequestTypeCd())) {
+				if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+					edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, -240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+				}else {
+					Calendar calendar = Calendar.getInstance();
+					calendar.setTime(edate);
+					calendar.add(Calendar.MINUTE, -240);
+					edate = calendar.getTime();
+				}
+			}
+			 */
+			SimpleDateFormat yMdHm = new SimpleDateFormat("yyyyMMddHHmm");
+			SimpleDateFormat hm = new SimpleDateFormat("HHmm");
+			logger.debug("taaCode.getRequestTypeCd() : " +taaCode.getRequestTypeCd());
+			if(taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_A) || taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_P)) {
+				WtmWorkCalendar calendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, symd);
+				WtmFlexibleEmp emp = flexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, calendar.getYmd());
+				WtmTimeCdMgr timeCdMgr = timeCdMgrRepo.findById(calendar.getTimeCdMgrId()).get();
+				
+				WtmFlexibleStdMgr flexibleStdMgr = flexStdMgrRepo.findByFlexibleStdMgrId(emp.getFlexibleStdMgrId());
+				//List<WtmWorkDayResult> baseResult = dayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCd(tenantId, enterCd, sabun, symd, WtmApplService.TIME_TYPE_BASE);
+				Date sdate = null, edate = null;
+				try {
+					sdate = yMdHm.parse(calendar.getYmd()+timeCdMgr.getWorkShm());
+					edate = yMdHm.parse(calendar.getYmd()+timeCdMgr.getWorkEhm());
+				} catch (ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				/*
+				if(baseResult != null && baseResult.size() > 0) {
+					for(WtmWorkDayResult br : baseResult) {
+						if(sdate == null) {
+							sdate = br.getPlanSdate();
+						}else {
+							if(sdate.compareTo(br.getPlanSdate()) > 0) {
+								sdate = br.getPlanSdate();
+							}
+						}
+						if(edate == null) {
+							edate = br.getPlanEdate();
+						}else {
+							if(edate.compareTo(br.getPlanEdate()) < 0) {
+								edate = br.getPlanEdate();
+							}
+						}
+					}
+				}
+				*/
+				//시분을 만들어서 체크한다. 
+				if(taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_A)) {
+					
+					if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+						edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, -240, calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+					}else {
+						Calendar cal2 = Calendar.getInstance();
+						cal2.setTime(edate);
+						cal2.add(Calendar.MINUTE, -240);
+						edate = cal2.getTime();
+					}
+				} else if(taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_P)) {
+					if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+						//반차는 근무시간을 변경함
+						//sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+						sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+					}else {
+						Calendar cal2 = Calendar.getInstance();
+						cal2.setTime(sdate);
+						cal2.add(Calendar.MINUTE, 240);
+						sdate = cal2.getTime();
+					}
+				}
+				shm = hm.format(sdate);
+				ehm = hm.format(edate);
+			}
 
-			//신청서 중복 체크
+			//신청서 중복 체크 'H'시간단위 신청서는 별도로 체크 한다. 
 			rp = checkDuplicateTaaAppl(tenantId, enterCd, sabun, workTimeCode, symd, eymd, shm, ehm, applId);
 
 			if (rp.getStatus() != null && !"OK".equals(rp.getStatus())) return rp;
 
-
-			/*List<Map<String, Object>> worksDet = new ArrayList<Map<String, Object>>();
+			/*
+			List<Map<String, Object>> worksDet = new ArrayList<Map<String, Object>>();
 			worksDet.add(work);
 
 			//근무시간 체크
-			return checkWorktimeTaaAppl(tenantId, enterCd, sabun, worksDet);*/
-
+			return checkWorktimeTaaAppl(tenantId, enterCd, sabun, worksDet);
+ 			*/
 		}
 
 
 		return rp;
 	}
-
+	/*
+	protected ReturnParam checkDuplicateAppl(Long tenantId, String enterCd, String sabun, String workTimeCode, String symd, String eymd, String shm, String ehm, String applId) throws Exception {
+		ReturnParam rp = new ReturnParam();
+		SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+		Date sDate = ymd.parse(symd);
+		Date eDate = ymd.parse(eymd);
+		Calendar cal = Calendar.getInstance();
+		while(sDate.compareTo(eDate) <= 0) {
+			
+			List<WtmWorkDayResult> results = dayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd.format(sDate));
+			if(results != null && results.size() > 0 ){
+				
+			}
+			
+			
+			cal.setTime(sDate);
+			cal.add(Calendar.DATE, 1);
+			sDate = cal.getTime();
+		}
+		cal.setTime(ymd.parse(symd));
+		List<WtmWorkDayResult> results = dayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenOrderByYmdAsc(tenantId, enterCd, sabun, symd, eymd);
+		if(results != null && results.size() > 0 ){
+			
+		}else {
+			rp.setSuccess("");
+		}
+		return rp;
+	}
+	*/
 	protected ReturnParam checkDuplicateTaaAppl(Long tenantId, String enterCd, String sabun, String workTimeCode, String symd, String eymd, String shm, String ehm, String applId) {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
@@ -426,6 +548,13 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 		paramMap.put("shm", shm);
 		paramMap.put("ehm", ehm);
 
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			logger.debug("paramMap : " + mapper.writeValueAsString(paramMap));
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		Map<String, Object> m = validatorMapper.checkDuplicateTaaAppl(paramMap);
 
 		if(m!=null && m.get("cnt")!=null) {

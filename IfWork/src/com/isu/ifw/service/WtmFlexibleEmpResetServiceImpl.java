@@ -359,7 +359,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 					insEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
 					insEmp.setWorkTypeCd("BASE");
 					insEmp.setUpdateId(userId);
-					
+					logger.debug("insEmp: " + insEmp);
 					wtmFlexibleEmpRepo.save(insEmp);
 				}
 			}else {

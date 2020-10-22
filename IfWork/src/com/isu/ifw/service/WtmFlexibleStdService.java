@@ -92,4 +92,12 @@ public interface WtmFlexibleStdService {
 	 */
 	public Map<String, Object> getWeekday(String ymd);
 	
+	
+	/**
+	 * 근무패턴관리 (관리자화면)
+	 * @param flexibleStdMgrId - 근무제도id
+	 * @return 
+	 */
+	public Map<String, Object> getSumWorkPatt(Map<String, Object> paramMap);
+	
 }

@@ -3167,7 +3167,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			logger.debug("********************** r addDayResult save " + addDayResult.toString());
 			workDayResultRepo.save(addDayResult); 
 		}
-		
+		workDayResultRepo.flush();
 	}
 	
 	@Transactional
@@ -5103,8 +5103,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("ymd", ymd);
 		
 		Map<String, Object> resMap = flexEmpMapper.getWorktermByFleibleEmp(paramMap);
-		resMap.put("restOtMinute", Integer.parseInt(resMap.get("totalOtMinute")+"") - Integer.parseInt(resMap.get("apprOtMinute")+""));
-		resMap.put("restWorkMinute", Integer.parseInt(resMap.get("totalWorkMinute")+"") - Integer.parseInt(resMap.get("apprWorkMinute")+""));
+		if(resMap != null) {
+			resMap.put("restOtMinute", Integer.parseInt(resMap.get("totalOtMinute")+"") - Integer.parseInt(resMap.get("apprOtMinute")+""));
+			resMap.put("restWorkMinute", Integer.parseInt(resMap.get("totalWorkMinute")+"") - Integer.parseInt(resMap.get("apprWorkMinute")+""));
+		}else {
+			return null;
+		}
 		return resMap;
 	}
 	

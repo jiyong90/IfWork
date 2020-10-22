@@ -2742,7 +2742,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					
 					// 오늘 이전이면 근무마감을 다시 돌려야함.
 					if (Integer.parseInt(chkYmd) > Integer.parseInt(d)) {
-						wtmFlexibleEmpService.resetCalcApprDayInfo(tenantId, enterCd, d, sabun, null);
+						//wtmFlexibleEmpService.resetCalcApprDayInfo(tenantId, enterCd, d, sabun, null);
 						wtmFlexibleEmpService.calcApprDayInfo(tenantId
 		        											 , enterCd
 		        											 , d
