@@ -1,5 +1,6 @@
 package com.isu.ifw.service;
 
+import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -528,9 +529,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					
 					if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE)) {
 						workMin += min;
-					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_FIXOT)) {
+					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT)  || timeTypeCd.equals(WtmApplService.TIME_TYPE_FIXOT)) {
 						otMin += min;
-					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT)) {
+					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)) {
 						otNightMin += min;
 					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_TAA) || timeTypeCd.equals(WtmApplService.TIME_TYPE_SUBS) || timeTypeCd.equals(WtmApplService.TIME_TYPE_LLA)) {
 						//근태 현황
@@ -1466,14 +1467,14 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							logger.debug("타각시간이 NIGHT 시간내에 있다.");
 							Date planSdate = calendar.getEntrySdate();
 							Date planEdate = prenightEdate;
-							this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun(), WtmApplService.TIME_TYPE_NIGHT, planSdate, planEdate, null, null, null, null);
+							this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun(), WtmApplService.TIME_TYPE_EARLY_NIGHT, planSdate, planEdate, null, null, null, null);
 							planSdate = prenightEdate;
 							planEdate = minPlanSdate;
-							this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun(), WtmApplService.TIME_TYPE_OT, planSdate, planEdate, null, null, null, null);
+							this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun(), WtmApplService.TIME_TYPE_EARLY_OT, planSdate, planEdate, null, null, null, null);
 						}else {
 							Date planSdate = calendar.getEntrySdate();
 							Date planEdate = minPlanSdate;
-							this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun(), WtmApplService.TIME_TYPE_OT, planSdate, planEdate, null, null, null, null);
+							this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun(), WtmApplService.TIME_TYPE_EARLY_OT, planSdate, planEdate, null, null, null, null);
 						}
 					}
 					
@@ -1502,7 +1503,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			List<String> timeTypeCds = new ArrayList<String>();
 			timeTypeCds.add(WtmApplService.TIME_TYPE_BASE); 
 			timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
+			timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 			timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
+			timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
 			timeTypeCds.add(WtmApplService.TIME_TYPE_SUBS);
 			/*
 			timeTypeCds.add(WtmApplService.TIME_TYPE_REGA);  // 아래서 하고 있음 
@@ -1756,7 +1759,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							
 						}
 						
-						if(isUpdate && !result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) && !result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) && !result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS)) {
+						if(isUpdate && !result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) && !result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) && !result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT) && !result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT) && !result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS)) {
 							isUpdate = false;
 							try {
 								if(flexStdMgr.getWorkShm() != null && !"".equals(flexStdMgr.getWorkShm()) && flexStdMgr.getWorkEhm() != null && !"".equals(flexStdMgr.getWorkEhm())) {
@@ -2158,7 +2161,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			if(!flexStdMgr.getDayOpenType().equals("N") && calendar.getEntrySdate() == null
 				&& (
 						(flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
-						|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)  || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)  ) 
+						|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT)  || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)  ) 
 						    )
 					)
 				
@@ -2177,7 +2180,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			if(!flexStdMgr.getDayCloseType().equals("N") && calendar.getEntryEdate() == null 
 					&& (
 							(flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
-							|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)  || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)  ) 
+							|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)  ) 
 							    )
 						)
 			){
@@ -2432,6 +2435,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				timeTypeCd = new ArrayList<>();
 				timeTypeCd.add(WtmApplService.TIME_TYPE_OT);
 				timeTypeCd.add(WtmApplService.TIME_TYPE_NIGHT);
+				timeTypeCd.add(WtmApplService.TIME_TYPE_EARLY_OT);
+				timeTypeCd.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
 				
 				List<WtmWorkDayResult> apprResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCd, calendar.getYmd(), calendar.getYmd());
 				for(WtmWorkDayResult r : apprResults) {
@@ -2663,6 +2668,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				timeTypeCds.add(WtmApplService.TIME_TYPE_FIXOT);
 				timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
 				timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
+				timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
+				timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
 				List<WtmWorkDayResult> timeTypeResult = workDayResultRepo.findByTimeTypeCdInAndTenantIdAndEnterCdAndSabunAndYmdAndApprSdateIsNotNullOrderByApprSdateAsc(timeTypeCds, tenantId, enterCd, sabun, calendar.getYmd());
 				
 				int baseApprMinute = 0;
@@ -2682,9 +2689,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						baseApprMinute += (r.getApprMinute() != null)?r.getApprMinute():0;
 					}else if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT)) {
 						fixotApprMinute += (r.getApprMinute() != null)?r.getApprMinute():0;
-					}else if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)) {
+					}else if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)|| r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT)) {
 						otApprMinute += (r.getApprMinute() != null)?r.getApprMinute():0;
-					}else if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)) {
+					}else if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)) {
 						nightApprMinute += (r.getApprMinute() != null)?r.getApprMinute():0;
 					}
 					
@@ -2726,7 +2733,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								break;
 							}
 							
-						}else if(ttc.equals(WtmApplService.TIME_TYPE_OT)  && otApprMinute > 0) {
+						}else if((ttc.equals(WtmApplService.TIME_TYPE_OT) || ttc.equals(WtmApplService.TIME_TYPE_EARLY_OT))  && otApprMinute > 0) {
 
 							String taaInfoCd = "BREAK_OT";
 							if(otApprMinute < breakMinute) {
@@ -2740,7 +2747,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								break;
 							}
 							
-						}else if(ttc.equals(WtmApplService.TIME_TYPE_NIGHT)  && nightApprMinute > 0) {
+						}else if((ttc.equals(WtmApplService.TIME_TYPE_NIGHT) || ttc.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)) && nightApprMinute > 0) {
 
 							String taaInfoCd = "BREAK_NIGHT";
 							if(nightApprMinute < breakMinute) {
@@ -4178,7 +4185,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					//인정시간 만들어지면 인정시간과 ot신청시간 비교
 					List<String> otTimeTypeCds = new ArrayList<String>();
 					otTimeTypeCds.add(WtmApplService.TIME_TYPE_OT);
+					otTimeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 					otTimeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
+					otTimeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
 					resultParam.put("timeTypeCds", otTimeTypeCds);
 					
 					Map<String, Object> otMinute = flexEmpMapper.sumResultMinuteByTimeTypeCd(resultParam);
@@ -4532,6 +4541,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
 						timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
 						timeTypCds.add(WtmApplService.TIME_TYPE_OT);
+						timeTypCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 						
 						List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypCds, sYmd, eYmd);
 						if(results!=null && results.size()>0) {
@@ -4583,6 +4593,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
 					timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
 					timeTypCds.add(WtmApplService.TIME_TYPE_OT);
+					timeTypCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 					
 					List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypCds, sYmd, eYmd);
 					if(results!=null && results.size()>0) {
@@ -5082,4 +5093,23 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		*/	
 		
 	}
+	
+	@Override
+	public Map<String, Object> getFlexibleStat(Long tenantId, String enterCd, String ymd, String sabun) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("sabun", sabun);
+		paramMap.put("ymd", ymd);
+		
+		Map<String, Object> resMap = flexEmpMapper.getWorktermByFleibleEmp(paramMap);
+		if(resMap != null) {
+			resMap.put("restOtMinute", Integer.parseInt(resMap.get("totalOtMinute")+"") - Integer.parseInt(resMap.get("apprOtMinute")+""));
+			resMap.put("restWorkMinute", Integer.parseInt(resMap.get("totalWorkMinute")+"") - Integer.parseInt(resMap.get("apprWorkMinute")+""));
+		}else {
+			return null;
+		}
+		return resMap;
+	}
+	
 }

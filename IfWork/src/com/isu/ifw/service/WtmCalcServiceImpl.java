@@ -246,8 +246,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		logger.debug("UPDATE_T :: calcSdate :: " + calcSdate);
 		logger.debug("UPDATE_T :: calcEdate :: " + calcEdate);
 		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
-		if( !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_OT)
-				&& !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_NIGHT)
+		if( !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_OT) && !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_EARLY_OT)
+				&& !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_NIGHT) && !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_EARLY_NIGHT)
 				) {
 			if( !flexStdMgr.getWorkShm().equals("") && !flexStdMgr.getWorkEhm().equals("") ) {
 				try {
@@ -630,7 +630,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		logger.debug("createFixOt start");
 		
 		//연장근무 시간이 아니면
-		if(!timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT)) {
+		if(!timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)) {
 			// 등록된 시간이 시작 시분보다 종료 시분이 적으면 0시가 넘어간 시간이다. 근무일 다음날을 종료 시간으로 셋팅 하기 위함이다.
 			String shm = flexibleStdMgr.getWorkShm();
 			String ehm = flexibleStdMgr.getWorkEhm();
@@ -1426,7 +1426,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			e1.printStackTrace();
 		}
 		//연장근무 시간이 아니면
-		if(!timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT)) {
+		if(!timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)) {
 			// 등록된 시간이 시작 시분보다 종료 시분이 적으면 0시가 넘어간 시간이다. 근무일 다음날을 종료 시간으로 셋팅 하기 위함이다.
 			String shm = flexibleStdMgr.getWorkShm();
 			String ehm = flexibleStdMgr.getWorkEhm();
@@ -2258,10 +2258,18 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						int nowWorkMinute = 0;
 						int nowOtMinute = 0;
 						
+						int oMinute = 0;
+						int nMinute = 0;
+						int eOMinute = 0;
+						int eNMinute = 0;
+						
+						//int holOMinute = 0;
+						
 						SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 						String today = sdf.format(new Date());
 						
 						for(WtmWorkDayResult result : results) {
+							//WtmWorkCalendar cal = workCalandarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, result.getYmd());
 							//주 기간내에 여러개의 근무제가 속할 수 있다. 근무제 기간별로 계산되어야한다. 
 							if(Integer.parseInt(result.getYmd()) >= Integer.parseInt(emp.getSymd()) && Integer.parseInt(result.getYmd()) <= Integer.parseInt(emp.getEymd()) ) {
 								/*
@@ -2287,9 +2295,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 									}
 								}
 								
-								if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)
+								if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) 
+									|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT)
 									|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT)
 									|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)
+									|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)
 										) {
 									
 									if(result.getPlanMinute() == null){
@@ -2375,8 +2385,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 									}
 											
 								}
-								if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT))
+								if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) ||result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT) )
 										) {
+										int addMinute = 0;
 										//오늘 포함 미래일
 										if(Integer.parseInt(today) <= Integer.parseInt(result.getYmd())) {
 											//인정시간 우선
@@ -2385,9 +2396,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 													nowOtMinute = nowOtMinute + 0;
 												}else {
 													nowOtMinute = nowOtMinute + result.getPlanMinute();
+													addMinute = result.getPlanMinute();
 												}
 											}else {
 												nowOtMinute = nowOtMinute + result.getApprMinute();
+												addMinute = result.getPlanMinute();
 											}
 										}else {
 											//과거는 인정시간만
@@ -2395,10 +2408,29 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 												nowOtMinute = nowOtMinute + 0;
 											}else {
 												nowOtMinute = nowOtMinute + result.getApprMinute();
+												addMinute = result.getPlanMinute();
 											}
 										}
+										
+										switch(result.getTimeTypeCd()) {
+											case WtmApplService.TIME_TYPE_EARLY_OT :
+												oMinute = oMinute + addMinute;
+												break;
+											case WtmApplService.TIME_TYPE_OT :
+												nMinute = nMinute + addMinute;
+												break;
+											case WtmApplService.TIME_TYPE_EARLY_NIGHT :
+												eOMinute = eOMinute + addMinute;
+												break;
+											case WtmApplService.TIME_TYPE_NIGHT :
+												eNMinute = eNMinute + addMinute;
+												break;
+											default:
+												break;
+										}
+										
 												
-									}
+								}
 									
 							}
 							workDayCnt++;
@@ -2434,6 +2466,14 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						workTermTime.setUpdateDate(new Date());
 						workTermTime.setNote("");
 						workTermTime.setUpdateId("workTermTime");
+						
+						/**
+						 * break에 대한 부분은 없다.. 빗썸에서 임의로 사용..
+						 */
+						workTermTime.setoMinute(oMinute);
+						workTermTime.setnMinute(nMinute);
+						workTermTime.seteOMinute(eOMinute);
+						workTermTime.seteNMinute(eNMinute);
 						logger.debug("workTermTime : " + workTermTime.toString());
 						workTermTimeRepo.save(workTermTime);
 					}

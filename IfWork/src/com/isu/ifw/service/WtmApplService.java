@@ -53,8 +53,12 @@ public interface WtmApplService {
 	final static String TIME_TYPE_SUBS = "SUBS";
 	//간주근무
 	final static String TIME_TYPE_REGA = "REGA";
+	//간주근무
+	final static String TIME_TYPE_REGA_CAN = "REGA_CAN";
 	//휴가
 	final static String TIME_TYPE_TAA = "TAA";
+	//휴가 취소
+	final static String TIME_TYPE_TAA_CAN = "TAA_CAN";
 	// 지각/조퇴
 	final static String TIME_TYPE_LLA = "LLA";
 	//외출

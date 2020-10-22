@@ -586,6 +586,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 							timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
 							timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
 							timeTypCds.add(WtmApplService.TIME_TYPE_OT);
+							timeTypCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 							
 							List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypCds, sd, ed);
 							if(results!=null && results.size()>0) {
@@ -638,6 +639,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 						timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
 						timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
 						timeTypCds.add(WtmApplService.TIME_TYPE_OT);
+						timeTypCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 						
 						List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypCds, sd, ed);
 						if(results!=null && results.size()>0) {

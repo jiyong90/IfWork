@@ -337,5 +337,11 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 	public Map<String, Object> getWeekday(String ymd) {
 		return flexStdMapper.getWeekday(ymd);
 	}
+
+	@Override
+	public Map<String, Object> getSumWorkPatt(Map<String, Object> paramMap) {
+		
+		return flexStdMapper.getSumWorkPatt(paramMap);
+	}
 	
 }
