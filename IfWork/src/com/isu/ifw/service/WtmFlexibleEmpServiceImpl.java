@@ -3167,7 +3167,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			logger.debug("********************** r addDayResult save " + addDayResult.toString());
 			workDayResultRepo.save(addDayResult); 
 		}
-		
+		workDayResultRepo.flush();
 	}
 	
 	@Transactional
