@@ -63,6 +63,15 @@ public class WtmWorkTermTime {
 	@Column(name="NOW_OT_MINUTE")
 	private Integer nowOtMinute;
 	
+	@Column(name="O_MINUTE")
+	private Integer oMinute;
+	@Column(name="N_MINUTE")
+	private Integer nMinute;
+	@Column(name="E_O_MINUTE")
+	private Integer eOMinute;
+	@Column(name="E_N_MINUTE")
+	private Integer eNMinute;
+	
 	@Column(name="NOTE")
 	private String note;
 	
@@ -189,6 +198,32 @@ public class WtmWorkTermTime {
 		this.updateId = updateId;
 	}
 
+	public Integer getoMinute() {
+		return oMinute;
+	}
+	public void setoMinute(Integer oMinute) {
+		this.oMinute = oMinute;
+	}
+	public Integer getnMinute() {
+		return nMinute;
+	}
+	public void setnMinute(Integer nMinute) {
+		this.nMinute = nMinute;
+	}
+	public Integer geteOMinute() {
+		return eOMinute;
+	}
+	public void seteOMinute(Integer eOMinute) {
+		this.eOMinute = eOMinute;
+	}
+	public Integer geteNMinute() {
+		return eNMinute;
+	}
+	public void seteNMinute(Integer eNMinute) {
+		this.eNMinute = eNMinute;
+	}
+	
+	
 	@Override
 	public String toString() {
 		return "tenantId="+this.tenantId+","

@@ -1208,7 +1208,9 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 								//휴일일 경우 계획정보가 있어야 한다. 
 								List<String> timeTypeCds = new ArrayList<>();
 								timeTypeCds.add(WtmApplService.TIME_TYPE_BASE);
+								timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 								timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
+								timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
 								timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
 								results = wtmWorkDayResultRepo.findByTimeTypeCdInAndTenantIdAndEnterCdAndSabunAndYmdAndApprSdateIsNotNullOrderByApprSdateAsc(timeTypeCds, tenantId, enterCd, sabun, ymd.format(inoutDt));
 								if(results != null && results.size() > 0) {

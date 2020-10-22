@@ -298,6 +298,7 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 				List<String> timeTypCds = new ArrayList<String>();
 				timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
 				timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
+				timeTypCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 				timeTypCds.add(WtmApplService.TIME_TYPE_OT);
 				
 				List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypCds, sYmd, eYmd);
