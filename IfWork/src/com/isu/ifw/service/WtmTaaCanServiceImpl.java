@@ -116,11 +116,12 @@ public class WtmTaaCanServiceImpl implements WtmApplService{
 				WtmTaaCanAppl taaCanAppl = new WtmTaaCanAppl();
 				taaCanAppl.setTenantId(tenantId);
 				taaCanAppl.setEnterCd(enterCd);
-				taaCanAppl.setApplId(wtmApplId);
+				taaCanAppl.setApplId(applId);
+				taaCanAppl.setCanApplId(wtmApplId);
 				taaCanAppl.setUpdateId(userId);
 
 
-				taaCanAppl = taaCanApplRepo.save(taaCanAppl);
+				taaCanApplRepo.save(taaCanAppl);
 
 
 				rp.put("applId", applId);

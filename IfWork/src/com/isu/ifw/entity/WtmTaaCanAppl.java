@@ -19,6 +19,8 @@ public class WtmTaaCanAppl {
 	private String enterCd;
 	@Column(name="APPL_ID")
 	private Long applId;
+	@Column(name="CAN_APPL_ID")
+	private Long canApplId;
 	@Column(name="NOTE")
 	private String note;
 	@Temporal(TemporalType.TIMESTAMP)
@@ -61,6 +63,13 @@ public class WtmTaaCanAppl {
 		this.applId = applId;
 	}
 
+	public Long getCanApplId() {
+		return canApplId;
+	}
+
+	public void setCanApplId(Long canApplId) {
+		this.canApplId = canApplId;
+	}
 
 	public String getNote() {
 		return note;

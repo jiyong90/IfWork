@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -144,6 +145,7 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
     */
 	@Query("SELECT r FROM  WtmWorkDayResult r JOIN WtmFlexibleEmp e ON e.tenantId = r.tenantId AND e.enterCd = r.enterCd AND e.sabun = r.sabun AND r.ymd BETWEEN e.symd AND e.eymd  WHERE e.flexibleEmpId = ?1 AND r.timeTypeCd = 'SUBS' AND r.planMinute IS NOT NULL ")
 	public List<WtmWorkDayResult> findByFlexibleEmpIdToSubsPlanMinute(Long flexibleEmpId);
-	
+
+	@Transactional
 	public int deleteByApplId(Long applId);
 }
