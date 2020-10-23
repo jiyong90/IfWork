@@ -2218,16 +2218,18 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		 * 간주근무의 경우 출퇴근 타각정보가 있으면 출퇴근 타각정보를 갱신하지 않는다. 
 		 * 간주근무는 계획된 시각 모두 인정한다. 출퇴근 시간은 출퇴근 시간으로 인정근무를 생성해야할 경우에만 사용한다. NGV 케이스
 		 */
-		if(isRega && calendar.getEntrySdate() == null && calendar.getEntryEdate() == null) {
-			try { logger.debug("3. 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다. " + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-			//flexEmpMapper.updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
-			calendar.setEntrySdate(minPlanSdate_REGA);
-			calendar.setEntryStypeCd(WtmApplService.TIME_TYPE_REGA);
-			calendar.setEntryEdate(maxPlanEdate_REGA);
-			calendar.setEntryEtypeCd(WtmApplService.TIME_TYPE_REGA);
-			workCalendarRepo.save(calendar);
-		}else {
-			try { logger.debug("3. 간주근무 없음." + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+		if(tenantId != 95) {
+			if(isRega && calendar.getEntrySdate() == null && calendar.getEntryEdate() == null) {
+				try { logger.debug("3. 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다. " + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+				//flexEmpMapper.updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
+				calendar.setEntrySdate(minPlanSdate_REGA);
+				calendar.setEntryStypeCd(WtmApplService.TIME_TYPE_REGA);
+				calendar.setEntryEdate(maxPlanEdate_REGA);
+				calendar.setEntryEtypeCd(WtmApplService.TIME_TYPE_REGA);
+				workCalendarRepo.save(calendar);
+			}else {
+				try { logger.debug("3. 간주근무 없음." + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+			}
 		}
 		
 		// 출근시간 자동 여부 -- 출근이 자유인 경운 지각이 없다고 본다?? 일단 ㅋ
