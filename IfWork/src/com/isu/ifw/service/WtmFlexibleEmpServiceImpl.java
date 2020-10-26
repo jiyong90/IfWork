@@ -2181,6 +2181,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 			//퇴근 자동 생성
 			if(!flexStdMgr.getDayCloseType().equals("N")) {
+				
 				if(tenantId == 102) { //그린캐미컬 타각정보 강제로 계획시간으로 엎어버리기
 					if(dayPlanSdate != null) {
 						if( (flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
@@ -2212,24 +2213,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
 			}
 			
-			//퇴근 자동 생성
-			if(!flexStdMgr.getDayCloseType().equals("N") && calendar.getEntryEdate() == null 
-					&& (
-							(flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
-							|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)  ) 
-							    )
-						)
-			){
-				if(r.getPlanEdate() != null) {
-					if(dayPlanEdate == null || dayPlanEdate.compareTo(r.getPlanEdate()) < 0) {
-						dayPlanEdate = r.getPlanEdate();
-						logger.debug("4.(퇴근)타각 자동 업데이트. dayPlanEdate : " +  dayPlanEdate); 
-					}
-				}else {
-					logger.debug("4.(퇴근)타각 자동 업데이트.  r.getPlanEdate() is null : " + r.getSabun() + " : " + r.getEnterCd() + " : " + r.getTimeTypeCd());
-				}
-			}
-
 		} 
 		
 		if(!isTaaWork) {
