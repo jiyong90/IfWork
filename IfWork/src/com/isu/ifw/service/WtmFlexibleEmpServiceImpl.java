@@ -2181,6 +2181,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 			//퇴근 자동 생성
 			if(!flexStdMgr.getDayCloseType().equals("N")) {
+				
 				if(tenantId == 102) { //그린캐미컬 타각정보 강제로 계획시간으로 엎어버리기
 					if(dayPlanSdate != null) {
 						if( (flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
