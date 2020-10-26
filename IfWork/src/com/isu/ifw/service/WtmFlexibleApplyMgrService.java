@@ -1,10 +1,11 @@
 package com.isu.ifw.service;
 
+import com.isu.ifw.entity.WtmFlexibleApply;
+import com.isu.ifw.vo.ReturnParam;
+
+import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
-
-import com.isu.ifw.entity.WtmFlexibleApplyMgr;
-import com.isu.ifw.vo.ReturnParam;
 
 /**
  * 
@@ -19,6 +20,10 @@ public interface WtmFlexibleApplyMgrService {
 	
 	//확정, 비동기
 	public void setApplyAsync(List<Map<String, Object>> searchList, List<Map<String, Object>> ymdList);
+
+	//확정, 비동기
+	public void setApplyAsync2(WtmFlexibleApply flexibleApplyId, List<Map<String, Object>> searchList, List<Map<String, Object>> ymdList, String id, String workTypeCd) throws ParseException;
+
 	//확정, 동기
 	public int setApply(List<Map<String, Object>> searchList, List<Map<String, Object>> ymdList);
 

@@ -1,16 +1,13 @@
 package com.isu.ifw.service; 
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
+import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.WtmFlexibleApplMapper;
+import com.isu.ifw.mapper.WtmFlexibleApplyMgrMapper;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.vo.WtmFlexibleApplDetVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,29 +16,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.isu.ifw.entity.WtmFlexibleApplyDet;
-import com.isu.ifw.entity.WtmFlexibleApplyMgr;
-import com.isu.ifw.entity.WtmFlexibleEmp;
-import com.isu.ifw.entity.WtmFlexibleStdMgr;
-import com.isu.ifw.entity.WtmPropertie;
-import com.isu.ifw.entity.WtmRule;
-import com.isu.ifw.entity.WtmWorkDayResult;
-import com.isu.ifw.entity.WtmWorkPattDet;
-import com.isu.ifw.mapper.WtmFlexibleApplMapper;
-import com.isu.ifw.mapper.WtmFlexibleApplyMgrMapper;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.repository.WtmFlexibleApplyDetRepository;
-import com.isu.ifw.repository.WtmFlexibleApplyMgrRepository;
-import com.isu.ifw.repository.WtmFlexibleEmpRepository;
-import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
-import com.isu.ifw.repository.WtmPropertieRepository;
-import com.isu.ifw.repository.WtmRuleRepository;
-import com.isu.ifw.repository.WtmWorkCalendarRepository;
-import com.isu.ifw.repository.WtmWorkDayResultRepository;
-import com.isu.ifw.repository.WtmWorkPattDetRepository;
-import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.ReturnParam;
-import com.isu.ifw.vo.WtmFlexibleApplDetVO;
+import javax.annotation.Resource;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service("flexibleApplyMgrService")
 public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrService{
@@ -97,6 +76,9 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 
 	@Autowired
 	WtmWorkPattDetRepository wtmWorkPattDetRepository;
+
+	@Autowired
+	WtmFlexibleApplyRepository flexibleApplyRepo;
 	
 	@Override
 	public List<Map<String, Object>> getApplyList(Long tenantId, String enterCd, String sYmd) {
@@ -363,6 +345,108 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 			wtmFlexibleApplyMgrMapper.updateFlexibleApplyAll(flexibleApplyId);
 		}
 	}
+
+	@Override
+	@Async("threadPoolTaskExecutor")
+	public void setApplyAsync2(WtmFlexibleApply flexibleApply, List<Map<String, Object>> searchList, List<Map<String, Object>> ymdList, String id, String workTypeCd) throws ParseException {
+
+		int cnt = 0;
+		ReturnParam rp = new ReturnParam();
+		String resultYn = WtmApplService.WTM_FLEXIBLE_APPLY_N;
+
+		Long flexibleApplyId = flexibleApply.getFlexibleApplyId();
+		Long tenantId = flexibleApply.getTenantId();
+		String enterCd = flexibleApply.getEnterCd();
+
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("userId", workTypeCd);
+
+
+		try {
+			//오류체크까지 하고 리턴
+			for(int i=0; i < searchList.size(); i++) {
+				Map<String, Object> validateMap = new HashMap<>();
+				validateMap = searchList.get(i);
+				String sabun = validateMap.get("sabun").toString();
+
+				WtmPropertie propertie = propertieRepo.findByTenantIdAndEnterCdAndInfoKey(tenantId, enterCd, "OPTION_FLEXIBLE_EMP_EXCEPT_TARGET");
+
+				String ruleValue = null;
+				String ruleType = null;
+				if(propertie!=null && propertie.getInfoValue()!=null && !"".equals(propertie.getInfoValue())) {
+					WtmRule rule = ruleRepo.findByTenantIdAndEnterCdAndRuleNm(tenantId, enterCd, propertie.getInfoValue());
+					if(rule!=null && rule.getRuleValue()!=null && !"".equals(rule.getRuleValue())) {
+						ruleType = rule.getRuleType();
+						ruleValue = rule.getRuleValue();
+					}
+				}
+
+				boolean isTarget = false;
+				if(ruleValue!=null)
+					isTarget = flexibleEmpService.isRuleTarget(tenantId, enterCd, sabun, ruleType, ruleValue);
+
+				System.out.println("sabun : "+ sabun + " / isTarget: " + isTarget);
+
+				if(!isTarget) {
+					for(int j=0; j < ymdList.size(); j++) {
+						// 반복 구간별 밸리데이션 체크 및 유연근무기간 입력
+						paramMap.put("sYmd", ymdList.get(j).get("symd"));
+						paramMap.put("eYmd", ymdList.get(j).get("eymd"));
+
+						//탄근제 validation 체크를 위한 param
+						paramMap.put("adminYn", "Y");
+						paramMap.put("flexibleApplyId", flexibleApplyId);
+
+						rp = wtmApplService.validate(tenantId, enterCd, sabun, workTypeCd, paramMap);
+						if(rp.getStatus().equals("FAIL")) {
+							throw new Exception(rp.get("message").toString());
+						}
+
+						validateMap.put("flexibleApplyId", flexibleApplyId);
+						validateMap.put("workTypeCd", workTypeCd);
+					}
+				}
+
+			}
+
+
+
+			// 오류검증이 없으면 저장하고 갱신해야함.
+			// 검증 오류가 없으면 flexible_emp에 저장하고 갱신용로직을 불러야함
+			for(int i=0; i< searchList.size(); i++) {
+				int rs = flexibleEmpService.setApplyForOne(searchList.get(i), ymdList);
+				if(rs == 1) {
+					//이사람 성공하면 Y
+					long flexibleApplyTempId = Long.parseLong(searchList.get(i).get("flexibleApplyTempId").toString());
+					flexibleApplyId = Long.parseLong(searchList.get(i).get("flexibleApplyId").toString());
+					wtmFlexibleApplyMgrMapper.updateFlexibleEmpTemp(flexibleApplyTempId);
+					logger.debug("[setApply] 확정성공 대상" + searchList.get(i).toString());
+
+					cnt++;
+				}
+			}
+
+			//전체성공
+			if(cnt == searchList.size()) {
+				wtmFlexibleApplyMgrMapper.updateFlexibleApplyAll(flexibleApplyId);
+				resultYn = WtmApplService.WTM_FLEXIBLE_APPLY_Y;
+			}
+
+		}catch (Exception e){
+			e.printStackTrace();
+			resultYn = WtmApplService.WTM_FLEXIBLE_APPLY_N;
+			flexibleApply.setApplyYn(resultYn);
+			flexibleApply.setNote(rp.get("message").toString());
+		}finally {
+			flexibleApplyRepo.save(flexibleApply);
+		}
+
+
+
+	}
+
 	
 	@Override
 	public int setApply(List<Map<String, Object>> searchList, List<Map<String, Object>> ymdList) {
