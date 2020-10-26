@@ -353,6 +353,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		int cnt = 0;
 		ReturnParam rp = new ReturnParam();
 		String resultYn = WtmApplService.WTM_FLEXIBLE_APPLY_N;
+		flexibleApply.setApplyYn(resultYn);
 
 		Long flexibleApplyId = flexibleApply.getFlexibleApplyId();
 		Long tenantId = flexibleApply.getTenantId();
@@ -387,7 +388,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				if(ruleValue!=null)
 					isTarget = flexibleEmpService.isRuleTarget(tenantId, enterCd, sabun, ruleType, ruleValue);
 
-				System.out.println("sabun : "+ sabun + " / isTarget: " + isTarget);
+				logger.debug("sabun : "+ sabun + " / isTarget: " + isTarget);
 
 				if(!isTarget) {
 					for(int j=0; j < ymdList.size(); j++) {
@@ -423,7 +424,6 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 					flexibleApplyId = Long.parseLong(searchList.get(i).get("flexibleApplyId").toString());
 					wtmFlexibleApplyMgrMapper.updateFlexibleEmpTemp(flexibleApplyTempId);
 					logger.debug("[setApply] 확정성공 대상" + searchList.get(i).toString());
-
 					cnt++;
 				}
 			}
