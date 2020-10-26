@@ -1002,10 +1002,12 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			return;
 		
 		List<WtmFlexibleApplDet> ds = wtmFlexibleApplDetRepo.findByFlexibleApplId(flexibleAppl.getFlexibleApplId());
+
 		logger.debug("ds size : " + ds.size());
 		if(ds != null && ds.size() > 0) {
-			logger.debug("return");
-			return;
+			wtmFlexibleApplDetRepo.deleteAll(ds);
+			//logger.debug("return");
+			//return;
 		}
 		logger.debug("????");
 		
@@ -1078,6 +1080,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			if(startPattSeq == 0) {
 				startPattSeq = pattSize;
 			}
+			
 			while(chkDate.compareTo(applEDate) <= 0) {
 				logger.debug("chkDate : " + chkDate);
 				logger.debug("applEDate : " + applEDate);

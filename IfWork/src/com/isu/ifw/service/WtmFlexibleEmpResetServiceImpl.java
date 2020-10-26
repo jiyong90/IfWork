@@ -154,11 +154,13 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 						) {
 					if(!flexEmp.getWorkTypeCd().equals("DIFF")) {
 						logger.debug("선택근무제이다.");
+						/*
 						List<WtmWorkDayResult> delResults = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndApprMinuteIsNull(tenantId, enterCd, sabun, loopSymd, loopEymd);
 						if(delResults != null && delResults.size() > 0) {
 							logger.debug("기본근무가 아닌 근무제 기간엔 마감되지 않은 정보는 초기화한다 : " + delResults.size());
 							wtmWorkDayResultRepo.deleteAll(delResults);
 						}
+						*/
 					}
 					this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), loopSymd, loopEymd, WtmFlexibleEmpResetService.WORK_TYPE_FLEX, null, userId);
 
