@@ -587,16 +587,19 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			}
 		}
 
-		//  연차현황 조회
-		Map<String, Object> annudalInfo = flexEmpMapper.getAnnualUsed(paramMap);
 		String totalCnt = "0" , usedCnt = "0", noUsedCnt = "0";
-
-
-		if(annudalInfo != null){
-			totalCnt = annudalInfo.get("totalCnt") != null ? annudalInfo.get("totalCnt").toString() : "0";
-			usedCnt = annudalInfo.get("usedCnt") != null ? annudalInfo.get("usedCnt").toString() : "0";
-			noUsedCnt = annudalInfo.get("noUsedCnt") != null ? annudalInfo.get("noUsedCnt").toString() : "0";
+		if(tenantId == 95) {
+			Map<String, Object> annudalInfo = flexEmpMapper.getAnnualUsed(paramMap);
+			
+			
+			if(annudalInfo != null){
+				totalCnt = annudalInfo.get("totalCnt") != null ? annudalInfo.get("totalCnt").toString() : "0";
+				usedCnt = annudalInfo.get("usedCnt") != null ? annudalInfo.get("usedCnt").toString() : "0";
+				noUsedCnt = annudalInfo.get("noUsedCnt") != null ? annudalInfo.get("noUsedCnt").toString() : "0";
+			}
+			
 		}
+		//  연차현황 조회
 
 		dayInfo.put("annualTotalCnt", totalCnt);
 		dayInfo.put("annualUsedCnt", usedCnt);
@@ -2177,23 +2180,39 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			}
 			
 			//퇴근 자동 생성
-			if(!flexStdMgr.getDayCloseType().equals("N") && calendar.getEntryEdate() == null 
-					&& (
-							(flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
-							|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)  ) 
-							    )
-						)
-			){
-				if(r.getPlanEdate() != null) {
-					if(dayPlanEdate == null || dayPlanEdate.compareTo(r.getPlanEdate()) < 0) {
-						dayPlanEdate = r.getPlanEdate();
-						logger.debug("4.(퇴근)타각 자동 업데이트. dayPlanEdate : " +  dayPlanEdate); 
+			if(!flexStdMgr.getDayCloseType().equals("N")) {
+				
+				if(tenantId == 102) { //그린캐미컬 타각정보 강제로 계획시간으로 엎어버리기
+					if(dayPlanSdate != null) {
+						if( (flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
+								|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)  || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) ))){
+							
+							if(dayPlanEdate == null || dayPlanEdate.compareTo(r.getPlanEdate()) < 0)  {
+								if(calendar.getEntryEdate() != null && r.getPlanEdate().compareTo(calendar.getEntryEdate()) < 0) {
+									dayPlanEdate = calendar.getEntryEdate();
+								} else {
+									dayPlanEdate = r.getPlanEdate();
+								}
+							}
+						}
 					}
-				}else {
-					logger.debug("4.(퇴근)타각 자동 업데이트.  r.getPlanEdate() is null : " + r.getSabun() + " : " + r.getEnterCd() + " : " + r.getTimeTypeCd());
+				} else {
+					if(calendar.getEntryEdate() == null
+							&& ( (flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
+							|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)|| r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)  || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT)							|| r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) )))){
+						if(r.getPlanEdate() != null) {
+							if(dayPlanEdate == null || dayPlanEdate.compareTo(r.getPlanEdate()) < 0) {
+								dayPlanEdate = r.getPlanEdate();
+								logger.debug("4.(퇴근)타각 자동 업데이트. dayPlanEdate : " +  dayPlanEdate);
+							}
+						}else {
+							logger.debug("4.(퇴근)타각 자동 업데이트.  r.getPlanEdate() is null : " + r.getSabun() + " : " + r.getEnterCd() + " : " + r.getTimeTypeCd());
+						}
+					}
 				}
-			}
 
+			}
+			
 		} 
 		
 		if(!isTaaWork) {
