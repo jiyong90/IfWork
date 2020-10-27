@@ -559,7 +559,7 @@ public interface WtmFlexibleEmpMapper {
 	 * @param paramMap { tenantId, enterCd, ymd}
 	 * @return
 	 */
-	public Map<String, Object> getWeekStartEndYmd(Map<String, Object> paramMap);
+	public List<Map<String, Object>> getWeekStartEndYmd(Map<String, Object> paramMap);
 
 	/**
 	 * 연차 사용내역 조회
