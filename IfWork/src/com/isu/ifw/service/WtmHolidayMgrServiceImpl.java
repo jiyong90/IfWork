@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.mapper.WtmHolidayMapper;
@@ -44,6 +45,7 @@ public class WtmHolidayMgrServiceImpl implements WtmHolidayMgrService{
 	}
 	
 	@Override
+	@Transactional
 	public int setHolidayList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) {
 		int cnt = 0;
 		try {
