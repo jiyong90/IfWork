@@ -3936,26 +3936,36 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 	
 	// 근무제 통계 데이터 생성
-	@Override
-	public Map<String, Object> createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
-		
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		paramMap.put("pId", userId);
-		//flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
-		
-		String ymd = "";
-		if(paramMap.containsKey("symd")) {
-			ymd = paramMap.get("symd")+"";
-		}else if(paramMap.containsKey("sYmd")) {
-			ymd = paramMap.get("sYmd")+"";
-		}else if(paramMap.containsKey("ymd")) {
-			ymd = paramMap.get("ymd")+"";
+		@Override
+		public Map<String, Object> createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
+			
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+			paramMap.put("sabun", sabun);
+			paramMap.put("pId", userId);
+			//flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
+			
+			String ymd = "";
+			String symd = "";
+			String eymd = "";
+			if(paramMap.containsKey("symd")) {
+				symd = paramMap.get("symd")+"";
+			}
+			if(paramMap.containsKey("eymd")) {
+				eymd = paramMap.get("eymd")+"";
+			}
+			if(paramMap.containsKey("ymd")) {
+				ymd = paramMap.get("ymd")+"";
+				if(symd== null || "".equals(symd)) {
+					symd = ymd;
+				}
+				if(eymd== null || "".equals(eymd)) {
+					eymd = ymd;
+				}
+			}
+			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, symd, eymd);
+			return flexEmpMapper.getWorkTermMinute(paramMap);
 		}
-		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, ymd, ymd);
-		return flexEmpMapper.getWorkTermMinute(paramMap);
-	}
 	
 	@Override
 	public ReturnParam getOtMinute(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
