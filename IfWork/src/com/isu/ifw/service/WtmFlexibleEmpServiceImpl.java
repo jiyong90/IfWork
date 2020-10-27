@@ -5123,7 +5123,15 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("sabun", sabun);
 		paramMap.put("ymd", ymd);
 		
+		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> resMap = flexEmpMapper.getWorktermByFleibleEmp(paramMap);
+		try {
+			System.out.println("paramMap : " + mapper.writeValueAsString(paramMap));
+			System.out.println("resMap : " + mapper.writeValueAsString(resMap));
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		if(resMap != null) {
 			resMap.put("restOtMinute", Integer.parseInt(resMap.get("totalOtMinute")+"") - Integer.parseInt(resMap.get("apprOtMinute")+""));
 			resMap.put("restWorkMinute", Integer.parseInt(resMap.get("totalWorkMinute")+"") - Integer.parseInt(resMap.get("apprWorkMinute")+""));
