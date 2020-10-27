@@ -2566,7 +2566,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		Double otMinute = 0.0;
 		if(workDayCnt > 0) {
 			logger.debug("workMinute : " + workMinute);
-			if(workTypeCd.equals("B")) {
+			if(calcType.equals("B")) {
 				workMinute = (double) (workDayCnt * 8 * 60);
 			}else {
 				workMinute = (Math.floor((cals.size() * weekWorkMinite / 7)) * 60);
