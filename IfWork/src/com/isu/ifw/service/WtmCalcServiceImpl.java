@@ -2569,7 +2569,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			if(workTypeCd.equals("B")) {
 				workMinute = (double) (workDayCnt * 8 * 60);
 			}else {
-				workMinute = (Math.floor((workDayCnt * weekWorkMinite / 7)) * 60);
+				workMinute = (Math.floor((cals.size() * weekWorkMinite / 7)) * 60);
 			}
 
 			/*
@@ -2587,7 +2587,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			logger.debug("*** calc workMinute : " + workMinute);
 			
 			logger.debug("weekOtMinute : " + weekOtMinute);
-			otMinute = Math.floor(workDayCnt * weekOtMinute / 7) * 60;
+			otMinute = Math.floor(cals.size() * weekOtMinute / 7) * 60;
 			logger.debug("otMinute : " + otMinute);
 			otMinute = Math.floor(otMinute) + ( ( otMinute -  Math.floor(otMinute))  * 60 );
 			logger.debug("*** calc otMinute : " + otMinute);
