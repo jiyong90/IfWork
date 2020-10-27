@@ -1,6 +1,5 @@
 package com.isu.ifw.service;
 
-import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -2306,6 +2305,15 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			laaResult.setApplId(null);
 			laaResult.setTimeTypeCd(WtmApplService.TIME_TYPE_LLA);
 			laaResult.setTaaCd(absenceTaaCode.getTaaCd());
+			laaResult.setPlanSdate(minPlanSdate_BASE);
+			laaResult.setPlanEdate(maxPlanEdate_BASE);
+			laaResult.setApprSdate(minPlanSdate_BASE);
+			laaResult.setApprEdate(maxPlanEdate_BASE);
+			Map<String, Object> calcMap = calcService.calcApprMinute(minPlanSdate_BASE, maxPlanEdate_BASE, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+			int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+			laaResult.setPlanMinute(apprMinute);
+			laaResult.setApprMinute(apprMinute);
+			
 			laaResult.setUpdateId(WtmApplService.TIME_TYPE_LLA + absenceTaaCode.getTaaCd());
 			workDayResultRepo.save(laaResult);
 			isAbsence = true;
@@ -2333,7 +2341,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				laaResult.setTaaCd(leaveTaaCode.getTaaCd());
 				laaResult.setUpdateId(WtmApplService.TIME_TYPE_LLA + leaveTaaCode.getTaaCd());
 				workDayResultRepo.save(laaResult);
-				
 			}
 			
 			// 계획 시작 시간보다 인정시작시간이 늦을 경우 BASE중에 
@@ -2420,9 +2427,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							lateResult.setPlanEdate(calcEdate);
 							lateResult.setApprSdate(calcSdate);
 							lateResult.setApprEdate(calcEdate);
-							SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
-							
-							int apprMinute = calcService.WtmCalcMinute(sdf.format(calcSdate), sdf.format(calcEdate), null, null, flexStdMgr.getUnitMinute());
+							//SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+							Map<String, Object> calcMap = calcService.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+							int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
 							lateResult.setPlanMinute(apprMinute);
 							lateResult.setApprMinute(apprMinute);
 							lateResult.setUpdateDate(new Date());
@@ -2587,7 +2594,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	
 			//결근은 최상단에서 제외
 			if(calendar.getEntrySdate() != null && calendar.getEntryEdate() != null && timeCdMgr.getLeaveChkYn().equals("Y")) {
-				
+				/*
 				dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
 				//Date maxPlanEdate = null;
 				if(dayResults != null && dayResults.size() > 0) {
@@ -2606,6 +2613,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						
 					}
 				}
+				*/
 				logger.debug("10. ***********************  " + maxPlanEdate_BASE + ",  " + calendar.getEntryEdate());
 				if(minPlanSdate_BASE != null && !minPlanSdate_BASE.equals("") && maxPlanEdate_BASE != null  && !maxPlanEdate_BASE.equals("")  && maxPlanEdate_BASE.compareTo(calendar.getEntryEdate()) > 0) {
 					
@@ -2624,6 +2632,17 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					laaResult.setYmd(calendar.getYmd());
 					laaResult.setSabun(calendar.getSabun());
 					laaResult.setApplId(null);
+					Date calcSdate = calcService.WorkTimeCalcApprDate(calendar.getEntryEdate(), calendar.getEntryEdate(), flexStdMgr.getUnitMinute(), "S");
+					Date calcEdate = calcService.WorkTimeCalcApprDate(maxPlanEdate_BASE, maxPlanEdate_BASE, flexStdMgr.getUnitMinute(), "E");
+					laaResult.setPlanSdate(calcSdate);
+					laaResult.setPlanEdate(calcEdate);
+					laaResult.setApprSdate(calcSdate);
+					laaResult.setApprEdate(calcEdate);
+					Map<String, Object> calcMap = calcService.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+					int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+					laaResult.setPlanMinute(apprMinute);
+					laaResult.setApprMinute(apprMinute);
+					
 					laaResult.setTimeTypeCd(WtmApplService.TIME_TYPE_LLA);
 					laaResult.setTaaCd(leaveTaaCode.getTaaCd());
 					laaResult.setUpdateId(WtmApplService.TIME_TYPE_LLA + leaveTaaCode.getTaaCd());
