@@ -2238,38 +2238,41 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						}else if(Integer.parseInt(eymd) >= Integer.parseInt(emp.getSymd()) && Integer.parseInt(eymd) <= Integer.parseInt(emp.getEymd()) ) {
 							weekEdate = eymd;
 						}
+						logger.debug("weekSdate : " + weekSdate);
+						logger.debug("weekEdate : " + weekEdate);
 						if(!"".equals(weekSdate) && !"".equals(weekEdate)) {
 							WtmFlexibleStdMgr flexibleStdMgr = flexibleStdMgrRepo.findById(emp.getFlexibleStdMgrId()).get();
-							List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenOrderByYmdAsc(tenantId, enterCd, sabun, symd, eymd);
+							List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenOrderByYmdAsc(tenantId, enterCd, sabun, weekSdate, weekEdate);
+							logger.debug("results : " + results.size());
+							
+							int workDayCnt = 0;
+	
+							int avlMinute = 0;
+							int planWorkMinute = 0;
+							int planOtMinute = 0;
+							
+							int apprWorkMinute = 0;
+							int apprOtMinute = 0;
+							
+							int planExMinute = 0;
+							int planOtExMinute = 0;
+							
+							int apprExMinute = 0;
+							int apprOtExMinute = 0;
+							
+							int nowWorkMinute = 0;
+							int nowOtMinute = 0;
+							
+							int oMinute = 0;
+							int nMinute = 0;
+							int eOMinute = 0;
+							int eNMinute = 0;
+							
+							//int holOMinute = 0;
+							
+							SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+							String today = sdf.format(new Date());
 							if(results != null && results.size() > 0) {
-								int workDayCnt = 0;
-		
-								int avlMinute = 0;
-								int planWorkMinute = 0;
-								int planOtMinute = 0;
-								
-								int apprWorkMinute = 0;
-								int apprOtMinute = 0;
-								
-								int planExMinute = 0;
-								int planOtExMinute = 0;
-								
-								int apprExMinute = 0;
-								int apprOtExMinute = 0;
-								
-								int nowWorkMinute = 0;
-								int nowOtMinute = 0;
-								
-								int oMinute = 0;
-								int nMinute = 0;
-								int eOMinute = 0;
-								int eNMinute = 0;
-								
-								//int holOMinute = 0;
-								
-								SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-								String today = sdf.format(new Date());
-								
 								for(WtmWorkDayResult result : results) {
 									//WtmWorkCalendar cal = workCalandarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, result.getYmd());
 									//주 기간내에 여러개의 근무제가 속할 수 있다. 근무제 기간별로 계산되어야한다. 
@@ -2437,50 +2440,51 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 									}
 									workDayCnt++;
 								}
-								/*
-								(XX.APPR_WORK_MINUTE + XX.APPR_OT_MINUTE - XX.APPR_EX_MINUTE) / XX.WORK_DAYS
-								, XX.PLAN_WORK_MINUTE - XX.PLAN_EX_MINUTE
-								, XX.PLAN_OT_MINUTE- XX.PLAN_OT_EX_MINUTE 
-								, XX.APPR_WORK_MINUTE- XX.APPR_EX_MINUTE
-								, XX.APPR_OT_MINUTE - XX.APPR_OT_EX_MINUTE
-								, XX.NOW_WORK_MINUTE - XX.PLAN_EX_MINUTE
-								, XX.NOW_OT_MINUTE- XX.PLAN_OT_EX_MINUTE
-								*/
-								avlMinute = (apprWorkMinute + apprOtMinute - apprExMinute) / workDayCnt;
-								
-								
-								WtmWorkTermTime workTermTime = new WtmWorkTermTime();
-								workTermTime.setTenantId(tenantId);
-								workTermTime.setEnterCd(enterCd);
-								workTermTime.setSabun(sabun);
-								workTermTime.setWorkTypeCd(emp.getWorkTypeCd());
-								workTermTime.setFlexibleSdate(emp.getSymd());
-								workTermTime.setFlexibleEdate(emp.getEymd());
-								workTermTime.setWeekSdate(weekSdate);
-								workTermTime.setWeekEdate(weekEdate);
-								workTermTime.setAvlMinute(avlMinute);
-								workTermTime.setPlanWorkMinute(planWorkMinute - planExMinute);
-								workTermTime.setPlanOtMinute(planOtMinute - planOtExMinute);
-								workTermTime.setApprWorkMinute(apprWorkMinute - apprExMinute);
-								workTermTime.setApprOtMinute(apprOtMinute - apprOtExMinute);
-								workTermTime.setNowWorkMinute(nowWorkMinute - planExMinute);
-								workTermTime.setNowOtMinute(nowOtMinute - planOtExMinute);
-								workTermTime.setUpdateDate(new Date());
-								workTermTime.setNote("");
-								workTermTime.setUpdateId("workTermTime");
-								
-								/**
-								 * break에 대한 부분은 없다.. 빗썸에서 임의로 사용..
-								 */
-								workTermTime.setoMinute(oMinute);
-								workTermTime.setnMinute(nMinute);
-								workTermTime.seteOMinute(eOMinute);
-								workTermTime.seteNMinute(eNMinute);
-								logger.debug("workTermTime : " + workTermTime.toString());
-								workTermTimeRepo.save(workTermTime);
 							}
+							/*
+							(XX.APPR_WORK_MINUTE + XX.APPR_OT_MINUTE - XX.APPR_EX_MINUTE) / XX.WORK_DAYS
+							, XX.PLAN_WORK_MINUTE - XX.PLAN_EX_MINUTE
+							, XX.PLAN_OT_MINUTE- XX.PLAN_OT_EX_MINUTE 
+							, XX.APPR_WORK_MINUTE- XX.APPR_EX_MINUTE
+							, XX.APPR_OT_MINUTE - XX.APPR_OT_EX_MINUTE
+							, XX.NOW_WORK_MINUTE - XX.PLAN_EX_MINUTE
+							, XX.NOW_OT_MINUTE- XX.PLAN_OT_EX_MINUTE
+							*/
+							if(workDayCnt > 0)
+								avlMinute = (apprWorkMinute + apprOtMinute - apprExMinute) / workDayCnt;
 							
+							
+							WtmWorkTermTime workTermTime = new WtmWorkTermTime();
+							workTermTime.setTenantId(tenantId);
+							workTermTime.setEnterCd(enterCd);
+							workTermTime.setSabun(sabun);
+							workTermTime.setWorkTypeCd(emp.getWorkTypeCd());
+							workTermTime.setFlexibleSdate(emp.getSymd());
+							workTermTime.setFlexibleEdate(emp.getEymd());
+							workTermTime.setWeekSdate(weekSdate);
+							workTermTime.setWeekEdate(weekEdate);
+							workTermTime.setAvlMinute(avlMinute);
+							workTermTime.setPlanWorkMinute(planWorkMinute - planExMinute);
+							workTermTime.setPlanOtMinute(planOtMinute - planOtExMinute);
+							workTermTime.setApprWorkMinute(apprWorkMinute - apprExMinute);
+							workTermTime.setApprOtMinute(apprOtMinute - apprOtExMinute);
+							workTermTime.setNowWorkMinute(nowWorkMinute - planExMinute);
+							workTermTime.setNowOtMinute(nowOtMinute - planOtExMinute);
+							workTermTime.setUpdateDate(new Date());
+							workTermTime.setNote("");
+							workTermTime.setUpdateId("workTermTime");
+							
+							/**
+							 * break에 대한 부분은 없다.. 빗썸에서 임의로 사용..
+							 */
+							workTermTime.setoMinute(oMinute);
+							workTermTime.setnMinute(nMinute);
+							workTermTime.seteOMinute(eOMinute);
+							workTermTime.seteNMinute(eNMinute);
+							logger.debug("workTermTime : " + workTermTime.toString());
+							workTermTimeRepo.save(workTermTime);
 						}
+							
 						
 					}
 				}else {
