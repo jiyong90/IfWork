@@ -3934,7 +3934,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		}else if(paramMap.containsKey("ymd")) {
 			ymd = paramMap.get("ymd")+"";
 		}
-		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, ymd);
+		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, ymd, ymd);
 		return flexEmpMapper.getWorkTermMinute(paramMap);
 	}
 	
@@ -4636,7 +4636,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		flexibleEmpResetSerevice.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, searchSabun.get("useSymd")+"", searchSabun.get("useEymd")+"", "ADMIN");
 		logger.debug("[setApply] initWtmFlexibleEmpOfWtmWorkDayResult ");
 		
-		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, searchSabun.get("useSymd")+"");
+		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, searchSabun.get("useSymd")+"", searchSabun.get("useEymd")+"");
 		//flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(searchSabun);
 		logger.debug("[setApply] createWorkTermBySabunAndSymdAndEymd ");
 		

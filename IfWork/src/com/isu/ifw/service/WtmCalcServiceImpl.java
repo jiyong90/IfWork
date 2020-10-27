@@ -2169,13 +2169,14 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	
 	@Transactional
 	@Override
-	public void P_WTM_FLEXIBLE_EMP_WORKTERM_C(Long tenantId, String enterCd, String sabun, String ymd) {
+	public void P_WTM_FLEXIBLE_EMP_WORKTERM_C(Long tenantId, String enterCd, String sabun, String sYmd, String eYmd) {
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
-		paramMap.put("ymd", ymd);
+		paramMap.put("sYmd", sYmd);
+		paramMap.put("eYmd", eYmd);
 		//주간 시작 종료일을 구한다. 
-		logger.debug(tenantId + " : " + enterCd + " : " + ymd + " 의 주간 시작 종료일을 구한다.");
+		logger.debug(tenantId + " : " + enterCd + " : " + sYmd + " / " + eYmd + " 의 주간 시작 종료일을 구한다.");
 		Map<String, Object> weekInfoMap = wtmFlexibleEmpMapper.getWeekStartEndYmd(paramMap);
 		
 		if(weekInfoMap != null && weekInfoMap.containsKey("weekSymd") && weekInfoMap.get("weekSymd") != null && !"".equals(weekInfoMap.get("weekSymd")+"") 

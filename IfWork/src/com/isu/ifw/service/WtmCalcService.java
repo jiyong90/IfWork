@@ -43,7 +43,7 @@ public interface WtmCalcService {
 	
 	public Map<String, Integer> calcDayCnt(Long tenantId, String enterCd, String symd, String eymd);
 	
-	public void P_WTM_FLEXIBLE_EMP_WORKTERM_C(Long tenantId, String enterCd, String sabun, String ymd);
+	public void P_WTM_FLEXIBLE_EMP_WORKTERM_C(Long tenantId, String enterCd, String sabun, String sYmd, String eYmd);
 	
 	/**
 	 * 선근제 workMinute otMinute 값을 구한다. 

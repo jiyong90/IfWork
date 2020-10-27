@@ -519,7 +519,7 @@ public class WtmCompCanApplServiceImpl implements WtmApplService {
 						}
 						
 						// 근무시간합산은 재정산한다
-		        		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, compMap.get("ymd").toString());
+		        		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, compMap.get("ymd").toString(), compMap.get("ymd").toString());
 					}
 				} 
 			}

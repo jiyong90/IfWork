@@ -2751,7 +2751,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					}
 					
 					// 근무시간합산은 재정산한다 
-		    		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, d);
+		    		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, d, d);
 	
 					cal1.add(Calendar.DATE, 1);
 					

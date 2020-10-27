@@ -224,7 +224,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
         		logger.debug("schedule_closeday tenantId : "+ tenantId + " enterCd : " + enterCd + " sabun : " + sabun + ", ymd : " + closeYmd + ", closeType : " + closeType);
         		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, closeYmd, closeYmd, sabun);
         		
-        		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, closeYmd);
+        		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, closeYmd, closeYmd);
         		//wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 			}
 			logger.debug("schedule_closeday tenantId : "+ tenantId + " tot cnt" + closeList.size() + " end ");
@@ -343,7 +343,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 				// 일마감생성
 				WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, closeymd, closeymd, sabun);
 				// 근무계획시간 합산
-				calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, closeymd);
+				calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, closeymd, closeymd);
 				//wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(l);
 			}
 			logger.debug("schedule_closeUnplaned tenantId : "+ tenantId + " tot cnt" + closeList.size() + " end ");
