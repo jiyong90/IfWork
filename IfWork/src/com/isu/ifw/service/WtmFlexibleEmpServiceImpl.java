@@ -4777,6 +4777,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				//마감데이터 재생성
 				calcApprDayInfo(tenantId, enterCd, paramSymd, paramEymd, sabun);
 				
+				String symd = sdf.format(sDate);
+				String eymd = sdf.format(eDate);
 				paramMap.put("tenantId", tenantId);
 				paramMap.put("enterCd", enterCd);
 				paramMap.put("sabun", sabun);
@@ -4784,7 +4786,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				paramMap.put("eymd", sdf.format(eDate));
 				paramMap.put("pId", "finishDay");
 				
-				flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
+				calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, symd, eymd);
+				
+				//flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(paramMap);
 			} catch (Exception e) {
 				rp.setFail("일마감 처리중 오류가 발생하였습니다.");
 				e.printStackTrace();
