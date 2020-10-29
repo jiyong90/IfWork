@@ -300,6 +300,7 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 				tmpMap.put("endHm", endHm);
 				tmpMap.put("workTimeCode", workTimeCode);
 				tmpMap.put("requestCd", "");    //  validation 기본 키값
+				tmpMap.put("applId", work.get("applId")); 
 
 				HashMap<String, Date> dateMap = new HashMap<String, Date>();
 				dateMap.put("startDt", inFormat.parse(taaDate+startHm));
