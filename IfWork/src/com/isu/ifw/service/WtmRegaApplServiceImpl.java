@@ -309,44 +309,44 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 				ReturnParam valiRp = new ReturnParam();
 				valiRp = validate2(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, tmpMap);
 
-				if (valiRp != null && valiRp.getStatus() != null && "OK".equals(valiRp.getStatus())) {
+				if (valiRp != null && valiRp.getStatus() != null && !"OK".equals(valiRp.getStatus())) {
 					rp = valiRp;
 				}
 
 			}
 
+			if (rp != null && rp.getStatus() != null && "OK".equals(rp.getStatus())) {
+				for (int i = 1; i < dateList.size(); i++) {
 
-			for (int i = 1; i < dateList.size(); i++) {
+					HashMap<String, Date> dateMap1 = dateList.get(i);
 
-				HashMap<String, Date> dateMap1 = dateList.get(i);
+					Date dtt1 = dateList.get(i - 1).get("startDt");
+					Date dtt2 = dateList.get(i - 1).get("entDt");
 
-				Date dtt1 = dateList.get(i - 1).get("startDt");
-				Date dtt2 = dateList.get(i - 1).get("entDt");
-
-				if (checkBetween(dtt1, dateMap1.get("startDt"), dateMap1.get("entDt"))) {
-					isDuplicateDt = true;
-				}
-				if (checkBetween(dtt2, dateMap1.get("startDt"), dateMap1.get("entDt"))) {
-					isDuplicateDt = true;
-				}
-
-				for (int j = i + 1; j < dateList.size(); j++) {
-
-					HashMap<String, Date> dateMap2 = dateList.get(j);
-
-					if (checkBetween(dtt1, dateMap2.get("startDt"), dateMap2.get("entDt"))) {
+					if (checkBetween(dtt1, dateMap1.get("startDt"), dateMap1.get("entDt"))) {
 						isDuplicateDt = true;
 					}
-					if (checkBetween(dtt2, dateMap2.get("startDt"), dateMap2.get("entDt"))) {
+					if (checkBetween(dtt2, dateMap1.get("startDt"), dateMap1.get("entDt"))) {
 						isDuplicateDt = true;
 					}
+
+					for (int j = i + 1; j < dateList.size(); j++) {
+
+						HashMap<String, Date> dateMap2 = dateList.get(j);
+
+						if (checkBetween(dtt1, dateMap2.get("startDt"), dateMap2.get("entDt"))) {
+							isDuplicateDt = true;
+						}
+						if (checkBetween(dtt2, dateMap2.get("startDt"), dateMap2.get("entDt"))) {
+							isDuplicateDt = true;
+						}
+					}
+				}
+
+				if (isDuplicateDt) {
+					rp.setFail("출장/긴급근무 신청기간이 중복됩니다.");
 				}
 			}
-
-			if(isDuplicateDt){
-				rp.setFail("출장/긴급근무 신청기간이 중복됩니다.");
-			}
-
 			
 		} else {
 			rp.setFail("출장/긴급근무 신청데이터가 존재하지 않습니다.");
@@ -435,6 +435,19 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 				ehm = work.get("endHm").toString();
 			}
 
+			//  시작시간이 종료시간보다 작으면 안된다. (단 24:00, 00:00시는 제외)
+			if(!"".equals(shm) && !"".equals(ehm)
+				&& (!"0000".equals(ehm) && !"2400".equals(ehm))){
+				Integer stmInt = Integer.parseInt(shm);
+				Integer etmInt = Integer.parseInt(ehm);
+				if(stmInt > etmInt){
+					rp.setFail("종료시간이 시작시간보다 작습니다.");
+					return rp;
+				}
+
+
+
+			}
 			String applId = ""; //  IF 소스 참조로 빈값으로 대체함.
 			if (work.containsKey("applId")) {
 				applId = work.get("applId") + "";
