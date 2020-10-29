@@ -2291,6 +2291,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 										 */
 										if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)
 											|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA)
+											|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS)
 											|| (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) && "Y".equals(flexibleStdMgr.getTaaTimeYn()) )
 											){
 											if(result.getPlanMinute() == null){
