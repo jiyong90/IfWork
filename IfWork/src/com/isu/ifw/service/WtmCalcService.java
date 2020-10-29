@@ -7,6 +7,7 @@ import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
+import com.isu.ifw.entity.WtmWorktimeClose;
 
 public interface WtmCalcService {
 
@@ -51,4 +52,6 @@ public interface WtmCalcService {
 	 * @return
 	 */
 	public Map<String, Integer> calcFlexibleMinuteByTypeForWorkTypeFlex(WtmFlexibleEmp flexEmp);
+	
+	public void calcWorktimeClose(WtmWorktimeClose worktimeClose , String sabun);
 }

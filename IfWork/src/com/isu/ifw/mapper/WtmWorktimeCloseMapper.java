@@ -36,4 +36,5 @@ public interface WtmWorktimeCloseMapper {
 	
 	public Map<String, Object> getCloseYn(Map<String, Object> paramMap);   
 	
+	public List<Map<String, Object>> getdayCloseTarget(Map<String, Object> paramMap);
 }

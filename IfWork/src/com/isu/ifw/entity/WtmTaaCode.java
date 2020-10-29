@@ -42,6 +42,8 @@ public class WtmTaaCode {
 	private String workYn;
 	@Column(name="WORK_APPR_HOUR")
 	private Integer workApprHour;
+	@Column(name="PAY_YN")
+	private String payYn;
 	@Column(name="NOTE")
 	private String note;
 	@Temporal(TemporalType.TIMESTAMP)
@@ -176,6 +178,13 @@ public class WtmTaaCode {
 		this.taaInfoCd = taaInfoCd;
 	}
 
+	public String getPayYn() {
+		return payYn;
+	}
+	
+	public void setPayYn(String payYn) {
+		this.payYn = payYn;
+	}
 
 	public Date getUpdateDate() {
 		return updateDate;

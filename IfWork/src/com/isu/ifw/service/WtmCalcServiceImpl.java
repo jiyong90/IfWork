@@ -31,8 +31,12 @@ import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.entity.WtmWorkTermTime;
+import com.isu.ifw.entity.WtmWorktimeClose;
+import com.isu.ifw.entity.WtmWorktimeDayClose;
+import com.isu.ifw.entity.WtmWorktimeDayClosePK;
 import com.isu.ifw.mapper.WtmCalcMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmWorktimeCloseMapper;
 import com.isu.ifw.repository.WtmDayMgrRepository;
 import com.isu.ifw.repository.WtmFlexibleEmpRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
@@ -45,6 +49,8 @@ import com.isu.ifw.repository.WtmTimeBreakTimeRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
 import com.isu.ifw.repository.WtmWorkTermTimeRepository;
+import com.isu.ifw.repository.WtmWorktimeDayCloseRepository;
+import com.isu.ifw.repository.WtmWorktimeMonCloseRepository;
 import com.isu.ifw.vo.WtmFlexibleInfoVO;
 
 @Service
@@ -2419,16 +2425,16 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 												
 												switch(result.getTimeTypeCd()) {
 													case WtmApplService.TIME_TYPE_EARLY_OT :
-														oMinute = oMinute + addMinute;
-														break;
-													case WtmApplService.TIME_TYPE_OT :
-														nMinute = nMinute + addMinute;
-														break;
-													case WtmApplService.TIME_TYPE_EARLY_NIGHT :
 														eOMinute = eOMinute + addMinute;
 														break;
-													case WtmApplService.TIME_TYPE_NIGHT :
+													case WtmApplService.TIME_TYPE_OT :
+														oMinute = oMinute + addMinute;
+														break;
+													case WtmApplService.TIME_TYPE_EARLY_NIGHT :
 														eNMinute = eNMinute + addMinute;
+														break;
+													case WtmApplService.TIME_TYPE_NIGHT :
+														nMinute = nMinute + addMinute;
 														break;
 													default:
 														break;
@@ -2607,5 +2613,438 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		
 		return resMap;
 		
+	}
+	
+	@Autowired private WtmWorktimeDayCloseRepository worktimeDayCloseRepo;
+	@Autowired private WtmWorktimeMonCloseRepository worktimeMonCloseRepo;
+	@Autowired private WtmWorktimeCloseMapper worktimeCloseMapper;
+	
+	@Override
+	public void calcWorktimeClose(WtmWorktimeClose worktimeClose , String sabun) {
+		List<WtmWorktimeDayClose> days = null;
+		if(sabun == null) {
+			days = worktimeDayCloseRepo.findByWorktimeCloseId(worktimeClose.getWorktimeCloseId());
+		}else {
+			days = worktimeDayCloseRepo.findByWorktimeCloseIdAndSabun(worktimeClose.getWorktimeCloseId(), sabun);
+		}
+		if(days != null && days.size() > 0) {
+			worktimeDayCloseRepo.deleteAll(days);
+		}
+		
+		Long tenantId = worktimeClose.getTenantId();
+		String enterCd = worktimeClose.getEnterCd();
+		String sYmd = worktimeClose.getSymd();
+		String eYmd = worktimeClose.getEymd();
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("symd", sYmd);
+		paramMap.put("eymd", eYmd);
+		paramMap.put("sabun", sabun);
+		
+		List<Map<String, Object>> targets = worktimeCloseMapper.getdayCloseTarget(paramMap);
+		if(targets != null && targets.size() > 0) {
+			for(Map<String, Object> target : targets) {
+				String empSabun = target.get("sabun")+"";
+				List<WtmFlexibleEmp> emps = flexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndEymdGreaterThanEqualAndSymdLessThanEqual(tenantId, enterCd, empSabun, sYmd, eYmd);
+				Map<String, String> stdMap = new HashMap<String, String>();
+				//쿼리를 최소화 하기 위함. 
+				if(emps != null && emps.size() > 0) {
+					SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+					for(WtmFlexibleEmp emp: emps) {
+						WtmFlexibleStdMgr flexibleStdMgr = flexibleStdMgrRepo.findById(emp.getFlexibleStdMgrId()).get();
+						Calendar cal = Calendar.getInstance();
+						String startYmd = emp.getSymd();
+						if(Integer.parseInt(startYmd) < Integer.parseInt(sYmd)) {
+							startYmd = sYmd;
+						}
+						Date sd = null;
+						try {
+							sd = ymd.parse(startYmd);
+						} catch (ParseException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						String endYmd = emp.getEymd();
+						if(Integer.parseInt(endYmd) > Integer.parseInt(eYmd)) {
+							endYmd = eYmd;
+						}
+						Date ed = null;
+						try {
+							ed = ymd.parse(endYmd);
+						} catch (ParseException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						while(sd.compareTo(ed) <= 0) {
+							stdMap.put(ymd.format(sd), flexibleStdMgr.getTaaTimeYn());
+							stdMap.put(ymd.format(sd)+"workTypeCd", emp.getWorkTypeCd());
+							cal.setTime(sd);
+							cal.add(Calendar.DATE, 1);
+							sd = cal.getTime();
+						}
+					}
+				}
+				ObjectMapper mapper = new ObjectMapper();
+				try {
+					logger.debug("stdMap : " + mapper.writeValueAsString(stdMap));
+				} catch (JsonProcessingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				List<WtmWorkCalendar> cals = workCalandarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenOrderByYmdAsc(tenantId, enterCd, empSabun, sYmd, eYmd);
+				//List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenOrderByYmdAsc(tenantId, enterCd, empSabun, sYmd, eYmd);
+				logger.debug("cals : " + cals.size());
+		//		
+		//		int workDayCnt = 0;
+		//
+		//		int avlMinute = 0;
+		//		int planWorkMinute = 0;
+		//		int planOtMinute = 0;
+		//		
+		//		int apprWorkMinute = 0;
+		//		int apprOtMinute = 0;
+		//		
+		//		int planExMinute = 0;
+		//		int planOtExMinute = 0;
+		//		
+		//		int apprExMinute = 0;
+		//		int apprOtExMinute = 0;
+		//		
+		//		int nowWorkMinute = 0;
+		//		int nowOtMinute = 0;
+		//		
+		//		int oMinute = 0;
+		//		int nMinute = 0;
+		//		int eOMinute = 0;
+		//		int eNMinute = 0;
+		//		
+				//int holOMinute = 0;
+				
+				//SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+				//String today = sdf.format(new Date());
+				if(cals != null && cals.size() > 0) {
+					List<WtmTaaCode> taaCodes = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCdLike(tenantId, enterCd, "BREAK%");
+					WtmTaaCode leaveTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LEAVE);
+					WtmTaaCode lateTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LATE);
+					WtmTaaCode absenceTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_ABSENCE);
+					/*
+					 * MAX(CASE WHEN  TAA_INFO_CD = 'BREAK' THEN TAA_CD ELSE '' END) AS M
+					 , MAX(CASE WHEN  TAA_INFO_CD = 'BREAK_FIXOT' THEN TAA_CD ELSE '' END) AS F
+					 , MAX(CASE WHEN  TAA_INFO_CD = 'BREAK_OT' THEN TAA_CD ELSE '' END) AS O
+					 , MAX(CASE WHEN  TAA_INFO_CD = 'BREAK_REGA' THEN TAA_CD ELSE '' END) AS R
+					 */
+					String M = "";
+					String F = "";
+					String O = "";
+					String R = "";
+					
+					for(WtmTaaCode taaCode : taaCodes) {
+						switch (taaCode.getTaaInfoCd()) {
+							case "BREAK":
+								M = taaCode.getTaaCd();
+								break;
+							case "BREAK_FIXOT":
+								F = taaCode.getTaaCd();
+								break;
+							case "BREAK_OT":
+								O = taaCode.getTaaCd();
+								break;
+							case "BREAK_REGA":
+								R = taaCode.getTaaCd();
+								break;
+							default:
+								break;
+						}
+					}
+					
+					for(WtmWorkCalendar calendar : cals) {
+						String taaTimeYn = stdMap.get(calendar.getYmd());
+						String workTypeCd = stdMap.get(calendar.getYmd()+"workTypeCd");
+						//WtmWorkCalendar calendar = workCalandarRepo.findByTenantIdAndEnterCdAndYmdAndSabun(result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun());
+						List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, empSabun, calendar.getYmd());
+						Map<String, Integer> resMap = this.calcResult(results, taaTimeYn, M, F, O, R, lateTaaCode.getTaaCd(), leaveTaaCode.getTaaCd(), absenceTaaCode.getTaaCd());
+						WtmWorktimeDayClose dayClose = new WtmWorktimeDayClose();
+						WtmWorktimeDayClosePK id = new WtmWorktimeDayClosePK();
+						id.setWorktimeCloseId(worktimeClose.getWorktimeCloseId());
+						id.setSabun(empSabun);
+						id.setYmd(calendar.getYmd());
+						dayClose.setId(id);
+						dayClose.setHolidayYn(calendar.getHolidayYn());
+						dayClose.setAbsenceMinute(resMap.get("absenceMinute"));
+						dayClose.setLateMinute(resMap.get("lateMinute"));
+						dayClose.setLeaveMinute(resMap.get("leaveMinute"));
+						dayClose.setOtMinute( resMap.get("oMinute") + resMap.get("eOMinute") );
+						dayClose.setOtnMinute( resMap.get("nMinute") + resMap.get("eNMinute"));
+						dayClose.setPayMinute(resMap.get("payMinute"));
+						dayClose.setNonpayMinute(resMap.get("nonpayMinute"));
+						dayClose.setSubYn(null);
+						dayClose.setTimeCdMgrId(calendar.getTimeCdMgrId());
+						dayClose.setUpdateId("calcWorktimeClose");
+						dayClose.setWorkTypeCd(workTypeCd);
+						dayClose.setWorkMinute(resMap.get("apprWorkMinute") - resMap.get("apprExMinute"));
+						worktimeDayCloseRepo.save(dayClose);
+					}	
+				//	workDayCnt++;
+				}
+			}
+		}
+		/*
+		(XX.APPR_WORK_MINUTE + XX.APPR_OT_MINUTE - XX.APPR_EX_MINUTE) / XX.WORK_DAYS
+		, XX.PLAN_WORK_MINUTE - XX.PLAN_EX_MINUTE
+		, XX.PLAN_OT_MINUTE- XX.PLAN_OT_EX_MINUTE 
+		, XX.APPR_WORK_MINUTE- XX.APPR_EX_MINUTE
+		, XX.APPR_OT_MINUTE - XX.APPR_OT_EX_MINUTE
+		, XX.NOW_WORK_MINUTE - XX.PLAN_EX_MINUTE
+		, XX.NOW_OT_MINUTE- XX.PLAN_OT_EX_MINUTE
+		*/
+		/*
+		if(workDayCnt > 0)
+			avlMinute = (apprWorkMinute + apprOtMinute - apprExMinute) / workDayCnt;
+		*/
+	
+		//return null;
+	
+		
+	}
+	
+	public Map<String, Integer> calcResult(List<WtmWorkDayResult> results,String taaTimeYn, String M, String F, String O, String R, String late, String leave, String absence){
+		Map<String, Integer> resMap = new HashMap<String, Integer>();
+		SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+		String today = ymd.format(new Date());
+		
+		//int avlMinute = 0;
+		int planWorkMinute = 0;
+		int planOtMinute = 0;
+		
+		int apprWorkMinute = 0;
+		int apprOtMinute = 0;
+		
+		int planExMinute = 0;
+		int planOtExMinute = 0;
+		
+		int apprExMinute = 0;
+		int apprOtExMinute = 0;
+		
+		int nowWorkMinute = 0;
+		int nowOtMinute = 0;
+		
+		int oMinute = 0;
+		int nMinute = 0;
+		int eOMinute = 0;
+		int eNMinute = 0;
+		
+		int lateMinute = 0;
+		int leaveMinute = 0;
+		int absenceMinute = 0;
+		
+		int nonpayMinute = 0;
+		int payMinute = 0;
+		
+		//String taaTimeYn = stdMap.get(result.getYmd());
+		/*
+		 *  SUM(CASE WHEN (X.TIME_TYPE_CD IN ('BASE', 'REGA')) OR (X.TIME_TYPE_CD IN ('TAA') AND X.TAA_TIME_YN = 'Y') THEN F_WTM_NVL(X.PLAN_MINUTE,0) ELSE 0 END) AS PLAN_WORK_MINUTE
+		, SUM(CASE WHEN X.TIME_TYPE_CD IN ('OT', 'FIXOT', 'NIGHT') THEN F_WTM_NVL(X.PLAN_MINUTE,0) ELSE 0 END) AS PLAN_OT_MINUTE
+		, SUM(CASE WHEN (X.TIME_TYPE_CD IN ('BASE', 'REGA')) OR (X.TIME_TYPE_CD IN ('TAA') AND X.TAA_TIME_YN = 'Y') THEN F_WTM_NVL(X.APPR_MINUTE,0) ELSE 0 END) AS APPR_WORK_MINUTE
+		, SUM(CASE WHEN X.TIME_TYPE_CD IN ('OT', 'FIXOT', 'NIGHT') THEN F_WTM_NVL(X.APPR_MINUTE,0) ELSE 0 END) AS APPR_OT_MINUTE 
+		 */
+		if(results != null && results.size() > 0) {
+			for(WtmWorkDayResult result : results) {
+				
+				if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)
+					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA)
+					|| (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) && "Y".equals(taaTimeYn) )
+					){
+					if(result.getPlanMinute() == null){
+						planWorkMinute = planWorkMinute + 0;
+					}else {
+						planWorkMinute = planWorkMinute + result.getPlanMinute();
+					}
+					
+					if(result.getApprMinute() == null){
+						apprWorkMinute = apprWorkMinute + 0;
+					}else {
+						apprWorkMinute = apprWorkMinute + result.getApprMinute();
+					}
+				}
+				
+				if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) 
+					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT)
+					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT)
+					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)
+					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)
+						) {
+					
+					if(result.getPlanMinute() == null){
+						planOtMinute = planOtMinute + 0;
+					}else {
+						planOtMinute = planOtMinute + result.getPlanMinute();
+					}
+					
+					if(result.getApprMinute() == null){
+						apprOtMinute = apprOtMinute + 0;
+					}else {
+						apprOtMinute = apprOtMinute + result.getApprMinute();
+					}
+					
+				}
+				
+				if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EXCEPT)) {
+					/*
+					 * , SUM(CASE WHEN X.TIME_TYPE_CD IN ('EXCEPT') AND X.TAA_CD IN (v_m, v_r) THEN F_WTM_NVL(X.PLAN_MINUTE,0) ELSE 0 END) AS PLAN_EX_MINUTE 
+		        	   , SUM(CASE WHEN X.TIME_TYPE_CD IN ('EXCEPT') AND X.TAA_CD IN (v_m, v_r) THEN F_WTM_NVL(X.APPR_MINUTE,0) ELSE 0 END) AS APPR_EX_MINUTE
+					 */
+					if(result.getTaaCd().equals(M) || result.getTaaCd().equals(R)) {
+						if(result.getPlanMinute() == null){
+							planExMinute = planExMinute + 0;
+						}else {
+							planExMinute = planExMinute + result.getPlanMinute();
+						}
+						
+						if(result.getApprMinute() == null){
+							apprExMinute = apprExMinute + 0;
+						}else {
+							apprExMinute = apprExMinute + result.getApprMinute();
+						}
+					}
+					/*
+		            	, SUM(CASE WHEN X.TIME_TYPE_CD IN ('EXCEPT') AND X.TAA_CD IN (v_f, v_o) THEN F_WTM_NVL(X.PLAN_MINUTE,0) ELSE 0 END) AS PLAN_OT_EX_MINUTE 
+		        		, SUM(CASE WHEN X.TIME_TYPE_CD IN ('EXCEPT') AND X.TAA_CD IN (v_f, v_o) THEN F_WTM_NVL(X.APPR_MINUTE,0) ELSE 0 END) AS APPR_OT_EX_MINUTE 
+					 */
+					if(result.getTaaCd().equals(F) || result.getTaaCd().equals(O)) {
+						if(result.getPlanMinute() == null){
+							planOtExMinute = planOtExMinute + 0;
+						}else {
+							planOtExMinute = planOtExMinute + result.getPlanMinute();
+						}
+						
+						if(result.getApprMinute() == null){
+							apprOtExMinute = apprOtExMinute + 0;
+						}else {
+							apprOtExMinute = apprOtExMinute + result.getApprMinute();
+						}
+					}
+					//지각시간
+					if(result.getTaaCd().equals(late)) {
+						lateMinute = lateMinute + (result.getApprMinute()==null?0:result.getApprMinute()); 
+					}else if(result.getTaaCd().equals(leave)) {
+						leaveMinute = leaveMinute + (result.getApprMinute()==null?0:result.getApprMinute());
+					}else if(result.getTaaCd().equals(absence)) {
+						absenceMinute = absenceMinute + (result.getApprMinute()==null?0:result.getApprMinute());
+					}
+					
+				}
+				/*
+				 * , SUM(CASE WHEN X.TIME_TYPE_CD IN ('BASE', 'REGA') AND F_WTM_DATE_FORMAT(NOW(), 'YMD') <= X.YMD THEN IFNULL(X.APPR_MINUTE, X.PLAN_MINUTE) 
+			  				 WHEN X.TIME_TYPE_CD IN ('BASE', 'REGA') AND F_WTM_DATE_FORMAT(NOW(), 'YMD') > X.YMD THEN IFNULL(X.APPR_MINUTE, 0) 
+			             ELSE 0 END) AS NOW_WORK_MINUTE
+				  	  , SUM(CASE WHEN X.TIME_TYPE_CD IN ('OT', 'FIXOT', 'NIGHT') AND F_WTM_DATE_FORMAT(NOW(), 'YMD') <= X.YMD THEN IFNULL(X.APPR_MINUTE, X.PLAN_MINUTE) 
+			  	  				 WHEN X.TIME_TYPE_CD IN ('OT', 'FIXOT', 'NIGHT') AND F_WTM_DATE_FORMAT(NOW(), 'YMD') > X.YMD THEN IFNULL(X.APPR_MINUTE, 0) 
+					          ELSE 0 END) AS NOW_OT_MINUTE
+				 */
+				if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA))
+					) {
+					//오늘 포함 미래일
+					if(Integer.parseInt(today) <= Integer.parseInt(result.getYmd())) {
+						//인정시간 우선
+						if(result.getApprMinute() == null) {
+							if(result.getPlanMinute() == null) {
+								nowWorkMinute = nowWorkMinute + 0;
+							}else {
+								nowWorkMinute = nowWorkMinute + result.getPlanMinute();
+							}
+						}else {
+							nowWorkMinute = nowWorkMinute + result.getApprMinute();
+						}
+					}else {
+						//과거는 인정시간만
+						if(result.getApprMinute() == null) {
+							nowWorkMinute = nowWorkMinute + 0;
+						}else {
+							nowWorkMinute = nowWorkMinute + result.getApprMinute();
+						}
+					}
+							
+				}
+				if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) ||result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT) )
+						) {
+					int addMinute = 0;
+					//오늘 포함 미래일
+					if(Integer.parseInt(today) <= Integer.parseInt(result.getYmd())) {
+						//인정시간 우선
+						if(result.getApprMinute() == null) {
+							if(result.getPlanMinute() == null) {
+								nowOtMinute = nowOtMinute + 0;
+							}else {
+								nowOtMinute = nowOtMinute + result.getPlanMinute();
+								addMinute = result.getPlanMinute();
+							}
+						}else {
+							nowOtMinute = nowOtMinute + result.getApprMinute();
+							addMinute = result.getPlanMinute();
+						}
+					}else {
+						//과거는 인정시간만
+						if(result.getApprMinute() == null) {
+							nowOtMinute = nowOtMinute + 0;
+						}else {
+							nowOtMinute = nowOtMinute + result.getApprMinute();
+							addMinute = result.getPlanMinute();
+						}
+					}
+					
+					switch(result.getTimeTypeCd()) {
+						case WtmApplService.TIME_TYPE_EARLY_OT :
+							eOMinute = eOMinute + addMinute;
+							break;
+						case WtmApplService.TIME_TYPE_OT :
+							oMinute = oMinute + addMinute;
+							break;
+						case WtmApplService.TIME_TYPE_EARLY_NIGHT :
+							eNMinute = eNMinute + addMinute;
+							break;
+						case WtmApplService.TIME_TYPE_NIGHT :
+							nMinute = nMinute + addMinute;
+							break;
+						default:
+							break;
+					}
+				}
+				
+				if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA)) {
+					WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(result.getTenantId(), result.getEnterCd(), result.getTaaCd());
+					if(taaCode == null || !"".equals(taaCode.getPayYn()) || "N".equals(taaCode.getPayYn())) {
+						nonpayMinute = nonpayMinute + (result.getApprMinute()==null?0:result.getApprMinute());
+					}else {
+						payMinute = payMinute + (result.getApprMinute()==null?0:result.getApprMinute());
+					}
+				}
+			}
+		}
+		
+		//휴일이면서 인정근무시간이 있고 신청서정보 취소 유무 확인 
+		//대체휴일여부 어케 구하까~
+		
+		resMap.put("planWorkMinute", planWorkMinute);
+		resMap.put("planOtMinute", planOtMinute);
+		resMap.put("apprWorkMinute", apprWorkMinute);
+		resMap.put("apprOtMinute", apprOtMinute);
+		resMap.put("planExMinute", planExMinute);
+		resMap.put("planOtExMinute", planOtExMinute);
+		resMap.put("apprExMinute", apprExMinute);
+		resMap.put("apprOtExMinute", apprOtExMinute);
+		resMap.put("nowWorkMinute", nowWorkMinute);
+		resMap.put("nowOtMinute", nowOtMinute);
+		resMap.put("oMinute", oMinute);
+		resMap.put("nMinute", nMinute);
+		resMap.put("eOMinute", eOMinute);
+		resMap.put("eNMinute", eNMinute);
+		resMap.put("lateMinute", lateMinute);
+		resMap.put("leaveMinute", leaveMinute);
+		resMap.put("absenceMinute", absenceMinute);
+		resMap.put("nonpayMinute", nonpayMinute);
+		resMap.put("payMinute", payMinute);
+		
+		return resMap;
 	}
 }
