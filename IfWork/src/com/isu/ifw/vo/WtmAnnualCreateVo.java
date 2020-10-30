@@ -23,9 +23,9 @@ public class WtmAnnualCreateVo {
 	private String updateId;
 	private String empNm;
 	private String orgNm;
-	private int usedCnt;
+	private Integer usedCnt;
 
-	public int getUsedCnt() {
+	public Integer getUsedCnt() {
 		return usedCnt;
 	}
 

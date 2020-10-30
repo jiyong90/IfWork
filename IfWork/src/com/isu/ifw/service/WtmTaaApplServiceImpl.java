@@ -186,11 +186,6 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 						
 						//if(w.containsKey("worksDet") && w.get("worksDet") != null && !"".equals(w.get("worksDet")+"")) {
 
-							String taaCd = "";
-
-							if(paramMap.containsKey("workTimeCode") && paramMap.get("workTimeCode") != null ){
-								taaCd = paramMap.get("workTimeCode").toString();
-							}
 
 							WtmTaaAppl taaAppl = new WtmTaaAppl();
 							taaAppl.setTenantId(tenantId);
@@ -199,63 +194,77 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 							taaAppl.setSabun(sabun);
 							taaAppl.setIfApplNo(null);
 							taaAppl.setUpdateId(userId);
-							taaAppl.setTaaCd(taaCd);
+//							taaAppl.setTaaCd(taaCd);
 							
 							taaAppl = wtmTaaApplRepo.save(taaAppl);
 							
 							//List<Map<String, Object>> worksDet = (List<Map<String, Object>>) w.get("worksDet");
 							//for(Map<String, Object> work : worksDet) {
-							
-								if(paramMap.containsKey("workTimeCode") && paramMap.containsKey("startYmd") && paramMap.containsKey("endYmd")
-										&& paramMap.get("workTimeCode") != null && !"".equals(paramMap.get("workTimeCode"))
-										&& paramMap.get("startYmd") != null && !"".equals(paramMap.get("startYmd"))
-										&& paramMap.get("endYmd") != null && !"".equals(paramMap.get("endYmd"))
-										) {
 
-									String symd = paramMap.get("startYmd").toString();
-									String eymd = paramMap.get("endYmd").toString();
-									String shm = "";
-									if(paramMap.containsKey("startHm") && paramMap.get("startHm") != null && !"".equals(paramMap.get("startHm"))) {
-										shm = paramMap.get("startHm").toString();
+
+								if(paramMap.containsKey("startYmdArr")
+									&& paramMap.containsKey("endYmdArr")
+									&& paramMap.containsKey("taaTypeCdArr")
+									) {
+
+
+									List<String> symdArr          = (List<String>) paramMap.get("startYmdArr");
+									List<String> eymdArr          = (List<String>) paramMap.get("endYmdArr");
+									List<String> taaTypeCdArr     = (List<String>) paramMap.get("taaTypeCdArr");
+
+									if(symdArr.size() == 0 || eymdArr.size() == 0 || taaTypeCdArr.size() == 0){
+										throw new Exception("휴가신청 기간이 존재하지 않습니다");
 									}
-									String ehm = "";
-									if(paramMap.containsKey("endHm") && paramMap.get("endHm") != null && !"".equals(paramMap.get("endHm"))) {
-										ehm = paramMap.get("endHm").toString();
-									}
-									
-									WtmTaaCode taaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, taaCd);
-									if(taaCode == null || taaCode.getRequestTypeCd() == null || taaCode.getRequestTypeCd().equals("N")){
-										throw new RuntimeException("근태신청이 불가능한 근태코드입니다. ");
-									}
-									
-									logger.debug("마감여부 체크 : ");
-									List<WtmWorkCalendar> calendars = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, symd, eymd);
-									if(calendars != null && calendars.size() > 0) {
-										for(WtmWorkCalendar c : calendars) {
-											if("Y".equals(c.getWorkCloseYn())) {
-												throw new RuntimeException("신청 기간 내 마감된 근무일이 존재합니다.");
-											}
+
+									for (int i = 0; i < symdArr.size(); i++) {
+
+										String symd = symdArr.get(i).replaceAll("-", "");
+										String eymd = eymdArr.get(i).replaceAll("-", "");
+										String taaCd = taaTypeCdArr.get(i);
+
+
+										String shm  = "";
+										if (paramMap.containsKey("startHm") && paramMap.get("startHm") != null && !"".equals(paramMap.get("startHm"))) {
+											shm = paramMap.get("startHm").toString();
 										}
-									}else {
-										throw new RuntimeException("캘린더 정보가 없습니다.");
-									}
-									
-									if(Integer.parseInt(symd) > Integer.parseInt(eymd)) {
-										throw new RuntimeException("시작일자가 종료일보다 클 수 없습니다.");
-									}
-										
-									WtmTaaApplDet taaApplDet = new WtmTaaApplDet();
-									taaApplDet.setTaaApplId(taaAppl.getTaaApplId());
-									taaApplDet.setTaaCd(taaCd);
-									taaApplDet.setSymd(symd);
-									taaApplDet.setEymd(eymd);
-									taaApplDet.setShm(shm);
-									taaApplDet.setEhm(ehm); 
-									taaApplDet.setUpdateId("TAA_INTF");
-									taaApplDet.setNote(note);
-									
-									wtmTaaApplDetRepo.save(taaApplDet);
+										String ehm = "";
+										if (paramMap.containsKey("endHm") && paramMap.get("endHm") != null && !"".equals(paramMap.get("endHm"))) {
+											ehm = paramMap.get("endHm").toString();
+										}
 
+										WtmTaaCode taaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, taaCd);
+										if (taaCode == null || taaCode.getRequestTypeCd() == null || taaCode.getRequestTypeCd().equals("N")) {
+											throw new RuntimeException("근태신청이 불가능한 근태코드입니다. ");
+										}
+
+										logger.debug("마감여부 체크 : ");
+										List<WtmWorkCalendar> calendars = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, symd, eymd);
+										if (calendars != null && calendars.size() > 0) {
+											for (WtmWorkCalendar c : calendars) {
+												if ("Y".equals(c.getWorkCloseYn())) {
+													throw new RuntimeException("신청 기간 내 마감된 근무일이 존재합니다.");
+												}
+											}
+										} else {
+											throw new RuntimeException("캘린더 정보가 없습니다.");
+										}
+
+										if (Integer.parseInt(symd) > Integer.parseInt(eymd)) {
+											throw new RuntimeException("시작일자가 종료일보다 클 수 없습니다.");
+										}
+
+										WtmTaaApplDet taaApplDet = new WtmTaaApplDet();
+										taaApplDet.setTaaApplId(taaAppl.getTaaApplId());
+										taaApplDet.setTaaCd(taaCd);
+										taaApplDet.setSymd(symd);
+										taaApplDet.setEymd(eymd);
+										taaApplDet.setShm(shm);
+										taaApplDet.setEhm(ehm);
+										taaApplDet.setUpdateId("TAA_INTF");
+										taaApplDet.setNote(note);
+
+										wtmTaaApplDetRepo.save(taaApplDet);
+									}
 									rp.put("applId", applId);
 									rp.setSuccess("");
 								}else {
@@ -271,7 +280,7 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 			//}
 		}else {
 
-			if(paramMap.containsKey("applCd") && paramMap.get("applCd") != null){
+			/*if(paramMap.containsKey("applCd") && paramMap.get("applCd") != null){
 
 				String taaCd = paramMap.get("applCd").toString();
 				appl = wtmApplRepo.findByApplId(applId);
@@ -287,7 +296,7 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 
 				rp.put("applId", applId);
 				rp.setSuccess("");
-			}
+			}*/
 
 		}
 
@@ -306,138 +315,114 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 	public ReturnParam validate(Long tenantId, String enterCd, String sabun, String workTypeCd,
 			Map<String, Object> work) {
 
-		ReturnParam rp = new ReturnParam();
 
+		ReturnParam rp = new ReturnParam();
 
 		if (sabun != null && !"".equals(sabun)) {
 
+			try {
 
-			if (work.get("startYmd") == null || "".equals(work.get("startYmd")) || work.get("endYmd") == null || "".equals(work.get("endYmd"))) {
-				rp.setFail(sabun + "의 일자 정보가 없습니다.");
-				return rp;
-			}
+				List<String> symdArr          = (List<String>) work.get("startYmdArr");
+				List<String> eymdArr          = (List<String>) work.get("endYmdArr");
+				List<String> requestTypeCdArr = (List<String>) work.get("requestTypeCdArr");
+				List<String> taaTypeCdArr     = (List<String>) work.get("taaTypeCdArr");
 
-			if (work.get("workTimeCode") == null || "".equals(work.get("workTimeCode"))) {
-				rp.setFail(sabun + "의 근태 코드 정보가 없습니다.");
-				return rp;
-			}
+				if (symdArr.size() == 0 || eymdArr.size() == 0 || requestTypeCdArr.size() == 0) {
+					rp.setFail(sabun + "의 일자 정보가 없습니다.");
+					throw new Exception();
+				}
 
-			String workTimeCode = work.get("workTimeCode")
-			                          .toString();
-			String requestCd = work.get("requestCd")
-			                          .toString();
+				if (taaTypeCdArr.size() == 0) {
+					rp.setFail(sabun + "의 근태 코드 정보가 없습니다.");
+					throw new Exception();
+				}
 
-			String symd = work.get("startYmd")
-			                  .toString();
-			String eymd = work.get("endYmd")
-			                  .toString();
 
-			if (symd.length() != eymd.length()) {
-				rp.setFail("시작일과 종료일의 날짜 포맷이 맞지 않습니다.");
-				return rp;
-			}
 
-			if (symd.length() != 8) {
-				rp.setFail("일자는 8자리 입니다.");
-				return rp;
-			}
+				for (int i = 0; i < symdArr.size(); i++) {
 
-			Date sd = WtmUtil.toDate(symd, "yyyyMMdd");
-			Date ed = WtmUtil.toDate(eymd, "yyyyMMdd");
+					String symd         = symdArr.get(i).replaceAll("-", "");
+					String eymd         = eymdArr.get(i).replaceAll("-", "");
+					String requestCd    = requestTypeCdArr.get(i);
+					String workTimeCode = taaTypeCdArr.get(i);
 
-			if (sd.compareTo(ed) > 0) {
-				rp.setFail("시작일자가 종료일자보다 큽니다.");
-				return rp;
-			}
-
-			//  totDays, holDays
-			Map<String, Integer> calMap = calcService.calcDayCnt(tenantId, enterCd, symd, eymd);
-			logger.debug("calMap.toString() : " + calMap.toString());
-
-			//  발생일수, 사용일수
-			Integer totalCnt = calMap.get("totDays");
-			Integer usedCnt = calMap.get("totDays") - calMap.get("holDays");
-
-			//  오전반차 오후반차 여부 체크, 공휴일인경우에 에러
-			switch (requestCd){
-				case "A" :
-				case "P" :
-					if(usedCnt == 0){
-						rp.setFail("반차사용일이 공휴일입니다");
-						return rp;
+					if (symd.length() != eymd.length()) {
+						rp.setFail("시작일과 종료일의 날짜 포맷이 맞지 않습니다.");
 					}
-					break;
-			}
 
-			//  사용일수가 최대신청가능일수보다 큰지 체크
-			WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, workTimeCode);
+					if (symd.length() != 8) {
+						rp.setFail("일자는 8자리 입니다.");
+					}
 
-			if(taaCode.getApprMaxDays() != null && !"".equals(taaCode.getApprMaxDays())){
-				if(usedCnt > taaCode.getApprMaxDays()){
-					rp.setFail("사용일수가 최대신청일수 (" + taaCode.getApprMaxDays()  +"일) 보다 큽니다.");
-					return rp;
-				}
-			}
+					Date sd = WtmUtil.toDate(symd, "yyyyMMdd");
+					Date ed = WtmUtil.toDate(eymd, "yyyyMMdd");
 
-			String shm = "";
-			String ehm = "";
-			if (work.get("startHm") != null && !"".equals(work.get("startHm"))) {
-				shm = work.get("startHm")
-				          .toString();
-			}
-			if (work.get("endHm") != null && !"".equals(work.get("endHm"))) {
-				ehm = work.get("endHm")
-				          .toString();
-			}
+					if (sd.compareTo(ed) > 0) {
+						rp.setFail("시작일자가 종료일자보다 큽니다.");
+					}
 
-			String applId = ""; //  IF 소스 참조로 빈값으로 대체함.
-			if(work.containsKey("applId")) {
-				applId = work.get("applId")+"";
-			}
-			
-			
-			/*
-			if("P".equals(taaCode.getRequestTypeCd())) {
-				if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
-					//반차는 근무시간을 변경함
-					sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-				}else {
-					Calendar calendar = Calendar.getInstance();
-					calendar.setTime(sdate);
-					calendar.add(Calendar.MINUTE, 240);
-					sdate = calendar.getTime();
-				}
-				
-				//calcService.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgrId, null)
-			}else if("A".equals(taaCode.getRequestTypeCd())) {
-				if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
-					edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, -240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-				}else {
-					Calendar calendar = Calendar.getInstance();
-					calendar.setTime(edate);
-					calendar.add(Calendar.MINUTE, -240);
-					edate = calendar.getTime();
-				}
-			}
-			 */
-			SimpleDateFormat yMdHm = new SimpleDateFormat("yyyyMMddHHmm");
-			SimpleDateFormat hm = new SimpleDateFormat("HHmm");
-			logger.debug("taaCode.getRequestTypeCd() : " +taaCode.getRequestTypeCd());
-			if(taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_A) || taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_P)) {
-				WtmWorkCalendar calendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, symd);
-				WtmFlexibleEmp emp = flexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, calendar.getYmd());
-				WtmTimeCdMgr timeCdMgr = timeCdMgrRepo.findById(calendar.getTimeCdMgrId()).get();
-				
-				WtmFlexibleStdMgr flexibleStdMgr = flexStdMgrRepo.findByFlexibleStdMgrId(emp.getFlexibleStdMgrId());
-				//List<WtmWorkDayResult> baseResult = dayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCd(tenantId, enterCd, sabun, symd, WtmApplService.TIME_TYPE_BASE);
-				Date sdate = null, edate = null;
-				try {
-					sdate = yMdHm.parse(calendar.getYmd()+timeCdMgr.getWorkShm());
-					edate = yMdHm.parse(calendar.getYmd()+timeCdMgr.getWorkEhm());
-				} catch (ParseException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+					//  totDays, holDays
+					Map<String, Integer> calMap = calcService.calcDayCnt(tenantId, enterCd, symd, eymd);
+					logger.debug("calMap.toString() : " + calMap.toString());
+
+					//  발생일수, 사용일수
+					Integer totalCnt = calMap.get("totDays");
+					Integer usedCnt  = calMap.get("totDays") - calMap.get("holDays");
+
+					//  오전반차 오후반차 여부 체크, 공휴일인경우에 에러
+					switch (requestCd) {
+						case "A":
+						case "P":
+							if (usedCnt == 0) {
+								rp.setFail("반차사용일이 공휴일입니다");
+							}
+							break;
+					}
+
+					//  사용일수가 최대신청가능일수보다 큰지 체크
+					WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, workTimeCode);
+
+					if (taaCode.getApprMaxDays() != null && !"".equals(taaCode.getApprMaxDays())) {
+						if (usedCnt > taaCode.getApprMaxDays()) {
+							rp.setFail("사용일수가 최대신청일수 (" + taaCode.getApprMaxDays() + "일) 보다 큽니다.");
+							throw new Exception();
+						}
+					}
+
+					String shm = "";
+					String ehm = "";
+					if (work.get("startHm") != null && !"".equals(work.get("startHm"))) {
+						shm = work.get("startHm").toString();
+					}
+					if (work.get("endHm") != null && !"".equals(work.get("endHm"))) {
+						ehm = work.get("endHm").toString();
+					}
+
+					String applId = ""; //  IF 소스 참조로 빈값으로 대체함.
+					if (work.containsKey("applId")) {
+						applId = work.get("applId") + "";
+					}
+
+
+					SimpleDateFormat yMdHm = new SimpleDateFormat("yyyyMMddHHmm");
+					SimpleDateFormat hm    = new SimpleDateFormat("HHmm");
+					logger.debug("taaCode.getRequestTypeCd() : " + taaCode.getRequestTypeCd());
+					if (taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_A) || taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_P)) {
+						WtmWorkCalendar calendar  = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, symd);
+						WtmFlexibleEmp  emp       = flexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, calendar.getYmd());
+						WtmTimeCdMgr    timeCdMgr = timeCdMgrRepo.findById(calendar.getTimeCdMgrId()).get();
+
+						WtmFlexibleStdMgr flexibleStdMgr = flexStdMgrRepo.findByFlexibleStdMgrId(emp.getFlexibleStdMgrId());
+						//List<WtmWorkDayResult> baseResult = dayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCd(tenantId, enterCd, sabun, symd, WtmApplService.TIME_TYPE_BASE);
+						Date sdate = null, edate = null;
+						try {
+							sdate = yMdHm.parse(calendar.getYmd() + timeCdMgr.getWorkShm());
+							edate = yMdHm.parse(calendar.getYmd() + timeCdMgr.getWorkEhm());
+						} catch (ParseException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							throw new Exception();
+						}
 				/*
 				if(baseResult != null && baseResult.size() > 0) {
 					for(WtmWorkDayResult br : baseResult) {
@@ -458,45 +443,46 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 					}
 				}
 				*/
-				//시분을 만들어서 체크한다. 
-				if(taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_A)) {
-					
-					if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
-						edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, -240, calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-					}else {
-						Calendar cal2 = Calendar.getInstance();
-						cal2.setTime(edate);
-						cal2.add(Calendar.MINUTE, -240);
-						edate = cal2.getTime();
+						//시분을 만들어서 체크한다.
+						if (taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_A)) {
+
+							if (timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+								edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, -240, calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+							} else {
+								Calendar cal2 = Calendar.getInstance();
+								cal2.setTime(edate);
+								cal2.add(Calendar.MINUTE, -240);
+								edate = cal2.getTime();
+							}
+						} else if (taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_P)) {
+							if (timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+								//반차는 근무시간을 변경함
+								//sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+								sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+							} else {
+								Calendar cal2 = Calendar.getInstance();
+								cal2.setTime(sdate);
+								cal2.add(Calendar.MINUTE, 240);
+								sdate = cal2.getTime();
+							}
+						}
+						shm = hm.format(sdate);
+						ehm = hm.format(edate);
 					}
-				} else if(taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_P)) {
-					if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
-						//반차는 근무시간을 변경함
-						//sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-						sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-					}else {
-						Calendar cal2 = Calendar.getInstance();
-						cal2.setTime(sdate);
-						cal2.add(Calendar.MINUTE, 240);
-						sdate = cal2.getTime();
+
+					//신청서 중복 체크 'H'시간단위 신청서는 별도로 체크 한다.
+					rp = checkDuplicateTaaAppl(tenantId, enterCd, sabun, workTimeCode, symd, eymd, shm, ehm, applId);
+
+					if (rp.getStatus() != null && !"OK".equals(rp.getStatus())) {
+						throw new Exception(rp.get("message").toString());
 					}
+
 				}
-				shm = hm.format(sdate);
-				ehm = hm.format(edate);
+
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 
-			//신청서 중복 체크 'H'시간단위 신청서는 별도로 체크 한다. 
-			rp = checkDuplicateTaaAppl(tenantId, enterCd, sabun, workTimeCode, symd, eymd, shm, ehm, applId);
-
-			if (rp.getStatus() != null && !"OK".equals(rp.getStatus())) return rp;
-
-			/*
-			List<Map<String, Object>> worksDet = new ArrayList<Map<String, Object>>();
-			worksDet.add(work);
-
-			//근무시간 체크
-			return checkWorktimeTaaAppl(tenantId, enterCd, sabun, worksDet);
- 			*/
 		}
 
 
