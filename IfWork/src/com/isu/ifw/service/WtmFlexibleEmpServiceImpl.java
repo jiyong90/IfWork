@@ -4259,7 +4259,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							if(subsCreateTarget!=null && subsCreateTarget.size()>0) {
 							
 								//대체휴일
-								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplId(otAppl.getApplId());
+//								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplId(otAppl.getApplId());
+								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByOtApplIdAndCancelYnIsNullOrCancelYnNot(otAppl.getOtApplId(), "Y");
 								if(subs!=null && subs.size()>0) {
 									logger.debug("save subs start >>> ");
 									System.out.println("save subs start >>> ");
