@@ -1725,7 +1725,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	
 	@Override
 	public Date WorkTimeCalcApprDate(Date rDt, Date dt, int unitMinute, String calcType) {
-
+		logger.debug("### WorkTimeCalcApprDate rDt : " + rDt + " /  dt : " + dt + " / calcType : " + calcType);
+		
 		SimpleDateFormat dH = new SimpleDateFormat("H");
 		SimpleDateFormat dM = new SimpleDateFormat("m");
 		SimpleDateFormat dYmd = new SimpleDateFormat("yyyyMMdd");
@@ -1754,7 +1755,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				// 10분 단위 일 경우 9시 8분일 경우 9시 10분으로 인정되어햔다.
 				
 				//단위 시간 적용
-				int calcM = ((m + unitMinute) - (m + unitMinute)%unitMinute)%60;
+				int calcM = ((m + unitMinute) - (m + unitMinute)%unitMinute)%60 - ((unitMinute==1)?1:0)  ;
 
 				Calendar cal = Calendar.getInstance();
 				try {

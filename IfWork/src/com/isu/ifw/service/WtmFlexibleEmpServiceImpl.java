@@ -4259,7 +4259,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							if(subsCreateTarget!=null && subsCreateTarget.size()>0) {
 							
 								//대체휴일
-								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplId(otAppl.getApplId());
+//								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplId(otAppl.getApplId());
+								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByOtApplIdAndCancelYnIsNullOrCancelYnNot(otAppl.getOtApplId(), "Y");
 								if(subs!=null && subs.size()>0) {
 									logger.debug("save subs start >>> ");
 									System.out.println("save subs start >>> ");
@@ -5157,21 +5158,27 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("ymd", ymd);
 		
 		ObjectMapper mapper = new ObjectMapper();
-		Map<String, Object> resMap = flexEmpMapper.getWorktermByFleibleEmp(paramMap);
-		try {
-			System.out.println("paramMap : " + mapper.writeValueAsString(paramMap));
-			System.out.println("resMap : " + mapper.writeValueAsString(resMap));
-		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		List<Map<String, Object>> resList = flexEmpMapper.getWorktermByFleibleEmp(paramMap);
+		if(resList != null && resList.size() > 0) {
+			//1건이어야 한다.
+			for(Map<String, Object> resMap : resList) {
+				try {
+					System.out.println("paramMap : " + mapper.writeValueAsString(paramMap));
+					System.out.println("resMap : " + mapper.writeValueAsString(resMap));
+				} catch (JsonProcessingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if(resMap != null) {
+					resMap.put("restOtMinute", Integer.parseInt(resMap.get("totalOtMinute")+"") - Integer.parseInt(resMap.get("apprOtMinute")+""));
+					resMap.put("restWorkMinute", Integer.parseInt(resMap.get("totalWorkMinute")+"") - Integer.parseInt(resMap.get("apprWorkMinute")+""));
+				}else {
+					return null;
+				}
+				return resMap;
+			}
 		}
-		if(resMap != null) {
-			resMap.put("restOtMinute", Integer.parseInt(resMap.get("totalOtMinute")+"") - Integer.parseInt(resMap.get("apprOtMinute")+""));
-			resMap.put("restWorkMinute", Integer.parseInt(resMap.get("totalWorkMinute")+"") - Integer.parseInt(resMap.get("apprWorkMinute")+""));
-		}else {
-			return null;
-		}
-		return resMap;
+		return null;
 	}
 	
 }
