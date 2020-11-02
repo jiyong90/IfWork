@@ -578,6 +578,7 @@ public interface WtmFlexibleEmpMapper {
 
 	public List<Map<String, Object>> getWorktermByYmd(Map<String, Object> paramMap);
 	
-	public List<Map<String, Object>> getWorktermByFleibleEmp(Map<String, Object> paramMap);
+	public Map<String, Object> getWorktermByFleibleEmp(Map<String, Object> paramMap);
+	public Map<String, Object> getWorktermByFleibleEmpId(Map<String, Object> paramMap);
 	
 }

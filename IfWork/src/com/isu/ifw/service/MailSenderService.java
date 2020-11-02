@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessagePreparator;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.isu.ifw.common.service.TenantConfigManagerService;
@@ -23,9 +24,10 @@ public class MailSenderService {
 	@Autowired
 	TenantConfigManagerService tcms;
 	
-	public boolean sendMail(Long tenantId, String to, String from, String subject, String content) {
+	@Async
+	public void sendMail(Long tenantId, String to, String from, String subject, String content, String mailSendMode, String host, String username, String password) {
 		
-		String mailSendMode = tcms.getConfigValue(tenantId, "MAIL.SEND_MODE", true, "");
+		//String mailSendMode = tcms.getConfigValue(tenantId, "MAIL.SEND_MODE", true, "");
 		
 		if("AWS".equals(mailSendMode)) {
 			/*
@@ -54,9 +56,9 @@ public class MailSenderService {
 			
 			try {
 				
-				String host = tcms.getConfigValue(tenantId, "MAIL.SMTP.HOST", true, "");
-				String username = tcms.getConfigValue(tenantId, "MAIL.SMTP.ID", true, "");
-				String password = tcms.getConfigValue(tenantId, "MAIL.SMTP.PW", true, "");
+				//String host = tcms.getConfigValue(tenantId, "MAIL.SMTP.HOST", true, "");
+				//String username = tcms.getConfigValue(tenantId, "MAIL.SMTP.ID", true, "");
+				//String password = tcms.getConfigValue(tenantId, "MAIL.SMTP.PW", true, "");
 				
 				JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
 				mailSender.setUsername(username);
@@ -65,20 +67,20 @@ public class MailSenderService {
 				mailSender.setDefaultEncoding("UTF-8");
 				mailSender.setJavaMailProperties(getMailProperties());
 				mailSender.send(preparator);
-				return true;
+				//return true;
 				
 			}catch(MailException me) {
 				me.printStackTrace();
 				logger.error("MailException", me);
-				return false;
+				//return false;
 			}catch(Exception e) {
 				e.printStackTrace();
-				return false;
+				//return false;
 			}
 			
 		}
 		
-		return false;
+		//return false;
 	}
 		
 	private Properties getMailProperties()
