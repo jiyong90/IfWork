@@ -1,6 +1,7 @@
 package com.isu.ifw.service;
 
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -600,9 +601,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		}
 		//  연차현황 조회
 
-		dayInfo.put("annualTotalCnt", totalCnt);
-		dayInfo.put("annualUsedCnt", usedCnt);
-		dayInfo.put("annualNoUsedCnt", noUsedCnt);
+		DecimalFormat df = new DecimalFormat("0.0");
+		
+		dayInfo.put("annualTotalCnt", df.format(Float.parseFloat(totalCnt)));
+		dayInfo.put("annualUsedCnt", df.format(Float.parseFloat(usedCnt)));
+		dayInfo.put("annualNoUsedCnt", df.format(Float.parseFloat(noUsedCnt)));
 
 		return dayInfo;
 	}
