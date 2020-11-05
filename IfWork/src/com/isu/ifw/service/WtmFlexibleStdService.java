@@ -69,7 +69,7 @@ public interface WtmFlexibleStdService {
 	 * @param convertMap - 저장sheet
 	 * @return 
 	 */
-	public int setStdListWeb(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap);
+	public int setStdListWeb(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) throws Exception;
 	
 	/**
 	 * 근무패턴관리 (관리자화면)

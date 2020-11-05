@@ -1,26 +1,6 @@
 package com.isu.ifw.service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.isu.ifw.entity.WtmBaseWorkMgr;
-import com.isu.ifw.entity.WtmFlexibleEmp;
-import com.isu.ifw.entity.WtmFlexibleStdMgr;
-import com.isu.ifw.entity.WtmTimeCdMgr;
-import com.isu.ifw.entity.WtmWorkPattDet;
-import com.isu.ifw.entity.WtmWorkteamMgr;
+import com.isu.ifw.entity.*;
 import com.isu.ifw.mapper.WtmFlexibleStdMapper;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmTimeCdMgrRepository;
@@ -28,6 +8,15 @@ import com.isu.ifw.repository.WtmWorkPattDetRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
 import com.isu.ifw.vo.WtmFlexibleStdVO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.*;
 
 @Transactional
 @Service
@@ -82,7 +71,6 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 	
 	@Override
 	public List<Map<String, Object>> getFlexibleStdWorkType(Long tenantId, String enterCd, String workTypeCd) {
-		// TODO Auto-generated method stub
 		Map<String, Object> paramMap = new HashMap<>();
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
@@ -93,7 +81,6 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 	
 	@Override
 	public List<Map<String, Object>> getFlexibleStdFlex(Long tenantId, String enterCd) {
-		// TODO Auto-generated method stub
 		Map<String, Object> paramMap = new HashMap<>();
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
@@ -114,7 +101,8 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 	}
 	
 	@Override
-	public int setStdListWeb(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) {
+	@Transactional
+	public int setStdListWeb(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) throws Exception {
 		int cnt = 0;
 		try {
 			if(convertMap.containsKey("insertRows") && ((List)convertMap.get("insertRows")).size() > 0) {
@@ -186,7 +174,7 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 						updateList.add(saveMap);
 					}
 				}
-				
+
 				if(updateList != null && updateList.size() > 0) {
 					System.out.println("updateList : " + updateList.size());
 					cnt = flexStdMapper.updateFlexibleStd(updateList);
@@ -194,9 +182,21 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 				
 				MDC.put("insert cnt", "" + cnt);
 			}
+
+			if(convertMap.containsKey("deleteRows") && ((List)convertMap.get("deleteRows")).size() > 0) {
+				List<Map<String, Object>> iList      = (List<Map<String, Object>>) convertMap.get("deleteRows");
+				if (iList != null && iList.size() > 0) {
+					for (Map<String, Object> l : iList) {
+						deleteFlexibleStdMgr(Long.parseLong(l.get("flexibleStdMgrId").toString()));
+					}
+				}
+			}
+
+
 		} catch(Exception e) {
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
+			throw new Exception(e.getMessage());
 		} finally {
 			logger.debug("setWorkPattList Service End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
 			MDC.clear();
