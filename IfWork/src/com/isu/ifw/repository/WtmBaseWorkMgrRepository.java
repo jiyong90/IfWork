@@ -23,4 +23,6 @@ public interface WtmBaseWorkMgrRepository extends JpaRepository<WtmBaseWorkMgr, 
 	public WtmBaseWorkMgr findByTenantIdAndEnterCdAndFlexibleStdMgrIdAndYmdAndBusinessPlaceCd(Long tenantId, String enterCd, Long flexibleStdMgrId, String ymd, String businessPlaceCd);
 	
 	public List<WtmBaseWorkMgr> findByTenantIdAndEnterCdAndEymdGreaterThanEqualAndSymdLessThanEqualOrderBySymdAsc(Long tenantId, String enterCd, String sYmd, String eYmd);
+	
+	public List<WtmBaseWorkMgr> findByFlexibleStdMgrId(Long flexibleStdMgrId);
 }

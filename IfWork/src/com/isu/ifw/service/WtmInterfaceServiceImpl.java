@@ -95,6 +95,12 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	
 	@Autowired private WtmTimeCdMgrRepository timeCdMgrRepo;
 	
+	@Autowired private WtmWorktimeCloseRepository worktimeCloseRepo;
+	
+	@Autowired private WtmAsyncService asyncService;
+	//@Autowired private WtmAsyncLogRepository asyncLogRepo;
+	//@Autowired private WtmAsyncLogDetRepository asyncLogDetRepo;
+	
 	@Override
 	public Map<String, Object> getIfLastDate(Long tenantId, String ifType) throws Exception {
 		// TODO Auto-generated method stub
@@ -4239,10 +4245,28 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	
 	
 	@Override
+	@Async
 	@Transactional
-	public ReturnParam setCloseWorkIfN(HashMap reqMap) {
-		ReturnParam rp = new ReturnParam();
-		rp.setSuccess("");
+	public void setCloseWorkIfN(HashMap reqMap) throws Exception {
+		
+		Long tenantId = (Long) reqMap.get("tenantId");
+		String enterCd = reqMap.get("enterCd") + "";
+
+		WtmAsyncLog log = asyncService.findByTenantIdAndEnterCdAndAsyncKey(tenantId, enterCd, asyncService.ASYNC_NAME_WORKTIME_CLOSE);
+		
+		SimpleDateFormat ymdhis = new SimpleDateFormat("yyyyMMddHHmmss");
+		String ymdhisStr = ymdhis.format(new Date()); 
+		
+		if(log.equals(asyncService.ASYNC_STATUS_ING)) {
+			String retMsg = "작동중인 마감정보가 있습니다.";
+			asyncService.saveLogDet(log.getAsyncLogId(), ymdhisStr, "setCloseWorkIfN", retMsg); 
+			
+			throw new Exception("작동중인 마감정보가 있습니다.");
+		}
+		asyncService.startAsync(log);
+		
+		//ReturnParam rp = new ReturnParam();
+		//rp.setSuccess("");
 		
 		// TODO Auto-generated method stub
 		System.out.println("WtmInterfaceServiceImpl setCloseWorkIf");
@@ -4268,8 +4292,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     		nowDataTime = getDateMap.get("nowDate").toString();
     	} catch(Exception e) {
     		retMsg = "WORKTIME_CLOSE get : 최종갱신일 조회오류";
-    		rp.setFail(retMsg);
-    		return rp;
+//    		rp.setFail(retMsg);
+    		asyncService.saveLogDet(log.getAsyncLogId(), ymdhisStr, "setCloseWorkIfN", retMsg);
+			
+    		throw new Exception(retMsg);
+    		//return rp;
     	}
 
 		try {
@@ -4293,9 +4320,10 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					
 					dayMap.put("msg", retMsg);
 					wtmInterfaceMapper.insertErrorLog(dayMap);
-					
-					rp.setFail(retMsg);
-		    		return rp;
+
+					asyncService.saveLogDet(log.getAsyncLogId(), ymdhisStr, "setCloseWorkIfN", retMsg);
+//					rp.setFail(retMsg);
+					throw new Exception(retMsg);
 				}
 			}
 			
@@ -4310,15 +4338,16 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				
 				dayMap.put("msg", retMsg);
 				wtmInterfaceMapper.insertErrorLog(dayMap);
-				
-				rp.setFail(retMsg);
-	    		return rp;
+
+				asyncService.saveLogDet(log.getAsyncLogId(), ymdhisStr, "setCloseWorkIfN", retMsg);
+//				rp.setFail(retMsg);
+				throw new Exception(retMsg);
 			}
 			
 			
 				
 			//생성할 자료 삭제
-			wtmInterfaceMapper.deleteWorktimeDayClose(dayMap);
+			//wtmInterfaceMapper.deleteWorktimeDayClose(dayMap);
 			
 			Map<String, Object> emptyWorkTypeCntMap = wtmInterfaceMapper.isWorkType(dayMap);
 			if(emptyWorkTypeCntMap!=null && emptyWorkTypeCntMap.containsKey("emptyWorkTypeCnt") && emptyWorkTypeCntMap.get("emptyWorkTypeCnt")!=null && !"".equals(emptyWorkTypeCntMap.get("emptyWorkTypeCnt")) ) {
@@ -4329,21 +4358,24 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					
 					dayMap.put("msg", retMsg);
 					wtmInterfaceMapper.insertErrorLog(dayMap);
-					
-					rp.setFail(retMsg);
-		    		return rp;
+					asyncService.saveLogDet(log.getAsyncLogId(), ymdhisStr, "setCloseWorkIfN", retMsg);
+//					rp.setFail(retMsg);
+					throw new Exception(retMsg);
 				}
 			}
 			
 			//WTM_WORKTIME_DAY_CLOSE 기본값 잆력
-			wtmInterfaceMapper.insertWorktimeDayClose(dayMap);
+			//wtmInterfaceMapper.insertWorktimeDayClose(dayMap);
 			
 			//근무시간 반영
 			dayMap.putAll(taaCodeMap);
-			wtmInterfaceMapper.updateWorktimeDayClose(dayMap);
+			//wtmInterfaceMapper.updateWorktimeDayClose(dayMap);
 			
 			// 기본근무시간대 심야근무시간이 있으면, 심야근무시간 가산
-			wtmInterfaceMapper.updateWorktimeNight(dayMap);
+			//wtmInterfaceMapper.updateWorktimeNight(dayMap);
+			WtmWorktimeClose worktimeClose = worktimeCloseRepo.findById(Long.parseLong(reqMap.get("worktimeCloseId")+"")).get();
+			
+			calcService.calcWorktimeClose(worktimeClose, reqMap.get("sabun")+"");
 			
 			System.out.println("******************************* DAY close end");
 			// System.out.println(dayMap.toString());
@@ -4361,8 +4393,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				dayMap.put("msg", retMsg);
 				System.out.println(dayMap.toString());
 				wtmInterfaceMapper.insertErrorLog(dayMap);
-				rp.setFail(retMsg);
-	    		return rp;
+//				rp.setFail(retMsg);
+				asyncService.saveLogDet(log.getAsyncLogId(), ymdhisStr, "setCloseWorkIfN", retMsg);
+				throw new Exception(retMsg);
 			}
 			
 			// 마감이 다 돌았는으면 보상휴가생성으로 넘어가자
@@ -4370,9 +4403,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			ifHisMap.put("ifStatus", "ERR");
 			retMsg = "근무마감오류";
             e.printStackTrace();
-            
-            rp.setFail(retMsg);
-    		return rp;
+            asyncService.saveLogDet(log.getAsyncLogId(), ymdhisStr, "setCloseWorkIfN", retMsg);
+//            rp.setFail(retMsg);
+            throw new Exception(retMsg);
         }
 		
     	// 3. 처리결과 저장
@@ -4383,10 +4416,13 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			ifHisMap.put("ifMsg", retMsg);
 			wtmInterfaceMapper.insertIfHis(ifHisMap);
 		} catch (Exception e) {
+			asyncService.saveLogDet(log.getAsyncLogId(), ymdhisStr, "setCloseWorkIfN", retMsg);
+			
 			e.printStackTrace();
 		}
         System.out.println("WtmInterfaceServiceImpl setTaaApplIf end");
-		return rp;
+        
+        asyncService.endAsync(log);
 	}
 
 }

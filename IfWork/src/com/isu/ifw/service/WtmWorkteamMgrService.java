@@ -3,6 +3,7 @@ package com.isu.ifw.service;
 import java.util.List;
 import java.util.Map;
 
+import com.isu.ifw.entity.WtmWorkteamMgr;
 import com.isu.ifw.vo.ReturnParam;
 
 /**
@@ -23,4 +24,6 @@ public interface WtmWorkteamMgrService {
 	 * @return 
 	 */
 	public List<Map<String, Object>> getWorkteamCdList(Long tenantId, String enterCd);
+	
+	public List<WtmWorkteamMgr> findByFlexibleStdMgrId(Long flexibleStdMgrId);
 }

@@ -2852,7 +2852,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		 */
 		if(results != null && results.size() > 0) {
 			for(WtmWorkDayResult result : results) {
-				
+				//logger.debug("### result : " + result.toString());
 				if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)
 					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA)
 					|| (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) && "Y".equals(taaTimeYn) )
@@ -2926,6 +2926,10 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							apprOtExMinute = apprOtExMinute + result.getApprMinute();
 						}
 					}
+					
+				}
+				if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA)) {
+
 					//지각시간
 					if(result.getTaaCd().equals(late)) {
 						lateMinute = lateMinute + (result.getApprMinute()==null?0:result.getApprMinute()); 

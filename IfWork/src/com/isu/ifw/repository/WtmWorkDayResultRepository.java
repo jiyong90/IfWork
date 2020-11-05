@@ -148,4 +148,7 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 
 	@Transactional
 	public int deleteByApplId(Long applId);
+	
+	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndYmdAndSabunAndApplIdIsNullAndTimeTypeCdIn(Long tenantId, String enterCd, String ymd, String sabun, List<String> timeTypeCds);
+	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndYmdBetweenAndSabunAndApplIdIsNullAndTimeTypeCdIn(Long tenantId, String enterCd, String sYmd, String eYmd, String sabun, List<String> timeTypeCds);
 }

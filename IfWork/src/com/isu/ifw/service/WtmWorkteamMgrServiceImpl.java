@@ -201,4 +201,9 @@ public class WtmWorkteamMgrServiceImpl implements WtmWorkteamMgrService{
 		
 		return workteamMgrMapper.getWorkteamCdList(paramMap);
 	}
+
+	@Override
+	public List<WtmWorkteamMgr> findByFlexibleStdMgrId(Long flexibleStdMgrId) {
+		return workteamMgrRepository.findByFlexibleStdMgrId(flexibleStdMgrId);
+	}
 }

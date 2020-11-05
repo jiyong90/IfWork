@@ -139,4 +139,9 @@ public class WtmBaseWorkMgrServiceImpl implements WtmBaseWorkMgrService{
 		}
 		return cnt;
 	}
+
+	@Override
+	public List<WtmBaseWorkMgr> findByFlexibleStdMgrId(Long flexibleStdMgrId) {
+		return baseWorkRepository.findByFlexibleStdMgrId(flexibleStdMgrId);
+	}
 }

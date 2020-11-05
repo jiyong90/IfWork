@@ -16,4 +16,6 @@ public interface WtmWorkteamMgrRepository extends JpaRepository<WtmWorkteamMgr, 
 	public List<WtmWorkteamMgr> findByTenantIdAndEnterCdAndSymd(@Param(value="tenantId")Long tenantId, @Param(value="enterCd")String enterCd, @Param(value="sYmd")String sYmd);
 
 	public WtmWorkteamMgr findByWorkteamMgrId(Long workTeamMgrId);
+	
+	public List<WtmWorkteamMgr> findByFlexibleStdMgrId(Long flexibleStdMgrId);
 }

@@ -3,6 +3,7 @@ package com.isu.ifw.service;
 import java.util.List;
 import java.util.Map;
 
+import com.isu.ifw.vo.ReturnParam;
 import com.isu.ifw.vo.WtmFlexibleStdVO;
 
 /**
@@ -100,4 +101,7 @@ public interface WtmFlexibleStdService {
 	 */
 	public Map<String, Object> getSumWorkPatt(Map<String, Object> paramMap);
 	
+	public ReturnParam isUsingFlexibleStdMgr(Long flexibleStdMgrId) ;
+	
+	public void deleteFlexibleStdMgr(Long flexibleStdMgrId) throws Exception;
 }

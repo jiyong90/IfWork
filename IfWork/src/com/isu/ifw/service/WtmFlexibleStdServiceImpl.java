@@ -15,13 +15,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.isu.ifw.entity.WtmBaseWorkMgr;
+import com.isu.ifw.entity.WtmFlexibleEmp;
+import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkPattDet;
+import com.isu.ifw.entity.WtmWorkteamMgr;
 import com.isu.ifw.mapper.WtmFlexibleStdMapper;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmTimeCdMgrRepository;
 import com.isu.ifw.repository.WtmWorkPattDetRepository;
 import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
 import com.isu.ifw.vo.WtmFlexibleStdVO;
 
 @Transactional
@@ -44,6 +49,9 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 	
 	@Autowired
 	WtmFlexibleEmpService flexibleEmpService;
+	
+	@Autowired private WtmBaseWorkMgrService baseWorkMgrService;
+	@Autowired private WtmWorkteamMgrService workteamMgrService;
 	
 	@Override
 	public List<WtmFlexibleStdVO> getFlexibleStd(Long tenantId, String enterCd, String userKey) {
@@ -344,4 +352,39 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 		return flexStdMapper.getSumWorkPatt(paramMap);
 	}
 	
+	@Override
+	public ReturnParam isUsingFlexibleStdMgr(Long flexibleStdMgrId) {
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("");
+		List<WtmFlexibleEmp> emps = flexibleEmpService.findByFlexibleStdMgrId(flexibleStdMgrId);
+		if(emps != null && emps.size() > 0) {
+			rp.setFail("사용중인 유연근무제도가 있습니다.");
+			return rp;
+		}
+		
+		List<WtmBaseWorkMgr> base = baseWorkMgrService.findByFlexibleStdMgrId(flexibleStdMgrId);
+		if(base != null && base.size() > 0) {
+			rp.setFail("사용중인 기본근무제도가 있습니다.");
+			return rp;
+		}
+		
+		List<WtmWorkteamMgr> work = workteamMgrService.findByFlexibleStdMgrId(flexibleStdMgrId);
+		if(work != null && work.size() > 0) {
+			rp.setFail("사용중인 근무조가 있습니다.");
+			return rp;
+		}
+		return rp;
+	}
+	
+	@Override
+	public void deleteFlexibleStdMgr(Long flexibleStdMgrId) throws Exception {
+		ReturnParam rp = this.isUsingFlexibleStdMgr(flexibleStdMgrId);
+		if(rp.getStatus().equalsIgnoreCase("FAIL")){
+			throw new Exception( rp.get("message") +"");
+		}
+		WtmFlexibleStdMgr flexibleStdMgr = flexibleStdRepository.findByFlexibleStdMgrId(flexibleStdMgrId);
+		flexibleStdMgr.setEnterCd(flexibleStdMgr.getEnterCd()+"_DEL");
+		flexibleStdRepository.save(flexibleStdMgr);
+		
+	}
 }

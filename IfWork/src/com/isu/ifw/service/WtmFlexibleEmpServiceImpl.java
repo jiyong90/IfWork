@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -4806,7 +4807,15 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			Date eDate = sdf.parse(paramEymd);
 			
 			try {
-
+				List<String> timeTypeCds = new ArrayList<String>();
+				timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
+				timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
+				timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
+				timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
+				List<WtmWorkDayResult> delRes = workDayResultRepo.findByTenantIdAndEnterCdAndYmdBetweenAndSabunAndApplIdIsNullAndTimeTypeCdIn(tenantId, enterCd, paramSymd, paramEymd, sabun, timeTypeCds);
+				if(delRes != null && delRes.size() > 0)
+					workDayResultRepo.deleteAll(delRes);
+				
 				//마감데이터 재생성
 				calcApprDayInfo(tenantId, enterCd, paramSymd, paramEymd, sabun);
 				
@@ -5177,5 +5186,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		}
 		return resMap;
 	}
-	
+
+	@Override
+	public List<WtmFlexibleEmp> findByFlexibleStdMgrId(Long flexibleStdMgrId) {
+		return flexEmpRepo.findByFlexibleStdMgrId(flexibleStdMgrId);
+	}
+ 
 }
