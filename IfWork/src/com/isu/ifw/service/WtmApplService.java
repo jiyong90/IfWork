@@ -102,6 +102,7 @@ public interface WtmApplService {
 	final static String WTM_FLEXIBLE_APPLY_Y = "Y" ;    //  Y : 완료
 	final static String WTM_FLEXIBLE_APPLY_N = "N" ;    //  N: 실패
 	final static String WTM_FLEXIBLE_APPLY_I = "I" ;    //  I : 진행중
+	final static String WTM_FLEXIBLE_APPLY_C = "C" ;    //  C : 취소처리중
 
 	final static int DAY_HOUR = 8;
 	final static int HARF_DAY_HOUR = 4;

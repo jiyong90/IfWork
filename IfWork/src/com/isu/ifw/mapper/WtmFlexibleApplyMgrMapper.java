@@ -1,9 +1,9 @@
 package com.isu.ifw.mapper;
 
+import org.apache.ibatis.annotations.Param;
+
 import java.util.List;
 import java.util.Map;
-
-import org.apache.ibatis.annotations.Param;
 
 public interface WtmFlexibleApplyMgrMapper {
 	
@@ -60,5 +60,10 @@ public interface WtmFlexibleApplyMgrMapper {
 	public int copyWtmApplyGroup(Map<String, Object> paramMap);
 	public int copyWtmApplyEmp(Map<String, Object> paramMap);
 	public int copyWtmApplyEmpTemp(Map<String, Object> paramMap);
-	
+
+	//  확정취소 대상자 조회
+	List<Map<String, Object>> getApplyConfirmCancelList(Map<String, Object> paramMap);
+
+	//  확정대상자 존재여부 체크
+	int getExistCountBySymdAndEymd(Map<String, Object> paramMap);
 }

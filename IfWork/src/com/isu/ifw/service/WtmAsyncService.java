@@ -1,11 +1,8 @@
 package com.isu.ifw.service;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,16 +10,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.isu.ifw.entity.WtmAsyncLog;
-import com.isu.ifw.entity.WtmAsyncLogDet;
-import com.isu.ifw.entity.WtmEmpHis;
-import com.isu.ifw.entity.WtmFlexibleEmp;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.repository.WtmAsyncLogDetRepository;
-import com.isu.ifw.repository.WtmAsyncLogRepository;
-import com.isu.ifw.repository.WtmEmpHisRepository;
-import com.isu.ifw.repository.WtmFlexibleEmpRepository;
-import com.isu.ifw.repository.WtmOtSubsApplRepository;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class WtmAsyncService {
@@ -58,8 +50,12 @@ public class WtmAsyncService {
 	
 	@Autowired private WtmAsyncLogRepository asyncLogRepo;
 	@Autowired private WtmAsyncLogDetRepository asyncLogDetRepo;
-	
-	
+
+	@Autowired
+	WtmFlexibleApplyRepository flexibleApplyRepo;
+
+
+
 	@Async("threadPoolTaskExecutor")
 	@Transactional
 	public void createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, String symd, String eymd, String userId, boolean initResult) {
@@ -120,69 +116,85 @@ public class WtmAsyncService {
 	}
 
 
-	@Async
-	public void cancelFlexibleEmpById(Long tenantId, String enterCd, List<Long> flexibleEmpIds, String userId) {
-		
-		WtmAsyncLog log = asyncLogRepo.findByTenantIdAndEnterCdAndAsyncNm(tenantId, enterCd, this.ASYNC_NAME_FLEXIBLE_APPLY_MGR);
-		SimpleDateFormat ymdhis = new SimpleDateFormat("yyyyMMddHHmmss");
-		String ymdhisStr = ymdhis.format(new Date());
-		if(log == null) {
-			log = new WtmAsyncLog();
-			log.setTenantId(tenantId);
-			log.setEnterCd(enterCd);
-			log.setAsyncNm(this.ASYNC_NAME_FLEXIBLE_APPLY_MGR);
-		}else {
-			if(log.equals(this.ASYNC_STATUS_ING)) {
-				WtmAsyncLogDet logDet = new WtmAsyncLogDet();
-				logDet.setAsyncLogId(log.getAsyncLogId());
-				logDet.setAsyncYmdhis(ymdhisStr);
-				logDet.setAsyncKey("cancelFlexibleEmpById");
-				logDet.setAsyncDesc("작동중인 취소정보가 있습니다.");
-				asyncLogDetRepo.save(logDet);
-				return;
-			}
-		}
-		log.setAsyncStatus(this.ASYNC_STATUS_ING);
-		log = asyncLogRepo.save(log);
-		
-		
-		if(flexibleEmpIds != null && flexibleEmpIds.size() > 0) {
-			for(Long flexibleEmpId : flexibleEmpIds) {
-				WtmFlexibleEmp emp = wtmFlexibleEmpRepo.findById(flexibleEmpId).get();
-				String sYmd = emp.getSymd();
-				String eYmd = emp.getEymd();
-				String sabun = emp.getSabun();
-				
-				wtmFlexibleEmpRepo.delete(emp);
-				
-				try {
-					flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, sYmd, eYmd, userId);
-				} catch (Exception e) {
+	@Async("threadPoolTaskExecutor")
+	public void cancelFlexibleEmpById(Long tenantId, String enterCd, List<Long> flexibleEmpIds, String userId, WtmFlexibleApply flexibleApply) {
 
+
+		String resultMsg = "";
+
+		try {
+			WtmAsyncLog log = asyncLogRepo.findByTenantIdAndEnterCdAndAsyncNm(tenantId, enterCd, this.ASYNC_NAME_FLEXIBLE_APPLY_MGR);
+			SimpleDateFormat ymdhis = new SimpleDateFormat("yyyyMMddHHmmss");
+			String ymdhisStr = ymdhis.format(new Date());
+			if(log == null) {
+				log = new WtmAsyncLog();
+				log.setTenantId(tenantId);
+				log.setEnterCd(enterCd);
+				log.setAsyncNm(this.ASYNC_NAME_FLEXIBLE_APPLY_MGR);
+			}else {
+				if(log.equals(this.ASYNC_STATUS_ING)) {
 					WtmAsyncLogDet logDet = new WtmAsyncLogDet();
 					logDet.setAsyncLogId(log.getAsyncLogId());
 					logDet.setAsyncYmdhis(ymdhisStr);
-					logDet.setAsyncKey(emp.getFlexibleEmpId()+"");
-					logDet.setAsyncDesc(e.getMessage());
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					logDet.setAsyncKey("cancelFlexibleEmpById");
+					logDet.setAsyncDesc("작동중인 취소정보가 있습니다.");
+					asyncLogDetRepo.save(logDet);
+					return;
 				}
-				
 			}
-			
+			log.setAsyncStatus(this.ASYNC_STATUS_ING);
+			log = asyncLogRepo.save(log);
+
+
+			if(flexibleEmpIds != null && flexibleEmpIds.size() > 0) {
+				for(Long flexibleEmpId : flexibleEmpIds) {
+					WtmFlexibleEmp emp = wtmFlexibleEmpRepo.findById(flexibleEmpId).get();
+					String sYmd = emp.getSymd();
+					String eYmd = emp.getEymd();
+					String sabun = emp.getSabun();
+
+					wtmFlexibleEmpRepo.delete(emp);
+
+					try {
+						flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, sYmd, eYmd, userId);
+					} catch (Exception e) {
+
+						WtmAsyncLogDet logDet = new WtmAsyncLogDet();
+						logDet.setAsyncLogId(log.getAsyncLogId());
+						logDet.setAsyncYmdhis(ymdhisStr);
+						logDet.setAsyncKey(emp.getFlexibleEmpId()+"");
+						logDet.setAsyncDesc(e.getMessage());
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+				}
+
+			}
+
+			log.setAsyncStatus("");
+			log = asyncLogRepo.save(log);
+
+			WtmAsyncLogDet logDet = new WtmAsyncLogDet();
+			logDet.setAsyncLogId(log.getAsyncLogId());
+			logDet.setAsyncYmdhis(ymdhisStr);
+			logDet.setAsyncKey("OK");
+			logDet.setAsyncDesc("cancelFlexibleEmpById");
+			asyncLogDetRepo.save(logDet);
+
+			resultMsg = "취소 완료";
+
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}finally {
+			logger.error("취소 오류");
+
+			flexibleApply.setNote(resultMsg);
+			flexibleApply.setApplyYn(WtmApplService.WTM_FLEXIBLE_APPLY_N);
+			flexibleApplyRepo.save(flexibleApply);
 		}
 
-		log.setAsyncStatus("");
-		log = asyncLogRepo.save(log);
-
-		WtmAsyncLogDet logDet = new WtmAsyncLogDet();
-		logDet.setAsyncLogId(log.getAsyncLogId());
-		logDet.setAsyncYmdhis(ymdhisStr);
-		logDet.setAsyncKey("OK");
-		logDet.setAsyncDesc("cancelFlexibleEmpById");
-		asyncLogDetRepo.save(logDet);
-		//flexibleEmpId
-		
 	}
 
 	public void startAsync(WtmAsyncLog log) {
