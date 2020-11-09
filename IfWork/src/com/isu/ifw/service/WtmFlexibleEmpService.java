@@ -412,6 +412,9 @@ public interface WtmFlexibleEmpService {
 	public List<Map<String, Object>> getFlexibleEmpImsiList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId);
 	
 	public void createWtmWorkDayResultAsCalendar(WtmFlexibleEmp flexibleEmp);
+	
+	public void createResultByCalendar(WtmFlexibleEmp flexibleEmp, WtmWorkCalendar calendar, WtmFlexibleStdMgr flexibleStdMgr, WtmTimeCdMgr timeCdMgr);
+
 	public Map<String, Object> getFlexibleStat(Long tenantId, String enterCd, String ymd, String sabun);
 	
 	public List<WtmFlexibleEmp> findByFlexibleStdMgrId(Long flexibleStdMgrId);

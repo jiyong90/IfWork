@@ -617,6 +617,7 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 	@Override
 	public ReturnParam applyCanAfter(Long tenantId, String enterCd, Long applId, Map<String, Object> paramMap, String sabun, String userId) throws Exception {
 		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("");
 		paramMap.put("applId", applId);
 		
 		//취소하는 근무시간 정보를 지운다.

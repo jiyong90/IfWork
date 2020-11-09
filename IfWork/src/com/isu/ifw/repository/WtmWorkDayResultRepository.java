@@ -126,6 +126,8 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 	
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndApprMinuteIsNull(Long tenantId, String enterCd, String sabun, String symd, String eymd);
 	
+	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdInAndApprMinuteIsNull(Long tenantId, String enterCd, String sabun, String ymd, List<String> timeTypeCds);
+	
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndApprMinuteIsNotNull(Long tenantId, String enterCd, String sabun, String symd, String eymd);
 	/*
 	SUBS를 빼자 APPL_ID 를 찾아 연장근무 일이 현재 근무기간에 속하지 않을 경우 빼야한다. 

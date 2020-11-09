@@ -46,4 +46,6 @@ public interface WtmEmpHisRepository extends JpaRepository<WtmEmpHis, Long> {
 	public String findMaxEmpYmdByTenantIdAndEnterCdAndSabun(@Param(value="tenantId")Long tenantId, @Param(value="enterCd")String enterCd, @Param(value="sabun")String sabun);
 	
 	public List<WtmEmpHis> findByTenantIdAndEnterCdAndEmpIdOrderBySymdDesc(Long tenantId, String enterCd, String empId);
+	
+	public List<WtmEmpHis> findByTenantIdAndEnterCdAndNoteOrderBySymdDesc(Long tenantId, String enterCd, String note);
 }
