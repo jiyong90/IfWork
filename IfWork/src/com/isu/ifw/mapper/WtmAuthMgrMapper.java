@@ -31,4 +31,7 @@ public interface WtmAuthMgrMapper {
 	 * @return
 	 */
 	public List<Map<String, Object>> findAuthByTenantIdAndEnterCdAndSabun(Map<String, Object> paramMap);
+	
+	public List<Map<String, Object>> findAuthByUserKey(Map<String, Object> paramMap);
+	
 }

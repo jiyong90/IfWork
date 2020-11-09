@@ -293,6 +293,7 @@ public interface WtmFlexibleEmpService {
 	 * @return
 	 */
 	public List<String> getAuth(Long tenantId, String enterCd, String sabun);
+	public List<String> getAuth(String userKey);
 	
 	/**
 	 * 하위 부서 조회

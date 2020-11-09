@@ -3895,6 +3895,36 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 	
 	@Override
+	public List<String> getAuth(String userKey) {
+		Map<String, Object> m = new HashMap<String, Object>();
+        m.put("userKey", userKey);
+        
+        List<String> rule = null;
+        try {
+	        ObjectMapper mapper = new ObjectMapper();
+	        List<Map<String, Object>> auths = authMgrMapper.findAuthByUserKey(m);
+
+			if(auths!=null && auths.size()>0) {
+				rule = new ArrayList<String>();
+				for(Map<String, Object> auth : auths) {
+					if(auth.get("ruleText")!=null && !"".equals(auth.get("ruleText"))) {
+						List<String> ruleText = mapper.readValue(auth.get("ruleText").toString(), new ArrayList<String>().getClass());
+						for(String t : ruleText) {
+							if(!rule.contains(t))
+								rule.add(t);
+						}
+					}
+				}
+			}
+			
+			return rule;
+        } catch(Exception e) {
+        	e.printStackTrace();
+        	return null;
+        }
+	}
+	
+	@Override
 	public List<String> getLowLevelOrgList(Long tenantId, String enterCd, String sabun, String ymd) {
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		
