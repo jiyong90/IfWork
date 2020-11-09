@@ -51,19 +51,6 @@ public class WtmAnnualCreate implements Serializable {
 	@Column(name = "UPDATE_ID")
 	private String updateId;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumns({@JoinColumn(name = "TENANT_ID",
-	                          referencedColumnName = "TENANT_ID",
-	                          insertable = false,
-	                          updatable = false), @JoinColumn(name = "ENTER_CD",
-	                                                          referencedColumnName = "ENTER_CD",
-	                                                          insertable = false,
-	                                                          updatable = false), @JoinColumn(name = "SABUN",
-	                                                                                          referencedColumnName = "SABUN",
-	                                                                                          insertable = false,
-	                                                                                          updatable = false)})
-	private WtmEmpHis wtmEmpHis;
-
 	@Transient
 	private String empNm;
 
@@ -84,15 +71,6 @@ public class WtmAnnualCreate implements Serializable {
 
 	public void setEmpNm(String empNm) {
 		this.empNm = empNm;
-	}
-
-	public WtmEmpHis getWtmEmpHis() {
-		return wtmEmpHis;
-	}
-
-	public void setWtmEmpHis(WtmEmpHis wtmEmpHis) {
-		this.wtmEmpHis = wtmEmpHis;
-		this.empNm = wtmEmpHis.getEmpNm();
 	}
 
 	@PrePersist
