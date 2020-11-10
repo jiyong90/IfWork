@@ -54,6 +54,8 @@ public class WtmAsyncService {
 	@Autowired
 	WtmFlexibleApplyRepository flexibleApplyRepo;
 
+	@Autowired
+	WtmFlexibleApplyEmpTempRepository flexibleApplyEmpTempRepo;
 
 
 	@Async("threadPoolTaskExecutor")
@@ -193,6 +195,16 @@ public class WtmAsyncService {
 			flexibleApply.setNote(resultMsg);
 			flexibleApply.setApplyYn(WtmApplService.WTM_FLEXIBLE_APPLY_N);
 			flexibleApplyRepo.save(flexibleApply);
+
+			WtmFlexibleApplyEmpTemp empTemp = new WtmFlexibleApplyEmpTemp();
+			empTemp.setTenantId(tenantId);
+			empTemp.setEnterCd(enterCd);
+			empTemp.setFlexibleApplyId(flexibleApply.getFlexibleApplyId());
+			empTemp.setApplyYn(WtmApplService.WTM_FLEXIBLE_APPLY_N);
+			//  확정취소시  WTM_FLEXIBLE_APPLY_EMP_TEMP << 여기에 applyYn도  N으로 업뎃
+			int empTempCnt = flexibleApplyEmpTempRepo.updateApplyYnByFlexibleApplId(empTemp);
+
+			logger.info("empTempCnt :" + empTempCnt);
 		}
 
 	}
