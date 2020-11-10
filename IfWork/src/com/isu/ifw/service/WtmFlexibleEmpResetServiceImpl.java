@@ -230,6 +230,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 		Date eDate = ymd.parse(eYmd);		
 		logger.debug("call initWtmFlexibleEmp : " + tenantId + " : " + enterCd + " : " + sabun + " : " + sYmd + " ~ " + eYmd);
 		logger.debug("1. FLEXIBLE_EMP에서 BASE근무제 정보를 지운다.");
+		
 		List<WtmFlexibleEmp> delBaseFlexibleemps = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndEymdGreaterThanEqualAndSymdLessThanEqualAndBaseWorkYnIsYAndWorkTypeCdIsBASE(tenantId, enterCd, sabun, sYmd, eYmd);
 		if(delBaseFlexibleemps != null && delBaseFlexibleemps.size() > 0) {
 			logger.debug("1-1. " + delBaseFlexibleemps.size()+ "건 삭제");
@@ -257,16 +258,18 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				Date d1 = ymd.parse(e.getSymd());
 				Date d2 = ymd.parse(e.getEymd());
 				
-				if(sDate.compareTo(d1) > 0) {
+				/*
+				if(sDate.compareTo(d1) < 0) {
 					d1 = sDate;
 				}
-				if(eDate.compareTo(d2) < 0) {
+				if(eDate.compareTo(d2) > 0) {
 					d2 = eDate;
 				}
 				//생성하려는 기간보다 시작일이 늦을 경우
 				if(eDate.compareTo(d1) < 0) {
 					continue;
 				}
+				*/
 				
 				Calendar cal = Calendar.getInstance();
 				while(d1.compareTo(d2) <= 0) {
@@ -290,9 +293,10 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				WtmWorkteamMgr mgr = workteamMgrRepo.findByWorkteamMgrId(e.getWorkteamMgrId());
 				Long flexibleStdMgrId = mgr.getFlexibleStdMgrId();
 				String flexibleNm = mgr.getWorkteamNm();
+				
 				Date d1 = ymd.parse(e.getSymd());
 				Date d2 = ymd.parse(e.getEymd());
-				
+				/*
 				if(sDate.compareTo(d1) > 0) {
 					d1 = sDate;
 				}
@@ -303,6 +307,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				if(eDate.compareTo(d1) < 0) {
 					continue;
 				}
+				*/
 				
 				Calendar cal = Calendar.getInstance();
 				while(d1.compareTo(d2) <= 0) {
@@ -347,7 +352,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 		} 
 		//기본근무 정보는 필수다.
 		if(dayMap != null) {
-			logger.debug("dayMap : " + mapper.writeValueAsString(dayMap));
+			//logger.debug("dayMap : " + mapper.writeValueAsString(dayMap));
 			logger.debug("hasWorkteam : " + hasWorkteam);
 			logger.debug("hasFlexible : " + hasFlexible);
 			//신규입사일 경우 
@@ -383,7 +388,8 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				//근무조가 있거나 유연근무제가 있는 상태에서의 초기화
 				Date d1 = ymd.parse(sYmd);
 				Date d2 = ymd.parse(eYmd);
-				 
+				logger.debug("### d1 : "+ d1);
+				logger.debug("### d2 : "+ d2);
 				Calendar cal = Calendar.getInstance();
 				String tmp1 = null, tmp2 = null;
 				String s = null, e = null;
@@ -434,7 +440,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 							e = null;
 							tmp1 = null;
 							tmp2 = null;
-							logger.debug(chkYmd + " : 유연근무일");
+							logger.debug(chkYmd + " : 유연근무일2");
 						}else {
 							s = chkYmd; 
 							tmp1 = m.get("flexibleStdMgrId");
