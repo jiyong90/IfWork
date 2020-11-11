@@ -798,16 +798,30 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 		}
 		boolean isCreateBase = true;
 		boolean hasTaa = false;
-		List<WtmWorkDayResult> applResults = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun());
+		List<WtmWorkDayResult> applResults = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd());
 		List<WtmWorkDayResult> taaResults = null;
+		logger.debug("### applResults : " + applResults.size());
 		if(applResults != null && applResults.size() > 0) {
 			for(WtmWorkDayResult r : applResults) {
+				r.setApprSdate(null);
+				r.setApprEdate(null);
+				r.setApprMinute(null);
+				r.setUpdateId("");
+				wtmWorkDayResultRepo.save(r);
+				
 				WtmTaaAppl taaAppl = taaApplRepo.findByApplIdAndSabun(r.getApplId(), calendar.getSabun());
+				if(taaAppl == null)
+					continue;
 				List<WtmTaaApplDet> taaApplDets = taaApplDetRepo.findByTaaApplId(taaAppl.getTaaApplId());
 				//근태나 출장이 아닐수 있다.
+				logger.debug("### taaApplDets : " + taaApplDets.size() );
 				if(taaApplDets != null && taaApplDets.size() > 0) {
 					for(WtmTaaApplDet det : taaApplDets) {
+						logger.debug("### if : " + (Integer.parseInt(det.getSymd()) <= Integer.parseInt(calendar.getYmd()) && Integer.parseInt(det.getEymd()) >= Integer.parseInt(calendar.getYmd()) ) );
 						if(Integer.parseInt(det.getSymd()) <= Integer.parseInt(calendar.getYmd()) && Integer.parseInt(det.getEymd()) >= Integer.parseInt(calendar.getYmd()) ) {
+							
+							logger.debug("### det.getTaaCd() : " + det.getTaaCd());
+							
 							WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(calendar.getTenantId(), calendar.getEnterCd(), det.getTaaCd());
 							if(taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_D)) {
 								//신청서가 있는 데이터가 D일 경우 기본근무 정보를 생성하지 않는다.
