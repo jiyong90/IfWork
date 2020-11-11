@@ -22,10 +22,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmBaseWorkMgr;
 import com.isu.ifw.entity.WtmDayMgr;
 import com.isu.ifw.entity.WtmEmpHis;
-import com.isu.ifw.entity.WtmFlexibleApplDet;
 import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmHolidayMgr;
+import com.isu.ifw.entity.WtmTaaAppl;
+import com.isu.ifw.entity.WtmTaaApplDet;
+import com.isu.ifw.entity.WtmTaaCode;
 import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.entity.WtmWorkDayResult;
@@ -45,6 +47,9 @@ import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmHolidayMgrRepository;
 import com.isu.ifw.repository.WtmPropertieRepository;
 import com.isu.ifw.repository.WtmRuleRepository;
+import com.isu.ifw.repository.WtmTaaApplDetRepository;
+import com.isu.ifw.repository.WtmTaaApplRepository;
+import com.isu.ifw.repository.WtmTaaCodeRepository;
 import com.isu.ifw.repository.WtmTimeCdMgrRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkDayResultRepository;
@@ -113,6 +118,9 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 	@Autowired private WtmHolidayMgrRepository holidayMgrRepo;
 	@Autowired private WtmCalcService calcService;
 	
+	@Autowired private WtmTaaApplRepository taaApplRepo;
+	@Autowired private WtmTaaApplDetRepository taaApplDetRepo;
+	@Autowired private WtmTaaCodeRepository taaCodeRepo;
 	@Transactional
 	@Override
 	public void P_WTM_FLEXIBLE_EMP_RESET(Long tenantId, String enterCd, String sabun, String sYmd, String eYmd, String userId) throws Exception {
@@ -776,5 +784,71 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				chkDate = cal.getTime();
 			}
 		} 
+	}
+
+	@Override
+	@Transactional
+	public void P_WTM_WORK_DAY_RESULT_RESET(WtmWorkCalendar calendar, WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr, String userId)  throws Exception {
+		
+		//SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+		//신청서 아이디가 있는 데이터를 제외하고 삭제한다 .
+		List<WtmWorkDayResult> delResult = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndYmdAndSabunAndApplIdIsNull(calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun());
+		if(delResult != null && delResult.size() > 0) {
+			wtmWorkDayResultRepo.deleteAll(delResult);
+		}
+		boolean isCreateBase = true;
+		boolean hasTaa = false;
+		List<WtmWorkDayResult> applResults = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun());
+		List<WtmWorkDayResult> taaResults = null;
+		if(applResults != null && applResults.size() > 0) {
+			for(WtmWorkDayResult r : applResults) {
+				WtmTaaAppl taaAppl = taaApplRepo.findByApplIdAndSabun(r.getApplId(), calendar.getSabun());
+				List<WtmTaaApplDet> taaApplDets = taaApplDetRepo.findByTaaApplId(taaAppl.getTaaApplId());
+				//근태나 출장이 아닐수 있다.
+				if(taaApplDets != null && taaApplDets.size() > 0) {
+					for(WtmTaaApplDet det : taaApplDets) {
+						if(Integer.parseInt(det.getSymd()) <= Integer.parseInt(calendar.getYmd()) && Integer.parseInt(det.getEymd()) >= Integer.parseInt(calendar.getYmd()) ) {
+							WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(calendar.getTenantId(), calendar.getEnterCd(), det.getTaaCd());
+							if(taaCode.getRequestTypeCd().equals(WtmTaaCode.REQUEST_TYPE_D)) {
+								//신청서가 있는 데이터가 D일 경우 기본근무 정보를 생성하지 않는다.
+								logger.debug("### 일단위 근태 또는 출장이 있다. : " + taaCode.getTaaNm() + " : " +  r.getPlanSdate() + " ~ " + r.getPlanEdate());
+								isCreateBase = false;
+							}else {
+								if(taaResults == null)
+									taaResults = new ArrayList<WtmWorkDayResult>();
+								
+								taaResults.add(r);		
+								logger.debug("### 시간단위의 근태 또는 출장이 있다. : " + taaCode.getTaaNm() + " : " +  r.getPlanSdate() + " ~ " + r.getPlanEdate());
+								hasTaa = true;
+							}
+						}
+					}
+				}
+			}
+		} 
+		//기본근무시간 기준으로 기본근무를 생성한다. 최초 개인이 입력한 계획시간을 알수 없다.  
+		if(isCreateBase) {
+			flexibleEmpService.createResultByCalendar(calendar, flexStdMgr, timeCdMgr);
+			//근무시간표 기준으로 기본근무 생성 후 근태 또는 출장 등의 데이터에 맞게 기본근무 시간을 자른다.
+			if(hasTaa && taaResults != null) {
+				for(WtmWorkDayResult taaR : taaResults) {
+					Date calcSdate = calcService.WorkTimeCalcApprDate(taaR.getPlanSdate(), taaR.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
+					Date calcEdate = calcService.WorkTimeCalcApprDate(taaR.getPlanEdate(), taaR.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
+					//gobackResult.setApprSdate(gobackResult.getPlanSdate());
+					//gobackResult.setApprEdate(gobackResult.getPlanEdate());
+					flexibleEmpService.addWtmDayResultInBaseTimeType(taaR.getTenantId()
+																	 , taaR.getEnterCd()
+																	 , taaR.getYmd()
+																	 , taaR.getSabun()
+																	 , taaR.getTimeTypeCd()
+																	 , ""
+																	 , calcSdate
+																	 , calcEdate
+																	 , null
+																	 , "taa reset timeblock"
+																	 , false);
+				}
+			}
+		}
 	}
 }

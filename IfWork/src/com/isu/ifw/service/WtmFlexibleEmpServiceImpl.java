@@ -4960,7 +4960,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
 			SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
 			for(WtmWorkCalendar calendar : calendars) {
-				this.createResultByCalendar(flexibleEmp, calendar, flexibleStdMgr, timeCdMgrMap.get(calendar.getTimeCdMgrId()));
+				this.createResultByCalendar(calendar, flexibleStdMgr, timeCdMgrMap.get(calendar.getTimeCdMgrId()));
 				/*
 				if(calendar.getHolidayYn() == null || "".equals(calendar.getHolidayYn()) || !"Y".equals(calendar.getHolidayYn())) {
 					logger.debug("마감된 즉 인정된 근무정보가 있으면 해당일은 생성하지 않는다.");
@@ -5194,10 +5194,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 	
 	@Override
-	public void createResultByCalendar(WtmFlexibleEmp flexibleEmp, WtmWorkCalendar calendar, WtmFlexibleStdMgr flexibleStdMgr, WtmTimeCdMgr timeCdMgr) {
+	public void createResultByCalendar(WtmWorkCalendar calendar, WtmFlexibleStdMgr flexibleStdMgr, WtmTimeCdMgr timeCdMgr) {
 		if(calendar.getHolidayYn() == null || "".equals(calendar.getHolidayYn()) || !"Y".equals(calendar.getHolidayYn())) {
 			logger.debug("마감된 즉 인정된 근무정보가 있으면 해당일은 생성하지 않는다.");
-			List<WtmWorkDayResult> apprResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndApprMinuteIsNotNull(flexibleEmp.getTenantId(), flexibleEmp.getEnterCd(), flexibleEmp.getSabun(), calendar.getYmd(), calendar.getYmd());
+			List<WtmWorkDayResult> apprResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndApprMinuteIsNotNull(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), calendar.getYmd());
 			if(apprResults != null &&  apprResults.size() > 0 ) {
 				return;//continue;
 			}

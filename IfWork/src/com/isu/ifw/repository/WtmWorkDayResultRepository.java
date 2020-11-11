@@ -153,4 +153,6 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 	
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndYmdAndSabunAndApplIdIsNullAndTimeTypeCdIn(Long tenantId, String enterCd, String ymd, String sabun, List<String> timeTypeCds);
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndYmdBetweenAndSabunAndApplIdIsNullAndTimeTypeCdIn(Long tenantId, String enterCd, String sYmd, String eYmd, String sabun, List<String> timeTypeCds);
+
+	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndYmdAndSabunAndApplIdIsNull(Long tenantId, String enterCd, String ymd, String sabun);
 }
