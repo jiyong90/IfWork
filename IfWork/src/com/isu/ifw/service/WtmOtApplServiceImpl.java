@@ -776,8 +776,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				}
 			}
 		}
-		
-		System.out.println("restMin ==========" + restMin);
+
+		logger.debug("### restMin : "+ restMin);
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
 		
@@ -835,6 +835,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				isOtCheck = false;
 			}
 		}
+		logger.debug("### isOtCheck : "+ isOtCheck);
 		if(isOtCheck) {
 			//현재 신청할 연장근무 시간 계산
 			resultMap.putAll(wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun));
@@ -938,6 +939,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				}
 			}
 			
+			logger.debug("### weekOtCheck : "+ weekOtCheck);
 			
 			if(weekOtCheck) {
 				paramMap.putAll(rMap);
@@ -968,8 +970,10 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 					return rp;
 				}
 			}
-			
 			Integer otMinute = emp.getOtMinute();
+			logger.debug("### otMinute : " + otMinute);
+			logger.debug("### calcMinute : " + calcMinute);
+			logger.debug("### sumOtMinute : " + sumOtMinute);
 			//otMinute 연장근무 가능 시간이 0이면 체크 하지말자 우선!!
 			if(otMinute != null && otMinute > 0) {
 				int t = (((sumOtMinute!=null)?sumOtMinute:0) + ((calcMinute!=null)?calcMinute:0));
