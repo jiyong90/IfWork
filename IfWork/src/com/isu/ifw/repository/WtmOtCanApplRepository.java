@@ -17,6 +17,7 @@ public interface WtmOtCanApplRepository extends JpaRepository<WtmOtCanAppl, Long
 
 	public WtmOtCanAppl findByApplIdAndSabun(Long applId, String sabun);
 
+	public List<WtmOtCanAppl> findByApplIdOrderByPlanSdateAsc(Long applId);
 	@Modifying
 	@Transactional
 	@Query("DELETE FROM WtmOtCanAppl a WHERE a.applId = ?1 ")

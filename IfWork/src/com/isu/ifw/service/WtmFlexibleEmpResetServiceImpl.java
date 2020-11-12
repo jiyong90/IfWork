@@ -799,6 +799,8 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				wtmWorkDayResultRepo.save(r);
 				
 				WtmTaaAppl taaAppl = taaApplRepo.findByApplIdAndSabun(r.getApplId(), calendar.getSabun());
+				if(taaAppl == null)
+					continue;
 				List<WtmTaaApplDet> taaApplDets = taaApplDetRepo.findByTaaApplId(taaAppl.getTaaApplId());
 				//근태나 출장이 아닐수 있다.
 				logger.debug("### taaApplDets : " + taaApplDets.size() );
