@@ -1,32 +1,25 @@
 package com.isu.ifw.service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplLine;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmOtApplMapper;
 import com.isu.ifw.mapper.WtmOtCanApplMapper;
-import com.isu.ifw.repository.WtmApplCodeRepository;
-import com.isu.ifw.repository.WtmApplLineRepository;
-import com.isu.ifw.repository.WtmApplRepository;
-import com.isu.ifw.repository.WtmEntryApplRepository;
-import com.isu.ifw.repository.WtmFlexibleApplRepository;
-import com.isu.ifw.repository.WtmOtSubsApplRepository;
+import com.isu.ifw.repository.*;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Service("wtmApplService")
 public class WtmApplServiceImpl implements WtmApplService {
@@ -131,7 +124,11 @@ public class WtmApplServiceImpl implements WtmApplService {
 					String applSabun = appr.get("applSabun").toString();
 					Map<String, Object> appl = null;
 					
-					if("OT".equals(applCd) ) { //연장
+					if("OT".equals(applCd)
+							|| WtmApplService.TIME_TYPE_EARLY_OT .equals(applCd)
+							|| WtmApplService.TIME_TYPE_EARLY_NIGHT .equals(applCd)
+							|| WtmApplService.TIME_TYPE_NIGHT .equals(applCd)
+					) { //연장
 						appl = wtmOtApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
 					} else if("OT_CAN".equals(applCd)) { //연장 취소
 						appl = wtmOtCanApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
