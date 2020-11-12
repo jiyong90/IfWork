@@ -160,8 +160,14 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 					&& flexEmp.getWorkTypeCd().startsWith("SELE")
 					|| flexEmp.getWorkTypeCd().equals("DIFF")
 						) {
-					if(flexEmp.getWorkTypeCd().equals("DIFF")) {
+					if(!flexEmp.getWorkTypeCd().equals("DIFF")) {
 						logger.debug("선택근무제이다.");
+
+					}
+					this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), loopSymd, loopEymd, WtmFlexibleEmpResetService.WORK_TYPE_FLEX, null, userId);
+
+					if(flexEmp.getWorkTypeCd().equals("DIFF")) {
+						logger.debug("시차출퇴근이다. RESULT RESET GO");
 						/*
 						List<WtmWorkDayResult> delResults = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndApprMinuteIsNull(tenantId, enterCd, sabun, loopSymd, loopEymd);
 						if(delResults != null && delResults.size() > 0) {
@@ -171,24 +177,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 						*/
 
 						// { call P_WTM_WORK_DAY_RESULT_RESET(#{tenantId}, #{enterCd}, #{pKey}, #{flexibleEmpId}, #{sYmd}, #{eYmd}, #{holExceptYn}, #{maxPattSeq}, #{pType}, #{userId}) }
-						Map<String, Object> params = new HashMap<String, Object>();
-						params.put("tenantId", tenantId);
-						params.put("enterCd", enterCd);
-						params.put("pKey", flexEmp.getFlexibleStdMgrId());
-						params.put("flexibleEmpId", flexEmp.getFlexibleEmpId());
-						params.put("sYmd", flexEmp.getSymd());
-						params.put("eYmd", flexEmp.getEymd());
-						params.put("holExceptYn", flexStdMgr.getHolExceptYn());
-						params.put("maxPattSeq", pattDets.get(pattDets.size()-1).getSeq());
-						params.put("pType", "DIFF");
-						params.put("userId", userId);
-						wtmFlexEmpMapper.resetWorkDayResult(params);
-
-					}
-					this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), loopSymd, loopEymd, WtmFlexibleEmpResetService.WORK_TYPE_FLEX, null, userId);
-
-					if(flexEmp.getWorkTypeCd().equals("DIFF")) {
-						logger.debug("시차출퇴근이다. RESULT RESET GO");
+						flexibleEmpService.createWtmWorkDayResultAsCalendar(flexEmp);
 					}
 					
 				}else {
