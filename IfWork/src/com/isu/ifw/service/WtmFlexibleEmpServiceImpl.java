@@ -4696,7 +4696,18 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		logger.debug("[setApply] updateStart " +searchSabun.toString());
 
 		//flexEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(searchSabun);
-		flexibleEmpResetSerevice.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, searchSabun.get("useSymd")+"", searchSabun.get("useEymd")+"", "ADMIN");
+		String symd = searchSabun.get("useSymd")+"";
+		String eymd = searchSabun.get("useSymd")+"";
+
+		if(symd != null && !"".equals(symd)) {
+			symd = symd.substring(0, 4)+"0101";
+		}
+		if(eymd != null && !"".equals(eymd)) {
+			eymd = eymd.substring(0, 4)+"1231";
+		}
+
+		flexibleEmpResetSerevice.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, symd, eymd, "ADMIN");
+
 		logger.debug("[setApply] initWtmFlexibleEmpOfWtmWorkDayResult ");
 		
 		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, searchSabun.get("useSymd")+"", searchSabun.get("useEymd")+"");

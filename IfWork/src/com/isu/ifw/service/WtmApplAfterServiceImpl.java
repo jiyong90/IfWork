@@ -111,7 +111,7 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 			
 			for(WtmOtAppl otA : otApplList) {
 				//otA.getYmd()
-				WtmWorkCalendar c = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, otA.getYmd());
+				WtmWorkCalendar c = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, otA.getSabun(), otA.getYmd());
 				WtmTimeCdMgr timeCdMgr = timeCdMgrRepo.findById(c.getTimeCdMgrId()).get();
 				WtmOtAppl otAppl = new WtmOtAppl();
 				otAppl.setApplId(otA.getApplId());
