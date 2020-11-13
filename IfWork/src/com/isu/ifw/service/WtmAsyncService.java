@@ -118,6 +118,39 @@ public class WtmAsyncService {
 	}
 
 
+	public void cacelFlexibleByEmpId(Long tenantId, String enterCd, List<Long> flexibleEmpIds, String userId){
+
+		WtmAsyncLog log = asyncLogRepo.findByTenantIdAndEnterCdAndAsyncNm(tenantId, enterCd, this.ASYNC_NAME_FLEXIBLE_APPLY_MGR);
+		SimpleDateFormat ymdhis = new SimpleDateFormat("yyyyMMddHHmmss");
+		String ymdhisStr = ymdhis.format(new Date());
+
+		if(flexibleEmpIds != null && flexibleEmpIds.size() > 0) {
+			for(Long flexibleEmpId : flexibleEmpIds) {
+				WtmFlexibleEmp emp = wtmFlexibleEmpRepo.findById(flexibleEmpId).get();
+				String sYmd = emp.getSymd();
+				String eYmd = emp.getEymd();
+				String sabun = emp.getSabun();
+
+				wtmFlexibleEmpRepo.delete(emp);
+
+				try {
+					flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, sYmd, eYmd, userId);
+				} catch (Exception e) {
+
+					WtmAsyncLogDet logDet = new WtmAsyncLogDet();
+					logDet.setAsyncLogId(log.getAsyncLogId());
+					logDet.setAsyncYmdhis(ymdhisStr);
+					logDet.setAsyncKey(emp.getFlexibleEmpId()+"");
+					logDet.setAsyncDesc(e.getMessage());
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			}
+
+		}
+	}
+
 	@Async("threadPoolTaskExecutor")
 	public void cancelFlexibleEmpById(Long tenantId, String enterCd, List<Long> flexibleEmpIds, String userId, WtmFlexibleApply flexibleApply) {
 
@@ -208,6 +241,7 @@ public class WtmAsyncService {
 		}
 
 	}
+
 
 	public void startAsync(WtmAsyncLog log) {
 		log.setAsyncStatus(this.ASYNC_STATUS_ING);
