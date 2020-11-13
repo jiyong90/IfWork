@@ -1308,7 +1308,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				
 				calcApprDayInfo1(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd());
 				
-				calcApprDayInfo2(calendar, flexStdMgr, timeCdMgr);
+				calcApprDayInfo2(flexEmp, calendar, flexStdMgr, timeCdMgr);
 				
 			}
 			
@@ -1420,7 +1420,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 	
 	@Transactional
-	public void calcaApprDayReset(WtmWorkCalendar calendar, WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr) {
+	public void calcaApprDayReset(WtmFlexibleEmp flexibleEmp, WtmWorkCalendar calendar, WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr) {
 		//타각 시간 기준으로 인정근무를 생성할 경우
 		//계획된 정보의 출퇴근 시간을 변경하고 
 		//간주근무 정보가 있을 경우 타임블럭을 재배치한다.
@@ -1433,6 +1433,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		if(!"".equals(flexStdMgr.getCreateOtIfOutOfPlanYn()) && "Y".equals(flexStdMgr.getCreateOtIfOutOfPlanYn())) {
 			logger.debug("flexStdMgr.getCreateOtIfOutOfPlanYn() : " + flexStdMgr.getCreateOtIfOutOfPlanYn());
 			//사이 데이터는 무시한다. 앞위 데이터를 만들어 주고 이후 로직을 태워보자 .
+			
+			
 			//Result전체 체크
 			List<WtmWorkDayResult> ress = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdOrderByPlanSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd());
 			if(ress != null && ress.size() > 0) {
@@ -1461,44 +1463,100 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					}
 				}
 				if(hasBASE) {
-					logger.debug("");
-					//타각시간이 빨라야한다. 
-					if(calendar.getEntrySdate().compareTo(minPlanSdate) < 0) {
-						logger.debug("타각시간이 계획시작시간보다 빠르다.");
-						logger.debug("calendar.getEntrySdate() : " + calendar.getEntrySdate());
-						logger.debug("minPlanSdate : " + minPlanSdate);
-						
-						if(calendar.getEntrySdate().compareTo(prenightEdate) < 0) {
-							logger.debug("타각시간이 NIGHT 시간내에 있다.");
-							Date planSdate = calendar.getEntrySdate();
-							Date planEdate = prenightEdate;
-							this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun(), WtmApplService.TIME_TYPE_EARLY_NIGHT, planSdate, planEdate, null, null, null, null);
-							planSdate = prenightEdate;
-							planEdate = minPlanSdate;
-							this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun(), WtmApplService.TIME_TYPE_EARLY_OT, planSdate, planEdate, null, null, null, null);
-						}else {
-							Date planSdate = calendar.getEntrySdate();
-							Date planEdate = minPlanSdate;
-							this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun(), WtmApplService.TIME_TYPE_EARLY_OT, planSdate, planEdate, null, null, null, null);
+
+					//오늘을 제외한 연장근무 시간을 구하자. 
+					int otMinute = flexibleEmp.getOtMinute();
+					List<String> timeTypeCd = new ArrayList<String>();
+					timeTypeCd.add(WtmApplService.TIME_TYPE_OT);
+					timeTypeCd.add(WtmApplService.TIME_TYPE_EARLY_OT);
+					timeTypeCd.add(WtmApplService.TIME_TYPE_NIGHT);
+					timeTypeCd.add(WtmApplService.TIME_TYPE_EARLY_NIGHT); 
+					
+					List<WtmWorkDayResult> otResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), timeTypeCd, flexibleEmp.getSymd(), flexibleEmp.getEymd());
+					int sumOtMinute = 0;
+					for(WtmWorkDayResult otR : otResults) {
+						if(!otR.getYmd().equals(calendar.getYmd())) {
+							sumOtMinute = sumOtMinute + ((otR.getApprMinute() == null)?otR.getPlanMinute():otR.getApprMinute());
 						}
 					}
 					
-					if(calendar.getEntryEdate().compareTo(maxPlanEdate) > 0){
-						logger.debug("타각시간이 계획종료시간보다 빠르다.");
-						logger.debug("calendar.getEntryEdate() : " + calendar.getEntryEdate());
-						logger.debug("maxPlanEdate : " + maxPlanEdate);
-						if(calendar.getEntryEdate().compareTo(nightSdate) > 0){
-							logger.debug("타각시간이 NIGHT 시간내에 있다.");
-							Date planSdate = maxPlanEdate;
-							Date planEdate = nightSdate;
-							this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun(), WtmApplService.TIME_TYPE_OT, planSdate, planEdate, null, null, null, null);
-							planSdate = nightSdate;
-							planEdate = calendar.getEntryEdate();
-							this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun(), WtmApplService.TIME_TYPE_NIGHT, planSdate, planEdate, null, null, null, null);
-						}else {
-							Date planSdate = maxPlanEdate;
-							Date planEdate = calendar.getEntryEdate();
-							this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun(), WtmApplService.TIME_TYPE_OT, planSdate, planEdate, null, null, null, null);
+					//기본근무 시간 외를 체크해야한다. 
+					Date baseSdate = null, baseEdate = null;
+					try {
+						baseSdate = ymdhm.parse(calendar.getYmd()+timeCdMgr.getWorkShm());
+						baseEdate = ymdhm.parse(calendar.getYmd()+timeCdMgr.getWorkEhm());
+						if(baseSdate.compareTo(baseEdate) > 0) {
+							Calendar cal = Calendar.getInstance();
+							cal.setTime(baseEdate);
+							cal.add(Calendar.DATE, 1);
+							baseEdate = cal.getTime();
+						}
+					} catch (ParseException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}  
+					logger.debug("### otMinute : "+ otMinute);
+					logger.debug("### sumOtMinute : "+ sumOtMinute);
+					if(otMinute > sumOtMinute) {
+						
+						int restOtMinute = otMinute - sumOtMinute;
+						logger.debug("### 잔여 restOtMinute : "+ restOtMinute);
+
+						WtmWorkDayResult savedResult = null;
+						//타각시간이 빨라야한다. 
+						if(calendar.getEntrySdate().compareTo(minPlanSdate) < 0 && calendar.getEntrySdate().compareTo(baseSdate) < 0) {
+							logger.debug("타각시간이 계획시작시간보다 빠르다.");
+							logger.debug("calendar.getEntrySdate() : " + calendar.getEntrySdate());
+							logger.debug("minPlanSdate : " + minPlanSdate);
+								if(calendar.getEntrySdate().compareTo(prenightEdate) < 0) {
+									logger.debug("타각시간이 NIGHT 시간내에 있다.");
+									Date planSdate = calendar.getEntrySdate();
+									Date planEdate = prenightEdate;
+									savedResult = this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun()
+											, WtmApplService.TIME_TYPE_EARLY_NIGHT, planSdate, planEdate, null, null, null, null, restOtMinute);
+									restOtMinute = restOtMinute - savedResult.getPlanMinute();
+									if(restOtMinute > 0) {
+										planSdate = prenightEdate;
+										planEdate = minPlanSdate;
+										savedResult = this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun()
+												, WtmApplService.TIME_TYPE_EARLY_OT, planSdate, planEdate, null, null, null, null, restOtMinute);
+										restOtMinute = restOtMinute - savedResult.getPlanMinute();
+									}
+								}else {
+									Date planSdate = calendar.getEntrySdate();
+									Date planEdate = minPlanSdate;
+									savedResult = this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun()
+											, WtmApplService.TIME_TYPE_EARLY_OT, planSdate, planEdate, null, null, null, null, restOtMinute);
+									restOtMinute = restOtMinute - savedResult.getPlanMinute();
+								} 
+						}
+						if(restOtMinute > 0) {
+							if(calendar.getEntryEdate().compareTo(maxPlanEdate) > 0 && calendar.getEntryEdate().compareTo(baseEdate) > 0 ){
+								logger.debug("타각시간이 계획종료시간보다 빠르다.");
+								logger.debug("calendar.getEntryEdate() : " + calendar.getEntryEdate());
+								logger.debug("maxPlanEdate : " + maxPlanEdate);
+								if(calendar.getEntryEdate().compareTo(nightSdate) > 0){
+									logger.debug("타각시간이 NIGHT 시간내에 있다.");
+									Date planSdate = maxPlanEdate;
+									Date planEdate = nightSdate;
+									savedResult = this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun()
+											, WtmApplService.TIME_TYPE_OT, planSdate, planEdate, null, null, null, null);
+									restOtMinute = restOtMinute - savedResult.getPlanMinute();
+									if(restOtMinute > 0) {
+										planSdate = nightSdate;
+										planEdate = calendar.getEntryEdate();
+										savedResult = this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun()
+												, WtmApplService.TIME_TYPE_NIGHT, planSdate, planEdate, null, null, null, null);
+										restOtMinute = restOtMinute - savedResult.getPlanMinute();
+									}
+								}else {
+									Date planSdate = maxPlanEdate;
+									Date planEdate = calendar.getEntryEdate();
+									savedResult = this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun()
+											, WtmApplService.TIME_TYPE_OT, planSdate, planEdate, null, null, null, null);
+									restOtMinute = restOtMinute - savedResult.getPlanMinute();
+								}
+							}
 						}
 					}
 				}
@@ -1905,7 +1963,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 	
 	@Transactional
-	protected WtmWorkDayResult saveWorkDayResult(WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr, WtmWorkDayResult result, Long tenantId, String enterCd, String ymd, String sabun, String timeTypeCd, Date planSdate, Date planEdate, Date apprSdate, Date apprEdate, Long applId, String taaCd) {
+	protected WtmWorkDayResult saveWorkDayResult(WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr, WtmWorkDayResult result, Long tenantId, String enterCd, String ymd, String sabun, String timeTypeCd, Date planSdate, Date planEdate, Date apprSdate, Date apprEdate, Long applId, String taaCd ) {
+		return this.saveWorkDayResult(flexStdMgr, timeCdMgr, result, tenantId, enterCd, ymd, sabun, timeTypeCd, planSdate, planEdate, apprSdate, apprEdate, applId, taaCd, null);
+	}
+	
+	@Transactional
+	protected WtmWorkDayResult saveWorkDayResult(WtmFlexibleStdMgr flexStdMgr, WtmTimeCdMgr timeCdMgr, WtmWorkDayResult result, Long tenantId, String enterCd, String ymd, String sabun, String timeTypeCd, Date planSdate, Date planEdate, Date apprSdate, Date apprEdate, Long applId, String taaCd, Integer restOtMinute) {
 
 		logger.debug("save ymd : " + ymd);
 		logger.debug("save timeTypeCd : " + timeTypeCd);
@@ -1982,13 +2045,31 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : breakMinute " + breakMinute);
 				apprMinute = apprMinute - breakMinute;
 				breakMinute = 0;
+				
+
+				if(restOtMinute != null) {
+					if(apprMinute > restOtMinute) {
+						Date recalcEdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(calcSdate, restOtMinute, timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+						if(recalcEdate.compareTo(calcEdate) < 0) {
+							calcEdate = recalcEdate;
+							apprMinute = calcService.WtmCalcMinute(sdf.format(calcSdate), sdf.format(calcEdate), null, null, flexStdMgr.getUnitMinute());
+							breakMinute = calcService.getBreakMinuteIfBreakTimeMGR(calcSdate, calcEdate, timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+							logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : apprMinute " + apprMinute);
+							logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : breakMinute " + breakMinute);
+							apprMinute = apprMinute - breakMinute;
+							
+							result.setPlanEdate(calcEdate);
+							
+						}
+					}
+				}
+				
 			}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
 				breakMinute = calcService.getBreakMinuteIfBreakTimeTIME(timeCdMgr.getTimeCdMgrId(), apprMinute);
 				logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : apprMinute " + apprMinute);
 				logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : breakMinute " + breakMinute);
 			//}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIMEFIX)) {
 			}
-		
 			result.setPlanMinute(apprMinute);
 		}
 		
@@ -2067,7 +2148,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	 * 타각시간 기준으로 인정시간 계산
 	 */
 	@Override
-	public void calcApprDayInfo2(WtmWorkCalendar calendar,WtmFlexibleStdMgr flexStdMgr,WtmTimeCdMgr timeCdMgr) {
+	public void calcApprDayInfo2(WtmFlexibleEmp flexibleEmp,  WtmWorkCalendar calendar,WtmFlexibleStdMgr flexStdMgr,WtmTimeCdMgr timeCdMgr) {
 		
 		
 		Long tenantId = calendar.getTenantId();
@@ -2449,7 +2530,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			/**
 			 * 출퇴근 타각정보로 갱신의 경우 계획 타각시간 기준으로 계획을 변경하고간주근무 외출 / 복귀에 대한 데이터를 재생성한다. 
 			 */
-			calcaApprDayReset(calendar, flexStdMgr, timeCdMgr);
+			
+			calcaApprDayReset(flexibleEmp, calendar, flexStdMgr, timeCdMgr);
 			
 	//		paramMap.put("timeTypeCd", timeTypeCd);
 			//소정근로시간의 경우 출퇴근 타각기록으로만 판단 >> 결근 데이터가 있는 날은 빼야한다.
@@ -4696,7 +4778,18 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		logger.debug("[setApply] updateStart " +searchSabun.toString());
 
 		//flexEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(searchSabun);
-		flexibleEmpResetSerevice.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, searchSabun.get("useSymd")+"", searchSabun.get("useEymd")+"", "ADMIN");
+		String symd = searchSabun.get("useSymd")+"";
+		String eymd = searchSabun.get("useSymd")+"";
+
+		if(symd != null && !"".equals(symd)) {
+			symd = symd.substring(0, 4)+"0101";
+		}
+		if(eymd != null && !"".equals(eymd)) {
+			eymd = eymd.substring(0, 4)+"1231";
+		}
+
+		flexibleEmpResetSerevice.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, symd, eymd, "ADMIN");
+
 		logger.debug("[setApply] initWtmFlexibleEmpOfWtmWorkDayResult ");
 		
 		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, searchSabun.get("useSymd")+"", searchSabun.get("useEymd")+"");
