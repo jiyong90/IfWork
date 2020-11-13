@@ -108,9 +108,7 @@ public class WtmAsyncService {
 	}
 
 	@Async("threadPoolTaskExecutor")
-	public void asyncFlexibleEmpRest(Long tenantId, String enterCd, String ymd) throws Exception {
-
-		List<WtmEmpHis> empList = wtmEmpHisRepo.findByTenantIdAndEnterCdAndYmdNotExistWtmFlexibleEmp(tenantId, enterCd, ymd);
+	public void asyncFlexibleEmpRest(Long tenantId, String enterCd, String ymd, List<WtmEmpHis> empList) throws Exception {
 
 		for (WtmEmpHis empHis : empList){
 			flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, empHis.getSabun(), ymd.substring(0,4)+"0101", ymd.substring(0,4)+"1231", empHis.getSabun());
