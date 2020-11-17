@@ -26,6 +26,7 @@ public interface WtmFlexibleApplyMgrService {
 
 	//확정, 동기
 	public int setApply(List<Map<String, Object>> searchList, List<Map<String, Object>> ymdList);
+	public void setApply(WtmFlexibleApply flexibleApply, List<Map<String, Object>> searchList, List<Map<String, Object>> ymdList);
 
 	//	public int setApplyForOne(Map<String, Object> searchSabun, List<Map<String, Object>> ymdList);
 	public List<Map<String, Object>> getApplyYmdList(Map<String, Object> paramMap) throws Exception;
