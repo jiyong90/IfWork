@@ -192,6 +192,14 @@ public class WtmWorkCalendar {
     	this.updateDate = new Date();
     }
 	
+
+	@Override
+	public String toString() {
+		return "WtmWorkCalendar [workCalendarId=" + workCalendarId + ", tenantId=" + tenantId + ", enterCd=" + enterCd
+				+ ", timeCdMgrId=" + timeCdMgrId + ", sabun=" + sabun + ", entrySdate=" + entrySdate + ", entryEdate=" + entryEdate
+				+ ", holidayYn=" + holidayYn + ", workCloseYn=" + workCloseYn + ", note=" + note + ", updateDate=" + updateDate + ", updateId=" + updateId
+				+ "]";
+	}
 	
 	
 }

@@ -527,7 +527,11 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 			int resultCnt = setApply(searchList, ymdList);
 			resultMsg = "총 " + searchList.size() + "명의 확정 대상자 중 " + resultCnt + "명의 확정에 성공하였습니다.";
 			flexibleApply.setNote(resultMsg);
-			flexibleApply.setApplyYn(WtmApplService.WTM_FLEXIBLE_APPLY_Y);
+			if(searchList.size() == resultCnt) {
+				flexibleApply.setApplyYn(WtmApplService.WTM_FLEXIBLE_APPLY_Y);
+			}else {
+				flexibleApply.setApplyYn(WtmApplService.WTM_FLEXIBLE_APPLY_N);
+			}
 		}catch (Exception e){
 			e.printStackTrace();
 			flexibleApply.setNote(rp.get("message").toString());

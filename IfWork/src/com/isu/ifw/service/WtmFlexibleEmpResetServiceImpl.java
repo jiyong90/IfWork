@@ -179,7 +179,9 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 						// { call P_WTM_WORK_DAY_RESULT_RESET(#{tenantId}, #{enterCd}, #{pKey}, #{flexibleEmpId}, #{sYmd}, #{eYmd}, #{holExceptYn}, #{maxPattSeq}, #{pType}, #{userId}) }
 						flexibleEmpService.createWtmWorkDayResultAsCalendar(flexEmp);
 					}
-					
+				}else if(flexEmp.getWorkTypeCd().equals("ELAS")) {
+					logger.debug("탄근제이다");
+					this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), loopSymd, loopEymd, WtmFlexibleEmpResetService.WORK_TYPE_FLEX, null, userId);
 				}else {
 					logger.debug("기본근무제이다.");
 					logger.debug("현재 근무제가 기본근무 일 경우 기본근무 인지 근무조 인지 알수가 없다. 시작일 기준으로 근무조정보가 있는지 확인한다.");
@@ -504,7 +506,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				mgrSdate = ymd.parse(workteamMgr.getSymd());
 			}else if(workType.equals(this.WORK_TYPE_BASE) || workType.equals(this.WORK_TYPE_DIFF)) {
 				WtmEmpHis empHis = empHisRepo.findByTenantIdAndEnterCdAndSabunAndYmd(flexStdMgr.getTenantId(), flexStdMgr.getEnterCd(), sabun, sYmd);
-				empHis.getBusinessPlaceCd();
+				logger.debug("### baseWorkMgr : " + flexStdMgr.getTenantId() + " : " +  flexStdMgr.getEnterCd() + " : " +  flexStdMgr.getFlexibleStdMgrId() + " : " +  sYmd + " : " +  empHis.getBusinessPlaceCd());
 				WtmBaseWorkMgr baseWorkMgr = baseWorkMgrRepo.findByTenantIdAndEnterCdAndFlexibleStdMgrIdAndYmdAndBusinessPlaceCd(flexStdMgr.getTenantId(), flexStdMgr.getEnterCd(), flexStdMgr.getFlexibleStdMgrId(), sYmd, empHis.getBusinessPlaceCd());
 				mgrSdate = ymd.parse(baseWorkMgr.getSymd());
 				//mgrId

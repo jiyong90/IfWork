@@ -5029,9 +5029,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 			//flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(searchSabun);
 			logger.debug("[setApply] createWorkTermBySabunAndSymdAndEymd ");
+			/*
 			if(saveFlexibleEmp != null)
 				this.createWtmWorkDayResultAsCalendar(saveFlexibleEmp);
-
+			 */
 			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, searchSabun.get("useSymd")+"", searchSabun.get("useEymd")+"");
 			
 			rp.setSuccess("");
@@ -5280,11 +5281,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		WtmFlexibleStdMgr flexibleStdMgr = flexStdMgrRepo.findByFlexibleStdMgrId(flexibleEmp.getFlexibleStdMgrId());
 		logger.debug("call createWtmWorkDayResultAsPattern ::");
+		logger.debug("### flexibleStdMgr : " + flexibleStdMgr);
 		List<WtmWorkPattDet> pattDets = workPattDetRepo.findByFlexibleStdMgrId(flexibleEmp.getFlexibleStdMgrId());
 		Map<Long, WtmTimeCdMgr> timeCdMgrMap = new HashMap<Long, WtmTimeCdMgr>();
 		logger.debug("매번 조회할 수 없으니 패턴 정보를 맵에 담아두자.");
 		for(WtmWorkPattDet pattDet : pattDets) {
 			if(!timeCdMgrMap.containsKey(pattDet.getTimeCdMgrId())) {
+				logger.debug("### pattDet.getTimeCdMgrId() : " + pattDet.getTimeCdMgrId());
 				timeCdMgrMap.put(pattDet.getTimeCdMgrId(), wtmTimeCdMgrRepo.findById(pattDet.getTimeCdMgrId()).get());
 			}
 		}
@@ -5296,6 +5299,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
 			SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
 			for(WtmWorkCalendar calendar : calendars) {
+				logger.debug("### calendar : " + calendar);
 				this.createResultByCalendar(calendar, flexibleStdMgr, timeCdMgrMap.get(calendar.getTimeCdMgrId()));
 				/*
 				if(calendar.getHolidayYn() == null || "".equals(calendar.getHolidayYn()) || !"Y".equals(calendar.getHolidayYn())) {
@@ -5553,12 +5557,14 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				
 				try {
 					sd = ymdhm.parse(sYmd+shm);
+					ed = ymdhm.parse(eYmd+ehm);
 					//종료시분이 시작시분보다 작으면 기준일을 다음날로 본다. 
 					if(Integer.parseInt(shm) > Integer.parseInt(ehm)) {
+						cal.setTime(ed);
 						cal.add(Calendar.DATE, 1);
-						eYmd = ymd.format(cal.getTime());
+						ed = cal.getTime();
+						//eYmd = ymd.format(cal.getTime());
 					}
-					ed = ymdhm.parse(eYmd+ehm);
 				} catch (ParseException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -5571,6 +5577,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				insRes.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
 				insRes.setPlanSdate(sd);
 				insRes.setPlanEdate(ed);
+				insRes.setUpdateId("createResultByCalendar");
 				
 				int breakMinute = 0;						
 				Map<String, Object> resMap = calcService.calcApprMinute(sd, ed, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());

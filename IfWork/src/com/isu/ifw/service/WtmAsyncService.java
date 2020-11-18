@@ -221,8 +221,6 @@ public class WtmAsyncService {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}finally {
-			logger.error("취소 오류");
-
 			flexibleApply.setNote(resultMsg);
 			flexibleApply.setApplyYn(WtmApplService.WTM_FLEXIBLE_APPLY_N);
 			flexibleApplyRepo.save(flexibleApply);
