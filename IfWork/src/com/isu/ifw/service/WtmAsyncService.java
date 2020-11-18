@@ -111,7 +111,14 @@ public class WtmAsyncService {
 	public void asyncFlexibleEmpRest(Long tenantId, String enterCd, String ymd, List<WtmEmpHis> empList) throws Exception {
 
 		for (WtmEmpHis empHis : empList){
+			logger.debug("### EMP_RESET EMP::" + empHis.getSabun());
+			try {
 			flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, empHis.getSabun(), ymd.substring(0,4)+"0101", ymd.substring(0,4)+"1231", empHis.getSabun());
+			}catch(Exception e) {
+				e.printStackTrace();
+				logger.debug("### EMP_RESET ERROR::" + empHis.getSabun() + " // " + e.getMessage());
+				
+			}
 		}
 	}
 
