@@ -179,12 +179,22 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("enterCd", enterCd);
 		paramMap.put("sabun", sabun);
 		
+		String qType = null;
+		if(paramMap.containsKey("queryType") && paramMap.get("queryType") != null) {
+			qType = paramMap.get("queryType")+"";
+		}
+		
 		List<Map<String, Object>> flexibleList = flexEmpMapper.getFlexibleEmpList(paramMap);
 		if(flexibleList!=null && flexibleList.size()>0) {
 			for(Map<String, Object> flex : flexibleList) {
 				if(flex.containsKey("flexibleEmpId") && flex.get("flexibleEmpId")!=null && !"".equals(flex.get("flexibleEmpId"))) {
 					paramMap.put("flexibleEmpId", Long.valueOf(flex.get("flexibleEmpId").toString()));
-					List<Map<String, Object>> plans = flexEmpMapper.getWorktimePlanByYmdBetween(paramMap);
+					List<Map<String, Object>> plans = null;
+					if(qType != null && !qType.equals("") && qType.equals("C")) {
+						plans = flexEmpMapper.getCalendarEntryByYmdBetween(paramMap);
+					}else {
+						plans = flexEmpMapper.getWorktimePlanByYmdBetween(paramMap);
+					}
 					flex.put("flexibleEmp", getDayWorks(plans, userId));
 				}
 			}
@@ -1176,7 +1186,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				String m = "";
 				Double H = 0d;
 				Double i = 0d;
-				if(plan.containsKey("minute") && plan.get("minute") != null) {
+				if(plan.containsKey("minute") && plan.get("minute") != null && !plan.get("minute").equals("")) {
 					m = plan.get("minute").toString();
 					H = Double.parseDouble(m)/60;
 					H = Math.ceil(H*100)/100.0;
@@ -1208,7 +1218,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				if(taaNm != null && !taaNm.equals("")) {
 					planVO.setLabel(taaNm);
 				}else{
-					String label = shm + "~" + ehm + "("+H.intValue()+"시간"+((i.intValue()>0)?i.intValue()+"분":"")+")";
+					String label = shm + "~" + ehm + (H.intValue()>0?"("+H.intValue()+"시간"+((i.intValue()>0)?i.intValue()+"분":"")+")":"") ;
 					planVO.setLabel(label);
 				}
 				
