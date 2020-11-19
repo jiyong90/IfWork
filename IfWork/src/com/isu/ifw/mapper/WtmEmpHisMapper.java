@@ -22,6 +22,6 @@ public interface WtmEmpHisMapper {
 	public Map<String, Object> getLeaderYn(Map<String, Object> paramMap);
 
 	List<WtmEmpHis> getWtmFlexibleEmp(Map<String, Object> map);
-	
-	public List<WtmEmpHis> getWtmEmpHis(Map<String, Object> map);
+
+	List<WtmEmpHis> getWtmEmpHis(Map<String, Object> map);
 }

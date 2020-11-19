@@ -17,4 +17,5 @@ public interface WtmCodeRepository extends JpaRepository<WtmCode, Long> {
 
 	@Query(value="SELECT C FROM WtmCode C WHERE C.tenantId = :tenantId AND C.enterCd = :enterCd AND :ymd BETWEEN C.symd AND C.eymd AND C.grpCodeCd = :grpCodeCd AND C.codeCd = :codeCd")
 	public WtmCode findByTenantIdAndEnterCdAndYmdAndGrpCodeCdAAndCodeCd(@Param(value="tenantId")Long tenantId, @Param(value="enterCd")String enterCd, @Param(value="ymd")String ymd, @Param(value="grpCodeCd")String grpCodeCd, @Param(value="codeCd")String codeCd);
+
 }
