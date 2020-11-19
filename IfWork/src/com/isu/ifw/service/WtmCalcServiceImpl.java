@@ -2582,10 +2582,10 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		Double otMinute = 0.0;
 		if(workDayCnt > 0) {
 			logger.debug("workMinute : " + workMinute);
-			if(calcType.equals("B")) {
+			if(calcType.equals("B") || calcType.equals("C")) {
 				workMinute = (double) (workDayCnt * 8 * 60);
 			}else {
-				workMinute = (Math.floor((cals.size() * weekWorkMinite / 7)) * 60);
+				workMinute = Math.floor(Double.parseDouble(cals.size()+"") * Double.parseDouble(weekWorkMinite+"") / Double.parseDouble(7+"") * Double.parseDouble(60+""));
 			}
 
 			/*
@@ -2603,7 +2603,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			logger.debug("*** calc workMinute : " + workMinute);
 			
 			logger.debug("weekOtMinute : " + weekOtMinute);
-			otMinute = Math.floor(cals.size() * weekOtMinute / 7) * 60;
+			if(calcType.equals("C")) {
+				otMinute = Math.floor(Double.parseDouble(cals.size()+"") * Double.parseDouble(weekOtMinute+"") / Double.parseDouble(7+"") * Double.parseDouble(60+""));
+			}else {
+				otMinute = Math.floor(cals.size() * weekOtMinute / 7) * 60;
+			}
 			logger.debug("otMinute : " + otMinute);
 			otMinute = Math.floor(otMinute) + ( ( otMinute -  Math.floor(otMinute))  * 60 );
 			logger.debug("*** calc otMinute : " + otMinute);

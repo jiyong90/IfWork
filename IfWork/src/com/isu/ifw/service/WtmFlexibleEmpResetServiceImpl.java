@@ -136,38 +136,38 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 		if(Integer.parseInt(sYmd) < Integer.parseInt(empYmd)) {
 			sYmd = empYmd;
 		}
-		logger.debug("1. 초기화"); 
+		logger.debug("### EMP_RESET ::" + sabun + " 1. 초기화"); 
 		this.initWtmFlexibleEmp(tenantId, enterCd, sabun, sYmd, eYmd, userId);
-		logger.debug("1. 초기화 END");
+		logger.debug("### EMP_RESET ::" + sabun + "1. 초기화 END");
 		wtmFlexibleEmpRepo.flush();
 		
 		List<WtmFlexibleEmp> emps = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndEymdGreaterThanEqualAndSymdLessThanEqual(tenantId, enterCd, sabun, sYmd, eYmd);
 		if(emps != null) {
-			logger.debug("2. 초기화 한 WTM_FLEXIBLE_EMP를 다시 조회 : " + emps.size());
+			logger.debug("### EMP_RESET ::" + sabun + "2. 초기화 한 WTM_FLEXIBLE_EMP를 다시 조회 : " + emps.size());
 			for(WtmFlexibleEmp flexEmp : emps) {
 				//계산 구간을 정하자. 유연근무제는 근무제 전체 기간을 체크하지만 기본근무제들은 재생성하려는 구간만 돌자
 				String loopSymd = flexEmp.getSymd();
 				String loopEymd = flexEmp.getEymd();
-				logger.debug("flexEmp : " + flexEmp);
+				logger.debug("### EMP_RESET ::" + sabun + "flexEmp : " + flexEmp);
 				WtmFlexibleStdMgr flexStdMgr = flexStdMgrRepo.findByFlexibleStdMgrId(flexEmp.getFlexibleStdMgrId());
-				logger.debug("flexStdMgr : " + flexStdMgr);
+				logger.debug("### EMP_RESET ::" + sabun + "flexStdMgr : " + flexStdMgr);
 				List<WtmWorkPattDet> pattDets = workPattDetRepo.findByFlexibleStdMgrId(flexStdMgr.getFlexibleStdMgrId());
-				logger.debug("pattDets : " + pattDets);
-				logger.debug("flexEmp : " + flexEmp.toString());
-				logger.debug("flexStdMgr : " + flexStdMgr.toString());
+				logger.debug("### EMP_RESET ::" + sabun + "pattDets : " + pattDets);
+				logger.debug("### EMP_RESET ::" + sabun + "flexEmp : " + flexEmp.toString());
+				logger.debug("### EMP_RESET ::" + sabun + "flexStdMgr : " + flexStdMgr.toString());
 				
 				if( (flexStdMgr.getBaseWorkYn() == null || "".equals(flexStdMgr.getBaseWorkYn()) || "N".equals(flexStdMgr.getBaseWorkYn())) 
 					&& flexEmp.getWorkTypeCd().startsWith("SELE")
 					|| flexEmp.getWorkTypeCd().equals("DIFF")
 						) {
 					if(!flexEmp.getWorkTypeCd().equals("DIFF")) {
-						logger.debug("선택근무제이다.");
+						logger.debug("### EMP_RESET ::" + sabun + " 선택근무제이다.");
 
 					}
 					this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), loopSymd, loopEymd, WtmFlexibleEmpResetService.WORK_TYPE_FLEX, null, userId);
 
 					if(flexEmp.getWorkTypeCd().equals("DIFF")) {
-						logger.debug("시차출퇴근이다. RESULT RESET GO");
+						logger.debug("### EMP_RESET ::" + sabun + " 시차출퇴근이다. RESULT RESET GO");
 						/*
 						List<WtmWorkDayResult> delResults = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndApprMinuteIsNull(tenantId, enterCd, sabun, loopSymd, loopEymd);
 						if(delResults != null && delResults.size() > 0) {
@@ -179,21 +179,23 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 						// { call P_WTM_WORK_DAY_RESULT_RESET(#{tenantId}, #{enterCd}, #{pKey}, #{flexibleEmpId}, #{sYmd}, #{eYmd}, #{holExceptYn}, #{maxPattSeq}, #{pType}, #{userId}) }
 						flexibleEmpService.createWtmWorkDayResultAsCalendar(flexEmp);
 					}
-					
+				}else if(flexEmp.getWorkTypeCd().equals("ELAS")) {
+					logger.debug("### EMP_RESET ::" + sabun + " 탄근제이다");
+					this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), loopSymd, loopEymd, WtmFlexibleEmpResetService.WORK_TYPE_FLEX, null, userId);
 				}else {
-					logger.debug("기본근무제이다.");
-					logger.debug("현재 근무제가 기본근무 일 경우 기본근무 인지 근무조 인지 알수가 없다. 시작일 기준으로 근무조정보가 있는지 확인한다.");
+					logger.debug("### EMP_RESET ::" + sabun + " 기본근무제이다.");
+					logger.debug("### EMP_RESET ::" + sabun + " 현재 근무제가 기본근무 일 경우 기본근무 인지 근무조 인지 알수가 없다. 시작일 기준으로 근무조정보가 있는지 확인한다.");
 					if(Integer.parseInt(sYmd) > Integer.parseInt(flexEmp.getSymd()) && Integer.parseInt(sYmd) < Integer.parseInt(flexEmp.getEymd())) {
-						logger.debug("시작일 체크 : " + flexEmp.getSymd() + " ~ " + flexEmp.getEymd() + " >> " + sYmd + " 로 시작일을 변경 한다. ");
+						logger.debug("### EMP_RESET ::" + sabun + " 시작일 체크 : " + flexEmp.getSymd() + " ~ " + flexEmp.getEymd() + " >> " + sYmd + " 로 시작일을 변경 한다. ");
 						loopSymd = sYmd;
 					}
 					if(Integer.parseInt(eYmd) > Integer.parseInt(flexEmp.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(flexEmp.getEymd())) {
-						logger.debug("종료일 체크 : " + flexEmp.getSymd() + " ~ " + flexEmp.getEymd() + " >> " + eYmd + " 로 종료일을 변경 한다. ");
+						logger.debug("### EMP_RESET ::" + sabun + " 종료일 체크 : " + flexEmp.getSymd() + " ~ " + flexEmp.getEymd() + " >> " + eYmd + " 로 종료일을 변경 한다. ");
 						loopEymd = eYmd;
 					}
 					List<WtmWorkteamEmp> workteams = workteamEmpRepo.findByTenantIdAndEnterCdAndSabunAndEymdGreaterThanEqualAndSymdLessThanEqualOrderBySymdAsc(tenantId, enterCd, sabun, loopSymd, loopEymd);
 					if(workteams != null && workteams.size() > 0){
-						logger.debug("근무조 : " + workteams.size() + " << 1 건이어야 한다.");
+						logger.debug("### EMP_RESET ::" + sabun + " 근무조 : " + workteams.size() + " << 1 건이어야 한다.");
 						for(WtmWorkteamEmp workteam : workteams) {
 							this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), loopSymd, loopEymd, WtmFlexibleEmpResetService.WORK_TYPE_BASE_WORKTEAM, workteam.getWorkteamMgrId(), userId);
 						}
@@ -208,7 +210,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 					flexEmp.setOtMinute(calcMinute.get("otMinute"));
 					
 					flexEmp= wtmFlexibleEmpRepo.save(flexEmp);
-					logger.debug("update flexEmp : " + flexEmp);
+					logger.debug("### EMP_RESET ::" + sabun + " update flexEmp : " + flexEmp);
 					
 					//flexibleEmpService.createWtmWorkDayResultAsCalendar(flexEmp);
 					
@@ -503,8 +505,8 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				logger.debug("근무조 설정 기준일로 패턴 시작일을 계산한다.");
 				mgrSdate = ymd.parse(workteamMgr.getSymd());
 			}else if(workType.equals(this.WORK_TYPE_BASE) || workType.equals(this.WORK_TYPE_DIFF)) {
-				WtmEmpHis empHis = empHisRepo.findByTenantIdAndEnterCdAndSabunAndYmd(flexStdMgr.getTenantId(), flexStdMgr.getEnterCd(), sabun, sYmd);
-				empHis.getBusinessPlaceCd();
+				WtmEmpHis empHis = empHisRepo.findByTenantIdAndEnterCdAndSabunAndYmd(flexStdMgr.getTenantId(), flexStdMgr.getEnterCd(), sabun, eYmd);
+				logger.debug("### baseWorkMgr : " + flexStdMgr.getTenantId() + " : " +  flexStdMgr.getEnterCd() + " : " +  flexStdMgr.getFlexibleStdMgrId() + " : " +  sYmd + " : " +  empHis.getBusinessPlaceCd());
 				WtmBaseWorkMgr baseWorkMgr = baseWorkMgrRepo.findByTenantIdAndEnterCdAndFlexibleStdMgrIdAndYmdAndBusinessPlaceCd(flexStdMgr.getTenantId(), flexStdMgr.getEnterCd(), flexStdMgr.getFlexibleStdMgrId(), sYmd, empHis.getBusinessPlaceCd());
 				mgrSdate = ymd.parse(baseWorkMgr.getSymd());
 				//mgrId

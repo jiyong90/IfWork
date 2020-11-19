@@ -581,4 +581,7 @@ public interface WtmFlexibleEmpMapper {
 	public Map<String, Object> getWorktermByFleibleEmp(Map<String, Object> paramMap);
 	public Map<String, Object> getWorktermByFleibleEmpId(Map<String, Object> paramMap);
 	
+	public List<Map<String, Object>> getCalendarEntryByYmdBetween(Map<String, Object> paramMap);
+	
+	
 }

@@ -924,6 +924,17 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			
 //			transactionManager.commit(status);
 		
+			List<String> timeTypeCds = new ArrayList<String>();
+			timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
+			timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
+			timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
+			timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
+			List<WtmWorkDayResult> delRes = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndYmdBetweenAndSabunAndApplIdIsNullAndTimeTypeCdIn(Long.parseLong(paramMap.get("tenantId").toString()), 
+					paramMap.get("enterCd").toString(), paramMap.get("stdYmd").toString(),paramMap.get("stdYmd").toString(), paramMap.get("sabun").toString(), timeTypeCds);
+			
+			if(delRes != null && delRes.size() > 0)
+				wtmWorkDayResultRepo.deleteAll(delRes);
+			
 			logger.debug("inoutPostProcess7 calc 시작 " + paramMap.get("sabun").toString());
 			empService.calcApprDayInfo(Long.parseLong(paramMap.get("tenantId").toString()), 
 					paramMap.get("enterCd").toString(), paramMap.get("stdYmd").toString(),

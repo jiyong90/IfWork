@@ -451,6 +451,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 	@Override
 	public int setApply(List<Map<String, Object>> searchList, List<Map<String, Object>> ymdList) {
 	
+		/*
 		int cnt = 0;
 		long flexibleApplyId = 0L;
 		// 오류검증이 없으면 저장하고 갱신해야함.
@@ -477,7 +478,69 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 			
 		}
 		return cnt;
+		*/
+		
+		int cnt = 0;
+		long flexibleApplyId = 0L;
+		// 오류검증이 없으면 저장하고 갱신해야함.
+		// 검증 오류가 없으면 flexible_emp에 저장하고 갱신용로직을 불러야함
+		for(int i=0; i< searchList.size(); i++) {
+
+			ReturnParam rp = flexibleEmpService.setApply(searchList.get(i), ymdList);
+			if(rp!=null && rp.getStatus()!=null && "OK".equals(rp.getStatus())) {
+				//이사람 성공하면 Y
+				long flexibleApplyTempId = Long.parseLong(searchList.get(i).get("flexibleApplyTempId").toString());
+				flexibleApplyId = Long.parseLong(searchList.get(i).get("flexibleApplyId").toString());
+				wtmFlexibleApplyMgrMapper.updateFlexibleEmpTemp(flexibleApplyTempId);
+				logger.debug("[setApply] 확정성공 대상" + searchList.get(i).toString());
+				cnt++;
+			}
+
+		}
+		
+		wtmFlexibleApplyMgrMapper.updateFlexibleApplyAll(flexibleApplyId);
+		
+		//전체성공
+		if(cnt == searchList.size()) {			
+			// 20200507 이효정추가 근무확정시 선반영된 근태건이 있으면 재갱신 대상으로 변경해야함.
+			wtmFlexibleApplyMgrMapper.updateFlexibleTaaReset(flexibleApplyId);
+			
+		}
+		return cnt;
+		
 	}
+	
+	@Async
+	@Override
+	public void setApply(WtmFlexibleApply flexibleApply, List<Map<String, Object>> searchList, List<Map<String, Object>> ymdList) {
+
+
+		ReturnParam rp = new ReturnParam();
+		String resultMsg = "";
+
+		String resultYn = WtmApplService.WTM_FLEXIBLE_APPLY_N;
+		flexibleApply.setApplyYn(resultYn);
+
+		logger.debug("확정대상자 :" + searchList.size());
+
+		try {
+			int resultCnt = setApply(searchList, ymdList);
+			resultMsg = "총 " + searchList.size() + "명의 확정 대상자 중 " + resultCnt + "명의 확정에 성공하였습니다.";
+			flexibleApply.setNote(resultMsg);
+			if(searchList.size() == resultCnt) {
+				flexibleApply.setApplyYn(WtmApplService.WTM_FLEXIBLE_APPLY_Y);
+			}else {
+				flexibleApply.setApplyYn(WtmApplService.WTM_FLEXIBLE_APPLY_N);
+			}
+		}catch (Exception e){
+			e.printStackTrace();
+			flexibleApply.setNote(rp.get("message").toString());
+		}finally {
+			flexibleApplyRepo.save(flexibleApply);
+		}
+
+	}
+	
 	
 	public ReturnParam setApply_backup(Map<String, Object> paramMap) {
 		ReturnParam rp = new ReturnParam();
