@@ -22,7 +22,7 @@ public interface WtmBaseWorkMgrRepository extends JpaRepository<WtmBaseWorkMgr, 
 	@Query("SELECT M FROM WtmBaseWorkMgr M WHERE M.tenantId = ?1 AND M.enterCd = ?2 AND M.flexibleStdMgrId = ?3 AND (?4 BETWEEN M.symd AND M.eymd) AND M.businessPlaceCd = ?5 ")
 	public WtmBaseWorkMgr findByTenantIdAndEnterCdAndFlexibleStdMgrIdAndYmdAndBusinessPlaceCd(Long tenantId, String enterCd, Long flexibleStdMgrId, String ymd, String businessPlaceCd);
 	
-	public List<WtmBaseWorkMgr> findByTenantIdAndEnterCdAndEymdGreaterThanEqualAndSymdLessThanEqualOrderBySymdAsc(Long tenantId, String enterCd, String sYmd, String eYmd);
+	public List<WtmBaseWorkMgr> findByTenantIdAndEnterCdAndBusinessPlaceCdAndEymdGreaterThanEqualAndSymdLessThanEqualOrderBySymdAsc(Long tenantId, String enterCd, String businessPlaceCd ,String sYmd, String eYmd);
 	
 	public List<WtmBaseWorkMgr> findByFlexibleStdMgrId(Long flexibleStdMgrId);
 }

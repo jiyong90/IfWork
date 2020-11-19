@@ -136,6 +136,8 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 		if(Integer.parseInt(sYmd) < Integer.parseInt(empYmd)) {
 			sYmd = empYmd;
 		}
+
+
 		logger.debug("### EMP_RESET ::" + sabun + " 1. 초기화"); 
 		this.initWtmFlexibleEmp(tenantId, enterCd, sabun, sYmd, eYmd, userId);
 		logger.debug("### EMP_RESET ::" + sabun + "1. 초기화 END");
@@ -229,7 +231,9 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 		Date eDate = ymd.parse(eYmd);		
 		logger.debug("call initWtmFlexibleEmp : " + tenantId + " : " + enterCd + " : " + sabun + " : " + sYmd + " ~ " + eYmd);
 		logger.debug("1. FLEXIBLE_EMP에서 BASE근무제 정보를 지운다.");
-		
+
+		WtmEmpHis wtmEmpHis = empHisRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, sYmd);
+
 		List<WtmFlexibleEmp> delBaseFlexibleemps = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndEymdGreaterThanEqualAndSymdLessThanEqualAndBaseWorkYnIsYAndWorkTypeCdIsBASE(tenantId, enterCd, sabun, sYmd, eYmd);
 		if(delBaseFlexibleemps != null && delBaseFlexibleemps.size() > 0) {
 			logger.debug("1-1. " + delBaseFlexibleemps.size()+ "건 삭제");
@@ -244,7 +248,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 		logger.debug("3. 근무조 정보가 있는지 확인한다. ");
 		List<WtmWorkteamEmp> workteamEmps = workteamEmpRepo.findByTenantIdAndEnterCdAndSabunAndEymdGreaterThanEqualAndSymdLessThanEqualOrderBySymdAsc(tenantId, enterCd, sabun, sYmd, eYmd);
 		
-		List<WtmBaseWorkMgr> baseWorks = baseWorkMgrRepo.findByTenantIdAndEnterCdAndEymdGreaterThanEqualAndSymdLessThanEqualOrderBySymdAsc(tenantId, enterCd, sYmd, eYmd);
+		List<WtmBaseWorkMgr> baseWorks = baseWorkMgrRepo.findByTenantIdAndEnterCdAndBusinessPlaceCdAndEymdGreaterThanEqualAndSymdLessThanEqualOrderBySymdAsc(tenantId, enterCd, wtmEmpHis.getBusinessPlaceCd(), sYmd, eYmd);
 		
 		/**
 		 * 무식하게 돌리자 머리가 안돌아간다..
