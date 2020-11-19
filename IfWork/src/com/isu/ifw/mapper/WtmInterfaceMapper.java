@@ -350,5 +350,30 @@ public interface WtmInterfaceMapper {
 	 * 월마감
 	 **/
 	public void monthWorkClose(Map<String, Object> paramMap);
-	
+
+	/**
+	 * 일마감 데이터 조회
+	 * @param reqMap
+	 * @return
+	 */
+	Map<String, Object> getClosedDayWorkInfo(HashMap reqMap);
+
+	/**
+	 *
+	 * @param reqMap
+	 * @return
+	 */
+	Integer getSubAddMinute(HashMap reqMap);
+
+	/**
+	 * 월마감 데이터 삭제
+	 * @param reqMap
+	 */
+	void deleteWorktimeMonthClose(HashMap reqMap);
+
+	/**
+	 * 월마감 데이터 등록
+	 * @param monthMap
+	 */
+	void insertWorktimeMonthClose(Map<String, Object> monthMap);
 }

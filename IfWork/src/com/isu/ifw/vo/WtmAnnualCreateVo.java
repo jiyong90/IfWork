@@ -17,21 +17,14 @@ public class WtmAnnualCreateVo {
 	private String yy;
 	private String symd;
 	private String eymd;
-	private Integer createCnt;
+	private Double createCnt;
 	private String note;
 	private Date updateDate;
 	private String updateId;
 	private String empNm;
 	private String orgNm;
-	private Integer usedCnt;
+	private Double usedCnt;
 
-	public Integer getUsedCnt() {
-		return usedCnt;
-	}
-
-	public void setUsedCnt(int usedCnt) {
-		this.usedCnt = usedCnt;
-	}
 
 	public Long getAnnCreateId() {
 		return annCreateId;
@@ -97,11 +90,11 @@ public class WtmAnnualCreateVo {
 		this.eymd = eymd;
 	}
 
-	public Integer getCreateCnt() {
+	public Double getCreateCnt() {
 		return createCnt;
 	}
 
-	public void setCreateCnt(Integer createCnt) {
+	public void setCreateCnt(Double createCnt) {
 		this.createCnt = createCnt;
 	}
 
@@ -143,5 +136,13 @@ public class WtmAnnualCreateVo {
 
 	public void setOrgNm(String orgNm) {
 		this.orgNm = orgNm;
+	}
+
+	public Double getUsedCnt() {
+		return usedCnt;
+	}
+
+	public void setUsedCnt(Double usedCnt) {
+		this.usedCnt = usedCnt;
 	}
 }
