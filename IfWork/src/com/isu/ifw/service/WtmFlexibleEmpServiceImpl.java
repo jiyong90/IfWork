@@ -612,10 +612,15 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//  연차현황 조회
 
 		DecimalFormat df = new DecimalFormat("0.0");
-		
-		dayInfo.put("annualTotalCnt", df.format(Float.parseFloat(totalCnt)));
-		dayInfo.put("annualUsedCnt", df.format(Float.parseFloat(usedCnt)));
-		dayInfo.put("annualNoUsedCnt", df.format(Float.parseFloat(noUsedCnt)));
+		try {
+			dayInfo.put("annualTotalCnt", df.format(Float.parseFloat(totalCnt)));
+			dayInfo.put("annualUsedCnt", df.format(Float.parseFloat(usedCnt)));
+			dayInfo.put("annualNoUsedCnt", df.format(Float.parseFloat(noUsedCnt)));
+		}catch(NullPointerException ne) {
+			dayInfo.put("annualTotalCnt", df.format(Float.parseFloat("0")));
+			dayInfo.put("annualUsedCnt", df.format(Float.parseFloat("0")));
+			dayInfo.put("annualNoUsedCnt", df.format(Float.parseFloat("0")));
+		}
 
 		return dayInfo;
 	}
