@@ -4377,12 +4377,13 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			// 기본근무시간대 심야근무시간이 있으면, 심야근무시간 가산
 			//wtmInterfaceMapper.updateWorktimeNight(dayMap);
 			WtmWorktimeClose worktimeClose = worktimeCloseRepo.findById(Long.parseLong(reqMap.get("worktimeCloseId")+"")).get();
-			
+
+
 			calcService.calcWorktimeClose(worktimeClose, reqMap.get("sabun")+"");
-			
+
 			System.out.println("******************************* DAY close end");
 			// System.out.println(dayMap.toString());
-			
+
 //			wtmInterfaceMapper.monthWorkClose(monMap);  //  월마감 호출 처리안됨.
 
 			logger.debug("******************************* Month close : Begin");
@@ -4392,136 +4393,165 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 
 				logger.debug("reqMap :" + reqMap.toString());
 
-				Integer nBaseMinute = 0;
-				Integer nBaseOtMinute = 0;
-				Integer nWorkMinute = 0;
-				Integer nOtMinute = 0;
-				Integer nOtnMinute = 0;
-				Integer nHolMinute = 0;
-				Integer nHolOtMinute = 0;
-				Integer nNonpayMinute = 0;
-				Integer nPayMinute = 0;
-				Integer nLateMinute = 0;
-				Integer nLeaveMinute = 0;
-				Integer nAbsenceMinute = 0;
-				Integer nGapMinute = 0;
-				Integer nSubHolMinute = 0;
-				Integer nSubAddMinute = 0;
-				Integer nFixOtMinute = 0;
+				List<HashMap<String, Object>> monthlyUserList = wtmInterfaceMapper.getTargerMonthlyCloseUserList(reqMap);
 
-				//  일마감 데이터 조회
-				Map<String, Object> dayClosedSumInfo = wtmInterfaceMapper.getClosedDayWorkInfo(reqMap);
+				for (HashMap<String, Object> monthlyUserInfo : monthlyUserList) {
 
-				logger.debug("dayClosedSumInfo.toString()" + dayClosedSumInfo.toString());
-				String workTypeCd = dayClosedSumInfo.get("workTypeCd").toString();
+					//  평일갯수 조회
+					Map<String, Integer> calMap = calcService.calcDayCnt(tenantId, enterCd, sYmd, eYmd);
+					logger.debug("calMap.toString() : " + calMap.toString());
 
-				nWorkMinute    = Integer.parseInt(dayClosedSumInfo.get("nWorkMinute").toString());
-				nOtMinute      = Integer.parseInt(dayClosedSumInfo.get("nOtMinute").toString());
-				nOtnMinute     = Integer.parseInt(dayClosedSumInfo.get("nOtnMinute").toString());
-				nHolMinute     = Integer.parseInt(dayClosedSumInfo.get("nHolMinute").toString());
-				nHolOtMinute   = Integer.parseInt(dayClosedSumInfo.get("nHolOtMinute").toString());
-				nNonpayMinute  = Integer.parseInt(dayClosedSumInfo.get("nNonpayMinute").toString());
-				nPayMinute     = Integer.parseInt(dayClosedSumInfo.get("nPayMinute").toString());
-				nLateMinute    = Integer.parseInt(dayClosedSumInfo.get("nLateMinute").toString());
-				nLeaveMinute   = Integer.parseInt(dayClosedSumInfo.get("nLeaveMinute").toString());
-				nAbsenceMinute = Integer.parseInt(dayClosedSumInfo.get("nAbsenceMinute").toString());
-				nSubHolMinute  = Integer.parseInt(dayClosedSumInfo.get("nSubHolMinute").toString());
+					Integer totalCnt = calMap.get("totDays").intValue();
+					Integer usedCnt  = totalCnt - calMap.get("holDays").intValue();
 
-				Integer nAWorkMinute  = nWorkMinute;
-				Integer nAOtMinute    = nOtMinute;
-				Integer nAOtnMinute   = nOtnMinute;
-				Integer nAHolMinute   = nHolMinute;
-				Integer nAHolOtMinute = nHolOtMinute;
+					monthlyUserInfo.put("tenantId", tenantId);
+					monthlyUserInfo.put("enterCd", enterCd);
 
-				//  대체휴가사용한 휴일근무가 있으면 같은구간 대체휴가 사용한 근무시간 확인
-				if(nSubHolMinute > 0){
-					nSubAddMinute = wtmInterfaceMapper.getSubAddMinute(reqMap);
+					monthlyUserInfo.put("sYmd", sYmd);
+					monthlyUserInfo.put("symd", sYmd);
+					monthlyUserInfo.put("eymd", eYmd);
+					monthlyUserInfo.put("eYmd", eYmd);
 
-					//  동월구간 휴일근무는 기본근무에 추가한다
-					if(nSubAddMinute > 0){
-						nWorkMinute = nWorkMinute + nSubAddMinute;
-						nAWorkMinute = nWorkMinute;
-					}
-				}
+					logger.debug("monthlyUserInfo.toString()" + monthlyUserInfo.toString());
 
+					logger.debug("마감사번:" + monthlyUserInfo.get("sabun"));
+					Integer baseMinute    = usedCnt * 8 * 60 ;
+					Double otMinute = Math.floor(totalCnt.doubleValue() * Double.parseDouble(12+"") / Double.parseDouble(7+"") * Double.parseDouble(60+""));
 
-				if(nBaseMinute > nWorkMinute ){
-					//  근무누락 연장및휴일근무에서 빼기
-					nGapMinute = nBaseMinute - nWorkMinute;
+					Integer nBaseMinute    = 0;
+					Integer nBaseOtMinute  = 0;
+					Integer nWorkMinute    = 0;
+					Integer nOtMinute      = 0;
+					Integer nOtnMinute     = 0;
+					Integer nHolMinute     = 0;
+					Integer nHolOtMinute   = 0;
+					Integer nNonpayMinute  = 0;
+					Integer nPayMinute     = 0;
+					Integer nLateMinute    = 0;
+					Integer nLeaveMinute   = 0;
+					Integer nAbsenceMinute = 0;
+					Integer nGapMinute     = 0;
+					Integer nSubHolMinute  = 0;
+					Integer nSubAddMinute  = 0;
+					Integer nFixOtMinute   = 0;
 
-					if ((nOtMinute + nHolMinute) >= nGapMinute) {
-						nAWorkMinute = nBaseMinute;
-						if (nOtMinute >= nGapMinute) {
-							nAOtMinute = nOtMinute - nGapMinute;
-						} else {
+					//  일마감 데이터 조회
+					Map<String, Object> dayClosedSumInfo = wtmInterfaceMapper.getClosedDayWorkInfo(monthlyUserInfo);
 
-							nGapMinute  = nGapMinute - nOtMinute;
-							nAOtMinute  = 0;
-							nAHolMinute = nHolMinute - nGapMinute;
+					logger.debug("dayClosedSumInfo.toString()" + dayClosedSumInfo.toString());
+					String workTypeCd = monthlyUserInfo.get("workTypeCd").toString();
+
+					nWorkMinute    = Integer.parseInt(dayClosedSumInfo.get("nWorkMinute").toString());
+					nOtMinute      = Integer.parseInt(dayClosedSumInfo.get("nOtMinute").toString());
+					nOtnMinute     = Integer.parseInt(dayClosedSumInfo.get("nOtnMinute").toString());
+					nHolMinute     = Integer.parseInt(dayClosedSumInfo.get("nHolMinute").toString());
+					nHolOtMinute   = Integer.parseInt(dayClosedSumInfo.get("nHolOtMinute").toString());
+					nNonpayMinute  = Integer.parseInt(dayClosedSumInfo.get("nNonpayMinute").toString());
+					nPayMinute     = Integer.parseInt(dayClosedSumInfo.get("nPayMinute").toString());
+					nLateMinute    = Integer.parseInt(dayClosedSumInfo.get("nLateMinute").toString());
+					nLeaveMinute   = Integer.parseInt(dayClosedSumInfo.get("nLeaveMinute").toString());
+					nAbsenceMinute = Integer.parseInt(dayClosedSumInfo.get("nAbsenceMinute").toString());
+					nSubHolMinute  = Integer.parseInt(dayClosedSumInfo.get("nSubHolMinute").toString());
+
+					Integer nAWorkMinute  = nWorkMinute;
+					Integer nAOtMinute    = nOtMinute;
+					Integer nAOtnMinute   = nOtnMinute;
+					Integer nAHolMinute   = nHolMinute;
+					Integer nAHolOtMinute = nHolOtMinute;
+
+					//  대체휴가사용한 휴일근무가 있으면 같은구간 대체휴가 사용한 근무시간 확인
+					if (nSubHolMinute > 0) {
+						nSubAddMinute = wtmInterfaceMapper.getSubAddMinute(monthlyUserInfo);
+
+						//  동월구간 휴일근무는 기본근무에 추가한다
+						if (nSubAddMinute > 0) {
+							nWorkMinute  = nWorkMinute + nSubAddMinute;
+							nAWorkMinute = nWorkMinute;
 						}
-					}else{
-						//  근무시간이 모자람 결근시수생성
-						nAWorkMinute = nBaseMinute;
-						nAbsenceMinute = nAbsenceMinute + (nGapMinute - nOtMinute - nHolMinute);
-						nAOtMinute = 0;
-						nAHolMinute = 0;
 					}
-				}else if(nBaseMinute < nWorkMinute){
-					nAWorkMinute = nBaseMinute;
-					nAOtMinute = nOtMinute + (nWorkMinute - nBaseMinute);
-				}
 
-				//  선근제는 누락시간만큼 기본근무를 재신청 하니깐.. 지각, 조퇴시간은 제외한다
-				nLateMinute = 0;
-				nLeaveMinute = 0;
 
-				if (nFixOtMinute > 0) {
-					if ((nAOtMinute + nAHolMinute) > nFixOtMinute) {
-						if (nAOtMinute > nFixOtMinute) {
-							nAOtMinute = nAOtMinute - nFixOtMinute;
-						} else if ((nAOtMinute + nAHolMinute) > nFixOtMinute) {
-							nAHolMinute = (nAOtMinute + nAHolMinute) - nFixOtMinute;
-							nAOtMinute  = 0;
+					if (nBaseMinute > nWorkMinute) {
+						//  근무누락 연장및휴일근무에서 빼기
+						nGapMinute = nBaseMinute - nWorkMinute;
+
+						if ((nOtMinute + nHolMinute) >= nGapMinute) {
+							nAWorkMinute = nBaseMinute;
+							if (nOtMinute >= nGapMinute) {
+								nAOtMinute = nOtMinute - nGapMinute;
+							} else {
+
+								nGapMinute  = nGapMinute - nOtMinute;
+								nAOtMinute  = 0;
+								nAHolMinute = nHolMinute - nGapMinute;
+							}
 						} else {
-							nAHolMinute = nAHolMinute - nFixOtMinute;
+							//  근무시간이 모자람 결근시수생성
+							nAWorkMinute   = nBaseMinute;
+							nAbsenceMinute = nAbsenceMinute + (nGapMinute - nOtMinute - nHolMinute);
+							nAOtMinute     = 0;
+							nAHolMinute    = 0;
 						}
-					}else{
-						nAOtMinute = 0;
-						nAHolMinute = 0;
+					} else if (nBaseMinute < nWorkMinute) {
+						nAWorkMinute = nBaseMinute;
+						nAOtMinute   = nOtMinute + (nWorkMinute - nBaseMinute);
 					}
+
+					//  선근제는 누락시간만큼 기본근무를 재신청 하니깐.. 지각, 조퇴시간은 제외한다
+					nLateMinute  = 0;
+					nLeaveMinute = 0;
+
+					if (nFixOtMinute > 0) {
+						if ((nAOtMinute + nAHolMinute) > nFixOtMinute) {
+							if (nAOtMinute > nFixOtMinute) {
+								nAOtMinute = nAOtMinute - nFixOtMinute;
+							} else if ((nAOtMinute + nAHolMinute) > nFixOtMinute) {
+								nAHolMinute = (nAOtMinute + nAHolMinute) - nFixOtMinute;
+								nAOtMinute  = 0;
+							} else {
+								nAHolMinute = nAHolMinute - nFixOtMinute;
+							}
+						} else {
+							nAOtMinute  = 0;
+							nAHolMinute = 0;
+						}
+					}
+
+
+
+					Map<String, Object> monthMap = new HashMap<String, Object>();
+					monthMap.put("worktimeCloseId", Long.parseLong(monthlyUserInfo.get("worktimeCloseId") + ""));
+					monthMap.put("sabun", monthlyUserInfo.get("sabun").toString());
+					monthMap.put("workTypeCd", workTypeCd);
+					monthMap.put("symd", sYmd);
+					monthMap.put("eymd", eYmd);
+
+					monthMap.put("nBaseMinute", baseMinute);
+					monthMap.put("nBaseOtMinute", otMinute);
+					monthMap.put("nFixOtMinute", nFixOtMinute);
+					monthMap.put("nWorkMinute", nWorkMinute);
+					monthMap.put("nOtMinute", nOtMinute);
+					monthMap.put("nOtnMinute", nOtnMinute);
+					monthMap.put("nHolMinute", nHolMinute);
+					monthMap.put("nHolOtMinute", nHolOtMinute);
+					monthMap.put("nAWorkMinute", nAWorkMinute);
+					monthMap.put("nAOtMinute", nAOtMinute);
+					monthMap.put("nAOtnMinute", nAOtnMinute);
+					monthMap.put("nAHolMinute", nAHolMinute);
+					monthMap.put("nAHolOtMinute", nAHolOtMinute);
+					monthMap.put("nLateMinute", nLateMinute);
+					monthMap.put("nLeaveMinute", nLeaveMinute);
+					monthMap.put("nAbsenceMinute", nAbsenceMinute);
+
+					logger.debug("monthMap.toString :" + monthMap.toString());
+
+					//  월 마감 데이터 삭제
+					wtmInterfaceMapper.deleteWorktimeMonthClose(monthMap);
+
+					//  월 마감 데이터 등록
+					wtmInterfaceMapper.insertWorktimeMonthClose(monthMap);
+
 				}
-
-				//  월 마감 데이터 삭제
-				wtmInterfaceMapper.deleteWorktimeMonthClose(reqMap);
-
-				Map<String, Object> monthMap = new HashMap<String, Object>();
-				monthMap.put("worktimeCloseId", Long.parseLong(reqMap.get("worktimeCloseId")+""));
-				monthMap.put("sabun", reqMap.get("sabun").toString());
-				monthMap.put("workTypeCd",workTypeCd);
-				monthMap.put("symd",sYmd);
-				monthMap.put("eymd",eYmd);
-
-				monthMap.put("nBaseMinute", nBaseMinute);
-				monthMap.put("nBaseOtMinute", nBaseOtMinute);
-				monthMap.put("nFixOtMinute", nFixOtMinute);
-				monthMap.put("nWorkMinute", nWorkMinute);
-				monthMap.put("nOtMinute", nOtMinute);
-				monthMap.put("nOtnMinute", nOtnMinute);
-				monthMap.put("nHolMinute", nHolMinute);
-				monthMap.put("nHolOtMinute", nHolOtMinute);
-				monthMap.put("nAWorkMinute", nAWorkMinute);
-				monthMap.put("nAOtMinute", nAOtMinute);
-				monthMap.put("nAOtnMinute", nAOtnMinute);
-				monthMap.put("nAHolMinute", nAHolMinute);
-				monthMap.put("nAHolOtMinute", nAHolOtMinute);
-				monthMap.put("nLateMinute", nLateMinute);
-				monthMap.put("nLeaveMinute", nLeaveMinute);
-				monthMap.put("nAbsenceMinute", nAbsenceMinute);
-
-				//  월 마감 데이터 등록
-				wtmInterfaceMapper.insertWorktimeMonthClose(monthMap);
-
-
 		} catch (Exception e) {
 				e.printStackTrace();
 				ifHisMap.put("ifStatus", "ERR");
@@ -4538,6 +4568,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			logger.debug("******************************* Month close : End");
 			// 마감이 다 돌았는으면 보상휴가생성으로 넘어가자
 		} catch(Exception e){
+			e.printStackTrace();
 			ifHisMap.put("ifStatus", "ERR");
 			retMsg = "근무마감오류";
             e.printStackTrace();
@@ -4559,7 +4590,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			e.printStackTrace();
 		}
         System.out.println("WtmInterfaceServiceImpl setTaaApplIf end");
-        
+
         asyncService.endAsync(log);
 	}
 

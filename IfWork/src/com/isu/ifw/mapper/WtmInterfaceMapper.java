@@ -369,11 +369,18 @@ public interface WtmInterfaceMapper {
 	 * 월마감 데이터 삭제
 	 * @param reqMap
 	 */
-	void deleteWorktimeMonthClose(HashMap reqMap);
+	void deleteWorktimeMonthClose(Map<String, Object> monthMap);
 
 	/**
 	 * 월마감 데이터 등록
 	 * @param monthMap
 	 */
 	void insertWorktimeMonthClose(Map<String, Object> monthMap);
+
+	/**
+	 * 월마감 대상자 조회
+	 * @param reqMap
+	 * @return
+	 */
+	List<HashMap<String, Object>> getTargerMonthlyCloseUserList(HashMap reqMap);
 }

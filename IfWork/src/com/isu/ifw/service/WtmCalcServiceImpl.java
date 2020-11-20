@@ -1,57 +1,22 @@
 package com.isu.ifw.service;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.WtmCalcMapper;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmWorktimeCloseMapper;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.vo.WtmFlexibleInfoVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.entity.WtmDayMgr;
-import com.isu.ifw.entity.WtmFlexibleEmp;
-import com.isu.ifw.entity.WtmFlexibleEmpCalc;
-import com.isu.ifw.entity.WtmFlexibleStdMgr;
-import com.isu.ifw.entity.WtmHolidayMgr;
-import com.isu.ifw.entity.WtmOtAppl;
-import com.isu.ifw.entity.WtmPropertie;
-import com.isu.ifw.entity.WtmTaaCode;
-import com.isu.ifw.entity.WtmTimeBreakMgr;
-import com.isu.ifw.entity.WtmTimeBreakTime;
-import com.isu.ifw.entity.WtmTimeCdMgr;
-import com.isu.ifw.entity.WtmWorkCalendar;
-import com.isu.ifw.entity.WtmWorkDayResult;
-import com.isu.ifw.entity.WtmWorkTermTime;
-import com.isu.ifw.entity.WtmWorktimeClose;
-import com.isu.ifw.entity.WtmWorktimeDayClose;
-import com.isu.ifw.entity.WtmWorktimeDayClosePK;
-import com.isu.ifw.mapper.WtmCalcMapper;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmWorktimeCloseMapper;
-import com.isu.ifw.repository.WtmDayMgrRepository;
-import com.isu.ifw.repository.WtmFlexibleEmpRepository;
-import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
-import com.isu.ifw.repository.WtmHolidayMgrRepository;
-import com.isu.ifw.repository.WtmOtApplRepository;
-import com.isu.ifw.repository.WtmPropertieRepository;
-import com.isu.ifw.repository.WtmTaaCodeRepository;
-import com.isu.ifw.repository.WtmTimeBreakMgrRepository;
-import com.isu.ifw.repository.WtmTimeBreakTimeRepository;
-import com.isu.ifw.repository.WtmWorkCalendarRepository;
-import com.isu.ifw.repository.WtmWorkDayResultRepository;
-import com.isu.ifw.repository.WtmWorkTermTimeRepository;
-import com.isu.ifw.repository.WtmWorktimeDayCloseRepository;
-import com.isu.ifw.repository.WtmWorktimeMonCloseRepository;
-import com.isu.ifw.vo.WtmFlexibleInfoVO;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service
 public class WtmCalcServiceImpl implements WtmCalcService {
@@ -2684,7 +2649,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						}
 						while(sd.compareTo(ed) <= 0) {
 							stdMap.put(ymd.format(sd), flexibleStdMgr.getTaaTimeYn());
-							stdMap.put(ymd.format(sd)+"workTypeCd", emp.getWorkTypeCd());
+							stdMap.put(ymd.format(sd)+"workTypeCd", flexibleStdMgr.getWorkTypeCd());
 							cal.setTime(sd);
 							cal.add(Calendar.DATE, 1);
 							sd = cal.getTime();
@@ -2763,33 +2728,43 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 								break;
 						}
 					}
-					
+
+					logger.debug("stdMap =>" + stdMap.toString());
 					for(WtmWorkCalendar calendar : cals) {
 						String taaTimeYn = stdMap.get(calendar.getYmd());
 						String workTypeCd = stdMap.get(calendar.getYmd()+"workTypeCd");
-						//WtmWorkCalendar calendar = workCalandarRepo.findByTenantIdAndEnterCdAndYmdAndSabun(result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun());
-						List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, empSabun, calendar.getYmd());
-						Map<String, Integer> resMap = this.calcResult(results, taaTimeYn, M, F, O, R, lateTaaCode.getTaaCd(), leaveTaaCode.getTaaCd(), absenceTaaCode.getTaaCd());
-						WtmWorktimeDayClose dayClose = new WtmWorktimeDayClose();
-						WtmWorktimeDayClosePK id = new WtmWorktimeDayClosePK();
-						id.setWorktimeCloseId(worktimeClose.getWorktimeCloseId());
-						id.setSabun(empSabun);
-						id.setYmd(calendar.getYmd());
-						dayClose.setId(id);
-						dayClose.setHolidayYn(calendar.getHolidayYn());
-						dayClose.setAbsenceMinute(resMap.get("absenceMinute"));
-						dayClose.setLateMinute(resMap.get("lateMinute"));
-						dayClose.setLeaveMinute(resMap.get("leaveMinute"));
-						dayClose.setOtMinute( resMap.get("oMinute") + resMap.get("eOMinute") );
-						dayClose.setOtnMinute( resMap.get("nMinute") + resMap.get("eNMinute"));
-						dayClose.setPayMinute(resMap.get("payMinute"));
-						dayClose.setNonpayMinute(resMap.get("nonpayMinute"));
-						dayClose.setSubYn(null);
-						dayClose.setTimeCdMgrId(calendar.getTimeCdMgrId());
-						dayClose.setUpdateId("calcWorktimeClose");
-						dayClose.setWorkTypeCd(workTypeCd);
-						dayClose.setWorkMinute(resMap.get("apprWorkMinute") - resMap.get("apprExMinute"));
-						worktimeDayCloseRepo.save(dayClose);
+						logger.debug("calendar.getYmd() =>" + calendar.getYmd());
+						logger.debug("workTypeCd => :" + workTypeCd);
+
+						if(workTypeCd != null && !"".equals(workTypeCd)){
+							//WtmWorkCalendar calendar = workCalandarRepo.findByTenantIdAndEnterCdAndYmdAndSabun(result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun());
+							List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, empSabun, calendar.getYmd());
+							Map<String, Integer> resMap = this.calcResult(results, taaTimeYn, M, F, O, R, lateTaaCode.getTaaCd(), leaveTaaCode.getTaaCd(), absenceTaaCode.getTaaCd());
+							WtmWorktimeDayClose dayClose = new WtmWorktimeDayClose();
+							WtmWorktimeDayClosePK id = new WtmWorktimeDayClosePK();
+							id.setWorktimeCloseId(worktimeClose.getWorktimeCloseId());
+							id.setSabun(empSabun);
+							id.setYmd(calendar.getYmd());
+							dayClose.setId(id);
+							dayClose.setHolidayYn(calendar.getHolidayYn());
+							dayClose.setAbsenceMinute(resMap.get("absenceMinute"));
+							dayClose.setLateMinute(resMap.get("lateMinute"));
+							dayClose.setLeaveMinute(resMap.get("leaveMinute"));
+							dayClose.setOtMinute( resMap.get("oMinute") + resMap.get("eOMinute") );
+							dayClose.setOtnMinute( resMap.get("nMinute") + resMap.get("eNMinute"));
+							dayClose.setPayMinute(resMap.get("payMinute"));
+							dayClose.setNonpayMinute(resMap.get("nonpayMinute"));
+							dayClose.setSubYn(null);
+							dayClose.setTimeCdMgrId(calendar.getTimeCdMgrId());
+							dayClose.setUpdateId("calcWorktimeClose");
+							dayClose.setWorkTypeCd(workTypeCd);
+							dayClose.setWorkMinute(resMap.get("apprWorkMinute") - resMap.get("apprExMinute"));
+							worktimeDayCloseRepo.save(dayClose);
+						}else{
+							logger.debug("DayClose workTypeCd is null : \n" + "sabun:" + empSabun + "\n" + "" + "calendar.getYmd() =>" + calendar.getYmd());
+						}
+
+
 					}	
 				//	workDayCnt++;
 				}
