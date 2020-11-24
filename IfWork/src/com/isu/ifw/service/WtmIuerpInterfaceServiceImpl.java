@@ -1,13 +1,15 @@
 package com.isu.ifw.service;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.common.service.TenantConfigManagerService;
+import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmInterfaceMapper;
+import com.isu.ifw.mapper.WtmIuerpInterfaceMapper;
+import com.isu.ifw.mapper.WtmOrgChartMapper;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,25 +17,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.common.service.TenantConfigManagerService;
-import com.isu.ifw.entity.WtmEmpHis;
-import com.isu.ifw.entity.WtmIntfTaaAppl;
-import com.isu.ifw.entity.WtmOrgChart;
-import com.isu.ifw.entity.WtmPropertie;
-import com.isu.ifw.entity.WtmRule;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmInterfaceMapper;
-import com.isu.ifw.mapper.WtmIuerpInterfaceMapper;
-import com.isu.ifw.mapper.WtmOrgChartMapper;
-import com.isu.ifw.repository.WtmEmpHisRepository;
-import com.isu.ifw.repository.WtmFlexibleEmpRepository;
-import com.isu.ifw.repository.WtmIntfTaaApplRepository;
-import com.isu.ifw.repository.WtmOrgChartRepository;
-import com.isu.ifw.repository.WtmPropertieRepository;
-import com.isu.ifw.repository.WtmRuleRepository;
-import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.ReturnParam;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service("wtmIuerpInterfaceService")
 public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
@@ -98,7 +83,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		if(dateMap!=null && dateMap.containsKey("lastDate") && dateMap.get("lastDate")!=null) {
 			ymdhis = dateMap.get("lastDate").toString();
 		}
-		
+
 		logger.debug("ymdhis : " + ymdhis);
 		System.out.println("ymdhis : " + ymdhis);
 		
@@ -113,7 +98,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		paramMap.put("ymdhis", ymdhis);
 		paramMap.put("ymd", WtmUtil.parseDateStr(WtmUtil.toDate(ymdhis, "yyyyMMddHHmmss"), "yyyyMMdd"));
 		paramMap.put("updateId", "INTF");
-		
+
 		ReturnParam rp = new ReturnParam();
 		if(type.equalsIgnoreCase("CODE")) { //공통코드
 			rp = saveWtmCode(paramMap);
@@ -979,7 +964,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		
 		try {
 			
-			List<WtmIntfTaaAppl> taaAppls = intfTaaApplRepo.findByYyyymmddhhmissGreaterThanAndTenantId(paramMap.get("ymdhis").toString(), Long.valueOf(paramMap.get("tenantId").toString()));
+			List<WtmIntfTaaAppl> taaAppls = intfTaaApplRepo.findByYyyymmddhhmissGreaterThanAndTenantIdOrderByIntfId(paramMap.get("ymdhis").toString(), Long.valueOf(paramMap.get("tenantId").toString()));
 			System.out.println("============================== " + taaAppls.size());
 			int total = 0;
 			int success = 0;

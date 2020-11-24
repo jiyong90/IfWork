@@ -1,33 +1,24 @@
 package com.isu.ifw.service;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.entity.WtmApplCode;
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
 import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.mapper.WtmApplMapper;
-import com.isu.ifw.mapper.WtmInoutHisMapper;
 import com.isu.ifw.mapper.WtmOtApplMapper;
-import com.isu.ifw.mapper.WtmWorktimeMapper;
 import com.isu.ifw.repository.WtmApplCodeRepository;
 import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
 import com.isu.ifw.repository.WtmTimeCdMgrRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service("mobileApplService")
 public class WtmMobileApplServiceImpl implements WtmMobileApplService{
@@ -84,7 +75,12 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		String ymd = dataMap.get("ymd").toString().replace(".", "");
 		String cSHm = dataMap.get("cSHm")!=null?ymd+dataMap.get("cSHm").toString().replace(":", ""):null;
 		String cEHm = dataMap.get("cEHm")!=null?ymd+dataMap.get("cEHm").toString().replace(":", ""):null;
-		
+
+
+		if(cSHm == null && cEHm == null) {
+			rp.setFail("변경시간을 입력바랍니다.");
+			return rp;
+		}
 		dataMap.put("chgSdate", cSHm);
 		dataMap.put("chgEdate", cEHm);
 		dataMap.put("ymd", ymd);

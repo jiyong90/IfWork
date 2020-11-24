@@ -1229,7 +1229,15 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 									cal.setEntryStypeCd(paramMap.get("entryType")+"");
 									calendarRepository.save(cal);
 								}else {
-									throw new Exception("휴일입니다. 휴일 근무계획시간이 존재하지 않습니다.");
+									// SAMHWACROWN 쪽 출퇴근 정보가 자꾸 없다고 하니. 휴일근무 계획이 없어도 일단 출퇴근 정보를 넣자!! 뒷단은 계획 생성 후 알아서 하자!
+									if(tenantId == 21 && "SAMHWACROWN".equalsIgnoreCase(enterCd)) {
+										cal.setEntrySdate(inoutDt);
+										cal.setEntryStypeCd(paramMap.get("entryType")+"");
+										calendarRepository.save(cal);
+									} else {
+										throw new Exception("휴일입니다. 휴일 근무계획시간이 존재하지 않습니다.");
+
+									}
 								}
 							}else {
 								cal.setEntrySdate(inoutDt);
