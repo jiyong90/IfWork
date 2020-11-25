@@ -1,15 +1,16 @@
 package com.isu.ifw.repository;
 
-import java.util.List;
-
+import com.isu.ifw.entity.WtmIntfTaaAppl;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.isu.ifw.entity.WtmIntfTaaAppl;
+import java.util.List;
 
 @Repository
 public interface WtmIntfTaaApplRepository extends JpaRepository<WtmIntfTaaAppl, Long> {
 	
-	List<WtmIntfTaaAppl> findByYyyymmddhhmissGreaterThanAndTenantId(String yyyymmddhhmiss, Long tenantId);
-	
+	List<WtmIntfTaaAppl> findByYyyymmddhhmissGreaterThanAndTenantIdOrderByIntfId(String yyyymmddhhmiss, Long tenantId);
+
+	List<WtmIntfTaaAppl> findByYyyymmddhhmissGreaterThanAndTenantIdAndSabunOrderByIntfId(String yyyymmddhhmiss, Long tenantId, String sabun);
+
 }

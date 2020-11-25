@@ -2101,8 +2101,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 
 			List<String> statusList = new ArrayList<String>();
 			statusList.add("OK");
-			statusList.add("FAIL");
-			statusList.add("ERR");
+//			statusList.add("FAIL");
+//			statusList.add("ERR");
 			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(statusList); 
 			if(list == null || list.size() == 0) {
 				logger.debug("setTaaApplBatchIfPostProcess 대상없음 종료");

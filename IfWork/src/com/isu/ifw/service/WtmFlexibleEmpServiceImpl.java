@@ -4030,10 +4030,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			paramMap.put("enterCd", enterCd);
 			paramMap.put("sabun", sabun);
 			paramMap.put("ymd", ymd);
-			
+
+			logger.debug("### paramMap : " + paramMap.toString());
 			WtmEmpHis emp = empHisRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
 			if(emp!=null && emp.getOrgCd()!=null && !"".equals(emp.getOrgCd()))
 				paramMap.put("orgCd", emp.getOrgCd());
+			
+			logger.debug("### orgCd : " + emp.getOrgCd());
 			
 			List<String> orgList = null;
 			
@@ -4043,6 +4046,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			if(lowLevelOrgList!=null && lowLevelOrgList.size()>0) {
 				orgList = new ArrayList<String>();
 				for(Map<String, Object> orgMap : lowLevelOrgList) {
+					
+					logger.debug("### orgMap : " + orgMap);
+					
 					orgList.add(orgMap.get("orgCd").toString());
 				}
 			}
