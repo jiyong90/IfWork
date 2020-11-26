@@ -1043,7 +1043,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 			Map<String, Object> result = flexEmpMapper.checkBaseWorktime(flexibleEmpId);
 			if(result!=null && result.get("isValid")!=null && "0".equals(result.get("isValid").toString())) {
-				throw new RuntimeException(result.get("totalWorktime").toString() + "분의 소정근로시간을 넘을 수 없습니다.");
+				throw new RuntimeException(result.get("totalWorktime").toString() + "분의 기본근로시간을 넘을 수 없습니다.");
 			}
 		}
 		
@@ -2550,7 +2550,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			calcaApprDayReset(flexibleEmp, calendar, flexStdMgr, timeCdMgr);
 			
 	//		paramMap.put("timeTypeCd", timeTypeCd);
-			//소정근로시간의 경우 출퇴근 타각기록으로만 판단 >> 결근 데이터가 있는 날은 빼야한다.
+			//기본근로시간의 경우 출퇴근 타각기록으로만 판단 >> 결근 데이터가 있는 날은 빼야한다.
 			paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 			paramMap.put("taaCd", absenceTaaCode.getTaaCd());
 	
@@ -2559,7 +2559,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				calcService.P_WTM_WORK_DAY_RESULT_CREATE_F(tenantId, enterCd, sabun,  calendar.getYmd(), flexStdMgr, timeCdMgr, "P_WTM_WORK_DAY_RESULT_CREATE_F-"+sabun);
 				
 				/**
-				 * 소정근로 시간 초과로 인해 소정근로시간 인정을 안할 경우에도 오티 나이트는 타각시간 내에 잇는 것은 인정해준다. 
+				 * 기본근로 시간 초과로 인해 기본근로시간 인정을 안할 경우에도 오티 나이트는 타각시간 내에 잇는 것은 인정해준다. 
 				 */
 				timeTypeCd = new ArrayList<>();
 				timeTypeCd.add(WtmApplService.TIME_TYPE_OT);
@@ -3078,7 +3078,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						/* 관리자는 일단 체크 하지 않는다. ....  .. . . . .  .
 						Map<String, Object> result2 = flexEmpMapper.checkBaseWorktimeMgr(l);
 						if(result2!=null && result2.get("isValid")!=null && result2.get("isValid").equals("0")) {
-							retMsg = l.get("sabun").toString() + "," + l.get("ymd").toString() + ", "+ result2.get("totalWorktime").toString() + "시간의 소정근로시간을 넘을 수 없습니다.";
+							retMsg = l.get("sabun").toString() + "," + l.get("ymd").toString() + ", "+ result2.get("totalWorktime").toString() + "시간의 기본근로시간을 넘을 수 없습니다.";
 						}
 						*/
 					} else {
@@ -3735,7 +3735,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			} else {
 				// 유연근무 기간 변경하기
 				flexEmpMapper.updateByflexibleEmpId(paramMap);
-				//근무제 기간의 총 소정근로 시간을 업데이트 한다.
+				//근무제 기간의 총 기본근로 시간을 업데이트 한다.
 				//20200102jyp P_WTM_WORK_CALENDAR_RESET procedure에서 한다.
 				//flexApplMapper.updateWorkMinuteOfWtmFlexibleEmp(paramMap);
 			}
@@ -4158,7 +4158,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								applOtMin = 0;
 							}
 						}
-						//신청중인 휴일연장근무 시간을 분리... 소정근로시간부터 차감이 필요하기때문이다. 
+						//신청중인 휴일연장근무 시간을 분리... 기본근로시간부터 차감이 필요하기때문이다. 
 						if(weekInfo != null && weekInfo.get("applHolOtMinute") != null && !weekInfo.get("applHolOtMinute").equals("")) {
 							applHolOtMin = Integer.parseInt(weekInfo.get("applHolOtMinute")+"");
 							if(applHolOtMin == null) {
@@ -4172,7 +4172,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								otMin = 0;
 							}
 						}
-						//기 신청된 휴일 연장근무는 별도로 빼서 계산한다. 소정근로시간부터 차감해야하기 때문인다.
+						//기 신청된 휴일 연장근무는 별도로 빼서 계산한다. 기본근로시간부터 차감해야하기 때문인다.
 						//휴일근로 인터페이스도 확인 필요
 						if(weekInfo != null && weekInfo.get("holOtMinute") != null && !weekInfo.get("holOtMinute").equals("")) {
 							holOtMin = Integer.parseInt(weekInfo.get("holOtMinute")+"");
@@ -4185,13 +4185,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						
 						//휴일근무이며
 						if(emp.get("holidayYn") != null && "Y".equals(emp.get("holidayYn"))) {
-							//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 소정근로 시간을 사용할 수 잇다. 
+							//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 기본근로 시간을 사용할 수 잇다. 
 							if(emp.get("workTypeCd") != null && ("BASE".equals(emp.get("workTypeCd")) || "DIFF".equals(emp.get("workTypeCd")) || "WORKTEAM".equals(emp.get("workTypeCd")) ) ) {
 								/*
 									한주에 대한 정보 조회 계획 및 인정 근무 시간의 합 - 결근 제외 
 								 */
 								if(weekInfo != null && weekInfo.get("workMinute") != null && !weekInfo.get("workMinute").equals("")) {
-									//한주소정근로시간 40시간   * 60  = 2400
+									//한주기본근로시간 40시간   * 60  = 2400
 									int weekWorkMinute = Integer.parseInt(weekInfo.get("weekWorkMinute")+"");
 									int exMinute = 0;
 									int exceptMinute = 0;
@@ -4213,7 +4213,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								if(emp.get("restWorkMinute")!=null && !"".equals(emp.get("restWorkMinute"))) {
 									int restMin = Integer.parseInt(emp.get("restWorkMinute").toString());
 									restMinuteMap.put("restWorkMinute", restMin);
-									restMinuteMap.put("guideMessage", "* 잔여소정근로시간이 먼저 차감됩니다.");
+									restMinuteMap.put("guideMessage", "* 잔여기본근로시간이 먼저 차감됩니다.");
 								}
 								*/
 							}
@@ -4228,7 +4228,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								applHolOtMin = applHolOtMin - restWorkMin;
 							}
 						}
-						//소정근로에서 빼고 남은 것을 연장근로 시간에 합해 다시 뺀다. 
+						//기본근로에서 빼고 남은 것을 연장근로 시간에 합해 다시 뺀다. 
 						applOtMin = applOtMin + applHolOtMin;
 						if(applOtMin > 0) {
 							if(applOtMin > 0) {
@@ -4240,7 +4240,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						
 						if(restWorkMin > 0) {
 							restMinuteMap.put("restWorkMinute", restWorkMin);
-							restMinuteMap.put("guideMessage", "* 잔여소정근로시간이 먼저 차감됩니다.");
+							restMinuteMap.put("guideMessage", "* 잔여기본근로시간이 먼저 차감됩니다.");
 						}
 						restMinuteMap.put("restOtMinute", restOtMin);
 						
