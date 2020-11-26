@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
+Built-By: claire
+Build-Jdk: 9.0.4
 Implementation-Title: IfWork
 Implementation-Version: 0.0.1-SNAPSHOT
-Built-By: 유충현
 Implementation-Vendor-Id: IfWork
-Build-Jdk: 1.8.0_251
 Implementation-URL: https://projects.spring.io/spring-boot/#/spring-bo
  ot-starter-parent/IfWork
 Created-By: Maven Integration for Eclipse
