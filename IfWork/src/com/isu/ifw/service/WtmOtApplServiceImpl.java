@@ -656,7 +656,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		paramMap.put("sabun", sabun);
 		paramMap.put("tenantId", tenantId);
 		
-		//연장근무 신청 기간 내에 소정근로 외 다른 근무계획이 있는지 체크 한다.
+		//연장근무 신청 기간 내에 기본근로 외 다른 근무계획이 있는지 체크 한다.
 		paramMap.put("sdate", sd);
 		paramMap.put("edate", ed);
 		
@@ -716,9 +716,9 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		paramMap.put("symd", WtmUtil.parseDateStr(sd, "yyyyMMdd"));
 		paramMap.put("eymd", WtmUtil.parseDateStr(ed, "yyyyMMdd"));
 		
-		//잔여 소정근로시간 체크 
+		//잔여 기본근로시간 체크 
 		//기본근무/시차/근무조 일경우에 
-		//잔여 소정근로시간이 있을 경우 BASE 와 OT를 분리하여 체크 한다. 
+		//잔여 기본근로시간이 있을 경우 BASE 와 OT를 분리하여 체크 한다. 
 		// To-Do
 		
 		List<String> sabunList = new ArrayList<String>();
@@ -754,7 +754,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				*/
 				//휴일근무이며
 				if(emp.get("holidayYn") != null && "Y".equals(emp.get("holidayYn"))) {
-					//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 소정근로 시간을 사용할 수 잇다. 
+					//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 기본근로 시간을 사용할 수 잇다. 
 					if(emp.get("workTypeCd") != null && ("BASE".equals(emp.get("workTypeCd")) || "DIFF".equals(emp.get("workTypeCd")) || "WORKTEAM".equals(emp.get("workTypeCd")) ) ) {
 						/*
 							한주에 대한 정보 조회 계획 및 인정 근무 시간의 합 - 결근 제외 
@@ -762,7 +762,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 						Map<String, Object> weekInfo = wtmFlexibleEmpMapper.weekWorkTimeByEmp(paramMap);
 						
 						if(weekInfo != null && weekInfo.get("workMinute") != null && !weekInfo.get("workMinute").equals("")) {
-							//한주소정근로시간 40시간   * 60  = 2400
+							//한주기본근로시간 40시간   * 60  = 2400
 							int weekWorkMinute = Integer.parseInt(weekInfo.get("weekWorkMinute")+"");
 							int exMinute = 0;
 							if(weekInfo.get("exMinute") != null && !weekInfo.get("exMinute").equals("")) {
@@ -784,14 +784,14 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		Map<String, Object> calcMinuteMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun);
 		//int calcMinute = Integer.parseInt(calcMinuteMap.get("calcMinute").toString());
 		//restMin
-		//잔여 소정 근로시간으로 모두 계산 시 연장근무 시간 체크를 하지 않는다. 
+		//잔여 기본 근로시간으로 모두 계산 시 연장근무 시간 체크를 하지 않는다. 
 		boolean isOtCheck = true;
-		//잔여 소정 근로 시간이 있을 경우 소정근로 시간을 먼저 구한다. 
+		//잔여 기본 근로 시간이 있을 경우 기본근로 시간을 먼저 구한다. 
 		if(restMin > 0) {
-			//신청 근무시간 과 잔여 소정근로 시간을 체크하자.
+			//신청 근무시간 과 잔여 기본근로 시간을 체크하자.
 			//분을 구하자
 			//int m = (int) ((ed.getTime() - sd.getTime()) / 1000 / 60);
-			//잔여 소정근로 시간보다 신청 시간이 작으면
+			//잔여 기본근로 시간보다 신청 시간이 작으면
 			/*
 			if(restMin > m) {
 				restMin = m;
@@ -801,7 +801,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 
 			//신청서의 시간을 구하고
 			int calcMinute =Integer.parseInt(calcMinuteMap.get("calcMinute").toString());
-			//잔여 소정근로시간보다 큰지를 판단
+			//잔여 기본근로시간보다 큰지를 판단
 			if(restMin < calcMinute) {
 				restMin = calcMinute - restMin;
 				isOtCheck = true;
@@ -1054,7 +1054,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		WtmFlexibleEmp emp = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, ymd);
 
 		if(emp!=null) {
-			//1. 연장근무 신청 시 소정근로 선 소진 여부를 체크한다.
+			//1. 연장근무 신청 시 기본근로 선 소진 여부를 체크한다.
 			//선 소진 여부
 			String exhaustionYn = null;
 			WtmFlexibleStdMgr flexibleStdMgr = wtmFlexibleStdMgrRepo.findById(emp.getFlexibleStdMgrId()).get();
@@ -1112,8 +1112,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			
 			if(exhaustionYn!=null && exhaustionYn.equals("Y")) {
 				//선소진시
-				//코어타임을 제외한 잔여 소정근로시간을 알려준다
-				//근무제 기간 내의 총 소정근로 시간
+				//코어타임을 제외한 잔여 기본근로시간을 알려준다
+				//근무제 기간 내의 총 기본근로 시간
 				int workMinute = emp.getWorkMinute();
 				paramMap.put("tenantId", tenantId);
 				paramMap.put("enterCd", enterCd);
@@ -1128,10 +1128,10 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 					coreMinute = Integer.parseInt(resultCoreMap.get("coreHm").toString());
 				}
 				
-				//근무제 기간 내 총 소정근로 시간 > 연장근무신청일 포함 이전일의 인정소정근로시간(인정소정근로시간이 없을 경우 계획소정근로 시간) + 연장근무신청일 이후의 코어타임 시간			
+				//근무제 기간 내 총 기본근로 시간 > 연장근무신청일 포함 이전일의 인정기본근로시간(인정기본근로시간이 없을 경우 계획기본근로 시간) + 연장근무신청일 이후의 코어타임 시간			
 				if(workMinute > apprMinute + coreMinute) {
 					int baseWorkMinute = workMinute - apprMinute - coreMinute;
-					rp.setFail("필수 근무시간을 제외한 " + baseWorkMinute + "분의 소정근로시간을 선 소진 후 연장근무를 신청할 수 있습니다.");
+					rp.setFail("필수 근무시간을 제외한 " + baseWorkMinute + "분의 기본근로시간을 선 소진 후 연장근무를 신청할 수 있습니다.");
 					return rp;
 				}
 			}

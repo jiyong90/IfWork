@@ -473,7 +473,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			
 			paramMap.put("symd", emp.getSymd());
 			paramMap.put("eymd", emp.getEymd());
-			//근무제 기간의 총 소정근로 시간을 업데이트 한다.
+			//근무제 기간의 총 기본근로 시간을 업데이트 한다.
 			//20200102jyp P_WTM_WORK_CALENDAR_RESET procedure에서 한다. 
 			//flexApplMapper.updateWorkMinuteOfWtmFlexibleEmp(paramMap);
 
@@ -608,7 +608,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			return rp;
 		}
 		
-		//근무 상세에 대한 소정근로시간 체크 (탄근제)
+		//근무 상세에 대한 기본근로시간 체크 (탄근제)
 		//근무제로 판단하지 않고 신청 시 신청에 딸린 계획데이터가 있을경우 체크하즈아.
 		WtmPropertie propertie = null;
 		String defultWorktime = "8";
@@ -679,7 +679,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 					logger.debug("sumWorkMinute : "+ sumWorkMinute);
 					logger.debug("day : "+ day);
 					if(sumWorkMinute>0 && sumWorkMinute>(day*8*60)) {
-						rp.setFail("소정 근무는 평균 40시간을 초과할 수 없습니다.");
+						rp.setFail("기본 근무는 평균 40시간을 초과할 수 없습니다.");
 						return rp;
 					} 
 				}
@@ -754,7 +754,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 					logger.debug("sumWorkMinute : "+ sumWorkMinute);
 					logger.debug("day : "+ day);
 					if(sumWorkMinute>0 && ((float)sumWorkMinute/day*7)/60>40) {
-						rp.setFail("소정 근무는 평균 40시간을 초과할 수 없습니다.");
+						rp.setFail("기본 근무는 평균 40시간을 초과할 수 없습니다.");
 						return rp;
 					} 
 				}
@@ -766,7 +766,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		}else {
 			rp.setFail("");
 		}
-		//소정근로시간 체크
+		//기본근로시간 체크
 		//2주이내 48체크	
 		//2주이상 52시간 체크
 			

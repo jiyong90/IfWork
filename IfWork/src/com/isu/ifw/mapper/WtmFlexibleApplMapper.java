@@ -19,7 +19,7 @@ public interface WtmFlexibleApplMapper {
 	public Map<String, Object> findByApplId(Long applId);
 	
 	/**
-	 * 나의 근무기간의 총 소정근로시간을 계산한다.
+	 * 나의 근무기간의 총 기본근로시간을 계산한다.
 	 * @param flexibleEmpId
 	 */
 	public void updateWorkMinuteOfWtmFlexibleEmp(Map<String, Object> paramMap);
