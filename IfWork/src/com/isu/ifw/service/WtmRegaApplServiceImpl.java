@@ -55,6 +55,9 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 	@Autowired
 	WtmCalcServiceImpl calcService;
 
+	@Autowired
+	WtmFlexibleEmpService wtmFlexibleEmpService;
+
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
 		// TODO Auto-generated method stub
@@ -563,12 +566,23 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 				}
 			} else {
 
+				Map<String, Object> reCalc = new HashMap<>();
+				reCalc.put("tenentId", tenantId);
+				reCalc.put("enterCd", enterCd);
+				reCalc.put("sabun", sabun);
+				reCalc.put("ymd", symd);
+				reCalc.put("shm", shm);
+				reCalc.put("ehm", ehm);
+
 				//시간이 들어오는 경우는 symd == eymd
+				Map<String, Object> addPlanMinuteMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, reCalc, sabun);
 
-				Date sd = WtmUtil.toDate(symd + shm, "yyyyMMddHHmm");
-				Date ed = WtmUtil.toDate(symd + ehm, "yyyyMMddHHmm");
+				applMinute = Integer.parseInt(addPlanMinuteMap.get("calcMinute")+"");
 
-				applMinute = (int) (ed.getTime() - sd.getTime()) / (60 * 1000);
+//				Date sd = WtmUtil.toDate(symd + shm, "yyyyMMddHHmm");
+//				Date ed = WtmUtil.toDate(symd + ehm, "yyyyMMddHHmm");
+//
+//				applMinute = (int) (ed.getTime() - sd.getTime()) / (60 * 1000);
 			}
 
 			System.out.println("applMinute : " + applMinute);
