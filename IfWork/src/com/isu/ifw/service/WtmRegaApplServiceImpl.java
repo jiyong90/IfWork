@@ -641,12 +641,12 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 		paramMap.put("eymd", eDate);
 		paramMap.put("taaWorkYn", taaWorkYn);    // 근무시간가산여부(가산이 아니면 해당기간 기본근무 빼고 계산해야함)
 		paramMap.put("applMinutes", applMinutes);
-		System.out.println("*********** paramMap : " + paramMap.toString());
+		logger.debug("*********** paramMap : " + paramMap.toString());
 		List<Map<String, Object>> results = validatorMapper.checkTotalWorkMinuteForSele(paramMap);
 
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			System.out.println("results : " + mapper.writeValueAsString(results));
+			logger.debug("results : " + mapper.writeValueAsString(results));
 		} catch (JsonProcessingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -655,8 +655,8 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 		if (results != null && results.size() > 0) {
 			for (Map<String, Object> r : results) {
 				if (r.get("isValid") != null && "N".equals(r.get("isValid"))) {
-					System.out.println("workMinute: " + r.get("workMinute").toString());
-					System.out.println("totalWorkMinute: " + r.get("totalWorkMinute").toString());
+					logger.debug("workMinute: " + r.get("workMinute").toString());
+					logger.debug("totalWorkMinute: " + r.get("totalWorkMinute").toString());
 
 					Double h = 0d;
 					Double m = 0d;
