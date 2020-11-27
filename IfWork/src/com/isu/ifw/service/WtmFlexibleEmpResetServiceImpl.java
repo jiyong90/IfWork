@@ -758,6 +758,12 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 		if(delResult != null && delResult.size() > 0) {
 			wtmWorkDayResultRepo.deleteAll(delResult);
 		}
+		//신청서 아이디가 있는 BASE도 지운다.
+		delResult = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCd(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), WtmApplService.TIME_TYPE_BASE);
+		if(delResult != null && delResult.size() > 0) {
+			wtmWorkDayResultRepo.deleteAll(delResult);
+		}
+		
 		boolean isCreateBase = true;
 		boolean hasTaa = false;
 		List<WtmWorkDayResult> applResults = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd());

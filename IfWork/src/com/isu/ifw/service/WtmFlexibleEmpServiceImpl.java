@@ -3432,7 +3432,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								logger.debug("workDayResults loop : " + cnt);
 								res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
 								res.setTaaCd(null);	// base 수정시 근태코드 클리어
-								res.setApplId(applId);
+								res.setApplId(null);
 								res.setApprSdate(null);
 								res.setApprEdate(null);
 								res.setApprMinute(null);
@@ -3471,7 +3471,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 									res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
 									//res.setApplId(applId);
 									res.setTaaCd("");	// base 수정시 근태코드 클리어
-									res.setApplId(applId);
+									res.setApplId(null);
 									res.setApprSdate(null);
 									res.setApprEdate(null);
 									res.setApprMinute(null);
