@@ -1890,6 +1890,19 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		List<WtmWorkDayResult> taa = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), WtmApplService.TIME_TYPE_TAA, calendar.getYmd(), calendar.getYmd());
 		for(WtmWorkDayResult res : taa) {
 			if(res.getApprSdate() == null && res.getPlanSdate() != null) {
+
+				this.addWtmDayResultInBaseTimeType(res.getTenantId()
+													 , res.getEnterCd()
+													 , res.getYmd()
+													 , res.getSabun()
+													 , res.getTimeTypeCd()
+													 ,""
+													 , res.getPlanSdate()
+													 , res.getPlanEdate()
+													 , null
+													 , "taa reset timeblock"
+													 , false);
+				
 				res.setApprSdate(res.getPlanSdate());
 				res.setApprEdate(res.getPlanEdate());
 				res.setApprMinute(res.getPlanMinute());
