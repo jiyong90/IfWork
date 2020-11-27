@@ -1807,11 +1807,30 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				 * 일 때 실제 근무 시간이 280분일 경우 280 - 60을 할 수 없다. 
 				 * 280 > 240+60 의 요건으로 240분에 해당하는 설정 값으로 적용해야한다.  
 				 * 
+				 * ### BREAK_TYPE_TIME wMinute : 240  + 0"
+					### BREAK_TYPE_TIME nextBMinute : 60 "
+					### BREAK_TYPE_TIME apprMinute : 382 "
+					### BREAK_TYPE_TIME isLast : false "
+					### BREAK_TYPE_TIME wMinute : 480  + 60"
+					### BREAK_TYPE_TIME nextBMinute : 120 "
+					### BREAK_TYPE_TIME apprMinute : 382 "
+					### BREAK_TYPE_TIME isLast : false "
+					### BREAK_TYPE_TIME wMinute : 600 "
+					### BREAK_TYPE_TIME nextBMinute : 0 "
+					### BREAK_TYPE_TIME apprMinute : 382 "
+					### BREAK_TYPE_TIME isLast : true "
+
 				 */
+				logger.debug("### BREAK_TYPE_TIME wMinute : " + wMinute);
+				logger.debug("### BREAK_TYPE_TIME bMinute : " + bMinute);
+				logger.debug("### BREAK_TYPE_TIME nextBMinute : " + nextBMinute);
+				logger.debug("### BREAK_TYPE_TIME apprMinute : " + apprMinute);
+				logger.debug("### BREAK_TYPE_TIME isLast : " + isLast);
 				if( apprMinute > (wMinute + nextBMinute) && !isLast ) {
 					continue;
 				}else {
 					breakMinute = bMinute;
+					break;
 				}
 				
 			}

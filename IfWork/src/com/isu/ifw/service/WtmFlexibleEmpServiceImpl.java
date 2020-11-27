@@ -2842,6 +2842,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				if(sumApprMinute > 0) {
 					breakMinute = calcService.getBreakMinuteIfBreakTimeTIME(timeCdMgr.getTimeCdMgrId(), sumApprMinute);
 				}
+				logger.debug("### BREAK_TYPE_TIME breakMinute : " + breakMinute);
 				if(breakMinute > 0) {
 					//총근무시간의 휴게시간을 구하고 이를.. 어떤 휴게시간으로 적용할지 선택한다. 
 					//BASE와 OT가 있는 날일 경우 
