@@ -310,6 +310,19 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 				dateMap.put("entDt", inFormat.parse(taaDate+endHm));
 				dateList.add(dateMap);
 
+				//  check 중복
+				Map<String, Object> chkMap = new HashMap<String, Object>();
+				chkMap.put("tenantId", tenantId);
+				chkMap.put("enterCd", enterCd);
+				chkMap.put("sabun", sabun);
+				chkMap.put("startDt", inFormat.parse(taaDate+startHm));
+				chkMap.put("entDt", inFormat.parse(taaDate+endHm));
+				int chkCnt = validatorMapper.checkDuplicateWorkDayResult(chkMap) ;
+				if(chkCnt > 0){
+					rp.setFail("출장/긴급근무 신청기간이 중복됩니다.");
+					return rp;
+				};
+
 				ReturnParam valiRp = new ReturnParam();
 				valiRp = validate2(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, tmpMap);
 
@@ -422,6 +435,8 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 				return rp;
 			}
 
+
+
 			//  totDays, holDays
 			Map<String, Integer> calMap = calcService.calcDayCnt(tenantId, enterCd, symd, eymd);
 			logger.debug("calMap.toString() : " + calMap.toString());
@@ -444,12 +459,10 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 				&& (!"0000".equals(ehm) && !"2400".equals(ehm))){
 				Integer stmInt = Integer.parseInt(shm);
 				Integer etmInt = Integer.parseInt(ehm);
-				if(stmInt > etmInt){
+				if(stmInt > etmInt) {
 					rp.setFail("종료시간이 시작시간보다 작습니다.");
 					return rp;
 				}
-
-
 
 			}
 			String applId = ""; //  IF 소스 참조로 빈값으로 대체함.

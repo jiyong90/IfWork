@@ -13,4 +13,6 @@ public interface WtmValidatorMapper {
 	public Map<String, Object> checkDuplicateTaaAppl(Map<String, Object> paramMap);
 	public Map<String, Object> checkApplMinute(Map<String, Object> paramMap);
 	public List<Map<String, Object>> checkTotalWorkMinuteForSele(Map<String, Object> paramMap);
+
+	public int checkDuplicateWorkDayResult(Map<String, Object> tmpMap);
 }
