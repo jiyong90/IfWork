@@ -154,9 +154,9 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 				logger.debug("야간 근무시간 : " + format.format(eOtNightSdate) + "~" + format.format(eOtNightEdate));
 				logger.debug("연장 근무 신청 시간 : " + format.format(otAppl.getOtSdate()) + "~" + format.format(otAppl.getOtEdate()));
 				
-				//잔여 소정근로시간 체크 
+				//잔여 기본근로시간 체크 
 				//기본근무/시차/근무조 일경우에 
-				//잔여 소정근로시간이 있을 경우 BASE 와 OT를 분리하여 체크 한다.  
+				//잔여 기본근로시간이 있을 경우 BASE 와 OT를 분리하여 체크 한다.  
 				List<String> sabunList = new ArrayList<String>();
 				sabunList.add(sabun);
 				Map<String, Object> empParamMap = new HashMap<>();
@@ -190,7 +190,7 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 						*/
 						//휴일근무이며
 						if(emp.get("holidayYn") != null && "Y".equals(emp.get("holidayYn"))) {
-							//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 소정근로 시간을 사용할 수 잇다. 
+							//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 기본근로 시간을 사용할 수 잇다. 
 							if(emp.get("workTypeCd") != null && ("BASE".equals(emp.get("workTypeCd")) || "DIFF".equals(emp.get("workTypeCd")) || "WORKTEAM".equals(emp.get("workTypeCd")) ) ) {
 								/*
 									한주에 대한 정보 조회 계획 및 인정 근무 시간의 합 - 결근 제외 
@@ -198,7 +198,7 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 								Map<String, Object> weekInfo = wtmFlexibleEmpMapper.weekWorkTimeByEmp(paramMap);
 								
 								if(weekInfo != null && weekInfo.get("workMinute") != null && !weekInfo.get("workMinute").equals("")) {
-									//한주소정근로시간 40시간   * 60  = 2400
+									//한주기본근로시간 40시간   * 60  = 2400
 									int weekWorkMinute = Integer.parseInt(weekInfo.get("weekWorkMinute")+"");
 									int exMinute = 0;
 									if(weekInfo.get("exMinute") != null && !weekInfo.get("exMinute").equals("")) {
@@ -226,7 +226,7 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 					}
 				}
 				boolean isOtSave = true;
-				//잔여소정근로시간이 있을 경우 BASE로 넣어줘야한다 나머지는 OT로 
+				//잔여기본근로시간이 있을 경우 BASE로 넣어줘야한다 나머지는 OT로 
 				//유급 휴일은 무조건 OT로 인정해야한다.
 				if(restMin > 0 && !"Y".equals(timeCdMgr.getPaidYn())) {
 					//dayResult.setPlanMinute(Integer.parseInt(otAppl.getOtMinute()));
@@ -242,9 +242,9 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 					//신청 시간의 인정시간(분)을 구한다.
 					int calcM = Integer.parseInt(addPlanMinuteMap.get("calcMinute")+"");
 					
-					//잔여소정근로시간과 비교
+					//잔여기본근로시간과 비교
 					if(restMin >= calcM) {
-						//잔여소정근로시간 보다 신청 시간이 작거나 같을 경우 
+						//잔여기본근로시간 보다 신청 시간이 작거나 같을 경우 
 						//모두 BASE 		
 						WtmWorkDayResult dayResult = new WtmWorkDayResult();
 						dayResult.setApplId(applId);
@@ -261,7 +261,7 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 						isOtSave = false;
 					}else {
 						//BASE 만큼 만들어 주구 나머지를 isOtSave 로직을 태우자 (시작시간을 변경해서 넘기자)
-						//잔여소정근로시간 보다 신청 시간이 작거나 같을 경우 
+						//잔여기본근로시간 보다 신청 시간이 작거나 같을 경우 
 						//모두 BASE  	
 						SimpleDateFormat sd = new SimpleDateFormat("yyyyMMddHHmmss");
 						Map<String, Object> calcMap = new HashMap<>();
@@ -274,7 +274,7 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 						calcMap.put("retDate", ""); 
 						wtmFlexibleEmpMapper.addMinuteWithBreakMGR(calcMap);
 						//시간대를 자르
-						//잔여소정근로종료시간을 구해서 기본근무시간 정보를 만들어 준다. 
+						//잔여기본근로종료시간을 구해서 기본근무시간 정보를 만들어 준다. 
 						String baseEdateStr = calcMap.get("retDate")+"";
 						Date baseEdate = sd.parse(baseEdateStr);
 						
@@ -692,7 +692,7 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 				Long deletedApplId = null;
 				
 				/**
-				 * 기본근무 , 근무조, 시차 출퇴근일 경우 연장근무 신청 시 잔여 소정근로시간이 남았을 경우 기본근무시간을 생성할 수 있다.
+				 * 기본근무 , 근무조, 시차 출퇴근일 경우 연장근무 신청 시 잔여 기본근로시간이 남았을 경우 기본근무시간을 생성할 수 있다.
 				 *  취소 신청에서 신청서아이디가 잇는 기본근무시간이 있는지를 확인한다.
 				 */
 				//휴게시간도 지워줌

@@ -39,7 +39,7 @@ public interface WtmApplService {
 	
 	
 
-	//소정근무시간
+	//기본근무시간
 	final static String TIME_TYPE_BASE = "BASE";
 	//고정 OT
 	final static String TIME_TYPE_FIXOT = "FIXOT";

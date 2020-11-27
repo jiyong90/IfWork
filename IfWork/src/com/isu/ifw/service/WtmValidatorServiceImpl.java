@@ -464,7 +464,7 @@ public class WtmValidatorServiceImpl implements WtmValidatorService  {
 			
 		}
 		
-		//2.선근제의 경우에는 해당 선근제 근무 기간 내의 소정근로시간을 넘지 않는지 체크
+		//2.선근제의 경우에는 해당 선근제 근무 기간 내의 기본근로시간을 넘지 않는지 체크
 		paramMap = new HashMap<>();
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
