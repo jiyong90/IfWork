@@ -494,9 +494,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					
 					if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE)) {
 						workMin += min;
-					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT)  || timeTypeCd.equals(WtmApplService.TIME_TYPE_FIXOT)) {
+					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_REGA_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_FIXOT)) {
 						otMin += min;
-					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)) {
+					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)|| timeTypeCd.equals(WtmApplService.TIME_TYPE_REGA_NIGHT)) {
 						otNightMin += min;
 					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_TAA) || timeTypeCd.equals(WtmApplService.TIME_TYPE_SUBS) || timeTypeCd.equals(WtmApplService.TIME_TYPE_LLA)) {
 						//근태 현황
@@ -1866,7 +1866,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		 * 간주근무 정보가 있을 경우 타임블럭을 재생성 하자. 
 		 * ngv 의 경우 타각정보 기준으로 인정근무를 생성하고 출장데이터가 하루에 여러건이 될 수 있다
 		 */
-		List<WtmWorkDayResult> r = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), WtmApplService.TIME_TYPE_REGA, calendar.getYmd(), calendar.getYmd());
+		//List<WtmWorkDayResult> r = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), WtmApplService.TIME_TYPE_REGA, calendar.getYmd(), calendar.getYmd());
+		List<String> timeTypeCds = new ArrayList<String>();
+		timeTypeCds.add(WtmApplService.TIME_TYPE_REGA);
+		timeTypeCds.add(WtmApplService.TIME_TYPE_REGA_OT);
+		timeTypeCds.add(WtmApplService.TIME_TYPE_REGA_NIGHT);
+		List<WtmWorkDayResult> r = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), timeTypeCds, calendar.getYmd(), calendar.getYmd());
 		for(WtmWorkDayResult res : r) {
 			this.addWtmDayResultInBaseTimeType(res.getTenantId()
 												 , res.getEnterCd()
