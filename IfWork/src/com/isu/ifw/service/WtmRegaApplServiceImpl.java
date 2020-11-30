@@ -315,8 +315,8 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 				chkMap.put("tenantId", tenantId);
 				chkMap.put("enterCd", enterCd);
 				chkMap.put("sabun", sabun);
-				chkMap.put("startDt", inFormat.parse(taaDate+startHm));
-				chkMap.put("entDt", inFormat.parse(taaDate+endHm));
+				chkMap.put("startDt", taaDateArr.get(i) + " " + startHmArr.get(i));
+				chkMap.put("entDt", taaDateArr.get(i) + " " + endHmArr.get(i));
 
 				logger.debug("chkMap :" + chkMap.toString());
 				int chkCnt = validatorMapper.checkDuplicateWorkDayResult(chkMap) ;
