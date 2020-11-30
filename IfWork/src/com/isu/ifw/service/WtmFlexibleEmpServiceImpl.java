@@ -1418,7 +1418,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					Date minPlanSdate = null, maxPlanEdate = null;
 					//반드시 계획은 있어야한다. 단 기본 근무 계획은 반드시 있어야 한다. - BASE
 					for(WtmWorkDayResult r : ress) {
-						if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA)) {
+						if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA) || r.getApplId() != null) {
 							continue;
 						}
 						if(minPlanSdate == null || minPlanSdate.compareTo(r.getPlanSdate()) > 0) {
@@ -1441,6 +1441,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						timeTypeCd.add(WtmApplService.TIME_TYPE_EARLY_OT);
 						timeTypeCd.add(WtmApplService.TIME_TYPE_NIGHT);
 						timeTypeCd.add(WtmApplService.TIME_TYPE_EARLY_NIGHT); 
+						timeTypeCd.add(WtmApplService.TIME_TYPE_REGA_OT);
+						timeTypeCd.add(WtmApplService.TIME_TYPE_REGA_NIGHT); 
 						
 						List<WtmWorkDayResult> otResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), timeTypeCd, flexibleEmp.getSymd(), flexibleEmp.getEymd());
 						int sumOtMinute = 0;
