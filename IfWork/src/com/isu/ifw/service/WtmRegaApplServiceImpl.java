@@ -317,7 +317,10 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 				chkMap.put("sabun", sabun);
 				chkMap.put("startDt", inFormat.parse(taaDate+startHm));
 				chkMap.put("entDt", inFormat.parse(taaDate+endHm));
+
+				logger.debug("chkMap :" + chkMap.toString());
 				int chkCnt = validatorMapper.checkDuplicateWorkDayResult(chkMap) ;
+				logger.debug("chkCnt :" + chkCnt);
 				if(chkCnt > 0){
 					rp.setFail("출장/긴급근무 신청기간이 중복됩니다.");
 					return rp;
