@@ -219,6 +219,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
 		if( !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_OT) && !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_EARLY_OT)
 				&& !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_NIGHT) && !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_EARLY_NIGHT)
+				&& !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_REGA_NIGHT) && !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_REGA_OT)
 				) {
 			if( !flexStdMgr.getWorkShm().equals("") && !flexStdMgr.getWorkEhm().equals("") ) {
 				try {
@@ -601,7 +602,10 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		logger.debug("createFixOt start");
 		
 		//연장근무 시간이 아니면
-		if(!timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)) {
+		if(!timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) 
+				&& !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)
+				&& !timeTypeCd.equals(WtmApplService.TIME_TYPE_REGA_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_REGA_NIGHT)
+				) {
 			// 등록된 시간이 시작 시분보다 종료 시분이 적으면 0시가 넘어간 시간이다. 근무일 다음날을 종료 시간으로 셋팅 하기 위함이다.
 			String shm = flexibleStdMgr.getWorkShm();
 			String ehm = flexibleStdMgr.getWorkEhm();
@@ -1397,7 +1401,10 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			e1.printStackTrace();
 		}
 		//연장근무 시간이 아니면
-		if(!timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)) {
+		if(!timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) 
+				&& !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)
+				&& !timeTypeCd.equals(WtmApplService.TIME_TYPE_REGA_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_REGA_NIGHT)
+				) {
 			// 등록된 시간이 시작 시분보다 종료 시분이 적으면 0시가 넘어간 시간이다. 근무일 다음날을 종료 시간으로 셋팅 하기 위함이다.
 			String shm = flexibleStdMgr.getWorkShm();
 			String ehm = flexibleStdMgr.getWorkEhm();
@@ -2297,6 +2304,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 											|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT)
 											|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)
 											|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)
+											|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_NIGHT)
+											|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_OT)
 												) {
 											
 											if(result.getPlanMinute() == null){
@@ -2382,7 +2391,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 											}
 													
 										}
-										if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) ||result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT) )
+										if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) ||result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_NIGHT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_OT) )
 												) {
 												int addMinute = 0;
 												//오늘 포함 미래일
@@ -2414,12 +2423,14 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 														eOMinute = eOMinute + addMinute;
 														break;
 													case WtmApplService.TIME_TYPE_OT :
+													case WtmApplService.TIME_TYPE_REGA_OT :
 														oMinute = oMinute + addMinute;
 														break;
 													case WtmApplService.TIME_TYPE_EARLY_NIGHT :
 														eNMinute = eNMinute + addMinute;
 														break;
 													case WtmApplService.TIME_TYPE_NIGHT :
+													case WtmApplService.TIME_TYPE_REGA_NIGHT :
 														nMinute = nMinute + addMinute;
 														break;
 													default:
@@ -2873,6 +2884,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT)
 					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)
 					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)
+					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_OT)
+					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_NIGHT)
 						) {
 					
 					if(result.getPlanMinute() == null){
@@ -2970,7 +2983,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					}
 							
 				}
-				if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) ||result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT) )
+				if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) ||result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)  || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_OT)  || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_NIGHT) )
 						) {
 					int addMinute = 0;
 					//오늘 포함 미래일
@@ -3002,12 +3015,14 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							eOMinute = eOMinute + addMinute;
 							break;
 						case WtmApplService.TIME_TYPE_OT :
+						case WtmApplService.TIME_TYPE_REGA_OT :
 							oMinute = oMinute + addMinute;
 							break;
 						case WtmApplService.TIME_TYPE_EARLY_NIGHT :
 							eNMinute = eNMinute + addMinute;
 							break;
 						case WtmApplService.TIME_TYPE_NIGHT :
+						case WtmApplService.TIME_TYPE_REGA_NIGHT :
 							nMinute = nMinute + addMinute;
 							break;
 						default:
