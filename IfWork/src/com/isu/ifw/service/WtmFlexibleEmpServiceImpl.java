@@ -1,16 +1,15 @@
 package com.isu.ifw.service;
 
-import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.common.service.TenantConfigManagerService;
+import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.*;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.vo.WtmDayPlanVO;
+import com.isu.ifw.vo.WtmDayWorkVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,55 +18,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.common.service.TenantConfigManagerService;
-import com.isu.ifw.entity.WtmEmpHis;
-import com.isu.ifw.entity.WtmFlexibleAppl;
-import com.isu.ifw.entity.WtmFlexibleApplDet;
-import com.isu.ifw.entity.WtmFlexibleApplyDet;
-import com.isu.ifw.entity.WtmFlexibleEmp;
-import com.isu.ifw.entity.WtmFlexibleStdMgr;
-import com.isu.ifw.entity.WtmOrgConc;
-import com.isu.ifw.entity.WtmOtAppl;
-import com.isu.ifw.entity.WtmOtSubsAppl;
-import com.isu.ifw.entity.WtmTaaCode;
-import com.isu.ifw.entity.WtmTimeCdMgr;
-import com.isu.ifw.entity.WtmWorkCalendar;
-import com.isu.ifw.entity.WtmWorkDayResult;
-import com.isu.ifw.entity.WtmWorkDayResultO;
-import com.isu.ifw.entity.WtmWorkPattDet;
-import com.isu.ifw.mapper.WtmAuthMgrMapper;
-import com.isu.ifw.mapper.WtmEmpHisMapper;
-import com.isu.ifw.mapper.WtmFlexibleApplMapper;
-import com.isu.ifw.mapper.WtmFlexibleApplyMgrMapper;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmFlexibleStdMapper;
-import com.isu.ifw.mapper.WtmOrgChartMapper;
-import com.isu.ifw.mapper.WtmOtApplMapper;
-import com.isu.ifw.mapper.WtmScheduleMapper;
-import com.isu.ifw.repository.WtmApplRepository;
-import com.isu.ifw.repository.WtmEmpHisRepository;
-import com.isu.ifw.repository.WtmFlexibleApplDetRepository;
-import com.isu.ifw.repository.WtmFlexibleApplRepository;
-import com.isu.ifw.repository.WtmFlexibleApplyDetRepository;
-import com.isu.ifw.repository.WtmFlexibleEmpRepository;
-import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
-import com.isu.ifw.repository.WtmOrgConcRepository;
-import com.isu.ifw.repository.WtmOtApplRepository;
-import com.isu.ifw.repository.WtmOtSubsApplRepository;
-import com.isu.ifw.repository.WtmTaaCodeRepository;
-import com.isu.ifw.repository.WtmTimeCdMgrRepository;
-import com.isu.ifw.repository.WtmWorkCalendarRepository;
-import com.isu.ifw.repository.WtmWorkDayResultORepository;
-import com.isu.ifw.repository.WtmWorkDayResultRepository;
-import com.isu.ifw.repository.WtmWorkPattDetRepository;
-import com.isu.ifw.repository.WtmWorkteamEmpRepository;
-import com.isu.ifw.repository.WtmWorkteamMgrRepository;
-import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.ReturnParam;
-import com.isu.ifw.vo.WtmDayPlanVO;
-import com.isu.ifw.vo.WtmDayWorkVO;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service("flexibleEmpService")
 public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
@@ -539,9 +494,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					
 					if(timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE)) {
 						workMin += min;
-					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT)  || timeTypeCd.equals(WtmApplService.TIME_TYPE_FIXOT)) {
+					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_REGA_OT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_FIXOT)) {
 						otMin += min;
-					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)) {
+					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) || timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)|| timeTypeCd.equals(WtmApplService.TIME_TYPE_REGA_NIGHT)) {
 						otNightMin += min;
 					} else if(timeTypeCd.equals(WtmApplService.TIME_TYPE_TAA) || timeTypeCd.equals(WtmApplService.TIME_TYPE_SUBS) || timeTypeCd.equals(WtmApplService.TIME_TYPE_LLA)) {
 						//근태 현황
@@ -1043,7 +998,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 			Map<String, Object> result = flexEmpMapper.checkBaseWorktime(flexibleEmpId);
 			if(result!=null && result.get("isValid")!=null && "0".equals(result.get("isValid").toString())) {
-				throw new RuntimeException(result.get("totalWorktime").toString() + "분의 소정근로시간을 넘을 수 없습니다.");
+				throw new RuntimeException(result.get("totalWorktime").toString() + "분의 기본근로시간을 넘을 수 없습니다.");
 			}
 		}
 		
@@ -1440,6 +1395,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//계획된 정보의 출퇴근 시간을 변경하고 
 		//간주근무 정보가 있을 경우 타임블럭을 재배치한다.
 		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
+		SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
 		//List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), WtmApplService.TIME_TYPE_BASE);
 		
 		if(calendar.getEntrySdate() != null && calendar.getEntryEdate() != null) {
@@ -1463,7 +1419,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					Date minPlanSdate = null, maxPlanEdate = null;
 					//반드시 계획은 있어야한다. 단 기본 근무 계획은 반드시 있어야 한다. - BASE
 					for(WtmWorkDayResult r : ress) {
-						if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA)) {
+						if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA) || r.getApplId() != null) {
 							continue;
 						}
 						if(minPlanSdate == null || minPlanSdate.compareTo(r.getPlanSdate()) > 0) {
@@ -1486,12 +1442,21 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						timeTypeCd.add(WtmApplService.TIME_TYPE_EARLY_OT);
 						timeTypeCd.add(WtmApplService.TIME_TYPE_NIGHT);
 						timeTypeCd.add(WtmApplService.TIME_TYPE_EARLY_NIGHT); 
+						timeTypeCd.add(WtmApplService.TIME_TYPE_REGA_OT);
+						timeTypeCd.add(WtmApplService.TIME_TYPE_REGA_NIGHT); 
 						
 						List<WtmWorkDayResult> otResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), timeTypeCd, flexibleEmp.getSymd(), flexibleEmp.getEymd());
 						int sumOtMinute = 0;
+						
 						for(WtmWorkDayResult otR : otResults) {
-							if(!otR.getYmd().equals(calendar.getYmd())) {
-								sumOtMinute = sumOtMinute + ((otR.getApprMinute() == null)?otR.getPlanMinute():otR.getApprMinute());
+							//과거일은 appr만 본다.
+							if(Integer.parseInt(ymd.format(new Date())) > Integer.parseInt(otR.getYmd())) {
+								sumOtMinute = sumOtMinute + ((otR.getApprMinute() == null)?0:otR.getApprMinute());
+							}else {
+								//오늘꺼 제외
+								if(!otR.getYmd().equals(calendar.getYmd())) {
+									sumOtMinute = sumOtMinute + ((otR.getApprMinute() == null)?otR.getPlanMinute():otR.getApprMinute());
+								}
 							}
 						}
 						
@@ -1911,7 +1876,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		 * 간주근무 정보가 있을 경우 타임블럭을 재생성 하자. 
 		 * ngv 의 경우 타각정보 기준으로 인정근무를 생성하고 출장데이터가 하루에 여러건이 될 수 있다
 		 */
-		List<WtmWorkDayResult> r = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), WtmApplService.TIME_TYPE_REGA, calendar.getYmd(), calendar.getYmd());
+		//List<WtmWorkDayResult> r = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), WtmApplService.TIME_TYPE_REGA, calendar.getYmd(), calendar.getYmd());
+		List<String> timeTypeCds = new ArrayList<String>();
+		timeTypeCds.add(WtmApplService.TIME_TYPE_REGA);
+		timeTypeCds.add(WtmApplService.TIME_TYPE_REGA_OT);
+		timeTypeCds.add(WtmApplService.TIME_TYPE_REGA_NIGHT);
+		List<WtmWorkDayResult> r = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), timeTypeCds, calendar.getYmd(), calendar.getYmd());
 		for(WtmWorkDayResult res : r) {
 			this.addWtmDayResultInBaseTimeType(res.getTenantId()
 												 , res.getEnterCd()
@@ -1935,6 +1905,19 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		List<WtmWorkDayResult> taa = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), WtmApplService.TIME_TYPE_TAA, calendar.getYmd(), calendar.getYmd());
 		for(WtmWorkDayResult res : taa) {
 			if(res.getApprSdate() == null && res.getPlanSdate() != null) {
+
+				this.addWtmDayResultInBaseTimeType(res.getTenantId()
+													 , res.getEnterCd()
+													 , res.getYmd()
+													 , res.getSabun()
+													 , res.getTimeTypeCd()
+													 ,""
+													 , res.getPlanSdate()
+													 , res.getPlanEdate()
+													 , null
+													 , "taa reset timeblock"
+													 , false);
+				
 				res.setApprSdate(res.getPlanSdate());
 				res.setApprEdate(res.getPlanEdate());
 				res.setApprMinute(res.getPlanMinute());
@@ -2550,7 +2533,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			calcaApprDayReset(flexibleEmp, calendar, flexStdMgr, timeCdMgr);
 			
 	//		paramMap.put("timeTypeCd", timeTypeCd);
-			//소정근로시간의 경우 출퇴근 타각기록으로만 판단 >> 결근 데이터가 있는 날은 빼야한다.
+			//기본근로시간의 경우 출퇴근 타각기록으로만 판단 >> 결근 데이터가 있는 날은 빼야한다.
 			paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 			paramMap.put("taaCd", absenceTaaCode.getTaaCd());
 	
@@ -2559,7 +2542,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				calcService.P_WTM_WORK_DAY_RESULT_CREATE_F(tenantId, enterCd, sabun,  calendar.getYmd(), flexStdMgr, timeCdMgr, "P_WTM_WORK_DAY_RESULT_CREATE_F-"+sabun);
 				
 				/**
-				 * 소정근로 시간 초과로 인해 소정근로시간 인정을 안할 경우에도 오티 나이트는 타각시간 내에 잇는 것은 인정해준다. 
+				 * 기본근로 시간 초과로 인해 기본근로시간 인정을 안할 경우에도 오티 나이트는 타각시간 내에 잇는 것은 인정해준다. 
 				 */
 				timeTypeCd = new ArrayList<>();
 				timeTypeCd.add(WtmApplService.TIME_TYPE_OT);
@@ -2842,6 +2825,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				if(sumApprMinute > 0) {
 					breakMinute = calcService.getBreakMinuteIfBreakTimeTIME(timeCdMgr.getTimeCdMgrId(), sumApprMinute);
 				}
+				logger.debug("### BREAK_TYPE_TIME breakMinute : " + breakMinute);
 				if(breakMinute > 0) {
 					//총근무시간의 휴게시간을 구하고 이를.. 어떤 휴게시간으로 적용할지 선택한다. 
 					//BASE와 OT가 있는 날일 경우 
@@ -3078,7 +3062,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						/* 관리자는 일단 체크 하지 않는다. ....  .. . . . .  .
 						Map<String, Object> result2 = flexEmpMapper.checkBaseWorktimeMgr(l);
 						if(result2!=null && result2.get("isValid")!=null && result2.get("isValid").equals("0")) {
-							retMsg = l.get("sabun").toString() + "," + l.get("ymd").toString() + ", "+ result2.get("totalWorktime").toString() + "시간의 소정근로시간을 넘을 수 없습니다.";
+							retMsg = l.get("sabun").toString() + "," + l.get("ymd").toString() + ", "+ result2.get("totalWorktime").toString() + "시간의 기본근로시간을 넘을 수 없습니다.";
 						}
 						*/
 					} else {
@@ -3476,7 +3460,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								logger.debug("workDayResults loop : " + cnt);
 								res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
 								res.setTaaCd(null);	// base 수정시 근태코드 클리어
-								res.setApplId(applId);
+								res.setApplId(null);
 								res.setApprSdate(null);
 								res.setApprEdate(null);
 								res.setApprMinute(null);
@@ -3515,7 +3499,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 									res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
 									//res.setApplId(applId);
 									res.setTaaCd("");	// base 수정시 근태코드 클리어
-									res.setApplId(applId);
+									res.setApplId(null);
 									res.setApprSdate(null);
 									res.setApprEdate(null);
 									res.setApprMinute(null);
@@ -3735,7 +3719,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			} else {
 				// 유연근무 기간 변경하기
 				flexEmpMapper.updateByflexibleEmpId(paramMap);
-				//근무제 기간의 총 소정근로 시간을 업데이트 한다.
+				//근무제 기간의 총 기본근로 시간을 업데이트 한다.
 				//20200102jyp P_WTM_WORK_CALENDAR_RESET procedure에서 한다.
 				//flexApplMapper.updateWorkMinuteOfWtmFlexibleEmp(paramMap);
 			}
@@ -4158,7 +4142,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								applOtMin = 0;
 							}
 						}
-						//신청중인 휴일연장근무 시간을 분리... 소정근로시간부터 차감이 필요하기때문이다. 
+						//신청중인 휴일연장근무 시간을 분리... 기본근로시간부터 차감이 필요하기때문이다. 
 						if(weekInfo != null && weekInfo.get("applHolOtMinute") != null && !weekInfo.get("applHolOtMinute").equals("")) {
 							applHolOtMin = Integer.parseInt(weekInfo.get("applHolOtMinute")+"");
 							if(applHolOtMin == null) {
@@ -4172,7 +4156,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								otMin = 0;
 							}
 						}
-						//기 신청된 휴일 연장근무는 별도로 빼서 계산한다. 소정근로시간부터 차감해야하기 때문인다.
+						//기 신청된 휴일 연장근무는 별도로 빼서 계산한다. 기본근로시간부터 차감해야하기 때문인다.
 						//휴일근로 인터페이스도 확인 필요
 						if(weekInfo != null && weekInfo.get("holOtMinute") != null && !weekInfo.get("holOtMinute").equals("")) {
 							holOtMin = Integer.parseInt(weekInfo.get("holOtMinute")+"");
@@ -4185,13 +4169,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						
 						//휴일근무이며
 						if(emp.get("holidayYn") != null && "Y".equals(emp.get("holidayYn"))) {
-							//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 소정근로 시간을 사용할 수 잇다. 
+							//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 기본근로 시간을 사용할 수 잇다. 
 							if(emp.get("workTypeCd") != null && ("BASE".equals(emp.get("workTypeCd")) || "DIFF".equals(emp.get("workTypeCd")) || "WORKTEAM".equals(emp.get("workTypeCd")) ) ) {
 								/*
 									한주에 대한 정보 조회 계획 및 인정 근무 시간의 합 - 결근 제외 
 								 */
 								if(weekInfo != null && weekInfo.get("workMinute") != null && !weekInfo.get("workMinute").equals("")) {
-									//한주소정근로시간 40시간   * 60  = 2400
+									//한주기본근로시간 40시간   * 60  = 2400
 									int weekWorkMinute = Integer.parseInt(weekInfo.get("weekWorkMinute")+"");
 									int exMinute = 0;
 									int exceptMinute = 0;
@@ -4213,7 +4197,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								if(emp.get("restWorkMinute")!=null && !"".equals(emp.get("restWorkMinute"))) {
 									int restMin = Integer.parseInt(emp.get("restWorkMinute").toString());
 									restMinuteMap.put("restWorkMinute", restMin);
-									restMinuteMap.put("guideMessage", "* 잔여소정근로시간이 먼저 차감됩니다.");
+									restMinuteMap.put("guideMessage", "* 잔여기본근로시간이 먼저 차감됩니다.");
 								}
 								*/
 							}
@@ -4228,7 +4212,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								applHolOtMin = applHolOtMin - restWorkMin;
 							}
 						}
-						//소정근로에서 빼고 남은 것을 연장근로 시간에 합해 다시 뺀다. 
+						//기본근로에서 빼고 남은 것을 연장근로 시간에 합해 다시 뺀다. 
 						applOtMin = applOtMin + applHolOtMin;
 						if(applOtMin > 0) {
 							if(applOtMin > 0) {
@@ -4240,7 +4224,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						
 						if(restWorkMin > 0) {
 							restMinuteMap.put("restWorkMinute", restWorkMin);
-							restMinuteMap.put("guideMessage", "* 잔여소정근로시간이 먼저 차감됩니다.");
+							restMinuteMap.put("guideMessage", "* 잔여기본근로시간이 먼저 차감됩니다.");
 						}
 						restMinuteMap.put("restOtMinute", restOtMin);
 						
@@ -5282,7 +5266,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		paramMap.put("enterCd", enterCd);
 		paramMap.put("sabun", sabun);
 
-		List<Map<String, Object>> flexibleList = flexEmpMapper.getFlexibleEmpList(paramMap);
+		List<Map<String, Object>> flexibleList = flexEmpMapper.getFlexibleImsiList(paramMap);
+
 		if(flexibleList!=null && flexibleList.size()>0) {
 			for(Map<String, Object> flex : flexibleList) {
 				if(flex.get("applId") != null && flex.get("applId").toString().equals(paramMap.get("applId"))) {
@@ -5291,7 +5276,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				}
 			}
 		}
-
 		return flexibleList;
 	}
 	

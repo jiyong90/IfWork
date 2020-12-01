@@ -55,6 +55,9 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 	@Autowired
 	WtmCalcServiceImpl calcService;
 
+	@Autowired
+	WtmFlexibleEmpService wtmFlexibleEmpService;
+
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
 		// TODO Auto-generated method stub
@@ -307,6 +310,22 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 				dateMap.put("entDt", inFormat.parse(taaDate+endHm));
 				dateList.add(dateMap);
 
+				//  check 중복
+				Map<String, Object> chkMap = new HashMap<String, Object>();
+				chkMap.put("tenantId", tenantId);
+				chkMap.put("enterCd", enterCd);
+				chkMap.put("sabun", sabun);
+				chkMap.put("startDt", taaDateArr.get(i) + " " + startHmArr.get(i));
+				chkMap.put("entDt", taaDateArr.get(i) + " " + endHmArr.get(i));
+
+				logger.debug("chkMap :" + chkMap.toString());
+				int chkCnt = validatorMapper.checkDuplicateWorkDayResult(chkMap) ;
+				logger.debug("chkCnt :" + chkCnt);
+				if(chkCnt > 0){
+					rp.setFail("출장/긴급근무 신청기간이 중복됩니다.");
+					return rp;
+				};
+
 				ReturnParam valiRp = new ReturnParam();
 				valiRp = validate2(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, tmpMap);
 
@@ -419,6 +438,8 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 				return rp;
 			}
 
+
+
 			//  totDays, holDays
 			Map<String, Integer> calMap = calcService.calcDayCnt(tenantId, enterCd, symd, eymd);
 			logger.debug("calMap.toString() : " + calMap.toString());
@@ -441,12 +462,10 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 				&& (!"0000".equals(ehm) && !"2400".equals(ehm))){
 				Integer stmInt = Integer.parseInt(shm);
 				Integer etmInt = Integer.parseInt(ehm);
-				if(stmInt > etmInt){
+				if(stmInt > etmInt) {
 					rp.setFail("종료시간이 시작시간보다 작습니다.");
 					return rp;
 				}
-
-
 
 			}
 			String applId = ""; //  IF 소스 참조로 빈값으로 대체함.
@@ -563,12 +582,23 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 				}
 			} else {
 
+				Map<String, Object> reCalc = new HashMap<>();
+				reCalc.put("tenentId", tenantId);
+				reCalc.put("enterCd", enterCd);
+				reCalc.put("sabun", sabun);
+				reCalc.put("ymd", symd);
+				reCalc.put("shm", shm);
+				reCalc.put("ehm", ehm);
+
 				//시간이 들어오는 경우는 symd == eymd
+				Map<String, Object> addPlanMinuteMap = wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, reCalc, sabun);
 
-				Date sd = WtmUtil.toDate(symd + shm, "yyyyMMddHHmm");
-				Date ed = WtmUtil.toDate(symd + ehm, "yyyyMMddHHmm");
+				applMinute = Integer.parseInt(addPlanMinuteMap.get("calcMinute")+"");
 
-				applMinute = (int) (ed.getTime() - sd.getTime()) / (60 * 1000);
+//				Date sd = WtmUtil.toDate(symd + shm, "yyyyMMddHHmm");
+//				Date ed = WtmUtil.toDate(symd + ehm, "yyyyMMddHHmm");
+//
+//				applMinute = (int) (ed.getTime() - sd.getTime()) / (60 * 1000);
 			}
 
 			System.out.println("applMinute : " + applMinute);
@@ -632,7 +662,7 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 
 		}
 
-		//2.선근제의 경우에는 해당 선근제 근무 기간 내의 소정근로시간을 넘지 않는지 체크
+		//2.선근제의 경우에는 해당 선근제 근무 기간 내의 기본근로시간을 넘지 않는지 체크
 		paramMap = new HashMap<>();
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
@@ -641,12 +671,12 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 		paramMap.put("eymd", eDate);
 		paramMap.put("taaWorkYn", taaWorkYn);    // 근무시간가산여부(가산이 아니면 해당기간 기본근무 빼고 계산해야함)
 		paramMap.put("applMinutes", applMinutes);
-		System.out.println("*********** paramMap : " + paramMap.toString());
+		logger.debug("*********** paramMap : " + paramMap.toString());
 		List<Map<String, Object>> results = validatorMapper.checkTotalWorkMinuteForSele(paramMap);
 
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			System.out.println("results : " + mapper.writeValueAsString(results));
+			logger.debug("results : " + mapper.writeValueAsString(results));
 		} catch (JsonProcessingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -655,8 +685,8 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 		if (results != null && results.size() > 0) {
 			for (Map<String, Object> r : results) {
 				if (r.get("isValid") != null && "N".equals(r.get("isValid"))) {
-					System.out.println("workMinute: " + r.get("workMinute").toString());
-					System.out.println("totalWorkMinute: " + r.get("totalWorkMinute").toString());
+					logger.debug("workMinute: " + r.get("workMinute").toString());
+					logger.debug("totalWorkMinute: " + r.get("totalWorkMinute").toString());
 
 					Double h = 0d;
 					Double m = 0d;

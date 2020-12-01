@@ -177,7 +177,7 @@ public class WtmAsyncService {
 					logDet.setAsyncLogId(log.getAsyncLogId());
 					logDet.setAsyncYmdhis(ymdhisStr);
 					logDet.setAsyncKey("cancelFlexibleEmpById");
-					logDet.setAsyncDesc("작동중인 취소정보가 있습니다.");
+					logDet.setAsyncDesc("작동중인 취기본보가 있습니다.");
 					asyncLogDetRepo.save(logDet);
 					return;
 				}

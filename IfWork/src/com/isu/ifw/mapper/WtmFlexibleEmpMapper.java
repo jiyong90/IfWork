@@ -122,7 +122,7 @@ public interface WtmFlexibleEmpMapper {
 	
 	/**
 	 * 근무제 기간에서 특정일 이후부터 근무제 적용 종료기간 까지의 코어시간의 합을 가지고 온다.
-	 * 사용처 : 연장근무 신청 시 소정근로 선 소진사용여부에 따라 사용할 수 있다. 
+	 * 사용처 : 연장근무 신청 시 기본근로 선 소진사용여부에 따라 사용할 수 있다.
 	 * @param paramMap - tenantId, enterCd, sabun,  ymd
 	 * @return { coreHm : 22 }
 	 */
@@ -582,6 +582,7 @@ public interface WtmFlexibleEmpMapper {
 	public Map<String, Object> getWorktermByFleibleEmpId(Map<String, Object> paramMap);
 	
 	public List<Map<String, Object>> getCalendarEntryByYmdBetween(Map<String, Object> paramMap);
-	
-	
+
+
+	List<Map<String, Object>> getFlexibleImsiList(Map<String, Object> paramMap);
 }

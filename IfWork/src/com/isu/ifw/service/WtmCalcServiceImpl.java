@@ -83,15 +83,15 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			e.printStackTrace();
 		}
 		if(flexInfo != null) {
-			// ymd가 속한 근무제의 총 소정근로 시간.
+			// ymd가 속한 근무제의 총 기본근로 시간.
 			int workMinute = flexInfo.getWorkMinute();
-			// ymd가 속한 근무제의 인정 소정근로 시간.
+			// ymd가 속한 근무제의 인정 기본근로 시간.
 			int sumWorkMinute = flexInfo.getWorkHour() - flexInfo.getBreakhour();
 			//int sumWorkMinute = flexInfo.getSumWorkMinute();
 			
 			logger.debug("CREATE_F :: workMinute = " + workMinute);
 			logger.debug("CREATE_F :: sumWorkMinute = " + sumWorkMinute);
-			// 소정근로 시간이 이미 다 찼으면 소정근로 시간을 생성하지 않는다. 
+			// 기본근로 시간이 이미 다 찼으면 기본근로 시간을 생성하지 않는다. 
 			if( workMinute > sumWorkMinute ) {
 					
 				List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(tenantId, enterCd, sabun, ymd, WtmApplService.TIME_TYPE_BASE);
@@ -219,6 +219,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
 		if( !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_OT) && !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_EARLY_OT)
 				&& !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_NIGHT) && !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_EARLY_NIGHT)
+				&& !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_REGA_NIGHT) && !result.getTimeTypeCd().equalsIgnoreCase(WtmApplService.TIME_TYPE_REGA_OT)
 				) {
 			if( !flexStdMgr.getWorkShm().equals("") && !flexStdMgr.getWorkEhm().equals("") ) {
 				try {
@@ -320,7 +321,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				calcMap.put("retDate", ""); 
 				wtmFlexibleEmpMapper.addMinuteWithBreakMGR(calcMap);
 				//시간대를 자르
-				//잔여소정근로종료시간을 구해서 기본근무시간 정보를 만들어 준다. 
+				//잔여기본근로종료시간을 구해서 기본근무시간 정보를 만들어 준다. 
 				String baseEdateStr = calcMap.get("retDate")+"";
 				try {
 					calcEdate = sd.parse(baseEdateStr);
@@ -359,8 +360,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	/**
 	 * 고정 OT 일괄 소진일 경우에만 사용된다. 
 	 * flexStdMgr.getDefaultWorkUseYn().equalsIgnoreCase("Y") && flexStdMgr.getFixotUseType().equalsIgnoreCase("ALL"))
-	 * 소정근로시간이 모두 소진 되었을 경우 고정 OT를 생성한다 .
-	 * 소정근로시간 생성 시 unplannedYn == 'Y' 일경우만 생성한다.
+	 * 기본근로시간이 모두 소진 되었을 경우 고정 OT를 생성한다 .
+	 * 기본근로시간 생성 시 unplannedYn == 'Y' 일경우만 생성한다.
 	 * 
 	 */
 	@Transactional
@@ -377,7 +378,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		paramMap.put("eYmd", ymd);
 
 		/**
-		 * 근무제도 기간내 총 소정근로 시간과 ymd 까지의 근무 시간의 합을 구한다.
+		 * 근무제도 기간내 총 기본근로 시간과 ymd 까지의 근무 시간의 합을 구한다.
 		 */
 		WtmFlexibleEmpCalc flexInfo = flexibleEmpRepo.getTotalWorkMinuteAndRealWorkMinute(tenantId, enterCd, sabun, ymd);
 		System.out.println("**************flexInfo " + flexInfo.toString());
@@ -388,9 +389,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			int workMinute = flexInfo.getWorkMinute();
 			int sumWorkMinute = (flexInfo.getWorkHour() - flexInfo.getBreakhour()) + addSumWorkMinute;
 	
-//			// ymd가 속한 근무제의 총 소정근로 시간.
+//			// ymd가 속한 근무제의 총 기본근로 시간.
 //			int workMinute = flexInfo.getWorkMinute();
-//			// ymd가 속한 근무제의 인정 소정근로 시간. -- 9840
+//			// ymd가 속한 근무제의 인정 기본근로 시간. -- 9840
 //			int sumWorkMinute = (flexInfo.getOtMinute() - Integer.parseInt(flexInfo.getNote())) + addSumWorkMinute;
 //			int sumWorkMinute = flexInfo.getSumWorkMinute() + addSumWorkMinute;
 			
@@ -404,7 +405,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			logger.debug("CREATE_N :: workMinute = " + workMinute);
 			logger.debug("CREATE_N :: sumWorkMinute = " + sumWorkMinute);
 			
-			// 소정근로 시간이 이미 다 찼으면 소정근로 시간을 생성하지 않는다. 
+			// 기본근로 시간이 이미 다 찼으면 기본근로 시간을 생성하지 않는다. 
 			if( workMinute > sumWorkMinute ) {
 
 				
@@ -577,7 +578,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		
 		
 		/*
-		// 이미 소정근로시간이 다 찼을 경우 남아있는 남아 있는 계획 시간들은 없애햐한다.
+		// 이미 기본근로시간이 다 찼을 경우 남아있는 남아 있는 계획 시간들은 없애햐한다.
 		// 이유는 계획시간으로 남아있으면 인정시간으로 계산하기 때문에 없애야한다. 그냥 지울수 없으니 다른 타입으로 백업을 하자.
 		if(workMinute > 0 && workMinute == sumWorkMinute) {
 			List<WtmWorkDayResult> dayResult = workDayResultRepo.findByTimeTypeCdAndTenantIdAndEnterCdAndSabunAndYmd(WtmApplService.TIME_TYPE_BASE, tenantId, enterCd, sabun, ymd);
@@ -601,7 +602,10 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		logger.debug("createFixOt start");
 		
 		//연장근무 시간이 아니면
-		if(!timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)) {
+		if(!timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) 
+				&& !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)
+				&& !timeTypeCd.equals(WtmApplService.TIME_TYPE_REGA_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_REGA_NIGHT)
+				) {
 			// 등록된 시간이 시작 시분보다 종료 시분이 적으면 0시가 넘어간 시간이다. 근무일 다음날을 종료 시간으로 셋팅 하기 위함이다.
 			String shm = flexibleStdMgr.getWorkShm();
 			String ehm = flexibleStdMgr.getWorkEhm();
@@ -660,7 +664,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						if(preEdate.compareTo(r.getApprSdate()) < 0 && eDate.compareTo(r.getApprSdate()) > 0) {
 							Date calcSdate = preEdate; 
 							Date calcEdate = r.getApprSdate();
-							// P_LIMIT_MINUTE (총소정근로시간) 에서 P_USE_MINUTE (합산 소정 근로시간) 을 뺀 남은 소정 근로 시간에 대해서만 근무 정보를 생성한다.. 
+							// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다.. 
 							// 근무시간을 계산 하자
 							Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 							sumApprMinute += Integer.parseInt(calcMap.get("apprMinute")+"");
@@ -672,7 +676,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						Date calcSdate = loopSdate; 
 						Date calcEdate = r.getApprSdate();
 						
-						// P_LIMIT_MINUTE (총소정근로시간) 에서 P_USE_MINUTE (합산 소정 근로시간) 을 뺀 남은 소정 근로 시간에 대해서만 근무 정보를 생성한다.. 
+						// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다.. 
 						// 근무시간을 계산 하자
 						Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 						sumApprMinute += Integer.parseInt(calcMap.get("apprMinute")+"");
@@ -698,7 +702,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						Date calcSdate = preEdate; 
 						Date calcEdate = eDate;
 						
-						// P_LIMIT_MINUTE (총소정근로시간) 에서 P_USE_MINUTE (합산 소정 근로시간) 을 뺀 남은 소정 근로 시간에 대해서만 근무 정보를 생성한다.. 
+						// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다.. 
 						// 근무시간을 계산 하자
 						Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 						sumApprMinute += Integer.parseInt(calcMap.get("apprMinute")+"");
@@ -742,7 +746,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 								Date calcEdate = r.getApprSdate();
 								
 								int apprMinute = 0;
-								// P_LIMIT_MINUTE (총소정근로시간) 에서 P_USE_MINUTE (합산 소정 근로시간) 을 뺀 남은 소정 근로 시간에 대해서만 근무 정보를 생성한다.. 
+								// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다.. 
 								// 근무시간을 계산 하자
 								Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 								apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
@@ -807,7 +811,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							Date calcEdate = r.getApprSdate();
 							
 							int apprMinute = 0;
-							// P_LIMIT_MINUTE (총소정근로시간) 에서 P_USE_MINUTE (합산 소정 근로시간) 을 뺀 남은 소정 근로 시간에 대해서만 근무 정보를 생성한다.. 
+							// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다.. 
 							// 근무시간을 계산 하자
 							Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 							apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
@@ -887,7 +891,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						Date calcEdate = eDate;
 						
 						int apprMinute = 0;
-						// P_LIMIT_MINUTE (총소정근로시간) 에서 P_USE_MINUTE (합산 소정 근로시간) 을 뺀 남은 소정 근로 시간에 대해서만 근무 정보를 생성한다.. 
+						// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다.. 
 						// 근무시간을 계산 하자
 						Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 						apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
@@ -1397,7 +1401,10 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			e1.printStackTrace();
 		}
 		//연장근무 시간이 아니면
-		if(!timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)) {
+		if(!timeTypeCd.equals(WtmApplService.TIME_TYPE_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_NIGHT) 
+				&& !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)
+				&& !timeTypeCd.equals(WtmApplService.TIME_TYPE_REGA_OT) && !timeTypeCd.equals(WtmApplService.TIME_TYPE_REGA_NIGHT)
+				) {
 			// 등록된 시간이 시작 시분보다 종료 시분이 적으면 0시가 넘어간 시간이다. 근무일 다음날을 종료 시간으로 셋팅 하기 위함이다.
 			String shm = flexibleStdMgr.getWorkShm();
 			String ehm = flexibleStdMgr.getWorkEhm();
@@ -1432,7 +1439,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		
 		int apprMinute = 0;
 		int breakMinute = 0;
-		// P_LIMIT_MINUTE (총소정근로시간) 에서 P_USE_MINUTE (합산 소정 근로시간) 을 뺀 남은 소정 근로 시간에 대해서만 근무 정보를 생성한다.. 
+		// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다.. 
 		// 근무시간을 계산 하자
 		Map<String, Object> calcMap = this.calcApprMinute(sDate, eDate, breakTypeCd, timeCdMgrId, unitMinute);
 		apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
@@ -1807,11 +1814,30 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				 * 일 때 실제 근무 시간이 280분일 경우 280 - 60을 할 수 없다. 
 				 * 280 > 240+60 의 요건으로 240분에 해당하는 설정 값으로 적용해야한다.  
 				 * 
+				 * ### BREAK_TYPE_TIME wMinute : 240  + 0"
+					### BREAK_TYPE_TIME nextBMinute : 60 "
+					### BREAK_TYPE_TIME apprMinute : 382 "
+					### BREAK_TYPE_TIME isLast : false "
+					### BREAK_TYPE_TIME wMinute : 480  + 60"
+					### BREAK_TYPE_TIME nextBMinute : 120 "
+					### BREAK_TYPE_TIME apprMinute : 382 "
+					### BREAK_TYPE_TIME isLast : false "
+					### BREAK_TYPE_TIME wMinute : 600 "
+					### BREAK_TYPE_TIME nextBMinute : 0 "
+					### BREAK_TYPE_TIME apprMinute : 382 "
+					### BREAK_TYPE_TIME isLast : true "
+
 				 */
+				logger.debug("### BREAK_TYPE_TIME wMinute : " + wMinute);
+				logger.debug("### BREAK_TYPE_TIME bMinute : " + bMinute);
+				logger.debug("### BREAK_TYPE_TIME nextBMinute : " + nextBMinute);
+				logger.debug("### BREAK_TYPE_TIME apprMinute : " + apprMinute);
+				logger.debug("### BREAK_TYPE_TIME isLast : " + isLast);
 				if( apprMinute > (wMinute + nextBMinute) && !isLast ) {
 					continue;
 				}else {
 					breakMinute = bMinute;
+					break;
 				}
 				
 			}
@@ -2278,6 +2304,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 											|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT)
 											|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)
 											|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)
+											|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_NIGHT)
+											|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_OT)
 												) {
 											
 											if(result.getPlanMinute() == null){
@@ -2363,7 +2391,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 											}
 													
 										}
-										if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) ||result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT) )
+										if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) ||result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_NIGHT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_OT) )
 												) {
 												int addMinute = 0;
 												//오늘 포함 미래일
@@ -2395,12 +2423,14 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 														eOMinute = eOMinute + addMinute;
 														break;
 													case WtmApplService.TIME_TYPE_OT :
+													case WtmApplService.TIME_TYPE_REGA_OT :
 														oMinute = oMinute + addMinute;
 														break;
 													case WtmApplService.TIME_TYPE_EARLY_NIGHT :
 														eNMinute = eNMinute + addMinute;
 														break;
 													case WtmApplService.TIME_TYPE_NIGHT :
+													case WtmApplService.TIME_TYPE_REGA_NIGHT :
 														nMinute = nMinute + addMinute;
 														break;
 													default:
@@ -2854,6 +2884,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT)
 					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)
 					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)
+					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_OT)
+					|| result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_NIGHT)
 						) {
 					
 					if(result.getPlanMinute() == null){
@@ -2951,7 +2983,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					}
 							
 				}
-				if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) ||result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT) )
+				if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) ||result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT)  || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_OT)  || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA_NIGHT) )
 						) {
 					int addMinute = 0;
 					//오늘 포함 미래일
@@ -2983,12 +3015,14 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							eOMinute = eOMinute + addMinute;
 							break;
 						case WtmApplService.TIME_TYPE_OT :
+						case WtmApplService.TIME_TYPE_REGA_OT :
 							oMinute = oMinute + addMinute;
 							break;
 						case WtmApplService.TIME_TYPE_EARLY_NIGHT :
 							eNMinute = eNMinute + addMinute;
 							break;
 						case WtmApplService.TIME_TYPE_NIGHT :
+						case WtmApplService.TIME_TYPE_REGA_NIGHT :
 							nMinute = nMinute + addMinute;
 							break;
 						default:

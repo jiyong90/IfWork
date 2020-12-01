@@ -66,7 +66,7 @@ public interface WtmFlexibleStdMapper {
 	 */
 	public void mergeWtmDayPattByFlexibleStdMgrId(Map<String, Object> paramMap);
 	
-	//탄력근무 소정근로시간 확인
+	//탄력근무 기본근로시간 확인
 	public Map<String, Object> getSumWorkPatt(Map<String, Object> paramMap);
 	
 }

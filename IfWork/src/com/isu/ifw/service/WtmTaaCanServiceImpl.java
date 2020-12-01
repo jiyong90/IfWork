@@ -2,7 +2,9 @@ package com.isu.ifw.service;
 
 import com.isu.ifw.entity.*;
 import com.isu.ifw.repository.WtmApplRepository;
+import com.isu.ifw.repository.WtmTaaApplDetRepository;
 import com.isu.ifw.repository.WtmTaaCanApplRepository;
+import com.isu.ifw.repository.WtmTaaCodeRepository;
 import com.isu.ifw.vo.ReturnParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -156,4 +158,21 @@ public class WtmTaaCanServiceImpl implements WtmApplService{
 	public ReturnParam saveWtmApplSts(Long tenantId, String enterCd, String sabun, String userId, Map<String, Object> convertMap) {
 		return null;
 	}
+	
+	@Autowired WtmTaaApplDetRepository taaApplDetRepo;
+	@Autowired WtmTaaCodeRepository taaCodeRepo;
+	
+	public WtmTaaCode findTaaCodeByApplId(Long applId) {
+		WtmTaaCanAppl canAppl = taaCanApplRepo.findByApplId(applId);
+		List<WtmTaaApplDet> taaApplDets = taaApplDetRepo.findByApplId(canAppl.getCanApplId());
+		if(taaApplDets != null && taaApplDets.size() > 0) {
+			//상위 코드는 1개여야한다.
+			WtmTaaApplDet taaApplDet = taaApplDets.get(0);
+			
+			return taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(canAppl.getTenantId(), canAppl.getEnterCd(), taaApplDet.getTaaCd());
+			
+		}
+		return null;
+	}
+	
 }
