@@ -1395,6 +1395,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//계획된 정보의 출퇴근 시간을 변경하고 
 		//간주근무 정보가 있을 경우 타임블럭을 재배치한다.
 		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
+		SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
 		//List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), WtmApplService.TIME_TYPE_BASE);
 		
 		if(calendar.getEntrySdate() != null && calendar.getEntryEdate() != null) {
@@ -1418,7 +1419,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					Date minPlanSdate = null, maxPlanEdate = null;
 					//반드시 계획은 있어야한다. 단 기본 근무 계획은 반드시 있어야 한다. - BASE
 					for(WtmWorkDayResult r : ress) {
-						if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA)) {
+						if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA) || r.getApplId() != null) {
 							continue;
 						}
 						if(minPlanSdate == null || minPlanSdate.compareTo(r.getPlanSdate()) > 0) {
@@ -1441,12 +1442,21 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						timeTypeCd.add(WtmApplService.TIME_TYPE_EARLY_OT);
 						timeTypeCd.add(WtmApplService.TIME_TYPE_NIGHT);
 						timeTypeCd.add(WtmApplService.TIME_TYPE_EARLY_NIGHT); 
+						timeTypeCd.add(WtmApplService.TIME_TYPE_REGA_OT);
+						timeTypeCd.add(WtmApplService.TIME_TYPE_REGA_NIGHT); 
 						
 						List<WtmWorkDayResult> otResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), timeTypeCd, flexibleEmp.getSymd(), flexibleEmp.getEymd());
 						int sumOtMinute = 0;
+						
 						for(WtmWorkDayResult otR : otResults) {
-							if(!otR.getYmd().equals(calendar.getYmd())) {
-								sumOtMinute = sumOtMinute + ((otR.getApprMinute() == null)?otR.getPlanMinute():otR.getApprMinute());
+							//과거일은 appr만 본다.
+							if(Integer.parseInt(ymd.format(new Date())) > Integer.parseInt(otR.getYmd())) {
+								sumOtMinute = sumOtMinute + ((otR.getApprMinute() == null)?0:otR.getApprMinute());
+							}else {
+								//오늘꺼 제외
+								if(!otR.getYmd().equals(calendar.getYmd())) {
+									sumOtMinute = sumOtMinute + ((otR.getApprMinute() == null)?otR.getPlanMinute():otR.getApprMinute());
+								}
 							}
 						}
 						

@@ -2232,7 +2232,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						logger.debug("intfTaaAppl ifApplNo : " + ifApplNo);
 						logger.debug("intfTaaAppl works : " + mapper.writeValueAsString(works));
 						
-						this.taaResult(tenantId, enterCd, applSabun, ifApplNo, status, works);
+						this.taaResult(tId, enterCd, applSabun, ifApplNo, status, works);
 						
 						List<WtmIfTaaHis> ifTaaHisList = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndApplNoAndIfStatusNotIn(tId, enterCd, ifApplNo, "OK");
 						for(WtmIfTaaHis h : ifTaaHisList) {
@@ -3285,9 +3285,15 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		System.out.println("setTaaApplBatchIfPostProcess");
 		List<String> status = new ArrayList<String>();
 		status.add("OK");
-		status.add("FAIL");
-		status.add("ERR");
-		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(status); 
+//		status.add("FAIL");
+//		status.add("ERR");
+
+//		List<String> enterCds = new ArrayList<String>();
+//		enterCds.add("ISU_ABX");http://localhost/ifw/schedule/colseDay?tenantId=98
+//		enterCds.add("ISU_AMC");
+		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(status);
+//		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotInAndEnterCdNotIn(status, enterCds);
+//		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndIfStatusNotInGroupBy();
 		if(list == null || list.size() == 0) {
 			System.out.println("setTaaApplBatchIfPostProcess 대상없음 종료");
 			return ;
