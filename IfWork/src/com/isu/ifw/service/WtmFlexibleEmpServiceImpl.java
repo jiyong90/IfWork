@@ -4026,7 +4026,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					orgList.add(orgMap.get("orgCd").toString());
 				}
 			}
-			
+
 			//겸직 조회
 			List<WtmOrgConc> orgConcList = orgConcRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymd(tenantId, enterCd, sabun, ymd);
 			if(orgConcList!=null && orgConcList.size()>0) {
@@ -4036,6 +4036,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				for(WtmOrgConc orgConc : orgConcList) {
 					orgList.add(orgConc.getOrgCd());
 				}
+			}
+
+			if(emp.getOrgCd().equals("1010")){  //  대표이사는 하위조직 정보 조회 하지 않음.
+				orgList = new ArrayList<String>();
 			}
 			
 			return orgList;
