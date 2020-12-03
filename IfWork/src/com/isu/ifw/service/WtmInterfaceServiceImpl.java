@@ -4252,7 +4252,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	
 	@Override
 	@Async
-	@Transactional
+	//@Transactional
 	public void setCloseWorkIfN(HashMap reqMap) throws Exception {
 		
 		Long tenantId = (Long) reqMap.get("tenantId");
@@ -4421,11 +4421,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					logger.debug("monthlyUserInfo.toString()" + monthlyUserInfo.toString());
 
 					logger.debug("마감사번:" + monthlyUserInfo.get("sabun"));
-					Integer baseMinute    = usedCnt * 8 * 60 ;
+					//Integer baseMinute    = usedCnt * 8 * 60 ;
 					Double otMinute = Math.floor(totalCnt.doubleValue() * Double.parseDouble(12+"") / Double.parseDouble(7+"") * Double.parseDouble(60+""));
 
-					Integer nBaseMinute    = 0;
-					Integer nBaseOtMinute  = 0;
+					Integer nBaseMinute    = usedCnt * 8 * 60 ;;
+					//Integer nBaseOtMinute  = otMinute.intValue();
 					Integer nWorkMinute    = 0;
 					Integer nOtMinute      = 0;
 					Integer nOtnMinute     = 0;
@@ -4465,32 +4465,49 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					Integer nAHolMinute   = nHolMinute;
 					Integer nAHolOtMinute = nHolOtMinute;
 
+					logger.debug("### nSubHolMinute : " + nSubHolMinute);
 					//  대체휴가사용한 휴일근무가 있으면 같은구간 대체휴가 사용한 근무시간 확인
 					if (nSubHolMinute > 0) {
 						nSubAddMinute = wtmInterfaceMapper.getSubAddMinute(monthlyUserInfo);
-
+						logger.debug("### nSubAddMinute : " + nSubAddMinute);
 						//  동월구간 휴일근무는 기본근무에 추가한다
 						if (nSubAddMinute > 0) {
+							logger.debug("### nWorkMinute : " + nWorkMinute);
 							nWorkMinute  = nWorkMinute + nSubAddMinute;
 							nAWorkMinute = nWorkMinute;
 						}
 					}
+					logger.debug("### nBaseMinute : " + nBaseMinute);
+					logger.debug("### nWorkMinute : " + nWorkMinute);
+					logger.debug("### nAWorkMinute : " + nAWorkMinute);
 
 
 					if (nBaseMinute > nWorkMinute) {
 						//  근무누락 연장및휴일근무에서 빼기
 						nGapMinute = nBaseMinute - nWorkMinute;
 
+						logger.debug("### nGapMinute : " + nGapMinute);
+						logger.debug("### nOtMinute : " + nOtMinute);
+						logger.debug("### nHolMinute : " + nHolMinute);
+						
 						if ((nOtMinute + nHolMinute) >= nGapMinute) {
-							nAWorkMinute = nBaseMinute;
+							//nAWorkMinute = nBaseMinute;
+							logger.debug("### nOtMinute : " + nOtMinute);
 							if (nOtMinute >= nGapMinute) {
 								nAOtMinute = nOtMinute - nGapMinute;
+								nGapMinute = 0;
+								logger.debug("### nAOtMinute : " + nAOtMinute);
 							} else {
 
 								nGapMinute  = nGapMinute - nOtMinute;
 								nAOtMinute  = 0;
 								nAHolMinute = nHolMinute - nGapMinute;
-							}
+								nGapMinute = 0;
+
+								logger.debug("### nAHolMinute : " + nAHolMinute);
+								logger.debug("### nGapMinute : " + nGapMinute);
+							} 
+							nAWorkMinute = nBaseMinute;
 						} else {
 							//  근무시간이 모자람 결근시수생성
 							nAWorkMinute   = nBaseMinute;
@@ -4504,8 +4521,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					}
 
 					//  선근제는 누락시간만큼 기본근무를 재신청 하니깐.. 지각, 조퇴시간은 제외한다
-					nLateMinute  = 0;
-					nLeaveMinute = 0;
+					//nLateMinute  = 0;
+					//nLeaveMinute = 0;
 
 					if (nFixOtMinute > 0) {
 						if ((nAOtMinute + nAHolMinute) > nFixOtMinute) {
@@ -4532,7 +4549,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					monthMap.put("symd", sYmd);
 					monthMap.put("eymd", eYmd);
 
-					monthMap.put("nBaseMinute", baseMinute);
+					monthMap.put("nBaseMinute", nBaseMinute);
 					monthMap.put("nBaseOtMinute", otMinute);
 					monthMap.put("nFixOtMinute", nFixOtMinute);
 					monthMap.put("nWorkMinute", nWorkMinute);
