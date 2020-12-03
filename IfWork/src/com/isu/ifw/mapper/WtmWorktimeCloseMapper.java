@@ -9,7 +9,8 @@ public interface WtmWorktimeCloseMapper {
 	public void setWorkTimeCloseIf(Map<String, Object> paramMap);
 	
 	/* 근무마감 확정  **/
-	public int setWorkTimeCloseConfirm(Map<String, Object> paramMap);			
+	public int setWorkTimeCloseConfirm(Map<String, Object> paramMap);
+	public int setWorkTimeClose(Map<String, Object> paramMap);
 	
 	/* 근무마감 조회  **/
 	public List<Map<String, Object>> getCloseList(Map<String, Object> paramMap);

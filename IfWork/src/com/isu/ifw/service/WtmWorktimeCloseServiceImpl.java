@@ -130,6 +130,8 @@ public class WtmWorktimeCloseServiceImpl implements WtmWorktimeCloseService{
 			cnt = wtmWorktimeCloseMapper.setWorkTimeCloseConfirm(paramMap);
 			
 			if(cnt>0) {
+				
+				wtmWorktimeCloseMapper.setWorkTimeClose(paramMap);
 				// 월마감 보상휴가기준 및 사용처 확인
 				// 월마감용 보상휴가생성이면
 				// System.out.println("Impl setWorktimeCloseConfirm cnt" + cnt);
