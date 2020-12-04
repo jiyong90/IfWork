@@ -114,6 +114,9 @@ public class WtmAsyncService {
 			logger.debug("### EMP_RESET EMP::" + empHis.getSabun());
 			try {
 			flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, empHis.getSabun(), ymd.substring(0,4)+"0101", ymd.substring(0,4)+"1231", empHis.getSabun());
+			
+			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, empHis.getSabun(), ymd.substring(0,4)+"0101", ymd.substring(0,4)+"1231");
+			
 			}catch(Exception e) {
 				e.printStackTrace();
 				logger.debug("### EMP_RESET ERROR::" + empHis.getSabun() + " // " + e.getMessage());
