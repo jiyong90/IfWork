@@ -166,7 +166,7 @@ public class WtmAnnualCreateServiceImpl implements WtmAnnualCreateService{
 						wtmAnnualCreate.setYy(l.get("yy").toString());
 						wtmAnnualCreate.setSymd(l.get("symd").toString());
 						wtmAnnualCreate.setEymd(l.get("eymd").toString());
-						wtmAnnualCreate.setCreateCnt(Integer.valueOf(l.get("createCnt").toString()));
+						wtmAnnualCreate.setCreateCnt(Float.valueOf(l.get("createCnt").toString()));
 						wtmAnnualCreate.setUpdateId(userId);
 						wtmAnnualCreate.setTaaTypeCd(l.get("taaTypeCd").toString());
 						wtmAnnualCreate.setNote(l.get("note").toString());
@@ -190,7 +190,7 @@ public class WtmAnnualCreateServiceImpl implements WtmAnnualCreateService{
 						wtmAnnualCreate.setYy(l.get("yy").toString());
 						wtmAnnualCreate.setSymd(l.get("symd").toString());
 						wtmAnnualCreate.setEymd(l.get("eymd").toString());
-						wtmAnnualCreate.setCreateCnt(Integer.valueOf(l.get("createCnt").toString()));
+						wtmAnnualCreate.setCreateCnt(Float.valueOf(l.get("createCnt").toString()));
 						wtmAnnualCreate.setUpdateId(userId);
 						wtmAnnualCreate.setTaaTypeCd(l.get("taaTypeCd").toString());
 						wtmAnnualCreate.setNote(l.get("note").toString());

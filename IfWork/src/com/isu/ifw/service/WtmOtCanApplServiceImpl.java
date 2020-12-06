@@ -388,9 +388,10 @@ public class WtmOtCanApplServiceImpl implements WtmApplService {
 		
 		//if(otApplList!=null && otApplList.size()>0) {
 		//	for(WtmOtAppl otAppl: otApplList) {
+		if(!status.equals(WtmApplService.APPL_STATUS_IMSI)) {
 				otAppl.setCancelYn("Y");
 				wtmOtApplRepo.save(otAppl);
-				
+		}
 				List<WtmWorkDayResult> results = wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndApplId(tenantId, enterCd, sabun, otAppl.getApplId());
 				for(WtmWorkDayResult result : results) {
 					//근무제 신청서 테이블 조회

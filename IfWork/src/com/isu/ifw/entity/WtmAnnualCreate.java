@@ -40,7 +40,7 @@ public class WtmAnnualCreate implements Serializable {
 	private String eymd;
 
 	@Column(name = "CREATE_CNT")
-	private Integer createCnt;
+	private Float createCnt;
 
 	@Column(name = "NOTE")
 	private String note;
@@ -147,11 +147,13 @@ public class WtmAnnualCreate implements Serializable {
 		this.eymd = eymd;
 	}
 
-	public Integer getCreateCnt() {
+	public Float getCreateCnt() {
 		return createCnt;
 	}
 
-	public void setCreateCnt(Integer createCnt) {
+	public void setCreateCnt(Float createCnt) {
+		if(createCnt == null)
+			createCnt = 0.0f;
 		this.createCnt = createCnt;
 	}
 

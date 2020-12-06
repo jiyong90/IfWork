@@ -933,10 +933,13 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			//선근제 이면
 			if(emp.getWorkTypeCd().startsWith("SELE")) {
 				//1주의 범위가 선근제 기간내에 있는지 체크
+				/*
 				if(Integer.parseInt(symd) >= Integer.parseInt(emp.getSymd() ) && Integer.parseInt(eymd) <= Integer.parseInt(emp.getEymd())) {
 					//선근제는 주단위 연장근무 시간을 체크하지 않는다.
 					weekOtCheck = false;
 				}
+				*/
+				weekOtCheck = false;
 			}
 			
 			logger.debug("### weekOtCheck : "+ weekOtCheck);
