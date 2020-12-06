@@ -65,25 +65,34 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 		List<WtmTaaApplDet> taaApplDetList = wtmTaaApplDetRepo.findByTaaApplId(taaAppl.getTaaApplId());
 
 		Map<String, Object> resultMap =new HashMap<String, Object>();
-
+		
+		Map<String, Object> taaMap =new HashMap<String, Object>();
+		List<Map<String, Object>> taaList = new ArrayList<Map<String,Object>>();
 		if(taaApplDetList != null && taaApplDetList.size() >0){
-
-			/*resultMap.put("taaApplDetId", taaApplDet.getTaaApplDetId());
-			resultMap.put("taaApplId", taaApplDet.getTaaApplId());
-			resultMap.put("taaCd", taaApplDet.getTaaCd());
-			resultMap.put("symd", taaApplDet.getSymd());
-			resultMap.put("eymd", taaApplDet.getEymd());
-			resultMap.put("shm", taaApplDet.getShm());
-			resultMap.put("ehm", taaApplDet.getEhm());
-			resultMap.put("note", taaApplDet.getNote());
-			resultMap.put("updateDate", taaApplDet.getUpdateDate());
-			resultMap.put("updateId", taaApplDet.getUpdateId());
-			resultMap.put("taaMinute", taaApplDet.getTaaMinute());*/
-
+			for(WtmTaaApplDet taaApplDet : taaApplDetList) {
+			
+				taaMap.put("taaApplDetId", taaApplDet.getTaaApplDetId());
+				taaMap.put("taaApplId", taaApplDet.getTaaApplId());
+				taaMap.put("taaCd", taaApplDet.getTaaCd());
+				taaMap.put("symd", taaApplDet.getSymd());
+				taaMap.put("sDate", taaApplDet.getSymd());
+				taaMap.put("eymd", taaApplDet.getEymd());
+				taaMap.put("eDate", taaApplDet.getEymd());
+				taaMap.put("shm", taaApplDet.getShm());
+				taaMap.put("ehm", taaApplDet.getEhm());
+				taaMap.put("note", taaApplDet.getNote());
+				taaMap.put("updateDate", taaApplDet.getUpdateDate());
+				taaMap.put("updateId", taaApplDet.getUpdateId());
+				taaMap.put("taaMinute", taaApplDet.getTaaMinute());
+				WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, taaApplDet.getTaaCd());
+				taaMap.put("taaNm", taaCode.getTaaNm());
+				taaMap.put("applId", taaAppl.getApplId());
+				taaList.add(taaMap);
+			}
 		}
 
 		resultMap.put("taaAppl", taaAppl);
-		resultMap.put("taaApplDetList", taaApplDetList);
+		resultMap.put("taaApplDetList", taaList);
 		return resultMap;
 	}
 

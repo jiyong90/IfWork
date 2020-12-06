@@ -1,27 +1,34 @@
 package com.isu.ifw.service;
 
-import com.isu.ifw.entity.*;
-import com.isu.ifw.repository.WtmApplRepository;
-import com.isu.ifw.repository.WtmTaaApplDetRepository;
-import com.isu.ifw.repository.WtmTaaCanApplRepository;
-import com.isu.ifw.repository.WtmTaaCodeRepository;
-import com.isu.ifw.vo.ReturnParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.isu.ifw.entity.WtmAppl;
+import com.isu.ifw.entity.WtmTaaApplDet;
+import com.isu.ifw.entity.WtmTaaCanAppl;
+import com.isu.ifw.entity.WtmTaaCode;
+import com.isu.ifw.repository.WtmApplRepository;
+import com.isu.ifw.repository.WtmTaaApplDetRepository;
+import com.isu.ifw.repository.WtmTaaApplRepository;
+import com.isu.ifw.repository.WtmTaaCanApplRepository;
+import com.isu.ifw.repository.WtmTaaCodeRepository;
+import com.isu.ifw.vo.ReturnParam;
+
 @Service("WtmTaaCanApplService")
 public class WtmTaaCanServiceImpl implements WtmApplService{
 
 	private static final Logger logger = LoggerFactory.getLogger("ifwFileLog");
-
+	@Autowired
+	WtmTaaApplRepository taaApplRepo;
+	
 	@Autowired
 	WtmTaaCanApplRepository taaCanApplRepo;
 
@@ -83,8 +90,22 @@ public class WtmTaaCanServiceImpl implements WtmApplService{
 		WtmTaaCanAppl    wtmTaaCanAppl = taaCanApplRepo.findByApplId(applId);
 		SimpleDateFormat ymd        = new SimpleDateFormat("yyyyMMdd");
 		String applCd = paramMap.get("applCd").toString();
-		Long wtmApplId = Long.valueOf(paramMap.get("applId").toString());
-
+		Long wtmApplId = Long.valueOf(paramMap.get("applId").toString()); 
+		
+		List<WtmTaaCanAppl> canList = taaCanApplRepo.findByCanApplId(wtmApplId);
+		
+		if(canList != null && canList.size() > 0) {
+			WtmTaaCanAppl canAppl = canList.get(0);
+			WtmAppl cAppl = wtmApplRepo.findById(canAppl.getApplId()).get();
+			if(cAppl.getApplStatusCd().equals(WtmApplService.APPL_STATUS_APPLY_ING)
+					|| cAppl.getApplStatusCd().equals(WtmApplService.APPL_STATUS_APPR_ING)
+					) {
+				rp.setFail("이미 신청중인 내역이 있습니다.");
+				return rp;
+			}
+			
+		}
+		
 		if(!applCd.equals(WtmApplService.TIME_TYPE_TAA_CAN) && !applCd.equals(WtmApplService.TIME_TYPE_REGA_CAN) ){
 			rp.setFail("신청 타입이 옳바르지 않습니다.");
 			return rp;

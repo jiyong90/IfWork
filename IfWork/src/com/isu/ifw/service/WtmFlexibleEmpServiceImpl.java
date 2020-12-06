@@ -3172,6 +3172,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		timeType.add(WtmApplService.TIME_TYPE_OT);
 		timeType.add(WtmApplService.TIME_TYPE_FIXOT);
 		timeType.add(WtmApplService.TIME_TYPE_NIGHT);
+		timeType.add(WtmApplService.TIME_TYPE_EARLY_OT);
+		timeType.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
+		
 		List<WtmWorkDayResult> base = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeType, ymd, ymd);
 		
 		//List<WtmWorkDayResult> days = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
