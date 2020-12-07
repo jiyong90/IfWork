@@ -4171,8 +4171,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								holOtMin = 0;
 							}
 						}
-						applHolOtMin = applHolOtMin + holOtMin;
-						applOtMin = applOtMin + otMin;
+						//2020.1207jyp  왜 신청서말고 기존 계산된거까지 빼지? 
+						applHolOtMin = applHolOtMin;// + holOtMin;
+						applOtMin = applOtMin;// + otMin;
 						
 						//휴일근무이며
 						if(emp.get("holidayYn") != null && "Y".equals(emp.get("holidayYn"))) {
