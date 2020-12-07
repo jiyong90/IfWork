@@ -1444,18 +1444,25 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						timeTypeCd.add(WtmApplService.TIME_TYPE_EARLY_NIGHT); 
 						timeTypeCd.add(WtmApplService.TIME_TYPE_REGA_OT);
 						timeTypeCd.add(WtmApplService.TIME_TYPE_REGA_NIGHT); 
+						timeTypeCd.add(WtmApplService.TIME_TYPE_EXCEPT);
 						
 						List<WtmWorkDayResult> otResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), timeTypeCd, flexibleEmp.getSymd(), flexibleEmp.getEymd());
 						int sumOtMinute = 0;
 						
 						for(WtmWorkDayResult otR : otResults) {
-							//과거일은 appr만 본다.
-							if(Integer.parseInt(ymd.format(new Date())) > Integer.parseInt(otR.getYmd())) {
-								sumOtMinute = sumOtMinute + ((otR.getApprMinute() == null)?0:otR.getApprMinute());
+							if(otR.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EXCEPT)) {
+								if(otR.getTaaCd().startsWith("BREAK_")) {
+									sumOtMinute = sumOtMinute - ((otR.getApprMinute() == null)?otR.getPlanMinute():otR.getApprMinute());
+								}
 							}else {
-								//오늘꺼 제외
-								if(!otR.getYmd().equals(calendar.getYmd())) {
-									sumOtMinute = sumOtMinute + ((otR.getApprMinute() == null)?otR.getPlanMinute():otR.getApprMinute());
+								//과거일은 appr만 본다.
+								if(Integer.parseInt(ymd.format(new Date())) > Integer.parseInt(otR.getYmd())) {
+									sumOtMinute = sumOtMinute + ((otR.getApprMinute() == null)?0:otR.getApprMinute());
+								}else {
+									//오늘꺼 제외
+									if(!otR.getYmd().equals(calendar.getYmd())) {
+										sumOtMinute = sumOtMinute + ((otR.getApprMinute() == null)?otR.getPlanMinute():otR.getApprMinute());
+									}
 								}
 							}
 						}
