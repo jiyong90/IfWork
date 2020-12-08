@@ -1527,20 +1527,20 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 										Date planSdate = maxPlanEdate;
 										Date planEdate = nightSdate;
 										savedResult = this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun()
-												, WtmApplService.TIME_TYPE_OT, planSdate, planEdate, null, null, null, null);
+												, WtmApplService.TIME_TYPE_OT, planSdate, planEdate, null, null, null, null, restOtMinute);
 										restOtMinute = restOtMinute - savedResult.getPlanMinute();
 										if(restOtMinute > 0) {
 											planSdate = nightSdate;
 											planEdate = calendar.getEntryEdate();
 											savedResult = this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun()
-													, WtmApplService.TIME_TYPE_NIGHT, planSdate, planEdate, null, null, null, null);
+													, WtmApplService.TIME_TYPE_NIGHT, planSdate, planEdate, null, null, null, null, restOtMinute);
 											restOtMinute = restOtMinute - savedResult.getPlanMinute();
 										}
 									}else {
 										Date planSdate = maxPlanEdate;
 										Date planEdate = calendar.getEntryEdate();
 										savedResult = this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun()
-												, WtmApplService.TIME_TYPE_OT, planSdate, planEdate, null, null, null, null);
+												, WtmApplService.TIME_TYPE_OT, planSdate, planEdate, null, null, null, null, restOtMinute);
 										restOtMinute = restOtMinute - savedResult.getPlanMinute();
 									}
 								}
