@@ -955,6 +955,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			logger.debug("inoutPostProcess9 워크텀 끗 " + tempTimeMap.toString());
 
 		} catch(Exception e) {
+			e.printStackTrace();
 			logger.debug("****인정시간 계산 중 오류가 발생했습니다. " + paramMap.toString() + ", " + e.getMessage());
 		}
 	}
