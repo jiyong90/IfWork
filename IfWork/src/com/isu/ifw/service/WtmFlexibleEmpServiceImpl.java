@@ -4058,10 +4058,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				}
 			}
 
-			if(emp.getOrgCd().equals("1010")){  //  대표이사는 하위조직 정보 조회 하지 않음.
+			if(orgList == null) {
 				orgList = new ArrayList<String>();
+				orgList.add(emp.getOrgCd());
 			}
-			
 			return orgList;
 			
 		} catch(Exception e) {
