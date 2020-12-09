@@ -3,10 +3,13 @@ package com.isu.ifw.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.WtmApplMapper;
+import com.isu.ifw.mapper.WtmTaaApplMapper;
 import com.isu.ifw.mapper.WtmValidatorMapper;
 import com.isu.ifw.repository.*;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.vo.WtmApplLineVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,22 +58,33 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 	WtmCalcServiceImpl calcService;
 	
 	@Autowired private WtmTimeCdMgrRepository timeCdMgrRepo;
+
+	@Autowired
+	private WtmTaaApplMapper wtmTaaApplMapper;
+
+	@Autowired
+	private WtmApplMapper applMapper;
 	
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
 		WtmAppl wtmAppl =wtmApplRepo.findByApplId(applId);
-
 		WtmTaaAppl taaAppl =wtmTaaApplRepo.findByApplIdAndSabun(applId, sabun);
 
 		List<WtmTaaApplDet> taaApplDetList = wtmTaaApplDetRepo.findByTaaApplId(taaAppl.getTaaApplId());
-
 		Map<String, Object> resultMap =new HashMap<String, Object>();
-		
+
+		WtmTaaCode wtmTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId,enterCd, taaApplDetList.get(0).getTaaCd());
+
+		resultMap.put("wtmTaaCode", wtmTaaCode);
+
+
+		String taaNm = "";
+
 		Map<String, Object> taaMap =new HashMap<String, Object>();
 		List<Map<String, Object>> taaList = new ArrayList<Map<String,Object>>();
 		if(taaApplDetList != null && taaApplDetList.size() >0){
 			for(WtmTaaApplDet taaApplDet : taaApplDetList) {
-			
+
 				taaMap.put("taaApplDetId", taaApplDet.getTaaApplDetId());
 				taaMap.put("taaApplId", taaApplDet.getTaaApplId());
 				taaMap.put("taaCd", taaApplDet.getTaaCd());
@@ -88,12 +102,80 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 				taaMap.put("taaNm", taaCode.getTaaNm());
 				taaMap.put("applId", taaAppl.getApplId());
 				taaList.add(taaMap);
+				taaNm = wtmTaaCode.getTaaNm();
 			}
 		}
 
+		resultMap.put("taaNm", taaNm);
 		resultMap.put("taaAppl", taaAppl);
 		resultMap.put("taaApplDetList", taaList);
-		return resultMap;
+		resultMap.put("taaApplDets", taaApplDetList);
+
+		try {
+			Map<String, Object> paramMap = new HashMap<String, Object>();
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+			paramMap.put("sabun", sabun);
+			paramMap.put("applId", applId);
+			List<Map<String, Object>> taaApplList = wtmTaaApplMapper.getTaaApplList(paramMap);
+
+			ObjectMapper mapper = new ObjectMapper();
+
+			logger.debug("compApplList :::::: " + mapper.writeValueAsString(taaApplList));
+
+			List<WtmApplLineVO> applLine = applMapper.getWtmApplLineByApplId(applId);
+			resultMap.put("applLine", applLine);
+
+			if(taaApplList!=null && taaApplList.size()>0) {
+
+				List<String> sabuns = new ArrayList<String>();
+
+				String ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
+
+				for(Map<String, Object> o : taaApplList) {
+					sabuns.add(o.get("sabun").toString());
+				}
+
+				boolean isRecovery = false;
+
+				//결재요청중일 때 회수 버튼 보여주기
+				if(applLine!=null && applLine.size()>0) {
+					int seq = 1;
+					int rSeq = 1; // 수신처 seq
+					boolean isRecIng = false;
+					for(WtmApplLineVO l : applLine) {
+						if(APPL_LINE_S.equals(l.getApprTypeCd())) {
+							if(seq==1 && APPR_STATUS_REQUEST.equals(l.getApprStatusCd()) && sabuns.indexOf(sabun)!=-1 )
+								isRecovery = true;
+
+							seq++;
+						}
+
+						if(APPL_LINE_R.equals(l.getApprTypeCd())) {
+							if(rSeq==1 && APPR_STATUS_REQUEST.equals(l.getApprStatusCd()))
+								isRecIng = true;
+							rSeq++;
+						}
+					}
+
+					//발신결재가 없는 경우
+					if(seq==1 && isRecIng) {
+						isRecovery = true;
+					}
+				}
+
+				resultMap.put("recoveryYn", isRecovery);
+				resultMap.put("taaApplList", taaApplList);
+			}
+
+			logger.debug("taaAppl :::::: " + mapper.writeValueAsString(taaAppl));
+			return resultMap;
+
+		}catch(Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+
 	}
 
 	@Override
