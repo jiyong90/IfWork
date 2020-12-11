@@ -1,6 +1,5 @@
 package com.isu.ifw.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.*;
 import com.isu.ifw.mapper.WtmValidatorMapper;
@@ -390,7 +389,8 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 		String workTimeCode = paramMap.get("workTimeCode").toString();
 		String taaNote      = paramMap.get("note").toString();
 
-		List<String> taaDateArr = (List<String>) paramMap.get("taaDateArr");
+		List<String> taaSdateArr = (List<String>) paramMap.get("taaSdateArr");
+		List<String> taaEdateArr = (List<String>) paramMap.get("taaEdateArr");
 		List<String> startHmArr = (List<String>) paramMap.get("startHmArr");
 		List<String> endHmArr   = (List<String>) paramMap.get("endHmArr");
 
@@ -455,19 +455,20 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 					//List<Map<String, Object>> worksDet = (List<Map<String, Object>>) w.get("worksDet");
 					//for(Map<String, Object> work : worksDet) {
 
-					if (workTimeCode != "" && taaDateArr.size() > 0 && startHmArr.size() > 0 && endHmArr.size() > 0) {
+					if (workTimeCode != null && taaSdateArr.size() > 0) {
 
 
-						for (int i = 0; i < taaDateArr.size(); i++) {
+						for (int i = 0; i < taaSdateArr.size(); i++) {
 
-							String taaDate = taaDateArr.get(i).replaceAll("-", "");
-							String shm = startHmArr.get(i).replaceAll(":", "");
-							String ehm = endHmArr.get(i).replaceAll(":", "");
+							String taaSdate = taaSdateArr.get(i).replaceAll("-", "");
+							String taaEdate = taaEdateArr.get(i).replaceAll("-", "");
+//							String shm = startHmArr.get(i).replaceAll(":", "");
+//							String ehm = endHmArr.get(i).replaceAll(":", "");
 
 
 
-							String symd = taaDate;
-							String eymd = taaDate;
+							String symd = taaSdate;
+							String eymd = taaEdate;
 
 
 
@@ -496,10 +497,10 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 							WtmTaaApplDet taaApplDet = new WtmTaaApplDet();
 							taaApplDet.setTaaApplId(taaAppl.getTaaApplId());
 							taaApplDet.setTaaCd(workTimeCode);
-							taaApplDet.setSymd(taaDate);
-							taaApplDet.setEymd(taaDate);
-							taaApplDet.setShm(shm);
-							taaApplDet.setEhm(ehm);
+							taaApplDet.setSymd(taaSdate);
+							taaApplDet.setEymd(taaEdate);
+//							taaApplDet.setShm(shm);
+//							taaApplDet.setEhm(ehm);
 							taaApplDet.setUpdateId("WTM_REGA");
 							taaApplDet.setNote(taaNote);
 
@@ -547,9 +548,8 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 		String workTimeCode = work.get("workTimeCode").toString();
 //		String note         = work.get("note").toString();
 
-		List<String> taaDateArr = (List<String>) work.get("taaDateArr");
-		List<String> startHmArr = (List<String>) work.get("startHmArr");
-		List<String> endHmArr   = (List<String>) work.get("endHmArr");
+		List<String> taaSdateArr = (List<String>) work.get("taaSdateArr");
+		List<String> taaEdateArr = (List<String>) work.get("taaEdateArr");
 
 		List<HashMap<String, Date>> dateList = new ArrayList<HashMap<String, Date>>();
 
@@ -557,42 +557,35 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 
 		boolean isDuplicateDt = false;
 
-		if (taaDateArr.size() > 0) {
-			for (int i = 0; i < taaDateArr.size(); i++) {
+		if (taaSdateArr.size() > 0) {
+			for (int i = 0; i < taaSdateArr.size(); i++) {
 
-				String taaDate = taaDateArr.get(i).replaceAll("-", "");
-				String startHm = startHmArr.get(i).replaceAll(":", "");
-				String endHm   = endHmArr.get(i).replaceAll(":", "");
+				String taaSdate = taaSdateArr.get(i).replaceAll("-", "");
+				String taaEdate = taaEdateArr.get(i).replaceAll("-", "");
 
 				Map<String, Object> tmpMap = new HashMap<String, Object>();
-				tmpMap.put("startYmd", taaDate);
-				tmpMap.put("endYmd", taaDate);
-				tmpMap.put("startHm", startHm);
-				tmpMap.put("endHm", endHm);
+				tmpMap.put("startYmd", taaSdate);
+				tmpMap.put("endYmd", taaEdate);
 				tmpMap.put("workTimeCode", workTimeCode);
 				tmpMap.put("requestCd", "");    //  validation 기본 키값
 				tmpMap.put("applId", work.get("applId")); 
-
-				HashMap<String, Date> dateMap = new HashMap<String, Date>();
-				dateMap.put("startDt", inFormat.parse(taaDate+startHm));
-				dateMap.put("entDt", inFormat.parse(taaDate+endHm));
-				dateList.add(dateMap);
 
 				//  check 중복
 				Map<String, Object> chkMap = new HashMap<String, Object>();
 				chkMap.put("tenantId", tenantId);
 				chkMap.put("enterCd", enterCd);
 				chkMap.put("sabun", sabun);
-				chkMap.put("startDt", taaDateArr.get(i) + " " + startHmArr.get(i));
-				chkMap.put("entDt", taaDateArr.get(i) + " " + endHmArr.get(i));
+				chkMap.put("timeTypeCd", "REGA");
+				chkMap.put("startYmd", taaSdate);
+				chkMap.put("endYmd", taaEdate);
 
 				logger.debug("chkMap :" + chkMap.toString());
 				int chkCnt = validatorMapper.checkDuplicateWorkDayResult(chkMap) ;
 				logger.debug("chkCnt :" + chkCnt);
-//				if(chkCnt > 0){
-//					rp.setFail("출장/긴급근무 신청기간이 중복됩니다.");
-//					return rp;
-//				};
+				if(chkCnt > 0){
+					rp.setFail("출장 신청기간이 중복됩니다.");
+					return rp;
+				};
 
 				ReturnParam valiRp = new ReturnParam();
 				valiRp = validate2(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, tmpMap);
@@ -825,8 +818,8 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 			String workTimeCode = a.get("workTimeCode").toString();
 			String symd         = a.get("startYmd").toString();
 			String eymd         = a.get("endYmd").toString();
-			String shm          = a.get("startHm").toString();
-			String ehm          = a.get("endHm").toString();
+			String shm          = "";
+			String ehm          = "";
 
 			WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, workTimeCode);
 			if (taaCode == null) {
@@ -930,45 +923,45 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 
 		}
 
-		//2.선근제의 경우에는 해당 선근제 근무 기간 내의 기본근로시간을 넘지 않는지 체크
-		paramMap = new HashMap<>();
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		paramMap.put("symd", sDate);
-		paramMap.put("eymd", eDate);
-		paramMap.put("taaWorkYn", taaWorkYn);    // 근무시간가산여부(가산이 아니면 해당기간 기본근무 빼고 계산해야함)
-		paramMap.put("applMinutes", applMinutes);
-		logger.debug("*********** paramMap : " + paramMap.toString());
-		List<Map<String, Object>> results = validatorMapper.checkTotalWorkMinuteForSele(paramMap);
+//		//2.선근제의 경우에는 해당 선근제 근무 기간 내의 기본근로시간을 넘지 않는지 체크
+//		paramMap = new HashMap<>();
+//		paramMap.put("tenantId", tenantId);
+//		paramMap.put("enterCd", enterCd);
+//		paramMap.put("sabun", sabun);
+//		paramMap.put("symd", sDate);
+//		paramMap.put("eymd", eDate);
+//		paramMap.put("taaWorkYn", taaWorkYn);    // 근무시간가산여부(가산이 아니면 해당기간 기본근무 빼고 계산해야함)
+//		paramMap.put("applMinutes", applMinutes);
+//		logger.debug("*********** paramMap : " + paramMap.toString());
+//		List<Map<String, Object>> results = validatorMapper.checkTotalWorkMinuteForSele(paramMap);
+//
+//		ObjectMapper mapper = new ObjectMapper();
+//		try {
+//			logger.debug("results : " + mapper.writeValueAsString(results));
+//		} catch (JsonProcessingException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 
-		ObjectMapper mapper = new ObjectMapper();
-		try {
-			logger.debug("results : " + mapper.writeValueAsString(results));
-		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		if (results != null && results.size() > 0) {
-			for (Map<String, Object> r : results) {
-				if (r.get("isValid") != null && "N".equals(r.get("isValid"))) {
-					logger.debug("workMinute: " + r.get("workMinute").toString());
-					logger.debug("totalWorkMinute: " + r.get("totalWorkMinute").toString());
-
-					Double h = 0d;
-					Double m = 0d;
-
-					h = Double.parseDouble(r.get("workMinute").toString()) / 60;
-					h = Math.ceil(h * 100) / 100.0;
-					m = (h - h.intValue()) * 60;
-
-					rp.setFail("선택근무제 총 근무 시간(" + ((h.intValue() > 0) ? String.format("%02d", h.intValue()) : "00") + "시간" + ((m.intValue() > 0) ? String.format("%02d", m.intValue()) + "분" : "") + ")을 초과할 수 없습니다.");
-					return rp;
-				}
-			}
-
-		}
+//		if (results != null && results.size() > 0) {
+//			for (Map<String, Object> r : results) {
+//				if (r.get("isValid") != null && "N".equals(r.get("isValid"))) {
+//					logger.debug("workMinute: " + r.get("workMinute").toString());
+//					logger.debug("totalWorkMinute: " + r.get("totalWorkMinute").toString());
+//
+//					Double h = 0d;
+//					Double m = 0d;
+//
+//					h = Double.parseDouble(r.get("workMinute").toString()) / 60;
+//					h = Math.ceil(h * 100) / 100.0;
+//					m = (h - h.intValue()) * 60;
+//
+//					rp.setFail("선택근무제 총 근무 시간(" + ((h.intValue() > 0) ? String.format("%02d", h.intValue()) : "00") + "시간" + ((m.intValue() > 0) ? String.format("%02d", m.intValue()) + "분" : "") + ")을 초과할 수 없습니다.");
+//					return rp;
+//				}
+//			}
+//
+//		}
 
 		return rp;
 	}
