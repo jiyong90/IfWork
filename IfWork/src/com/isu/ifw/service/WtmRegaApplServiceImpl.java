@@ -711,10 +711,10 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 
 			String shm = "";
 			String ehm = "";
-			if (work.get("startHm") != null && !"".equals(work.get("startHm"))) {
+			if (work.containsKey("startHm") && work.get("startHm") != null && !"".equals(work.get("startHm"))) {
 				shm = work.get("startHm").toString();
 			}
-			if (work.get("endHm") != null && !"".equals(work.get("endHm"))) {
+			if (work.containsKey("endHm") && work.get("endHm") != null && !"".equals(work.get("endHm"))) {
 				ehm = work.get("endHm").toString();
 			}
 
