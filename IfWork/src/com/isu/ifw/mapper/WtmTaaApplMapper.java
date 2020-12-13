@@ -7,4 +7,6 @@ public interface WtmTaaApplMapper {
 
 	public List<Map<String, Object>> getTaaApplList(Map<String, Object> paramMap);
 
+	public Map<String, Object> getTaaApplMobileList(Long applId);
+
 }

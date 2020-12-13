@@ -60,6 +60,10 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 	@Autowired
 	WtmTaaCodeRepository wtmTaaCodeRepo;
 
+	@Autowired
+	WtmTaaApplMapper wtmTaaApplMapper;
+
+
 	@Override
 	public List<Map<String, Object>> getTermList(Map<String, Object> paramMap) throws Exception  {
 		//겸직 하위 조직 조회
@@ -267,6 +271,14 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 //			}
 		} else if("ENTRY_CHG".equals(applCd)) {
 		    data = wtmEntryApplMapper.findByApplId(Long.parseLong(applId));
+		} else if("ANNUAL".equals(applCd)) {
+			data = wtmTaaApplMapper.getTaaApplMobileList(Long.parseLong(applId));
+		} else if("ANNUAL_CAN".equals(applCd)) {
+			data = null;
+		} else if("REGA".equals(applCd)) {
+			data = wtmTaaApplMapper.getTaaApplMobileList(Long.parseLong(applId));
+		} else if("REGA_CAN".equals(applCd)) {
+			data = null;
 		}
 		List<WtmApplLineVO> applLine = applMapper.getWtmApplLineByApplId(Long.parseLong(applId));
 		List approvalLines = MobileUtil.makeApprLines(applLine);
