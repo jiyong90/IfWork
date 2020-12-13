@@ -532,41 +532,64 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		dataMap.put("applSabun", sabun);
 		dataMap.put("sabun", sabun);
 
-		String note = dataMap.get("reason").toString();
-		if(note == null || "".equals(note)) {
-			throw new Exception("사유를 입력해주세요.");
+		String symd = "";
+		String eymd = "";
+		String note = "";
+
+		if(dataMap.get("symd") != null && dataMap.get("eymd")  != null && dataMap.get("reason") != null) {
+			if(dataMap.get("symd") == null) {
+				rp.setFail("휴가시작일을 입력해주세요");
+				return rp;
+			} else {
+				symd = dataMap.get("symd").toString().replace(".", "");
+			}
+
+			if(dataMap.get("eymd")  == null) {
+				rp.setFail("휴가종료일을 입력해주세요");
+				return rp;
+			} else {
+				eymd = dataMap.get("eymd").toString().replace(".", "");
+			}
+
+			if(dataMap.get("reason") == null || "".equals(dataMap.get("reason"))) {
+				rp.setFail("사유를 입력해주세요");
+				return rp;
+			} else {
+				note = dataMap.get("reason").toString();
+			}
+
+			WtmTaaCode wtmTaaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, dataMap.get("gubun").toString());
+
+			String requestTypeCd = "";
+			if(wtmTaaCode != null) {
+				requestTypeCd = wtmTaaCode.getRequestTypeCd();
+			}
+
+			List<String> symdArr          = new ArrayList<String>();
+			List<String> eymdArr          = new ArrayList<String>();
+			List<String> requestTypeCdArr = new ArrayList<String>();
+			List<String> taaTypeCdArr     = new ArrayList<String>();
+
+			symdArr.add(symd);
+			eymdArr.add(eymd);
+			requestTypeCdArr.add(requestTypeCd);
+			taaTypeCdArr.add(dataMap.get("gubun").toString());
+
+			Map<String, Object> valiMap = new HashMap<String, Object>();
+			valiMap.put("startYmdArr", symdArr);
+			valiMap.put("endYmdArr", eymdArr);
+			valiMap.put("requestTypeCdArr", requestTypeCdArr);
+			valiMap.put("taaTypeCdArr", taaTypeCdArr);
+			valiMap.put("startHm", ""); //  validation 기본 키값
+			valiMap.put("endHm", "");   //  validation 기본 키값
+			valiMap.put("note", note);
+
+			rp = taaApplService.validate(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_ANNUAL, valiMap);
+
+			resultMap.put("data", dataMap);
+			rp.put("result", resultMap);
 		}
 
-		WtmTaaCode wtmTaaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, dataMap.get("gubun").toString());
-
-		String requestTypeCd = "";
-		if(wtmTaaCode != null) {
-			requestTypeCd = wtmTaaCode.getRequestTypeCd();
-		}
-
-		List<String> symdArr          = new ArrayList<String>();
-		List<String> eymdArr          = new ArrayList<String>();
-		List<String> requestTypeCdArr = new ArrayList<String>();
-		List<String> taaTypeCdArr     = new ArrayList<String>();
-
-		symdArr.add(dataMap.get("symd").toString());
-		eymdArr.add(dataMap.get("eymd").toString());
-		requestTypeCdArr.add(requestTypeCd);
-		taaTypeCdArr.add(dataMap.get("gubun").toString());
-
-		Map<String, Object> valiMap = new HashMap<String, Object>();
-		valiMap.put("startYmdArr", symdArr);
-		valiMap.put("endYmdArr", eymdArr);
-		valiMap.put("requestTypeCdArr", requestTypeCdArr);
-		valiMap.put("taaTypeCdArr", taaTypeCdArr);
-		valiMap.put("startHm", ""); //  validation 기본 키값
-		valiMap.put("endHm", "");   //  validation 기본 키값
-		valiMap.put("note", note);
-
-		rp = taaApplService.validate(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_ANNUAL, dataMap);
-
-		resultMap.put("data", dataMap);
-		rp.put("result", resultMap);
 		return rp;
 	}
 
@@ -582,7 +605,32 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		dataMap.put("applSabun", sabun);
 		dataMap.put("sabun", sabun);
 
-		String note = dataMap.get("reason").toString();
+		String symd = "";
+		String eymd = "";
+		String note = "";
+
+		if(dataMap.get("symd") != null && dataMap.get("eymd")  != null && dataMap.get("reason") != null) {
+			if (dataMap.get("symd") == null) {
+				rp.setFail("휴가시작일을 입력해주세요");
+				return rp;
+			} else {
+				symd = dataMap.get("symd").toString().replace(".", "");
+			}
+
+			if (dataMap.get("eymd") == null) {
+				rp.setFail("휴가종료일을 입력해주세요");
+				return rp;
+			} else {
+				eymd = dataMap.get("eymd").toString().replace(".", "");
+			}
+
+			if (dataMap.get("reason") == null || "".equals(dataMap.get("reason"))) {
+				rp.setFail("사유를 입력해주세요");
+				return rp;
+			} else {
+				note = dataMap.get("reason").toString();
+			}
+		}
 
 		if(note == null || "".equals(note)) {
 			throw new Exception("사유를 입력해주세요.");
@@ -600,8 +648,8 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		List<String> requestTypeCdArr = new ArrayList<String>();
 		List<String> taaTypeCdArr     = new ArrayList<String>();
 
-		symdArr.add(dataMap.get("symd").toString());
-		eymdArr.add(dataMap.get("eymd").toString());
+		symdArr.add(symd);
+		eymdArr.add(eymd);
 		requestTypeCdArr.add(requestTypeCd);
 		taaTypeCdArr.add(dataMap.get("gubun").toString());
 
@@ -610,8 +658,10 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		valiMap.put("taaEdateArr", eymdArr);
 		valiMap.put("workTimeCode", requestTypeCd);
 		valiMap.put("requestCd", "");
+		valiMap.put("note", note);
+		valiMap.put("applCd", dataMap.get("applCd").toString());
 
-		rp = taaApplService.validate(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_ANNUAL, valiMap);
+		rp = regaApplService.validate(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, valiMap);
 
 		resultMap.put("data", dataMap);
 		rp.put("result", resultMap);
@@ -651,22 +701,26 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		List<String> requestTypeCdArr = new ArrayList<String>();
 		List<String> taaTypeCdArr     = new ArrayList<String>();
 
-		symdArr.add(dataMap.get("symd").toString());
-		eymdArr.add(dataMap.get("eymd").toString());
+		symdArr.add(dataMap.get("symd").toString().replace(".", ""));
+		eymdArr.add(dataMap.get("eymd").toString().replace(".", ""));
 		requestTypeCdArr.add(requestTypeCd);
 		taaTypeCdArr.add(dataMap.get("gubun").toString());
 
 		Map<String, Object> valiMap = new HashMap<String, Object>();
-		valiMap.put("taaSdateArr", symdArr);
-		valiMap.put("taaEdateArr", eymdArr);
-		valiMap.put("workTimeCode", requestTypeCd);
-		valiMap.put("requestCd", "");
+		valiMap.put("startYmdArr", symdArr);
+		valiMap.put("endYmdArr", eymdArr);
+		valiMap.put("requestTypeCdArr", requestTypeCdArr);
+		valiMap.put("taaTypeCdArr", taaTypeCdArr);
+		valiMap.put("startHm", ""); //  validation 기본 키값
+		valiMap.put("endHm", "");   //  validation 기본 키값
+		valiMap.put("note", note);
+		valiMap.put("applCd", dataMap.get("applCd").toString());
 
-		rp =  taaApplService.validate(tenantId, enterCd, sabun, dataMap.get("applCd").toString(), dataMap);
+		rp =  taaApplService.validate(tenantId, enterCd, sabun, dataMap.get("applCd").toString(), valiMap);
 		if(rp!=null && rp.getStatus()!=null && "FAIL".equals(rp.getStatus())) {
 			return rp;
 		}
-		return taaApplService.request(tenantId, enterCd, applId, WtmApplService.TIME_TYPE_ANNUAL, dataMap, sabun, sabun);
+		return taaApplService.request(tenantId, enterCd, applId, WtmApplService.TIME_TYPE_ANNUAL, valiMap, sabun, sabun);
 	}
 
 
@@ -712,12 +766,14 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		valiMap.put("taaEdateArr", eymdArr);
 		valiMap.put("workTimeCode", requestTypeCd);
 		valiMap.put("requestCd", "");
+		valiMap.put("note", note);
+		valiMap.put("applCd", dataMap.get("applCd").toString());
 
-		rp =  regaApplService.validate(tenantId, enterCd, sabun, dataMap.get("applCd").toString(), dataMap);
+		rp =  regaApplService.validate(tenantId, enterCd, sabun, dataMap.get("applCd").toString(), valiMap);
 		if(rp!=null && rp.getStatus()!=null && "FAIL".equals(rp.getStatus())) {
 			return rp;
 		}
-		return regaApplService.request(tenantId, enterCd, applId, WtmApplService.TIME_TYPE_REGA, dataMap, sabun, sabun);
+		return regaApplService.request(tenantId, enterCd, applId, WtmApplService.TIME_TYPE_REGA, valiMap, sabun, sabun);
 	}
 
 	
