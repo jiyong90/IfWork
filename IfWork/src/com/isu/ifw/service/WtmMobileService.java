@@ -3,8 +3,6 @@ package com.isu.ifw.service;
 import java.util.List;
 import java.util.Map;
 
-import com.isu.ifw.vo.ReturnParam;
-
 /**
  * 
  * @author 
@@ -22,6 +20,9 @@ public interface WtmMobileService {
 
 	//모바일에서 보여줄 코드 목록 
 	public Map<String,Object> getCodeList(Long tenantId, String enterCd, String key) throws Exception ;
+
+	//모바일에서 보여줄 코드 목록
+	public Map<String,Object> getTaaCodeList(Long tenantId, String enterCd, String key) throws Exception ;
 	
 	//adapter에서 data get
 	public Map<String, Object> getDataMap(String url, String queryId, Map<String, Object> user) throws Exception ;

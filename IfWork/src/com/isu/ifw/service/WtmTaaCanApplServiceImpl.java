@@ -494,7 +494,7 @@ public class WtmTaaCanApplServiceImpl implements WtmApplService {
 		appl.setUpdateId(userId);
 		wtmApplRepo.save(appl);
 
-		inbox.setInbox(tenantId, enterCd, applSabun, applId, "APPLY", "결재완료", "휴가 신청서가 반려되었습니다.", "N");
+		inbox.setInbox(tenantId, enterCd, applSabun, applId, "APPLY", "결재완료", "휴가 취소 신청서가 반려되었습니다.", "N");
 
 		//메일 전송을 위한 파라미터
 		rp.put("from", sabun);

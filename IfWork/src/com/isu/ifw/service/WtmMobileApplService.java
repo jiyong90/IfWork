@@ -1,9 +1,8 @@
 package com.isu.ifw.service;
 
-import java.util.List;
-import java.util.Map;
-
 import com.isu.ifw.vo.ReturnParam;
+
+import java.util.Map;
 
 /**
  * 
@@ -24,4 +23,16 @@ public interface WtmMobileApplService {
 
 	//근태사유서 request
 	public ReturnParam requestEntryChgAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception ;
+
+	//연차신청 validate
+	public ReturnParam validateAnnualAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception ;
+
+	//출장신청 validate
+	public ReturnParam validateRegaAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception ;
+
+	//연차신청 request
+	public ReturnParam requestAnnualAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception ;
+
+	//연차신청 request
+	public ReturnParam requestRegaAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception ;
 }

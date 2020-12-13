@@ -64,7 +64,25 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 
 	@Autowired
 	private WtmApplMapper applMapper;
-	
+
+	@Autowired
+	WtmInboxService inbox;
+
+	@Autowired
+	WtmApplLineRepository wtmApplLineRepo;
+
+	@Autowired
+	WtmApplLineService applLineService;
+
+	@Autowired
+	WtmApplCodeRepository wtmApplCodeRepo;
+
+	@Autowired
+	WtmInterfaceService interfaceService;
+
+	@Autowired
+	WtmAnnualUsedService annualUsedService;
+
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
 		WtmAppl wtmAppl =wtmApplRepo.findByApplId(applId);
@@ -202,8 +220,37 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 	@Override
 	public ReturnParam request(Long tenantId, String enterCd, Long applId, String workTypeCd,
 			Map<String, Object> paramMap, String sabun, String userId) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		ReturnParam rp = new ReturnParam();
+		rp = imsi(tenantId, enterCd, applId, workTypeCd, paramMap, WtmApplService.APPL_STATUS_APPLY_ING, sabun, userId);
+
+		List<String> apprSabun = new ArrayList();
+		if(rp!=null && rp.getStatus()!=null && "OK".equals(rp.getStatus())) {
+
+			applId = Long.valueOf(rp.get("applId").toString());
+			List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprTypeCdAscApprSeqAsc(applId);
+
+			if(lines != null && lines.size() > 0) {
+				for(WtmApplLine line : lines) {
+
+					if(APPL_LINE_I.equals(line.getApprTypeCd())) { //기안
+						//첫번째 결재자의 상태만 변경 후 스탑
+						line.setApprStatusCd(APPR_STATUS_APPLY);
+						line.setApprDate(new Date());
+						line = wtmApplLineRepo.save(line);
+					} else if(APPL_LINE_S.equals(line.getApprTypeCd()) || APPL_LINE_R.equals(line.getApprTypeCd())) { //결재
+						//첫번째 결재자의 상태만 변경 후 스탑
+						apprSabun.add(line.getApprSabun());
+						line.setApprStatusCd(APPR_STATUS_REQUEST);
+						line = wtmApplLineRepo.save(line);
+						break;
+					}
+
+				}
+			}
+			inbox.setInbox(tenantId, enterCd, apprSabun, applId, workTypeCd, "결재요청 : 휴가신청", "휴가신청이 완료되었습니다.", "Y");
+			rp.setSuccess("저장이 성공하였습니다.");
+		}
+		return rp;
 	}
 
 	@Override
@@ -216,15 +263,244 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 	@Override
 	public ReturnParam apply(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap,
 			String sabun, String userId) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		ReturnParam rp = new ReturnParam();
+
+		rp.setFail("");
+		paramMap.put("applId", applId);
+
+		ObjectMapper mapper = new ObjectMapper();
+
+		//신청 대상자
+		List<String> applSabuns = null;
+		if(paramMap.get("applSabuns")!=null && !"".equals(paramMap.get("applSabuns"))) {
+			applSabuns = mapper.readValue(paramMap.get("applSabuns").toString(), new ArrayList<String>().getClass());
+		} else {
+			//개인 신청
+			applSabuns = new ArrayList<String>();
+			applSabuns.add(sabun);
+		}
+
+		logger.debug("휴가 승인 대상자 : " + mapper.writeValueAsString(applSabuns));
+
+		//결재라인 상태값 업데이트
+		//WtmApplLine line = wtmApplLineRepo.findByApplIdAndApprSeq(applId, apprSeq);
+		List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);
+
+		String apprSabun = null;
+		//마지막 결재자인지 확인하자
+		boolean lastAppr = false;
+		if(lines != null && lines.size() > 0) {
+			for(int i = 0; i < lines.size(); i++) {
+				WtmApplLine line = lines.get(i);
+
+				if(line.getApprSeq() == apprSeq && line.getApprSabun().equals(sabun)) {
+					line.setApprStatusCd(APPR_STATUS_APPLY);
+					line.setApprDate(new Date());
+					//결재의견
+					if(paramMap != null && paramMap.containsKey("apprOpinion")) {
+						line.setApprOpinion(paramMap.get("apprOpinion").toString());
+						line.setUpdateId(userId);
+					}
+					apprSabun = line.getApprSabun();
+					line = wtmApplLineRepo.save(line);
+					lastAppr = true;
+				}else {
+					if(lastAppr) {
+						line.setApprStatusCd(APPR_STATUS_REQUEST);
+						line = wtmApplLineRepo.save(line);
+						apprSabun = line.getApprSabun();
+					}
+					lastAppr = false;
+				}
+			}
+		}
+
+		WtmAppl appl = wtmApplRepo.findById(applId).get();
+
+		if(lastAppr) {
+
+			List<WtmTaaApplDet> taaApplDets = wtmTaaApplDetRepo.findByApplId(applId);
+			rp.setFail("");
+			String status = "99";
+
+			//변경 전의 상태값을 가지고 있는데 99였다가 44가 될 경우엔 RESULT를 다시 생성해야하기 때문이다.
+			//21 > 44 는 괜찮다.
+			String preApplStatus = null;
+
+			if (appl != null) {
+				preApplStatus = appl.getApplStatusCd();
+				if (!preApplStatus.equals(status)) {
+
+					appl.setApplStatusCd(status);
+
+
+					for (WtmTaaApplDet taaApplDet : taaApplDets) {
+						Map<String, Object> work = new HashMap<String, Object>();
+						work.put("startYmd", taaApplDet.getSymd());
+						work.put("endYmd", taaApplDet.getEymd());
+						work.put("workTimeCode", taaApplDet.getTaaCd());
+
+						WtmTaaAppl taaAppl = wtmTaaApplRepo.findById(taaApplDet.getTaaApplId()).get();
+
+						logger.debug("===============================taaResult======================================= ");
+						logger.debug("status : " + status);
+
+						List<String> statusList = new ArrayList<String>();
+						statusList.add(WtmApplService.APPL_STATUS_APPLY_ING);
+						statusList.add(WtmApplService.APPL_STATUS_APPLY_REJECT);
+						statusList.add(WtmApplService.APPL_STATUS_APPR);
+						statusList.add(WtmApplService.APPL_STATUS_APPR_ING);
+						statusList.add(WtmApplService.APPL_STATUS_APPR_REJECT);
+						statusList.add(WtmApplService.APPL_STATUS_CANCEL);
+						statusList.add(WtmApplService.APPL_STATUS_IMSI);
+
+						if (statusList.indexOf(status) == -1) {
+							throw new RuntimeException("지원하지 않은 신청서 상태코드");
+						}
+
+						logger.debug("============================== HIS END ");
+						logger.debug("============================== preApplStatus : " + preApplStatus);
+						logger.debug("============================== status : " + status);
+						//이건 상태랑 같으면 무시
+						if (preApplStatus == null || !preApplStatus.equals(status)) {
+
+							if (status.equals(WtmApplService.APPL_STATUS_APPR)
+									|| status.equals(WtmApplService.APPL_STATUS_APPR_REJECT)
+									|| status.equals(WtmApplService.APPL_STATUS_CANCEL)) {
+
+								//List<Map<String, Object>> worksDet = new ArrayList<Map<String,Object>>();
+
+								SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+								Calendar cal1 = Calendar.getInstance();
+								Calendar cal2 = Calendar.getInstance();
+								try {
+									cal1.setTime(ymd.parse(taaApplDet.getSymd()));
+									cal2.setTime(ymd.parse(taaApplDet.getEymd()));
+								} catch (ParseException e) {
+									e.printStackTrace();
+								}
+
+								Date d1 = cal1.getTime();
+								Date d2 = cal2.getTime();
+								while (d1.compareTo(d2) < 1) {
+									logger.debug("cal1 : " + d1);
+									logger.debug("cal2 : " + d2);
+									String d = ymd.format(d1);
+									cal1.add(Calendar.DATE, 1);
+
+									d1 = cal1.getTime();
+
+									interfaceService.resetTaaResult(appl.getTenantId(), appl.getEnterCd(), appl.getApplSabun(), d);
+
+								}
+							}
+						}
+
+					}
+
+					//  연차사용 저장
+					for(WtmTaaApplDet det : taaApplDets){
+
+						String symd = det.getSymd();
+						String eymd = det.getEymd();
+						String yy   = symd.substring(0,4);
+
+						String annualTaCd = det.getTaaCd();
+
+						//  WTM_TAA_CODE.REQUEST_TYPE_CD 조회
+						WtmTaaCode taaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, annualTaCd);
+						String requestCd = taaCode.getRequestTypeCd();
+
+						//  계산 해야함. totDays, holDays
+						Map<String, Integer> calMap = calcService.calcDayCnt(tenantId, enterCd, symd, eymd);
+						logger.debug("calMap.toString() : " + calMap.toString());
+
+						Double totalCnt         = calMap.get("totDays").doubleValue();
+						Double usedCnt          = totalCnt - calMap.get("holDays").doubleValue();
+
+						switch (requestCd) {
+							case "A":
+							case "P":
+
+								if (usedCnt != 0) {
+									usedCnt   = 0.5;
+								}
+
+						}
+						annualUsedService.save(tenantId, enterCd, sabun, sabun, yy, annualTaCd, symd, eymd, usedCnt, det.getNote());
+					}
+					wtmApplRepo.save(appl);
+
+					rp.setSuccess("결재가 완료되었습니다.");
+				}
+			}
+
+			appl.setApplStatusCd((lastAppr) ? APPL_STATUS_APPR : APPL_STATUS_APPLY_ING);
+			appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
+			appl.setUpdateId(userId);
+
+			appl = wtmApplRepo.save(appl);
+		}
+		List<String> pushSabun = new ArrayList();
+		if(lastAppr) {
+			pushSabun.addAll(applSabuns);
+			inbox.setInbox(tenantId, enterCd, pushSabun, applId, "APPLY", "결재완료", "휴가 신청서가  승인되었습니다.", "N");
+
+			rp.put("msgType", "APPLY");
+		} else {
+			pushSabun.add(apprSabun);
+			inbox.setInbox(tenantId, enterCd, pushSabun, applId, "APPR", "결재요청 : 휴가 신청", "", "N");
+
+			rp.put("msgType", "APPR");
+		}
+
+		return rp;
 	}
 
 	@Override
-	public ReturnParam reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap,
-			String sabun, String userId) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+	public ReturnParam reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap, String sabun, String userId) throws Exception {
+
+		ReturnParam rp = new ReturnParam();
+
+		if(paramMap == null || !paramMap.containsKey("apprOpinion") && paramMap.get("apprOpinion").equals("")) {
+			rp.setFail("사유를 입력하세요.");
+			throw new Exception("사유를 입력하세요.");
+		}
+		List<String> applSabun = new ArrayList();
+		applSabun.add(paramMap.get("applSabun").toString());
+//		String applSabun = paramMap.get("applSabun").toString();
+		String apprOpinion = paramMap.get("apprOpinion").toString();
+
+		List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);
+		if(lines != null && lines.size() > 0) {
+			for(WtmApplLine line : lines) {
+				if(line.getApprSeq() <= apprSeq) {
+					line.setApprStatusCd(APPR_STATUS_REJECT);
+					//반려일때는 date가 안들어가도 되는건지?? 확인해보기
+					line.setApprDate(new Date());
+					if(line.getApprSeq() == apprSeq) {
+						line.setApprOpinion(apprOpinion);
+					}
+				}else {
+					line.setApprStatusCd("");
+				}
+				line.setUpdateId(userId);
+				wtmApplLineRepo.save(line);
+			}
+		}
+		WtmAppl appl = wtmApplRepo.findById(applId).get();
+		appl.setApplStatusCd(APPL_STATUS_APPLY_REJECT);
+		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
+		appl.setUpdateId(userId);
+		wtmApplRepo.save(appl);
+
+		inbox.setInbox(tenantId, enterCd, applSabun, applId, "APPLY", "결재완료", "휴가 신청서가 반려되었습니다.", "N");
+
+		//메일 전송을 위한 파라미터
+		rp.put("from", sabun);
+		rp.put("to", applSabun);
+
+		return rp;
 	}
 
 	@Override
@@ -245,6 +521,8 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 		List<WtmTaaAppl> taaAppls = wtmTaaApplRepo.findByApplId(applId);
 		SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
 
+		WtmApplCode applCode = getApplInfo(tenantId, enterCd, workTypeCd);
+
 		//기신청 데이터 
 		if(taaAppls == null || taaAppls.size() == 0) {
 			//logger.debug("works.size() : " + works.size());
@@ -262,15 +540,21 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 						//있으면 문제다. 데이터 동기화 작업이 필요. 99일 경우
 						//preApplStatus = appl.getApplStatusCd();
 					}
-					appl.setApplCd(WtmApplService.TIME_TYPE_TAA);
+					appl.setApplCd(WtmApplService.TIME_TYPE_ANNUAL);
 					appl.setApplSabun(applSabun);
 					appl.setApplInSabun(applSabun);
 					appl.setApplStatusCd(status);
-					appl.setUpdateId("TAA_INTF");
+					appl.setUpdateId("WTM_ANNUAL");
 					
 					appl = wtmApplRepo.save(appl);
 
 					applId = appl.getApplId();
+
+					//IF에도 번호를 넣어주자 추후에 승인시 필요하다..
+					if(applId != null) {
+						appl.setIfApplNo(applId.toString());
+						appl = wtmApplRepo.save(appl);
+					}
 					 
 					//for(Map<String, Object> w : works) {
 						//String sabun = w.get("sabun")+"";
@@ -283,7 +567,7 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 							taaAppl.setEnterCd(enterCd);
 							taaAppl.setApplId(appl.getApplId());
 							taaAppl.setSabun(sabun);
-							taaAppl.setIfApplNo(null);
+							taaAppl.setIfApplNo(applId.toString());
 							taaAppl.setUpdateId(userId);
 //							taaAppl.setTaaCd(taaCd);
 							
@@ -356,8 +640,9 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 
 										wtmTaaApplDetRepo.save(taaApplDet);
 									}
+									applLineService.saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, workTypeCd, applSabun, userId);
 									rp.put("applId", applId);
-									rp.setSuccess("");
+									rp.setSuccess("신청이 완료되었습니다.");
 								}else {
 									throw new RuntimeException("근태정보가 부족합니다.");
 								} 
@@ -405,7 +690,6 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 	@Override
 	public ReturnParam validate(Long tenantId, String enterCd, String sabun, String workTypeCd,
 			Map<String, Object> work) {
-
 
 		ReturnParam rp = new ReturnParam();
 
@@ -830,6 +1114,10 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 			Map<String, Object> convertMap) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	protected WtmApplCode getApplInfo(Long tenantId,String enterCd,String applCd) {
+		return wtmApplCodeRepo.findByTenantIdAndEnterCdAndApplCd(tenantId, enterCd, applCd);
 	}
 
 }

@@ -1,12 +1,12 @@
 package com.isu.ifw.service;
 
-import java.net.URI;
-import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.isu.ifw.common.service.TenantConfigManagerService;
+import com.isu.ifw.entity.WtmTaaCode;
+import com.isu.ifw.mapper.*;
+import com.isu.ifw.repository.WtmApplCodeRepository;
+import com.isu.ifw.repository.WtmTaaCodeRepository;
+import com.isu.ifw.util.MobileUtil;
+import com.isu.ifw.vo.WtmApplLineVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,16 +15,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.isu.ifw.common.service.TenantConfigManagerService;
-import com.isu.ifw.mapper.WtmApplMapper;
-import com.isu.ifw.mapper.WtmCalendarMapper;
-import com.isu.ifw.mapper.WtmEntryApplMapper;
-import com.isu.ifw.mapper.WtmInoutHisMapper;
-import com.isu.ifw.mapper.WtmOtApplMapper;
-import com.isu.ifw.mapper.WtmWorktimeMapper;
-import com.isu.ifw.repository.WtmApplCodeRepository;
-import com.isu.ifw.util.MobileUtil;
-import com.isu.ifw.vo.WtmApplLineVO;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service("mobileService")
 public class WtmMobileServiceImpl implements WtmMobileService{
@@ -61,6 +56,9 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		
 	@Autowired
 	WtmCalendarMapper calendarMapper;
+
+	@Autowired
+	WtmTaaCodeRepository wtmTaaCodeRepo;
 
 	@Override
 	public List<Map<String, Object>> getTermList(Map<String, Object> paramMap) throws Exception  {
@@ -337,5 +335,28 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 		paramMap.put("orgList", empService.getLowLevelOrgList(Long.parseLong(paramMap.get("tenantId").toString()), paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("ymd").toString()));
 
 		return calendarMapper.getTeamDayResultListNotInLLA(paramMap);
+	}
+
+	//code로 콤보박스 그리기
+	public Map<String,Object> getTaaCodeList(Long tenantId, String enterCd, String key) throws Exception {
+//		Map<String,Map<String,Object>> itemPropertiesMap = new HashMap();
+
+		List<Map<String,Object>> itemCollection = new ArrayList();
+
+		List<WtmTaaCode> taaCodeList = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaTypeCd(tenantId, enterCd, key);
+		for (WtmTaaCode taaCode : taaCodeList) {
+
+			String value = taaCode.getTaaCd().toString();
+			String text = taaCode.getTaaNm().toString();
+			Map<String,Object> item = new HashMap<String,Object>();
+
+			item.put("text", text);
+			item.put("value", value);
+			itemCollection.add(item);
+		}
+
+		Map<String,Object> item = new HashMap();
+		item.put("collection", itemCollection);
+		return item;
 	}
 }
