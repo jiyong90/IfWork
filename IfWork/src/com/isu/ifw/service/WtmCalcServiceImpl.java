@@ -2367,7 +2367,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 									  	  				 WHEN X.TIME_TYPE_CD IN ('OT', 'FIXOT', 'NIGHT') AND F_WTM_DATE_FORMAT(NOW(), 'YMD') > X.YMD THEN IFNULL(X.APPR_MINUTE, 0) 
 											          ELSE 0 END) AS NOW_OT_MINUTE
 										 */
-										if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA))
+										// 대체휴무도 인정시간은 생성하진 않지만 소정근로시간에는 포함시키자!
+										if( (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS))
 											) {
 											//오늘 포함 미래일
 											if(Integer.parseInt(today) <= Integer.parseInt(result.getYmd())) {

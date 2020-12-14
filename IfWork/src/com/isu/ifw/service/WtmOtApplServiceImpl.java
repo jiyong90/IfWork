@@ -1052,12 +1052,12 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			// 대체휴가 사용여부 체크
 			if(applCode.getSubsYn()!=null && "Y".equals(applCode.getSubsYn())) {
 				rp.put("subsYn", applCode.getSubsYn());
-			}	
-			
+			}
 			// 수당지급 대상자 인지 확인
 			Long subsRuleId = applCode.getSubsRuleId();
 			System.out.println("preCheckOneByOne  subsRuleId ::::: " + subsRuleId + " !!!!");
-			if(subsRuleId != null) 
+			System.out.println("preCheckOneByOne  subsRuleId ::::: " + subsRuleId + " !!!!");
+			if(subsRuleId != null)
 				ruleIds.add(subsRuleId);
 			
 			if(ruleIds.size()>0) {
