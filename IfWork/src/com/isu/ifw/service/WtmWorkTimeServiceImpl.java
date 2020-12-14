@@ -1,15 +1,5 @@
 package com.isu.ifw.service;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmBaseWorkMgr;
 import com.isu.ifw.entity.WtmTimeChgHis;
@@ -23,6 +13,17 @@ import com.isu.ifw.repository.WtmTimeChgHisRepository;
 import com.isu.ifw.repository.WtmWorkCalendarRepository;
 import com.isu.ifw.repository.WtmWorkPattDetRepository;
 import com.isu.ifw.util.WtmUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
@@ -271,93 +272,108 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 			paramMap.put("eYmd", ymd);
 			
 			for(Map<String, Object> t : chgTargetList) {
-				WtmTimeChgHis history = new WtmTimeChgHis();
-				String sabun = t.get("sabun").toString();
-				paramMap.put("sabun", sabun);
-				
-				history.setTenantId(tenantId);
-				history.setEnterCd(enterCd);
-				history.setSabun(t.get("sabun").toString());
-				history.setYmd(ymd);
-				history.setTimeTypeCd(t.get("timeTypeCd").toString());
-				history.setTimeCdMgrId(Long.valueOf(t.get("timeCdMgrId").toString()));
-				
-				if(t.get("planSdate")!=null && !"".equals(t.get("planSdate"))) {
-					history.setPlanSdate(WtmUtil.toDate(t.get("planSdate").toString(), "yyyyMMddHHmmss"));
-				}
-				if(t.get("planEdate")!=null && !"".equals(t.get("planEdate"))) {
-					history.setPlanEdate(WtmUtil.toDate(t.get("planEdate").toString(), "yyyyMMddHHmmss"));
-				}
-				if(t.get("planMinute")!=null && !"".equals(t.get("planMinute"))) {
-					String planMinute = t.get("planMinute").toString();
-					String[] hm = planMinute.split(":");
-					
-					int hour = 0;
-					int min = 0;
-					if(hm[0]!=null && !"".equals(hm[0])) {
-						hour = Integer.valueOf(hm[0]);
-						hour *= 60;
-					}
-					if(hm[1]!=null && !"".equals(hm[1])) {
-						min = Integer.valueOf(hm[1]);
-					}
-					
-					history.setPlanMinute(hour+min);
-				}
-				
-				history.setUpdateId(userId);
-				
-				histories.add(history);
-				
-				//calendar timeCdMgrId 변경
-				WtmWorkCalendar workCalendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
-				workCalendar.setTimeCdMgrId(timeCdMgrId);
-				workCalendarRepo.save(workCalendar);
-				
-				Map<String, Object> flexibleEmp = flexibleEmpMapper.getFlexibleEmp(paramMap);
-				
-				// 공휴일 제외 여부
-				String holExceptYn = "N";
-				if(flexibleEmp.get("holExceptYn")!=null && !"".equals(flexibleEmp.get("holExceptYn"))) 
-					holExceptYn = flexibleEmp.get("holExceptYn").toString();
 
-				// 근무제 패턴으로 정해놓은 일 수  
-				int maxPattDet = 0;
-				WtmWorkPattDet workPattDet = workPattDetRepo.findTopByFlexibleStdMgrIdOrderBySeqDesc(Long.valueOf(flexibleEmp.get("flexibleStdMgrId").toString()));
-				if(workPattDet!=null && workPattDet.getSeq()!=null) 
-					maxPattDet = workPattDet.getSeq();
-				
-				//calendar 기반으로 result reset
-				Long pKey = null;
-				String pType = null;
-				
-				//근무조인지
-				Map<String, Object> workteam = workteamEmpMapper.getWorkteamEmp(paramMap);
-				if(workteam!=null && workteam.containsKey("workteamMgrId") && workteam.get("workteamMgrId")!=null) {
-					pType = "WORKTEAM";
-					pKey = Long.valueOf(workteam.get("workteamMgrId").toString()); 
-				} else {
-					pType = "BASE";
-					WtmBaseWorkMgr baseWorkMgr = baseWorkMgrRepo.findByTenantIdAndEnterCdAndFlexibleStdMgrIdAndYmd(tenantId, enterCd, Long.valueOf(flexibleEmp.get("flexibleStdMgrId").toString()), ymd);
-					if(baseWorkMgr!=null && baseWorkMgr.getBaseWorkMgrId()!=null)
-						pKey = baseWorkMgr.getBaseWorkMgrId();
-				}
-				
-				paramMap.put("pKey", pKey); //workteam이면 workTeamMgrId, base이면 baseMgrId
-				paramMap.put("pType", pType); //workteam or base
-				paramMap.put("holExceptYn", holExceptYn);
-				paramMap.put("maxPattSeq", maxPattDet);
-				paramMap.put("flexibleEmpId", Long.valueOf(flexibleEmp.get("flexibleEmpId").toString()));
-				flexibleEmpMapper.resetWorkDayResult(paramMap);
-				
-				//calc 인정근무시간
-				if(workCalendar.getEntrySdate()!=null || workCalendar.getEntryEdate()!=null) {
-					//appr null로
+				if("BASE".equals(t.get("timeTypeCd"))) {
+					WtmTimeChgHis history = new WtmTimeChgHis();
+					String sabun = t.get("sabun").toString();
 					paramMap.put("sabun", sabun);
-					paramMap.put("stdYmd", ymd);
-					flexibleEmpMapper.updateResultAppr(paramMap);
-					empService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
+
+					history.setTenantId(tenantId);
+					history.setEnterCd(enterCd);
+					history.setSabun(t.get("sabun").toString());
+					history.setYmd(ymd);
+					history.setTimeTypeCd(t.get("timeTypeCd").toString());
+					history.setTimeCdMgrId(Long.valueOf(t.get("timeCdMgrId").toString()));
+
+					if(t.get("planSdate")!=null && !"".equals(t.get("planSdate"))) {
+						history.setPlanSdate(WtmUtil.toDate(t.get("planSdate").toString(), "yyyyMMddHHmmss"));
+					}
+					if(t.get("planEdate")!=null && !"".equals(t.get("planEdate"))) {
+						history.setPlanEdate(WtmUtil.toDate(t.get("planEdate").toString(), "yyyyMMddHHmmss"));
+					}
+					if(t.get("planMinute")!=null && !"".equals(t.get("planMinute"))) {
+						String planMinute = t.get("planMinute").toString();
+						String[] hm = planMinute.split(":");
+
+						int hour = 0;
+						int min = 0;
+						if(hm[0]!=null && !"".equals(hm[0])) {
+							hour = Integer.valueOf(hm[0]);
+							hour *= 60;
+						}
+						if(hm[1]!=null && !"".equals(hm[1])) {
+							min = Integer.valueOf(hm[1]);
+						}
+
+						history.setPlanMinute(hour+min);
+					}
+
+					history.setUpdateId(userId);
+
+					histories.add(history);
+
+					//calendar timeCdMgrId 변경
+					WtmWorkCalendar workCalendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
+					workCalendar.setTimeCdMgrId(timeCdMgrId);
+					workCalendarRepo.save(workCalendar);
+
+					Map<String, Object> flexibleEmp = flexibleEmpMapper.getFlexibleEmp(paramMap);
+
+					// 공휴일 제외 여부
+					String holExceptYn = "N";
+					if(flexibleEmp.get("holExceptYn")!=null && !"".equals(flexibleEmp.get("holExceptYn")))
+						holExceptYn = flexibleEmp.get("holExceptYn").toString();
+
+					// 근무제 패턴으로 정해놓은 일 수
+					int maxPattDet = 0;
+					WtmWorkPattDet workPattDet = workPattDetRepo.findTopByFlexibleStdMgrIdOrderBySeqDesc(Long.valueOf(flexibleEmp.get("flexibleStdMgrId").toString()));
+					if(workPattDet!=null && workPattDet.getSeq()!=null)
+						maxPattDet = workPattDet.getSeq();
+
+					//calendar 기반으로 result reset
+					Long pKey = null;
+					String pType = null;
+
+
+					//근무조인지
+					Map<String, Object> workteam = workteamEmpMapper.getWorkteamEmp(paramMap);
+					if(workteam!=null && workteam.containsKey("workteamMgrId") && workteam.get("workteamMgrId")!=null) {
+						pType = "WORKTEAM";
+						pKey = Long.valueOf(workteam.get("workteamMgrId").toString());
+					} else {
+						pType = "BASE";
+						WtmBaseWorkMgr baseWorkMgr = baseWorkMgrRepo.findByTenantIdAndEnterCdAndFlexibleStdMgrIdAndYmd(tenantId, enterCd, Long.valueOf(flexibleEmp.get("flexibleStdMgrId").toString()), ymd);
+						if(baseWorkMgr!=null && baseWorkMgr.getBaseWorkMgrId()!=null)
+							pKey = baseWorkMgr.getBaseWorkMgrId();
+					}
+
+					paramMap.put("pKey", pKey); //workteam이면 workTeamMgrId, base이면 baseMgrId
+					paramMap.put("pType", pType); //workteam or base
+					paramMap.put("holExceptYn", holExceptYn);
+					paramMap.put("maxPattSeq", maxPattDet);
+					paramMap.put("flexibleEmpId", Long.valueOf(flexibleEmp.get("flexibleEmpId").toString()));
+					flexibleEmpMapper.resetWorkDayResult(paramMap);
+
+
+					/*
+					그린캐미칼(TENANT_ID = 102) 근무시간 변경시 변경전 OT 근무가 있을경우 변경 후에도 OT 근무를 생성해 준다.
+					 */
+					if(tenantId == 102 || tenantId == 4) {
+						if(t.get("planMinute")!=null && !"".equals(t.get("planMinute"))) {
+
+						}
+					}
+
+					//calc 인정근무시간
+					if(workCalendar.getEntrySdate()!=null || workCalendar.getEntryEdate()!=null) {
+						//appr null로
+						paramMap.put("sabun", sabun);
+						paramMap.put("stdYmd", ymd);
+						flexibleEmpMapper.updateResultAppr(paramMap);
+						empService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
+					}
 				}
+
 			}
 			timeChgHisRepo.saveAll(histories);
 		}

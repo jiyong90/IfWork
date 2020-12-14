@@ -81,6 +81,9 @@ public interface WtmApplService {
 
 	final static String TIME_TYPE_EXCEPT = "EXCEPT";
 
+	final static String TIME_TYPE_ANNUAL = "ANNUAL";
+	final static String TIME_TYPE_ANNUAL_CAN = "ANNUAL_CAN";
+
 
 	//현출 현퇴
 	final static String TIME_TYPE_ETC = "ETC";

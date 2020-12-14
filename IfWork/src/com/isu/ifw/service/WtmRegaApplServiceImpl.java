@@ -1,6 +1,5 @@
 package com.isu.ifw.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.*;
 import com.isu.ifw.mapper.WtmValidatorMapper;
@@ -58,6 +57,21 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 	@Autowired
 	WtmFlexibleEmpService wtmFlexibleEmpService;
 
+	@Autowired
+	WtmApplLineRepository wtmApplLineRepo;
+
+	@Autowired
+	WtmInboxService inbox;
+
+	@Autowired
+	WtmInterfaceService interfaceService;
+
+	@Autowired
+	WtmApplLineService applLineService;
+
+	@Autowired
+	WtmApplCodeRepository wtmApplCodeRepo;
+
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
 		// TODO Auto-generated method stub
@@ -82,10 +96,54 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 		return null;
 	}
 
+	/**
+	 * 출장 신청
+	 * @param tenantId
+	 * @param enterCd
+	 * @param applId
+	 * @param workTypeCd
+	 * @param paramMap
+	 * @param sabun
+	 * @param userId
+	 * @return
+	 * @throws Exception
+	 */
+	@Transactional
 	@Override
 	public ReturnParam request(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap, String sabun, String userId) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+
+		ReturnParam rp = new ReturnParam();
+		rp = imsi(tenantId, enterCd, applId, workTypeCd, paramMap, WtmApplService.APPL_STATUS_APPLY_ING, sabun, userId);
+
+		List<String> apprSabun = new ArrayList();
+		if(rp!=null && rp.getStatus()!=null && "OK".equals(rp.getStatus())) {
+
+			applId = Long.valueOf(rp.get("applId").toString());
+			List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprTypeCdAscApprSeqAsc(applId);
+
+			if(lines != null && lines.size() > 0) {
+				for(WtmApplLine line : lines) {
+
+					if(APPL_LINE_I.equals(line.getApprTypeCd())) { //기안
+						//첫번째 결재자의 상태만 변경 후 스탑
+						line.setApprStatusCd(APPR_STATUS_APPLY);
+						line.setApprDate(new Date());
+						line = wtmApplLineRepo.save(line);
+					} else if(APPL_LINE_S.equals(line.getApprTypeCd()) || APPL_LINE_R.equals(line.getApprTypeCd())) { //결재
+						//첫번째 결재자의 상태만 변경 후 스탑
+						apprSabun.add(line.getApprSabun());
+						line.setApprStatusCd(APPR_STATUS_REQUEST);
+						line = wtmApplLineRepo.save(line);
+						break;
+					}
+
+				}
+			}
+			inbox.setInbox(tenantId, enterCd, apprSabun, applId, workTypeCd, "결재요청 : 출장신청", "출장신청이 완료되었습니다.", "Y");
+			rp.setSuccess("저장이 성공하였습니다.");
+		}
+
+		return rp;
 	}
 
 	@Override
@@ -94,16 +152,222 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 		return null;
 	}
 
+	/**
+	 * 결재 승인
+	 * @param tenantId
+	 * @param enterCd
+	 * @param applId
+	 * @param apprSeq
+	 * @param paramMap
+	 * @param sabun
+	 * @param userId
+	 * @return
+	 * @throws Exception
+	 */
 	@Override
 	public ReturnParam apply(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap, String sabun, String userId) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		ReturnParam rp = new ReturnParam();
+
+		rp.setFail("");
+		paramMap.put("applId", applId);
+
+		ObjectMapper mapper = new ObjectMapper();
+
+		//신청 대상자
+		List<String> applSabuns = null;
+		if(paramMap.get("applSabuns")!=null && !"".equals(paramMap.get("applSabuns"))) {
+			applSabuns = mapper.readValue(paramMap.get("applSabuns").toString(), new ArrayList<String>().getClass());
+		} else {
+			//개인 신청
+			applSabuns = new ArrayList<String>();
+			applSabuns.add(sabun);
+		}
+
+		logger.debug("휴가 승인 대상자 : " + mapper.writeValueAsString(applSabuns));
+
+		//결재라인 상태값 업데이트
+		//WtmApplLine line = wtmApplLineRepo.findByApplIdAndApprSeq(applId, apprSeq);
+		List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);
+
+		String apprSabun = null;
+		//마지막 결재자인지 확인하자
+		boolean lastAppr = false;
+		if(lines != null && lines.size() > 0) {
+			for(int i = 0; i < lines.size(); i++) {
+				WtmApplLine line = lines.get(i);
+
+				if(line.getApprSeq() == apprSeq && line.getApprSabun().equals(sabun)) {
+					line.setApprStatusCd(APPR_STATUS_APPLY);
+					line.setApprDate(new Date());
+					//결재의견
+					if(paramMap != null && paramMap.containsKey("apprOpinion")) {
+						line.setApprOpinion(paramMap.get("apprOpinion").toString());
+						line.setUpdateId(userId);
+					}
+					apprSabun = line.getApprSabun();
+					line = wtmApplLineRepo.save(line);
+					lastAppr = true;
+				}else {
+					if(lastAppr) {
+						line.setApprStatusCd(APPR_STATUS_REQUEST);
+						line = wtmApplLineRepo.save(line);
+						apprSabun = line.getApprSabun();
+					}
+					lastAppr = false;
+				}
+			}
+		}
+
+		WtmAppl appl = wtmApplRepo.findById(applId).get();
+
+		if(lastAppr) {
+
+			List<WtmTaaApplDet> taaApplDets = wtmTaaApplDetRepo.findByApplId(applId);
+			rp.setFail("");
+			String status = "99";
+
+			//변경 전의 상태값을 가지고 있는데 99였다가 44가 될 경우엔 RESULT를 다시 생성해야하기 때문이다.
+			//21 > 44 는 괜찮다.
+			String preApplStatus = null;
+
+			if (appl != null) {
+				preApplStatus = appl.getApplStatusCd();
+				if (!preApplStatus.equals(status)) {
+
+					appl.setApplStatusCd(status);
+					wtmApplRepo.save(appl);
+
+					for (WtmTaaApplDet taaApplDet : taaApplDets) {
+						Map<String, Object> work = new HashMap<String, Object>();
+						work.put("startYmd", taaApplDet.getSymd());
+						work.put("endYmd", taaApplDet.getEymd());
+						work.put("workTimeCode", taaApplDet.getTaaCd());
+
+						WtmTaaAppl taaAppl = wtmTaaApplRepo.findById(taaApplDet.getTaaApplId()).get();
+
+						logger.debug("===============================taaResult======================================= ");
+						logger.debug("status : " + status);
+
+						List<String> statusList = new ArrayList<String>();
+						statusList.add(WtmApplService.APPL_STATUS_APPLY_ING);
+						statusList.add(WtmApplService.APPL_STATUS_APPLY_REJECT);
+						statusList.add(WtmApplService.APPL_STATUS_APPR);
+						statusList.add(WtmApplService.APPL_STATUS_APPR_ING);
+						statusList.add(WtmApplService.APPL_STATUS_APPR_REJECT);
+						statusList.add(WtmApplService.APPL_STATUS_CANCEL);
+						statusList.add(WtmApplService.APPL_STATUS_IMSI);
+
+						if (statusList.indexOf(status) == -1) {
+							throw new RuntimeException("지원하지 않은 신청서 상태코드");
+						}
+
+						logger.debug("============================== HIS END ");
+						logger.debug("============================== preApplStatus : " + preApplStatus);
+						logger.debug("============================== status : " + status);
+						//이건 상태랑 같으면 무시
+						if (preApplStatus == null || !preApplStatus.equals(status)) {
+
+							if (status.equals(WtmApplService.APPL_STATUS_APPR)
+									|| status.equals(WtmApplService.APPL_STATUS_APPR_REJECT)
+									|| status.equals(WtmApplService.APPL_STATUS_CANCEL)) {
+
+								//List<Map<String, Object>> worksDet = new ArrayList<Map<String,Object>>();
+
+								SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+								Calendar cal1 = Calendar.getInstance();
+								Calendar cal2 = Calendar.getInstance();
+								try {
+									cal1.setTime(ymd.parse(taaApplDet.getSymd()));
+									cal2.setTime(ymd.parse(taaApplDet.getEymd()));
+								} catch (ParseException e) {
+									e.printStackTrace();
+								}
+
+								Date d1 = cal1.getTime();
+								Date d2 = cal2.getTime();
+								while (d1.compareTo(d2) < 1) {
+									logger.debug("cal1 : " + d1);
+									logger.debug("cal2 : " + d2);
+									String d = ymd.format(d1);
+									cal1.add(Calendar.DATE, 1);
+
+									d1 = cal1.getTime();
+
+									interfaceService.resetTaaResult(appl.getTenantId(), appl.getEnterCd(), appl.getApplSabun(), d);
+
+								}
+							}
+						}
+					}
+					rp.setSuccess("결재가 완료되었습니다.");
+				}
+			}
+
+			appl.setApplStatusCd((lastAppr) ? APPL_STATUS_APPR : APPL_STATUS_APPLY_ING);
+			appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
+			appl.setUpdateId(userId);
+
+			appl = wtmApplRepo.save(appl);
+		}
+		List<String> pushSabun = new ArrayList();
+		if(lastAppr) {
+			pushSabun.addAll(applSabuns);
+			inbox.setInbox(tenantId, enterCd, pushSabun, applId, "APPLY", "결재완료", "출장 신청서가  승인되었습니다.", "N");
+
+			rp.put("msgType", "APPLY");
+		} else {
+			pushSabun.add(apprSabun);
+			inbox.setInbox(tenantId, enterCd, pushSabun, applId, "APPR", "결재요청 : 출장 신청", "", "N");
+
+			rp.put("msgType", "APPR");
+		}
+
+		return rp;
 	}
 
 	@Override
 	public ReturnParam reject(Long tenantId, String enterCd, Long applId, int apprSeq, Map<String, Object> paramMap, String sabun, String userId) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		ReturnParam rp = new ReturnParam();
+
+		if(paramMap == null || !paramMap.containsKey("apprOpinion") && paramMap.get("apprOpinion").equals("")) {
+			rp.setFail("사유를 입력하세요.");
+			throw new Exception("사유를 입력하세요.");
+		}
+		List<String> applSabun = new ArrayList();
+		applSabun.add(paramMap.get("applSabun").toString());
+//		String applSabun = paramMap.get("applSabun").toString();
+		String apprOpinion = paramMap.get("apprOpinion").toString();
+
+		List<WtmApplLine> lines = wtmApplLineRepo.findByApplIdOrderByApprSeqAsc(applId);
+		if(lines != null && lines.size() > 0) {
+			for(WtmApplLine line : lines) {
+				if(line.getApprSeq() <= apprSeq) {
+					line.setApprStatusCd(APPR_STATUS_REJECT);
+					//반려일때는 date가 안들어가도 되는건지?? 확인해보기
+					line.setApprDate(new Date());
+					if(line.getApprSeq() == apprSeq) {
+						line.setApprOpinion(apprOpinion);
+					}
+				}else {
+					line.setApprStatusCd("");
+				}
+				line.setUpdateId(userId);
+				wtmApplLineRepo.save(line);
+			}
+		}
+		WtmAppl appl = wtmApplRepo.findById(applId).get();
+		appl.setApplStatusCd(APPL_STATUS_APPLY_REJECT);
+		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
+		appl.setUpdateId(userId);
+		wtmApplRepo.save(appl);
+
+		inbox.setInbox(tenantId, enterCd, applSabun, applId, "APPLY", "결재완료", "출장 신청서가 반려되었습니다.", "N");
+
+		//메일 전송을 위한 파라미터
+		rp.put("from", sabun);
+		rp.put("to", applSabun);
+
+		return rp;
 	}
 
 	@Override
@@ -112,9 +376,9 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 
 	}
 
-	@Transactional
 	@Override
 	public ReturnParam imsi(Long tenantId, String enterCd, Long applId, String workTypeCd, Map<String, Object> paramMap, String status, String sabun, String userId) throws Exception {
+
 		ReturnParam rp = new ReturnParam();
 		rp.setFail("");
 		String           applSabun = sabun;
@@ -125,12 +389,14 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 		String workTimeCode = paramMap.get("workTimeCode").toString();
 		String taaNote      = paramMap.get("note").toString();
 
-		List<String> taaDateArr = (List<String>) paramMap.get("taaDateArr");
+		List<String> taaSdateArr = (List<String>) paramMap.get("taaSdateArr");
+		List<String> taaEdateArr = (List<String>) paramMap.get("taaEdateArr");
 		List<String> startHmArr = (List<String>) paramMap.get("startHmArr");
 		List<String> endHmArr   = (List<String>) paramMap.get("endHmArr");
 
-		try {
+		WtmApplCode applCode = getApplInfo(tenantId, enterCd, workTypeCd);
 
+		try {
 			//기신청 데이터
 			if (taaAppls == null || taaAppls.size() == 0) {
 				//logger.debug("works.size() : " + works.size());
@@ -152,11 +418,18 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 					appl.setApplSabun(applSabun);
 					appl.setApplInSabun(applSabun);
 					appl.setApplStatusCd(status);
-					appl.setUpdateId("TAA_INTF");
+					appl.setUpdateId("WTM_REGA");
 
 					appl = wtmApplRepo.save(appl);
 
 					applId = appl.getApplId();
+
+					//IF에도 번호를 넣어주자 추후에 승인시 필요하다..
+					if(applId != null) {
+						appl.setIfApplNo(applId.toString());
+						appl = wtmApplRepo.save(appl);
+					}
+
 
 					//for(Map<String, Object> w : works) {
 					//String sabun = w.get("sabun")+"";
@@ -171,9 +444,9 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 					WtmTaaAppl taaAppl = new WtmTaaAppl();
 					taaAppl.setTenantId(tenantId);
 					taaAppl.setEnterCd(enterCd);
-					taaAppl.setApplId(appl.getApplId());
+					taaAppl.setApplId(applId);
 					taaAppl.setSabun(sabun);
-					taaAppl.setIfApplNo(null);
+					taaAppl.setIfApplNo(applId.toString());
 					taaAppl.setUpdateId(userId);
 					taaAppl.setTaaCd(taaCd);
 
@@ -182,19 +455,20 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 					//List<Map<String, Object>> worksDet = (List<Map<String, Object>>) w.get("worksDet");
 					//for(Map<String, Object> work : worksDet) {
 
-					if (workTimeCode != "" && taaDateArr.size() > 0 && startHmArr.size() > 0 && endHmArr.size() > 0) {
+					if (workTimeCode != null && taaSdateArr.size() > 0) {
 
 
-						for (int i = 0; i < taaDateArr.size(); i++) {
+						for (int i = 0; i < taaSdateArr.size(); i++) {
 
-							String taaDate = taaDateArr.get(i).replaceAll("-", "");
-							String shm = startHmArr.get(i).replaceAll(":", "");
-							String ehm = endHmArr.get(i).replaceAll(":", "");
+							String taaSdate = taaSdateArr.get(i).replaceAll("-", "");
+							String taaEdate = taaEdateArr.get(i).replaceAll("-", "");
+//							String shm = startHmArr.get(i).replaceAll(":", "");
+//							String ehm = endHmArr.get(i).replaceAll(":", "");
 
 
 
-							String symd = taaDate;
-							String eymd = taaDate;
+							String symd = taaSdate;
+							String eymd = taaEdate;
 
 
 
@@ -223,42 +497,37 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 							WtmTaaApplDet taaApplDet = new WtmTaaApplDet();
 							taaApplDet.setTaaApplId(taaAppl.getTaaApplId());
 							taaApplDet.setTaaCd(workTimeCode);
-							taaApplDet.setSymd(taaDate);
-							taaApplDet.setEymd(taaDate);
-							taaApplDet.setShm(shm);
-							taaApplDet.setEhm(ehm);
-							taaApplDet.setUpdateId("TAA_INTF");
+							taaApplDet.setSymd(taaSdate);
+							taaApplDet.setEymd(taaEdate);
+//							taaApplDet.setShm(shm);
+//							taaApplDet.setEhm(ehm);
+							taaApplDet.setUpdateId("WTM_REGA");
 							taaApplDet.setNote(taaNote);
 
 							wtmTaaApplDetRepo.save(taaApplDet);
 
 
 						}
+						applLineService.saveWtmApplLine(tenantId, enterCd, Integer.parseInt(applCode.getApplLevelCd()), applId, workTypeCd, applSabun, userId);
+
+						rp.put("applId", applId);
+						rp.setSuccess("신청이 완료되었습니다.");
 					} else {
 						rp.setFail("출장/긴급근무 신청데이터가 존재하지 않습니다.");
 						throw new RuntimeException("근태정보가 부족합니다.");
 					}
-					//}
-					//}else {
-					//	throw new RuntimeException(sabun + " 님의 근무 상세정보가 없습니다.");
-					//}
-					//}
 
 				}
-				//}
-			} else {
-				//
+
 			}
 
 			rp.put("applId", applId);
-			rp.setSuccess("");
+			rp.setSuccess("출장신청이 완료되었습니다.");
 		}catch (Exception e){
 			rp.setFail("출장/긴급근무 신청시 에러가 발생하였습니다, 신청데이터를 확인해주세요");
 			e.printStackTrace();
 			throw new RuntimeException("근태정보가 부족합니다.");
 		}
-
-
 
 		return rp;
 	}
@@ -279,9 +548,8 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 		String workTimeCode = work.get("workTimeCode").toString();
 //		String note         = work.get("note").toString();
 
-		List<String> taaDateArr = (List<String>) work.get("taaDateArr");
-		List<String> startHmArr = (List<String>) work.get("startHmArr");
-		List<String> endHmArr   = (List<String>) work.get("endHmArr");
+		List<String> taaSdateArr = (List<String>) work.get("taaSdateArr");
+		List<String> taaEdateArr = (List<String>) work.get("taaEdateArr");
 
 		List<HashMap<String, Date>> dateList = new ArrayList<HashMap<String, Date>>();
 
@@ -289,40 +557,33 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 
 		boolean isDuplicateDt = false;
 
-		if (taaDateArr.size() > 0) {
-			for (int i = 0; i < taaDateArr.size(); i++) {
+		if (taaSdateArr.size() > 0) {
+			for (int i = 0; i < taaSdateArr.size(); i++) {
 
-				String taaDate = taaDateArr.get(i).replaceAll("-", "");
-				String startHm = startHmArr.get(i).replaceAll(":", "");
-				String endHm   = endHmArr.get(i).replaceAll(":", "");
+				String taaSdate = taaSdateArr.get(i).replaceAll("-", "");
+				String taaEdate = taaEdateArr.get(i).replaceAll("-", "");
 
 				Map<String, Object> tmpMap = new HashMap<String, Object>();
-				tmpMap.put("startYmd", taaDate);
-				tmpMap.put("endYmd", taaDate);
-				tmpMap.put("startHm", startHm);
-				tmpMap.put("endHm", endHm);
+				tmpMap.put("startYmd", taaSdate);
+				tmpMap.put("endYmd", taaEdate);
 				tmpMap.put("workTimeCode", workTimeCode);
 				tmpMap.put("requestCd", "");    //  validation 기본 키값
 				tmpMap.put("applId", work.get("applId")); 
-
-				HashMap<String, Date> dateMap = new HashMap<String, Date>();
-				dateMap.put("startDt", inFormat.parse(taaDate+startHm));
-				dateMap.put("entDt", inFormat.parse(taaDate+endHm));
-				dateList.add(dateMap);
 
 				//  check 중복
 				Map<String, Object> chkMap = new HashMap<String, Object>();
 				chkMap.put("tenantId", tenantId);
 				chkMap.put("enterCd", enterCd);
 				chkMap.put("sabun", sabun);
-				chkMap.put("startDt", taaDateArr.get(i) + " " + startHmArr.get(i));
-				chkMap.put("entDt", taaDateArr.get(i) + " " + endHmArr.get(i));
+				chkMap.put("timeTypeCd", "REGA");
+				chkMap.put("startYmd", taaSdate);
+				chkMap.put("endYmd", taaEdate);
 
 				logger.debug("chkMap :" + chkMap.toString());
 				int chkCnt = validatorMapper.checkDuplicateWorkDayResult(chkMap) ;
 				logger.debug("chkCnt :" + chkCnt);
 				if(chkCnt > 0){
-					rp.setFail("출장/긴급근무 신청기간이 중복됩니다.");
+					rp.setFail("출장 신청기간이 중복됩니다.");
 					return rp;
 				};
 
@@ -367,7 +628,7 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 					rp.setFail("출장/긴급근무 신청기간이 중복됩니다.");
 				}
 			}
-			
+
 		} else {
 			rp.setFail("출장/긴급근무 신청데이터가 존재하지 않습니다.");
 		}
@@ -450,10 +711,10 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 
 			String shm = "";
 			String ehm = "";
-			if (work.get("startHm") != null && !"".equals(work.get("startHm"))) {
+			if (work.containsKey("startHm") && work.get("startHm") != null && !"".equals(work.get("startHm"))) {
 				shm = work.get("startHm").toString();
 			}
-			if (work.get("endHm") != null && !"".equals(work.get("endHm"))) {
+			if (work.containsKey("endHm") && work.get("endHm") != null && !"".equals(work.get("endHm"))) {
 				ehm = work.get("endHm").toString();
 			}
 
@@ -557,8 +818,8 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 			String workTimeCode = a.get("workTimeCode").toString();
 			String symd         = a.get("startYmd").toString();
 			String eymd         = a.get("endYmd").toString();
-			String shm          = a.get("startHm").toString();
-			String ehm          = a.get("endHm").toString();
+			String shm          = "";
+			String ehm          = "";
 
 			WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, workTimeCode);
 			if (taaCode == null) {
@@ -662,45 +923,45 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 
 		}
 
-		//2.선근제의 경우에는 해당 선근제 근무 기간 내의 기본근로시간을 넘지 않는지 체크
-		paramMap = new HashMap<>();
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-		paramMap.put("sabun", sabun);
-		paramMap.put("symd", sDate);
-		paramMap.put("eymd", eDate);
-		paramMap.put("taaWorkYn", taaWorkYn);    // 근무시간가산여부(가산이 아니면 해당기간 기본근무 빼고 계산해야함)
-		paramMap.put("applMinutes", applMinutes);
-		logger.debug("*********** paramMap : " + paramMap.toString());
-		List<Map<String, Object>> results = validatorMapper.checkTotalWorkMinuteForSele(paramMap);
+//		//2.선근제의 경우에는 해당 선근제 근무 기간 내의 기본근로시간을 넘지 않는지 체크
+//		paramMap = new HashMap<>();
+//		paramMap.put("tenantId", tenantId);
+//		paramMap.put("enterCd", enterCd);
+//		paramMap.put("sabun", sabun);
+//		paramMap.put("symd", sDate);
+//		paramMap.put("eymd", eDate);
+//		paramMap.put("taaWorkYn", taaWorkYn);    // 근무시간가산여부(가산이 아니면 해당기간 기본근무 빼고 계산해야함)
+//		paramMap.put("applMinutes", applMinutes);
+//		logger.debug("*********** paramMap : " + paramMap.toString());
+//		List<Map<String, Object>> results = validatorMapper.checkTotalWorkMinuteForSele(paramMap);
+//
+//		ObjectMapper mapper = new ObjectMapper();
+//		try {
+//			logger.debug("results : " + mapper.writeValueAsString(results));
+//		} catch (JsonProcessingException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 
-		ObjectMapper mapper = new ObjectMapper();
-		try {
-			logger.debug("results : " + mapper.writeValueAsString(results));
-		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		if (results != null && results.size() > 0) {
-			for (Map<String, Object> r : results) {
-				if (r.get("isValid") != null && "N".equals(r.get("isValid"))) {
-					logger.debug("workMinute: " + r.get("workMinute").toString());
-					logger.debug("totalWorkMinute: " + r.get("totalWorkMinute").toString());
-
-					Double h = 0d;
-					Double m = 0d;
-
-					h = Double.parseDouble(r.get("workMinute").toString()) / 60;
-					h = Math.ceil(h * 100) / 100.0;
-					m = (h - h.intValue()) * 60;
-
-					rp.setFail("선택근무제 총 근무 시간(" + ((h.intValue() > 0) ? String.format("%02d", h.intValue()) : "00") + "시간" + ((m.intValue() > 0) ? String.format("%02d", m.intValue()) + "분" : "") + ")을 초과할 수 없습니다.");
-					return rp;
-				}
-			}
-
-		}
+//		if (results != null && results.size() > 0) {
+//			for (Map<String, Object> r : results) {
+//				if (r.get("isValid") != null && "N".equals(r.get("isValid"))) {
+//					logger.debug("workMinute: " + r.get("workMinute").toString());
+//					logger.debug("totalWorkMinute: " + r.get("totalWorkMinute").toString());
+//
+//					Double h = 0d;
+//					Double m = 0d;
+//
+//					h = Double.parseDouble(r.get("workMinute").toString()) / 60;
+//					h = Math.ceil(h * 100) / 100.0;
+//					m = (h - h.intValue()) * 60;
+//
+//					rp.setFail("선택근무제 총 근무 시간(" + ((h.intValue() > 0) ? String.format("%02d", h.intValue()) : "00") + "시간" + ((m.intValue() > 0) ? String.format("%02d", m.intValue()) + "분" : "") + ")을 초과할 수 없습니다.");
+//					return rp;
+//				}
+//			}
+//
+//		}
 
 		return rp;
 	}
@@ -715,6 +976,10 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 	public ReturnParam saveWtmApplSts(Long tenantId, String enterCd, String sabun, String userId, Map<String, Object> convertMap) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	protected WtmApplCode getApplInfo(Long tenantId,String enterCd,String applCd) {
+		return wtmApplCodeRepo.findByTenantIdAndEnterCdAndApplCd(tenantId, enterCd, applCd);
 	}
 
 }

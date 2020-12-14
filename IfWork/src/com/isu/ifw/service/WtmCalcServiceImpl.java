@@ -2797,6 +2797,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							dayClose.setWorkTypeCd(workTypeCd);
 							dayClose.setWorkMinute(resMap.get("apprWorkMinute") - resMap.get("apprExMinute"));
 							worktimeDayCloseRepo.save(dayClose);
+							worktimeDayCloseRepo.flush();;
 						}else{
 							logger.debug("DayClose workTypeCd is null : \n" + "sabun:" + empSabun + "\n" + "" + "calendar.getYmd() =>" + calendar.getYmd());
 						}
@@ -2948,7 +2949,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				}
 				if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA)) {
 
-					//지각시간
+					//지각시간getFlexibleImsiList
 					if(result.getTaaCd().equals(late)) {
 						lateMinute = lateMinute + (result.getApprMinute()==null?0:result.getApprMinute()); 
 					}else if(result.getTaaCd().equals(leave)) {
@@ -3039,7 +3040,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				
 				if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA)) {
 					WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(result.getTenantId(), result.getEnterCd(), result.getTaaCd());
-					if(taaCode == null || !"".equals(taaCode.getPayYn()) || "N".equals(taaCode.getPayYn())) {
+					if(taaCode == null || (!"".equals(taaCode.getPayYn()) && "N".equals(taaCode.getPayYn()))) {
 						nonpayMinute = nonpayMinute + (result.getApprMinute()==null?0:result.getApprMinute());
 					}else {
 						payMinute = payMinute + (result.getApprMinute()==null?0:result.getApprMinute());

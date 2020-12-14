@@ -80,7 +80,19 @@ public class WtmApplServiceImpl implements WtmApplService {
 	@Autowired
 	@Qualifier("wtmCompCanApplService")
 	WtmApplService wtmCompCanApplService;
-	
+
+	@Autowired
+	@Qualifier("WtmTaaApplService")
+	WtmApplService wtmTaaApplService;
+
+	@Autowired
+	@Qualifier("wtmTaaCanService")
+	WtmApplService wtmTaaCanApplService;
+
+	@Autowired
+	@Qualifier("wtmRegaCanService")
+	WtmApplService wtmRegaCanApplService;
+
 	@Autowired
 	WtmApplCodeRepository applCodeRepo;
 	
@@ -140,6 +152,14 @@ public class WtmApplServiceImpl implements WtmApplService {
 						appl = wtmCompApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
 					} else if("COMP_CAN".equals(applCd)) { //보상휴가취소
 						appl = wtmCompCanApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
+					} else if("ANNUAL".equals(applCd)) { //휴가신청
+						appl = wtmTaaApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
+					} else if("REGA".equals(applCd)) { //출장신청
+						appl = wtmTaaApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
+					} else if("ANNUAL_CAN".equals(applCd)) { //휴가신청취소
+						appl = wtmTaaCanApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
+					} else if("REGA_CAN".equals(applCd)) { //출장취소신청
+						appl = wtmTaaCanApplService.getAppl(tenantId, enterCd, applSabun, applId, userId);
 					} else {
 						//유연근무제
 						appl = wtmFlexibleApplService.getAppl(tenantId, enterCd, applSabun, applId, userId); 

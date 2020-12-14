@@ -1,15 +1,13 @@
 package com.isu.ifw.service;
 
-import java.sql.Timestamp;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.*;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.vo.WtmApplLineVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -17,43 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.entity.WtmAppl;
-import com.isu.ifw.entity.WtmApplCode;
-import com.isu.ifw.entity.WtmApplLine;
-import com.isu.ifw.entity.WtmFlexibleEmp;
-import com.isu.ifw.entity.WtmFlexibleStdMgr;
-import com.isu.ifw.entity.WtmOtAppl;
-import com.isu.ifw.entity.WtmOtSubsAppl;
-import com.isu.ifw.entity.WtmPropertie;
-import com.isu.ifw.entity.WtmRule;
-import com.isu.ifw.entity.WtmTimeCdMgr;
-import com.isu.ifw.entity.WtmWorkCalendar;
-import com.isu.ifw.entity.WtmWorkDayResult;
-import com.isu.ifw.mapper.WtmApplMapper;
-import com.isu.ifw.mapper.WtmFlexibleApplMapper;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmFlexibleStdMapper;
-import com.isu.ifw.mapper.WtmOtApplMapper;
-import com.isu.ifw.mapper.WtmOtCanApplMapper;
-import com.isu.ifw.repository.WtmApplCodeRepository;
-import com.isu.ifw.repository.WtmApplLineRepository;
-import com.isu.ifw.repository.WtmApplRepository;
-import com.isu.ifw.repository.WtmEmpHisRepository;
-import com.isu.ifw.repository.WtmFlexibleApplRepository;
-import com.isu.ifw.repository.WtmFlexibleEmpRepository;
-import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
-import com.isu.ifw.repository.WtmOtApplRepository;
-import com.isu.ifw.repository.WtmOtSubsApplRepository;
-import com.isu.ifw.repository.WtmPropertieRepository;
-import com.isu.ifw.repository.WtmRuleRepository;
-import com.isu.ifw.repository.WtmTimeCdMgrRepository;
-import com.isu.ifw.repository.WtmWorkCalendarRepository;
-import com.isu.ifw.repository.WtmWorkDayResultRepository;
-import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.ReturnParam;
-import com.isu.ifw.vo.WtmApplLineVO;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service("wtmOtApplService")
 public class WtmOtApplServiceImpl implements WtmApplService {
@@ -1056,6 +1020,12 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		
 		WtmFlexibleEmp emp = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, ymd);
 
+		System.out.println("preCheckOneByOne  tenantId:  " + tenantId);
+		System.out.println("preCheckOneByOne  enterCd:  " + enterCd);
+		System.out.println("preCheckOneByOne  sabun:  " + sabun);
+		System.out.println("preCheckOneByOne  workTypeCd:  " + workTypeCd);
+		System.out.println("preCheckOneByOne  paramMap:  " + paramMap.toString());
+
 		if(emp!=null) {
 			//1. 연장근무 신청 시 기본근로 선 소진 여부를 체크한다.
 			//선 소진 여부
@@ -1075,6 +1045,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			Map<String, Object> ruleMap = null;
 			
 			Long targetRuleId = applCode.getTargetRuleId();
+			System.out.println("preCheckOneByOne  targetRuleId ::::: " + targetRuleId + " !!!!");
 			if(targetRuleId != null) 
 				ruleIds.add(targetRuleId);
 			
@@ -1085,6 +1056,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			
 			// 수당지급 대상자 인지 확인
 			Long subsRuleId = applCode.getSubsRuleId();
+			System.out.println("preCheckOneByOne  subsRuleId ::::: " + subsRuleId + " !!!!");
 			if(subsRuleId != null) 
 				ruleIds.add(subsRuleId);
 			

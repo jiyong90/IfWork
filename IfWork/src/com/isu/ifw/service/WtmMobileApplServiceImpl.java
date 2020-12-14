@@ -1,14 +1,12 @@
 package com.isu.ifw.service;
 
 import com.isu.ifw.entity.WtmFlexibleStdMgr;
+import com.isu.ifw.entity.WtmTaaCode;
 import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.entity.WtmWorkCalendar;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmOtApplMapper;
-import com.isu.ifw.repository.WtmApplCodeRepository;
-import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
-import com.isu.ifw.repository.WtmTimeCdMgrRepository;
-import com.isu.ifw.repository.WtmWorkCalendarRepository;
+import com.isu.ifw.repository.*;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
 import org.slf4j.Logger;
@@ -47,6 +45,14 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 	WtmApplService entryApplService;
 
 	@Autowired
+	@Qualifier("WtmTaaApplService")
+	WtmApplService taaApplService;
+
+	@Autowired
+	@Qualifier("WtmRegaApplService")
+	WtmApplService regaApplService;
+
+	@Autowired
 	WtmCalendarService wtmCalendarService;
 	
 	@Autowired private WtmFlexibleStdMgrRepository flexibleStdMgrRepo;
@@ -59,6 +65,9 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 	
 	@Autowired
 	WtmOtApplMapper wtmOtApplMapper;
+
+	@Autowired
+	WtmTaaCodeRepository wtmTaaCodeRepo;
 	
 	@Override
 	public ReturnParam requestEntryChgAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception {
@@ -510,6 +519,261 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 			dataMap.put("subsEhm", dataMap.get("subsEhm").toString().substring(0, 2)+":"+dataMap.get("subsEhm").toString().substring(2, 4));
 		}
 	}
-	
+
+	@Override
+	public ReturnParam validateAnnualAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception {
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("");
+
+		Map<String, Object> resultMap = new HashMap();
+
+		dataMap.put("tenantId", tenantId);
+		dataMap.put("enterCd", enterCd);
+		dataMap.put("applSabun", sabun);
+		dataMap.put("sabun", sabun);
+
+		String symd = "";
+		String eymd = "";
+		String note = "";
+
+		if(dataMap.get("symd") != null && dataMap.get("eymd")  != null && dataMap.get("reason") != null) {
+			if(dataMap.get("symd") == null) {
+				rp.setFail("휴가시작일을 입력해주세요");
+				return rp;
+			} else {
+				symd = dataMap.get("symd").toString().replace(".", "");
+			}
+
+			if(dataMap.get("eymd")  == null) {
+				rp.setFail("휴가종료일을 입력해주세요");
+				return rp;
+			} else {
+				eymd = dataMap.get("eymd").toString().replace(".", "");
+			}
+
+			if(dataMap.get("reason") == null || "".equals(dataMap.get("reason"))) {
+				rp.setFail("사유를 입력해주세요");
+				return rp;
+			} else {
+				note = dataMap.get("reason").toString();
+			}
+
+			WtmTaaCode wtmTaaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, dataMap.get("gubun").toString());
+
+			String requestTypeCd = "";
+			if(wtmTaaCode != null) {
+				requestTypeCd = wtmTaaCode.getRequestTypeCd();
+			}
+
+			List<String> symdArr          = new ArrayList<String>();
+			List<String> eymdArr          = new ArrayList<String>();
+			List<String> requestTypeCdArr = new ArrayList<String>();
+			List<String> taaTypeCdArr     = new ArrayList<String>();
+
+			symdArr.add(symd);
+			eymdArr.add(eymd);
+			requestTypeCdArr.add(requestTypeCd);
+			taaTypeCdArr.add(dataMap.get("gubun").toString());
+
+			Map<String, Object> valiMap = new HashMap<String, Object>();
+			valiMap.put("startYmdArr", symdArr);
+			valiMap.put("endYmdArr", eymdArr);
+			valiMap.put("requestTypeCdArr", requestTypeCdArr);
+			valiMap.put("taaTypeCdArr", taaTypeCdArr);
+			valiMap.put("startHm", ""); //  validation 기본 키값
+			valiMap.put("endHm", "");   //  validation 기본 키값
+			valiMap.put("note", note);
+
+			rp = taaApplService.validate(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_ANNUAL, valiMap);
+
+			resultMap.put("data", dataMap);
+			rp.put("result", resultMap);
+		}
+
+		return rp;
+	}
+
+	@Override
+	public ReturnParam validateRegaAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception {
+
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("");
+
+		Map<String, Object> resultMap = new HashMap();
+
+		dataMap.put("tenantId", tenantId);
+		dataMap.put("enterCd", enterCd);
+		dataMap.put("applSabun", sabun);
+		dataMap.put("sabun", sabun);
+
+		String symd = "";
+		String eymd = "";
+		String note = "";
+
+		if(dataMap.get("symd") != null && dataMap.get("eymd")  != null && dataMap.get("reason") != null) {
+			if (dataMap.get("symd") == null) {
+				rp.setFail("휴가시작일을 입력해주세요");
+				return rp;
+			} else {
+				symd = dataMap.get("symd").toString().replace(".", "");
+			}
+
+			if (dataMap.get("eymd") == null) {
+				rp.setFail("휴가종료일을 입력해주세요");
+				return rp;
+			} else {
+				eymd = dataMap.get("eymd").toString().replace(".", "");
+			}
+
+			if (dataMap.get("reason") == null || "".equals(dataMap.get("reason"))) {
+				rp.setFail("사유를 입력해주세요");
+				return rp;
+			} else {
+				note = dataMap.get("reason").toString();
+			}
+
+
+			WtmTaaCode wtmTaaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, dataMap.get("gubun").toString());
+
+			String requestTypeCd = "";
+			if(wtmTaaCode != null) {
+				requestTypeCd = wtmTaaCode.getTaaTypeCd();
+			}
+
+			List<String> symdArr          = new ArrayList<String>();
+			List<String> eymdArr          = new ArrayList<String>();
+			List<String> requestTypeCdArr = new ArrayList<String>();
+			List<String> taaTypeCdArr     = new ArrayList<String>();
+
+			symdArr.add(symd.replaceAll(".", ""));
+			eymdArr.add(eymd.replaceAll(".", ""));
+			requestTypeCdArr.add(requestTypeCd); //TAA TYPE CD : 20
+			taaTypeCdArr.add(dataMap.get("gubun").toString()); //간주 근무 코드
+
+			Map<String, Object> valiMap = new HashMap<String, Object>();
+			valiMap.put("taaSdateArr", symdArr);
+			valiMap.put("taaEdateArr", eymdArr);
+			valiMap.put("workTimeCode", dataMap.get("gubun").toString());
+			valiMap.put("requestCd", requestTypeCd);
+			valiMap.put("note", note);
+			valiMap.put("applCd", dataMap.get("applCd").toString());
+			valiMap.put("applId", dataMap.get("applId"));
+
+			rp = regaApplService.validate(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, valiMap);
+
+			resultMap.put("data", dataMap);
+			rp.put("result", resultMap);
+		}
+		return rp;
+
+	}
+
+	@Override
+	public ReturnParam requestAnnualAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception {
+		ReturnParam rp = new ReturnParam();
+		rp.setFail("저장 시 오류가 발생했습니다.");
+
+		dataMap.put("tenantId", tenantId);
+		dataMap.put("enterCd", enterCd);
+		dataMap.put("applSabun", sabun);
+		dataMap.put("sabun", sabun);
+
+		Long applId = null;
+		if(dataMap.get("applId")!=null && !"".equals(dataMap.get("applId"))) {
+			applId = Long.valueOf(dataMap.get("applId").toString());
+		}
+
+		String note = dataMap.get("reason").toString();
+		if(note == null || "".equals(note)) {
+			throw new Exception("사유를 입력해주세요.");
+		}
+
+		WtmTaaCode wtmTaaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, dataMap.get("gubun").toString());
+
+		String requestTypeCd = "";
+		if(wtmTaaCode != null) {
+			requestTypeCd = wtmTaaCode.getRequestTypeCd();
+		}
+
+		List<String> symdArr          = new ArrayList<String>();
+		List<String> eymdArr          = new ArrayList<String>();
+		List<String> requestTypeCdArr = new ArrayList<String>();
+		List<String> taaTypeCdArr     = new ArrayList<String>();
+
+		symdArr.add(dataMap.get("symd").toString().replace(".", ""));
+		eymdArr.add(dataMap.get("eymd").toString().replace(".", ""));
+		requestTypeCdArr.add(requestTypeCd);
+		taaTypeCdArr.add(dataMap.get("gubun").toString());
+
+		Map<String, Object> valiMap = new HashMap<String, Object>();
+		valiMap.put("startYmdArr", symdArr);
+		valiMap.put("endYmdArr", eymdArr);
+		valiMap.put("requestTypeCdArr", requestTypeCdArr);
+		valiMap.put("taaTypeCdArr", taaTypeCdArr);
+		valiMap.put("startHm", ""); //  validation 기본 키값
+		valiMap.put("endHm", "");   //  validation 기본 키값
+		valiMap.put("note", note);
+		valiMap.put("applCd", dataMap.get("applCd").toString());
+
+		rp =  taaApplService.validate(tenantId, enterCd, sabun, dataMap.get("applCd").toString(), valiMap);
+		if(rp!=null && rp.getStatus()!=null && "FAIL".equals(rp.getStatus())) {
+			return rp;
+		}
+		return taaApplService.request(tenantId, enterCd, applId, WtmApplService.TIME_TYPE_ANNUAL, valiMap, sabun, sabun);
+	}
+
+
+	@Override
+	public ReturnParam requestRegaAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception {
+		ReturnParam rp = new ReturnParam();
+		rp.setFail("저장 시 오류가 발생했습니다.");
+
+		dataMap.put("tenantId", tenantId);
+		dataMap.put("enterCd", enterCd);
+		dataMap.put("applSabun", sabun);
+		dataMap.put("sabun", sabun);
+
+		Long applId = null;
+		if(dataMap.get("applId")!=null && !"".equals(dataMap.get("applId"))) {
+			applId = Long.valueOf(dataMap.get("applId").toString());
+		}
+
+		String note = dataMap.get("reason").toString();
+		if(note == null || "".equals(note)) {
+			throw new Exception("사유를 입력해주세요.");
+		}
+
+		WtmTaaCode wtmTaaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, dataMap.get("gubun").toString());
+
+		String requestTypeCd = "";
+		if(wtmTaaCode != null) {
+			requestTypeCd = wtmTaaCode.getRequestTypeCd();
+		}
+
+		List<String> symdArr          = new ArrayList<String>();
+		List<String> eymdArr          = new ArrayList<String>();
+		List<String> requestTypeCdArr = new ArrayList<String>();
+		List<String> taaTypeCdArr     = new ArrayList<String>();
+
+		symdArr.add(dataMap.get("symd").toString());
+		eymdArr.add(dataMap.get("eymd").toString());
+		requestTypeCdArr.add(requestTypeCd);
+		taaTypeCdArr.add(dataMap.get("gubun").toString());
+
+		Map<String, Object> valiMap = new HashMap<String, Object>();
+		valiMap.put("taaSdateArr", symdArr);
+		valiMap.put("taaEdateArr", eymdArr);
+		valiMap.put("workTimeCode", requestTypeCd);
+		valiMap.put("requestCd", "");
+		valiMap.put("note", note);
+		valiMap.put("applCd", dataMap.get("applCd").toString());
+
+		rp =  regaApplService.validate(tenantId, enterCd, sabun, dataMap.get("applCd").toString(), valiMap);
+		if(rp!=null && rp.getStatus()!=null && "FAIL".equals(rp.getStatus())) {
+			return rp;
+		}
+		return regaApplService.request(tenantId, enterCd, applId, WtmApplService.TIME_TYPE_REGA, valiMap, sabun, sabun);
+	}
+
 	
 }

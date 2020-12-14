@@ -413,7 +413,6 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 			}
 
 
-
 			// 오류검증이 없으면 저장하고 갱신해야함.
 			// 검증 오류가 없으면 flexible_emp에 저장하고 갱신용로직을 불러야함
 			for(int i=0; i< searchList.size(); i++) {
