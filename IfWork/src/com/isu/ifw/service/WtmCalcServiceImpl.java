@@ -1910,7 +1910,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	 */
 	@Override
 	public int getBreakMinuteIfBreakTimeMGR(Date sDate, Date eDate, long timeCdMgrId, int unitMinute) {
-		logger.debug("BREAK TYPE MGR 타입의 휴게시간 계산합니다.", sDate, eDate, timeCdMgrId, unitMinute);
+		logger.debug("BREAK TYPE MGR 타입의 휴게시간 계산합니다." + sDate + " ~ " +  eDate + " : " + timeCdMgrId + " : " + unitMinute);
 		int sumBreakMinute = 0;
 		
 		if(sDate.compareTo(eDate) < 1) {
@@ -1918,15 +1918,20 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			SimpleDateFormat yyyyMMdd = new SimpleDateFormat("yyyyMMdd");
 			
 			List<WtmTimeBreakMgr> timeBreakMgrs = timebreakMgrRepo.findByTimeCdMgrId(timeCdMgrId);
-			
+			String shm = HHmm.format(sDate);
+			String ehm = HHmm.format(eDate);
 			for(WtmTimeBreakMgr timeBreakMgr : timeBreakMgrs) {
 				logger.debug("timeBreakMgr.getShm() :: "+ timeBreakMgr.getShm());
 				logger.debug("timeBreakMgr.getEhm() :: "+ timeBreakMgr.getEhm());
-				if(!yyyyMMdd.format(sDate).equals(yyyyMMdd.format(eDate))) {
-					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), "0000", unitMinute);
-					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), "0000", HHmm.format(eDate), unitMinute);
-				}else {
-					sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), HHmm.format(eDate), unitMinute);
+				if(Integer.parseInt(timeBreakMgr.getEhm()) > Integer.parseInt(shm) 
+						&& Integer.parseInt(timeBreakMgr.getShm()) < Integer.parseInt(ehm)
+						) {
+					if(!yyyyMMdd.format(sDate).equals(yyyyMMdd.format(eDate))) {
+						sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), "0000", unitMinute);
+						sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), "0000", HHmm.format(eDate), unitMinute);
+					}else {
+						sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), HHmm.format(eDate), unitMinute);
+					}
 				}
 					
 			}
@@ -1934,7 +1939,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			//return this.WtmCalcMinute(HHmm.format(sDate), HHmm.format(eDate), null, null, unitMinute) - sumBreakMinute;
 		}
 		logger.debug("sumBreakMinute :: "+ sumBreakMinute);
+		logger.debug("BREAK TYPE MGR 타입의 휴게시간 계산합니다. 끝");
 		return sumBreakMinute;
+		
 		
 	}
 	
