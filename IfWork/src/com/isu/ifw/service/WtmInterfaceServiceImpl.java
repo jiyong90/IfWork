@@ -2103,7 +2103,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			statusList.add("OK");
 //			statusList.add("FAIL");
 //			statusList.add("ERR");
-			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(statusList); 
+			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByTenantIdAndIfStatusNotInOrIfStatusNull(tenantId, statusList);
 			if(list == null || list.size() == 0) {
 				logger.debug("setTaaApplBatchIfPostProcess 대상없음 종료");
 				return ;
@@ -2165,11 +2165,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						List<Map<String, Object>> worksDet = new ArrayList<Map<String,Object>>();
 						for(WtmIfTaaHis data : taaHis) {
 							//첫데이터를 담는다 기준이 없어서..
-							if(tId == null) { tId = data.getTenantId();}
-							if(enterCd == null) { enterCd = data.getEnterCd();}
-							if(applSabun == null) { applSabun = data.getSabun();}
-							if(ifApplNo == null) { ifApplNo = data.getApplNo();}
-							if(status == null) { status = data.getStatus();}
+							tId = data.getTenantId();
+							enterCd = data.getEnterCd();
+							applSabun = data.getSabun();
+							ifApplNo = data.getApplNo();
+							status = data.getStatus();
 							
 							SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
 							Calendar cal1 = Calendar.getInstance();
@@ -3291,7 +3291,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 //		List<String> enterCds = new ArrayList<String>();
 //		enterCds.add("ISU_ABX");http://localhost/ifw/schedule/colseDay?tenantId=98
 //		enterCds.add("ISU_AMC");
-		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(status);
+		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotInOrIfStatusNull(status);
 //		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotInAndEnterCdNotIn(status, enterCds);
 //		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndIfStatusNotInGroupBy();
 		if(list == null || list.size() == 0) {
