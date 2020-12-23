@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.isu.ifw.entity.WtmTimeCdMgr;
 import com.isu.ifw.vo.ReturnParam;
 
 /**
@@ -17,6 +18,9 @@ import com.isu.ifw.vo.ReturnParam;
 public interface WtmTimeCdMgrService{
 	
 	public List<Map<String, Object>> getTimeCdMgrList(Long tenantId, String enterCd, Map<String, Object> paramMap);
+	
+	public List<WtmTimeCdMgr> getTimeCdMgrList(Long tenantId, String enterCd, String ymd);
+	
 	
 	public int setTimeCodeMgrList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap);
 	

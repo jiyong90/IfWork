@@ -1,29 +1,37 @@
 package com.isu.ifw.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.entity.WtmBaseWorkMgr;
-import com.isu.ifw.entity.WtmTimeChgHis;
-import com.isu.ifw.entity.WtmWorkCalendar;
-import com.isu.ifw.entity.WtmWorkPattDet;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmWorkteamEmpMapper;
-import com.isu.ifw.mapper.WtmWorktimeMapper;
-import com.isu.ifw.repository.WtmBaseWorkMgrRepository;
-import com.isu.ifw.repository.WtmTimeChgHisRepository;
-import com.isu.ifw.repository.WtmWorkCalendarRepository;
-import com.isu.ifw.repository.WtmWorkPattDetRepository;
-import com.isu.ifw.util.WtmUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.WtmFlexibleEmp;
+import com.isu.ifw.entity.WtmFlexibleStdMgr;
+import com.isu.ifw.entity.WtmTimeCdMgr;
+import com.isu.ifw.entity.WtmTimeChgHis;
+import com.isu.ifw.entity.WtmWorkCalendar;
+import com.isu.ifw.entity.WtmWorkDayResult;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmWorkteamEmpMapper;
+import com.isu.ifw.mapper.WtmWorktimeMapper;
+import com.isu.ifw.repository.WtmBaseWorkMgrRepository;
+import com.isu.ifw.repository.WtmFlexibleEmpRepository;
+import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
+import com.isu.ifw.repository.WtmTimeCdMgrRepository;
+import com.isu.ifw.repository.WtmTimeChgHisRepository;
+import com.isu.ifw.repository.WtmWorkCalendarRepository;
+import com.isu.ifw.repository.WtmWorkDayResultRepository;
+import com.isu.ifw.repository.WtmWorkPattDetRepository;
+import com.isu.ifw.util.WtmUtil;
 
 @Service
 public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
@@ -53,6 +61,14 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 	
 	@Autowired
 	WtmBaseWorkMgrRepository baseWorkMgrRepo;
+	
+	@Autowired private WtmFlexibleEmpResetService flexibleEmpResetSerevice;
+	@Autowired private WtmWorkDayResultRepository workDayResultRepo;
+	@Autowired private WtmFlexibleEmpRepository flexEmpRepo;
+	@Autowired private WtmTimeCdMgrRepository timeCdMgrRepo;
+	@Autowired private WtmFlexibleStdMgrRepository flexStdMgrRepo;
+	@Autowired private WtmInterfaceService interfaceService;
+	
 	private SimpleDateFormat dateFormat;
 
 	@Override
@@ -313,10 +329,29 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 					histories.add(history);
 
 					//calendar timeCdMgrId 변경
-					WtmWorkCalendar workCalendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
-					workCalendar.setTimeCdMgrId(timeCdMgrId);
-					workCalendarRepo.save(workCalendar);
-
+					WtmWorkCalendar calendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
+					calendar.setTimeCdMgrId(timeCdMgrId);
+					calendar = workCalendarRepo.save(calendar);
+					
+					WtmTimeCdMgr timeCdMgr = timeCdMgrRepo.findById(timeCdMgrId).get();
+					WtmFlexibleEmp emp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd());
+					WtmFlexibleStdMgr flexStdMgr = flexStdMgrRepo.findById(emp.getFlexibleStdMgrId()).get();
+					try {
+						List<String> timeTypeCds = new ArrayList<String>();
+						timeTypeCds.add(WtmApplService.TIME_TYPE_TAA);
+						timeTypeCds.add(WtmApplService.TIME_TYPE_BASE);
+						timeTypeCds.add(WtmApplService.TIME_TYPE_REGA);
+						List<WtmWorkDayResult> taaResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCds, ymd, ymd);
+						workDayResultRepo.deleteAll(taaResults);
+						//workDayResultRepo.flush();
+						
+						flexibleEmpResetSerevice.P_WTM_WORK_DAY_RESULT_RESET(calendar, flexStdMgr, timeCdMgr, userId);
+						interfaceService.resetTaaResult(tenantId, enterCd, sabun, ymd);
+					} catch (Exception e) {
+						e.printStackTrace();
+					};
+					
+					/*
 					Map<String, Object> flexibleEmp = flexibleEmpMapper.getFlexibleEmp(paramMap);
 
 					// 공휴일 제외 여부
@@ -355,9 +390,8 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 					flexibleEmpMapper.resetWorkDayResult(paramMap);
 
 
-					/*
-					그린캐미칼(TENANT_ID = 102) 근무시간 변경시 변경전 OT 근무가 있을경우 변경 후에도 OT 근무를 생성해 준다.
-					 */
+					
+					//그린캐미칼(TENANT_ID = 102) 근무시간 변경시 변경전 OT 근무가 있을경우 변경 후에도 OT 근무를 생성해 준다.
 					if(tenantId == 102 || tenantId == 4) {
 						if(t.get("planMinute")!=null && !"".equals(t.get("planMinute"))) {
 
@@ -372,6 +406,7 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 						flexibleEmpMapper.updateResultAppr(paramMap);
 						empService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
 					}
+					*/
 				}
 
 			}

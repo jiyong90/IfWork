@@ -91,6 +91,10 @@ public class WtmTimeCdMgrServiceImpl implements WtmTimeCdMgrService{
 		return timeCdMgrMapper.getTimeCdMgrList(paramMap);
 	}
 	
+	public List<WtmTimeCdMgr> getTimeCdMgrList(Long tenantId, String enterCd, String ymd) {
+		return timeCdMgrRepository.findByTenantIdAndEnterCdAndSymdLessThanEqualAndEymdGreaterThanEqual(tenantId, enterCd, ymd, ymd);
+	}
+	
 	@Override
 	public int setTimeCodeMgrList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) {
 		int cnt = 0;
@@ -117,6 +121,8 @@ public class WtmTimeCdMgrServiceImpl implements WtmTimeCdMgrService{
 						code.setLateChkYn(l.get("lateChkYn").toString());
 						code.setLeaveChkYn(l.get("leaveChkYn").toString());
 						code.setAbsenceChkYn(l.get("absenceChkYn").toString());
+						code.setOtbMinute(l.get("otbMinute").toString().equals("") ? null : Integer.parseInt(l.get("otbMinute").toString()));
+						code.setOtaMinute(l.get("otaMinute").toString().equals("") ? null : Integer.parseInt(l.get("otaMinute").toString()));
 						code.setNote(l.get("note").toString());
 						code.setUpdateId(userId);
 						saveList.add(code);

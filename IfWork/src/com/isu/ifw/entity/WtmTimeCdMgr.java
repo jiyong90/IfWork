@@ -62,6 +62,11 @@ public class WtmTimeCdMgr {
 	@Column(name="UPDATE_ID")
 	private String updateId;
 
+
+	@Column(name="OTB_MINUTE")
+	private Integer otbMinute;
+	@Column(name="OTA_MINUTE")
+	private Integer otaMinute;
 	
 	public Long getTimeCdMgrId() {
 		return timeCdMgrId;
@@ -260,4 +265,18 @@ public class WtmTimeCdMgr {
     protected void onUpdate() {
 		this.updateDate = new Date();
     }
+	
+	public Integer getOtaMinute() {
+		return otaMinute;
+	}
+	public void setOtaMinute(Integer otaMinute) {
+		this.otaMinute = otaMinute;
+	}
+	public Integer getOtbMinute() {
+		return otbMinute;
+	}
+	public void setOtbMinute(Integer otbMinute) {
+		this.otbMinute = otbMinute;
+	}
+	
 }

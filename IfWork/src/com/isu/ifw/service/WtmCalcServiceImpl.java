@@ -3075,4 +3075,17 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		
 		return resMap;
 	}
+	
+	@Override
+	public Date F_WTM_DATE_ADD(Date d, int addMinute, WtmTimeCdMgr timeCdMgr, int unitMinute) {
+		if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+			return this.P_WTM_DATE_ADD_FOR_BREAK_MGR(d, addMinute, timeCdMgr.getTimeCdMgrId(), unitMinute);
+		}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(d);
+			cal.add(Calendar.MINUTE, addMinute);
+			return cal.getTime();
+		}
+		return null;
+	}
 }
