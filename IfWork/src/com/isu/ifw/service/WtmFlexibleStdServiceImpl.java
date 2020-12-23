@@ -16,6 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Transactional
@@ -41,6 +44,7 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 	
 	@Autowired private WtmBaseWorkMgrService baseWorkMgrService;
 	@Autowired private WtmWorkteamMgrService workteamMgrService;
+	@Autowired private WtmCalcService calcService;
 	
 	@Override
 	public List<WtmFlexibleStdVO> getFlexibleStd(Long tenantId, String enterCd, String userKey) {
@@ -208,8 +212,11 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 	public List<Map<String, Object>> getWorkPattList(Long flexibleStdMgrId) {
 		List<Map<String, Object>> workPattList = new ArrayList();	
 		List<WtmWorkPattDet> list = workPattDetRepository.findByFlexibleStdMgrId(flexibleStdMgrId);
-
+		WtmFlexibleStdMgr flexStdMgr = flexibleStdRepository.findByFlexibleStdMgrId(flexibleStdMgrId);
 		if(list!=null && list.size()>0) {
+			SimpleDateFormat yMdHm = new SimpleDateFormat("yyyyMMddHHmm");
+			SimpleDateFormat yMd = new SimpleDateFormat("yyyyMMdd");
+			
 			for(WtmWorkPattDet l : list) {
 				Map<String, Object> workPatt = new HashMap();
 				workPatt.put("workPattDetId", l.getWorkPattDetId());
@@ -224,32 +231,55 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 					workPatt.put("subGrp", subGrp);
 				}
 				
-				workPatt.put("planShm", l.getPlanShm());
-				workPatt.put("planEhm", l.getPlanEhm());
+				workPatt.put("planShm", timeCdMgr.getWorkShm());//l.getPlanShm());
+				workPatt.put("planEhm", timeCdMgr.getWorkEhm());//l.getPlanEhm());
 
-				if(timeCdMgr.getHolYn()!=null && !"Y".equals(timeCdMgr.getHolYn()))
-					workPatt.put("planMinute", l.getPlanMinute());
-				else 
-					workPatt.put("planMinute", "");
-				
-				workPatt.put("otbMinute", l.getOtbMinute());
-				workPatt.put("otaMinute", l.getOtaMinute());
-				
-				int otMinute = 0;
-				
-				if(timeCdMgr.getHolYn()!=null && "Y".equals(timeCdMgr.getHolYn()) && l.getPlanMinute()!=null) {
-					otMinute = l.getPlanMinute();
-				} 
-				
-				if(otMinute!=0) {
-					workPatt.put("otMinute", otMinute);
-				} else {
-					workPatt.put("otMinute", "");
+				if(timeCdMgr.getWorkShm() != null && !timeCdMgr.getWorkShm().equals("")
+						&& timeCdMgr.getWorkEhm() != null && !timeCdMgr.getWorkEhm().equals("")) {
+					Date calcSdate = null, calcEdate = null;
+					try {
+						
+						calcSdate = yMdHm.parse(yMd.format(new Date())+""+timeCdMgr.getWorkShm());
+						calcEdate = yMdHm.parse(yMd.format(new Date())+""+timeCdMgr.getWorkEhm());
+					} catch (ParseException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					if(calcSdate != null && calcEdate != null) {
+						if(calcSdate.compareTo(calcEdate) > 0) {
+							Calendar c = Calendar.getInstance();
+							c.setTime(calcEdate);
+							c.add(Calendar.DATE, 1);
+							calcEdate = c.getTime();
+						}
+						
+						Map<String, Object> calcMap = calcService.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+						Integer planMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+						
+						if(timeCdMgr.getHolYn()!=null && !"Y".equals(timeCdMgr.getHolYn()))
+							workPatt.put("planMinute", planMinute);
+						else 
+							workPatt.put("planMinute", "");
+						
+						workPatt.put("otbMinute", timeCdMgr.getOtbMinute());
+						workPatt.put("otaMinute", timeCdMgr.getOtaMinute());
+						
+						int otMinute = 0;
+						
+						if(timeCdMgr.getHolYn()!=null && "Y".equals(timeCdMgr.getHolYn()) && planMinute!=null) {
+							otMinute = planMinute;
+						} 
+						
+						if(otMinute!=0) {
+							workPatt.put("otMinute", otMinute);
+						} else {
+							workPatt.put("otMinute", "");
+						}
+						
+						workPatt.put("note", l.getNote());
+						workPattList.add(workPatt);
+					}
 				}
-				
-				workPatt.put("note", l.getNote());
-				workPattList.add(workPatt);
-
 			}
 		}
 		
