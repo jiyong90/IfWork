@@ -80,6 +80,10 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 	@Autowired
 	WtmFlexibleApplyRepository flexibleApplyRepo;
 	
+	@Autowired private WtmTimeCdMgrRepository timeCdMgrRepo;
+	
+	@Autowired private WtmCalcService calcService;
+	
 	@Override
 	public List<Map<String, Object>> getApplyList(Long tenantId, String enterCd, String sYmd) {
 		List<Map<String, Object>> searchList = new ArrayList();	
@@ -176,22 +180,25 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 							wtmFlexibleApplyMgrMapper.copyWtmApplyGroup(paramMap);
 							wtmFlexibleApplyMgrMapper.copyWtmApplyEmp(paramMap);
 							wtmFlexibleApplyMgrMapper.copyWtmApplyEmpTemp(paramMap);
-							
+							/*
 							if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {
 								createElasPlan(tenantId, enterCd, flexibleApply.getFlexibleStdMgrId(), flexibleApply.getFlexibleApplyId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), userId);
 								cnt += 1;
 							} else {
+							*/
 								codes.add(code);
-							}
+							//}
 							
 						} else {
+							/*
 							if(l.get("workTypeCd")!=null && "ELAS".equals(l.get("workTypeCd").toString())) {
 								WtmFlexibleApplyMgr flexibleApply = flexibleApplyRepository.save(code);
 								createElasPlan(tenantId, enterCd, flexibleApply.getFlexibleStdMgrId(), flexibleApply.getFlexibleApplyId(), flexibleApply.getUseSymd(), flexibleApply.getUseEymd(), userId);
 								cnt += 1;
 							} else {
+							*/
 								codes.add(code);
-							}
+							//}
 							
 						}
 						// End						
@@ -500,11 +507,11 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		wtmFlexibleApplyMgrMapper.updateFlexibleApplyAll(flexibleApplyId);
 		
 		//전체성공
-		if(cnt == searchList.size()) {			
+		//if(cnt == searchList.size()) {			
 			// 20200507 이효정추가 근무확정시 선반영된 근태건이 있으면 재갱신 대상으로 변경해야함.
-			wtmFlexibleApplyMgrMapper.updateFlexibleTaaReset(flexibleApplyId);
+		//	wtmFlexibleApplyMgrMapper.updateFlexibleTaaReset(flexibleApplyId);
 			
-		}
+		//}
 		return cnt;
 		
 	}
@@ -1105,8 +1112,100 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		
 		List<WtmFlexibleApplyDet> workList = new ArrayList<WtmFlexibleApplyDet>();
 		List<WtmFlexibleApplDetVO> patterns = flexApplMapper.getWorkPattern(paramMap);
+		Map<Long, WtmTimeCdMgr> timeMap = new HashMap<Long, WtmTimeCdMgr>();
 		if(patterns!=null && patterns.size()>0) {
 			for(WtmFlexibleApplDetVO p : patterns) {
+				WtmTimeCdMgr timeCdMgr = null;
+				
+				if(timeMap.containsKey(p.getTimeCdMgrId())) {
+					timeCdMgr = timeMap.get(p.getTimeCdMgrId());
+				}else {
+					timeCdMgr = timeCdMgrRepo.findById(p.getTimeCdMgrId()).get();
+					timeMap.put(timeCdMgr.getTimeCdMgrId(), timeCdMgr);
+				}
+				
+				if(timeCdMgr.getWorkShm() != null && timeCdMgr.getWorkEhm() != null
+						&& !"".equals(timeCdMgr.getWorkShm()) && !"".equals(timeCdMgr.getWorkEhm())) {
+						logger.debug("timeCdMgr is not null ");
+						String shm = timeCdMgr.getWorkShm();
+						String ehm = timeCdMgr.getWorkEhm();
+						String d = p.getYmd();
+						//String sYmd = calendar.getYmd();
+						//String eYmd = calendar.getYmd();
+						Date sd = null, ed = null;
+						SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+						SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+						SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
+						Calendar cal = Calendar.getInstance();
+						
+
+						try {
+							sd = ymdhm.parse(d+shm);
+							ed = ymdhm.parse(d+ehm);
+							//종료시분이 시작시분보다 작으면 기준일을 다음날로 본다. 
+							if(Integer.parseInt(shm) > Integer.parseInt(ehm)) {
+								cal.setTime(ed);
+								cal.add(Calendar.DATE, 1);
+								ed = cal.getTime();
+								//eYmd = ymd.format(cal.getTime());
+							}
+						} catch (ParseException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+
+						WtmFlexibleApplyDet fd = new WtmFlexibleApplyDet();
+						fd.setFlexibleApplyId(flexibleApplyId);
+						fd.setYmd(d);
+						fd.setTimeCdMgrId(timeCdMgr.getTimeCdMgrId());
+						fd.setHolidayYn(p.getHolidayYn());
+						fd.setPlanSdate(sd);
+						fd.setPlanEdate(ed); 
+						
+						Map<String, Object> resMap = calcService.calcApprMinute(sd, ed, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+						if(resMap.containsKey("apprMinute")) {
+							fd.setPlanMinute(Integer.parseInt(resMap.get("apprMinute")+""));
+							//breakMinute = Integer.parseInt(resMap.get("breakMinute")+"");
+						}
+						
+						/*
+						 * timeCdMgr otbMinute 조출 이 있을 경우 생성해준다.
+						 */
+						if(timeCdMgr.getOtbMinute() != null && !timeCdMgr.getOtbMinute().equals("")) {
+							Date earlyOtSdate = calcService.F_WTM_DATE_ADD(sd, timeCdMgr.getOtbMinute() * -1, timeCdMgr, flexibleStdMgr.getUnitMinute());
+							fd.setOtbSdate(earlyOtSdate);
+							fd.setOtbEdate(sd);
+							//int breakMinute = 0;						
+							Map<String, Object> resOtMap = calcService.calcApprMinute(earlyOtSdate, sd, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+							if(resOtMap.containsKey("apprMinute")) {
+								fd.setOtbMinute(Integer.parseInt(resOtMap.get("apprMinute")+""));
+								//breakMinute = Integer.parseInt(resMap.get("breakMinute")+"");
+							}
+						}
+						/*
+						 * timeCdMgr otAMinute 잔업 이 있을 경우 생성해준다.
+						 */
+						if(timeCdMgr.getOtaMinute() != null && !timeCdMgr.getOtaMinute().equals("")) {
+							Date otEdate = calcService.F_WTM_DATE_ADD(sd, timeCdMgr.getOtaMinute(), timeCdMgr, flexibleStdMgr.getUnitMinute());
+
+							fd.setOtbSdate(ed);
+							fd.setOtbEdate(otEdate);
+							//int breakMinute = 0;						
+							Map<String, Object> resOtMap = calcService.calcApprMinute(ed, otEdate, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+							if(resOtMap.containsKey("apprMinute")) {
+								fd.setOtaMinute(Integer.parseInt(resOtMap.get("apprMinute")+""));
+								//breakMinute = Integer.parseInt(resMap.get("breakMinute")+"");
+							}
+						}				
+							
+						
+						fd.setUpdateDate(new Date());
+						fd.setUpdateId(userId);
+						
+						workList.add(fd);
+						
+				}
+				/*
 				WtmFlexibleApplyDet fd = new WtmFlexibleApplyDet();
 				fd.setFlexibleApplyId(flexibleApplyId);
 				fd.setYmd(p.getYmd());
@@ -1131,6 +1230,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 				fd.setUpdateDate(new Date());
 				fd.setUpdateId(userId);
 				workList.add(fd);
+				*/
 			}
 			
 			flexibleApplyDetRepo.saveAll(workList);
@@ -1204,7 +1304,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		
 		//계획 생성
 		List<WtmFlexibleApplyDet> applyDets = saveWtmFlexibleApplyDet(tenantId, enterCd, flexibleApplyId, flexibleStdMgrId, sYmd, eYmd, null, userId);
-		updateWtmFlexibleApplyDet(tenantId, enterCd, flexibleStdMgrId, applyDets, userId);
+		//updateWtmFlexibleApplyDet(tenantId, enterCd, flexibleStdMgrId, applyDets, userId);
 	}
 	
 	@Transactional

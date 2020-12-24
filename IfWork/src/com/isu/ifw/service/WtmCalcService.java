@@ -54,4 +54,6 @@ public interface WtmCalcService {
 	public Map<String, Integer> calcFlexibleMinuteByTypeForWorkTypeFlex(WtmFlexibleEmp flexEmp);
 	
 	public void calcWorktimeClose(WtmWorktimeClose worktimeClose , String sabun);
+	
+	public Date F_WTM_DATE_ADD(Date d, int addMinute, WtmTimeCdMgr timeCdMgr, int unitMinute);
 }

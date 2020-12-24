@@ -1,8 +1,12 @@
 package com.isu.ifw.service;
 
-import com.isu.ifw.entity.*;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.repository.*;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,11 +14,22 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.isu.ifw.entity.WtmAsyncLog;
+import com.isu.ifw.entity.WtmAsyncLogDet;
+import com.isu.ifw.entity.WtmEmpHis;
+import com.isu.ifw.entity.WtmFlexibleApply;
+import com.isu.ifw.entity.WtmFlexibleApplyEmpTemp;
+import com.isu.ifw.entity.WtmFlexibleEmp;
+import com.isu.ifw.entity.WtmWorkDayResult;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.repository.WtmAsyncLogDetRepository;
+import com.isu.ifw.repository.WtmAsyncLogRepository;
+import com.isu.ifw.repository.WtmEmpHisRepository;
+import com.isu.ifw.repository.WtmFlexibleApplyEmpTempRepository;
+import com.isu.ifw.repository.WtmFlexibleApplyRepository;
+import com.isu.ifw.repository.WtmFlexibleEmpRepository;
+import com.isu.ifw.repository.WtmOtSubsApplRepository;
+import com.isu.ifw.repository.WtmWorkDayResultRepository;
 
 @Service
 public class WtmAsyncService {
@@ -56,6 +71,9 @@ public class WtmAsyncService {
 
 	@Autowired
 	WtmFlexibleApplyEmpTempRepository flexibleApplyEmpTempRepo;
+	
+	@Autowired private WtmWorkDayResultRepository workDayResultRepo;
+	@Autowired private WtmInterfaceService interfaceService;
 
 
 	@Async("threadPoolTaskExecutor")
@@ -200,6 +218,29 @@ public class WtmAsyncService {
 
 					try {
 						flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, sYmd, eYmd, userId);
+						
+						try {
+							List<String> timeTypeCds = new ArrayList<String>();
+							timeTypeCds.add(WtmApplService.TIME_TYPE_TAA);
+							timeTypeCds.add(WtmApplService.TIME_TYPE_REGA);
+							//timeTypeCds.add(WtmApplService.TIME_TYPE_BASE);
+							List<WtmWorkDayResult> taaResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCds, sYmd, eYmd);
+							if(taaResults != null && taaResults.size() > 0) {
+								List<String> taaYmd = new ArrayList<String>();
+								for(WtmWorkDayResult r : taaResults) {
+									if(taaYmd.indexOf(r.getYmd()) == -1) {
+										taaYmd.add(r.getYmd());
+									}
+								}
+								workDayResultRepo.deleteAll(taaResults);
+								workDayResultRepo.flush();
+								for(String ymd : taaYmd) {
+									interfaceService.resetTaaResult(tenantId, enterCd, sabun, ymd);
+								}
+							}
+						} catch (Exception e) {
+							e.printStackTrace();
+						};
 					} catch (Exception e) {
 
 						WtmAsyncLogDet logDet = new WtmAsyncLogDet();

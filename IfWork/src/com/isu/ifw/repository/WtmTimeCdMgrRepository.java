@@ -18,4 +18,7 @@ public interface WtmTimeCdMgrRepository extends JpaRepository<WtmTimeCdMgr, Long
 	@Query(value="SELECT M FROM WtmTimeCdMgr M WHERE M.tenantId = :tenantId AND M.enterCd = :enterCd AND M.holYn like F_WTM_NVL(:holYn, '%') AND :ymd BETWEEN M.symd AND CASE WHEN M.eymd IS NULL THEN '99991231' ELSE M.eymd END ORDER BY M.symd, M.timeCd")
 	public List<WtmTimeCdMgr> findByTenantIdAndEnterCdAndHolYnAndYmd(@Param(value="tenantId")Long tenantId, @Param(value="enterCd")String enterCd, @Param(value="holYn")String holYn, @Param(value="ymd")String ymd);
 	
+	//symd <= #{ymd} AND eymd >= #{ymd}
+	public List<WtmTimeCdMgr> findByTenantIdAndEnterCdAndSymdLessThanEqualAndEymdGreaterThanEqual(Long tenantId, String enterCd, String eymd, String symd);
+	
 }

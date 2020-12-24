@@ -1,15 +1,14 @@
 package com.isu.ifw.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.common.entity.CommTenantModule;
-import com.isu.ifw.common.repository.CommTenantModuleRepository;
-import com.isu.ifw.entity.*;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmInterfaceMapper;
-import com.isu.ifw.repository.*;
-import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.ReturnParam;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,9 +18,50 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.common.entity.CommTenantModule;
+import com.isu.ifw.common.repository.CommTenantModuleRepository;
+import com.isu.ifw.entity.WtmAppl;
+import com.isu.ifw.entity.WtmFlexibleStdMgr;
+import com.isu.ifw.entity.WtmIfTaaHis;
+import com.isu.ifw.entity.WtmIntfCode;
+import com.isu.ifw.entity.WtmIntfEmp;
+import com.isu.ifw.entity.WtmIntfEmpAddr;
+import com.isu.ifw.entity.WtmIntfGnt;
+import com.isu.ifw.entity.WtmIntfHoliday;
+import com.isu.ifw.entity.WtmIntfOrg;
+import com.isu.ifw.entity.WtmIntfOrgChart;
+import com.isu.ifw.entity.WtmIntfOrgConc;
+import com.isu.ifw.entity.WtmIntfTaaAppl;
+import com.isu.ifw.entity.WtmTaaAppl;
+import com.isu.ifw.entity.WtmTaaApplDet;
+import com.isu.ifw.entity.WtmTaaCode;
+import com.isu.ifw.entity.WtmTimeCdMgr;
+import com.isu.ifw.entity.WtmWorkCalendar;
+import com.isu.ifw.entity.WtmWorkDayResult;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmInterfaceMapper;
+import com.isu.ifw.repository.WtmApplRepository;
+import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
+import com.isu.ifw.repository.WtmIfTaaHisRepository;
+import com.isu.ifw.repository.WtmIntfCodeRepository;
+import com.isu.ifw.repository.WtmIntfEmpAddrRepository;
+import com.isu.ifw.repository.WtmIntfEmpRepository;
+import com.isu.ifw.repository.WtmIntfGntRepository;
+import com.isu.ifw.repository.WtmIntfHolidayRepository;
+import com.isu.ifw.repository.WtmIntfOrgChartRepository;
+import com.isu.ifw.repository.WtmIntfOrgConcRepository;
+import com.isu.ifw.repository.WtmIntfOrgRepository;
+import com.isu.ifw.repository.WtmIntfTaaApplRepository;
+import com.isu.ifw.repository.WtmTaaApplDetRepository;
+import com.isu.ifw.repository.WtmTaaApplRepository;
+import com.isu.ifw.repository.WtmTaaCodeRepository;
+import com.isu.ifw.repository.WtmTimeCdMgrRepository;
+import com.isu.ifw.repository.WtmWorkCalendarRepository;
+import com.isu.ifw.repository.WtmWorkDayResultRepository;
+import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
 
 @Service("wtmInterfaceService")
 public class WtmInterfaceServiceImpl implements WtmInterfaceService {
@@ -94,12 +134,6 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	@Autowired private WtmCalcService calcService;
 	
 	@Autowired private WtmTimeCdMgrRepository timeCdMgrRepo;
-	
-	@Autowired private WtmWorktimeCloseRepository worktimeCloseRepo;
-	
-	@Autowired private WtmAsyncService asyncService;
-	//@Autowired private WtmAsyncLogRepository asyncLogRepo;
-	//@Autowired private WtmAsyncLogDetRepository asyncLogDetRepo;
 	
 	@Override
 	public Map<String, Object> getIfLastDate(Long tenantId, String ifType) throws Exception {
@@ -2525,6 +2559,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					logger.debug("cal2 : " + d2);
 					 
 					String d = ymdFt.format(d1);
+					System.out.println("sabun : " + sabun);
+					System.out.println("d : " + d);
 					WtmFlexibleStdMgr flexibleStdMgr = flexStdMgrRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, d);
 					WtmWorkCalendar cal = workCalendarRepo.findByTenantIdAndEnterCdAndYmdAndSabun(tenantId, enterCd, d, sabun);
 					WtmTimeCdMgr timeCdMgr = timeCdMgrRepo.findById(cal.getTimeCdMgrId()).get();
@@ -2630,6 +2666,13 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 											e.printStackTrace();
 											sdate = null; edate = null;
 										}
+
+										if(sdate.compareTo(edate) > 0) {
+											Calendar c = Calendar.getInstance();
+											c.setTime(edate);
+											c.add(Calendar.DATE, 1);
+											edate = c.getTime();
+										}
 									}else {
 										//기본근무시간
 										try {
@@ -2638,6 +2681,12 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										} catch (ParseException e) {
 											e.printStackTrace();
 											sdate = null; edate = null;
+										}
+										if(sdate.compareTo(edate) > 0) {
+											Calendar c = Calendar.getInstance();
+											c.setTime(edate);
+											c.add(Calendar.DATE, 1);
+											edate = c.getTime();
 										}
 										// 근무시간이 없으면 근태코드별 시간을 조정해야함.
 										logger.debug("반차는 근무시간을 변경함 : " + taaCode.getRequestTypeCd());

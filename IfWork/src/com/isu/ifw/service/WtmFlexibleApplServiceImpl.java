@@ -221,7 +221,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 			//탄근제의 경우 추가로 근무제 패턴을 flexibleApplDet 저장
 			if(workTypeCd.equals("ELAS")) {
 				List<WtmFlexibleApplDet> flexibleApplDet = saveWtmFlexibleApplDet(tenantId, enterCd, flexibleAppl.getFlexibleApplId(), flexibleStdMgrId, sYmd, eYmd, sabun, userId);
-				updateWtmFlexibleApplDet(flexibleApplDet, userId);
+				//updateWtmFlexibleApplDet(flexibleApplDet, userId);
 			}
 				
 			rp.put("applId", appl.getApplId());
