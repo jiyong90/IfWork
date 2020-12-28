@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResult, Long> {
@@ -155,5 +156,8 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndYmdBetweenAndSabunAndApplIdIsNullAndTimeTypeCdIn(Long tenantId, String enterCd, String sYmd, String eYmd, String sabun, List<String> timeTypeCds);
 
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndYmdAndSabunAndApplIdIsNull(Long tenantId, String enterCd, String ymd, String sabun);
+
+	@Query("SELECT MIN(R.planSdate) AS planSdate , MIN(R.planEdate) AS planEdate FROM WtmWorkDayResult R WHERE R.tenantId = ?1 AND R.enterCd = ?2 AND R.sabun = ?3 AND R.ymd = ?4 AND R.timeTypeCd NOT IN (?5) ")
+	public Map<String, Object> findByMinMaxPlanDate(Long tenantId, String enterCd, String sabun, String ymd, String timeTypeCd);
 
 }

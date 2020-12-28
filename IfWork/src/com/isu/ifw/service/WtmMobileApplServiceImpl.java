@@ -595,7 +595,6 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 
 	@Override
 	public ReturnParam validateRegaAppl(Long tenantId, String enterCd, String sabun, Map<String, Object> dataMap) throws Exception {
-
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
 
@@ -631,39 +630,41 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 			} else {
 				note = dataMap.get("reason").toString();
 			}
-
-
-			WtmTaaCode wtmTaaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, dataMap.get("gubun").toString());
-
-			String requestTypeCd = "";
-			if(wtmTaaCode != null) {
-				requestTypeCd = wtmTaaCode.getTaaTypeCd();
-			}
-
-			List<String> symdArr          = new ArrayList<String>();
-			List<String> eymdArr          = new ArrayList<String>();
-			List<String> requestTypeCdArr = new ArrayList<String>();
-			List<String> taaTypeCdArr     = new ArrayList<String>();
-
-			symdArr.add(symd.replaceAll(".", ""));
-			eymdArr.add(eymd.replaceAll(".", ""));
-			requestTypeCdArr.add(requestTypeCd); //TAA TYPE CD : 20
-			taaTypeCdArr.add(dataMap.get("gubun").toString()); //간주 근무 코드
-
-			Map<String, Object> valiMap = new HashMap<String, Object>();
-			valiMap.put("taaSdateArr", symdArr);
-			valiMap.put("taaEdateArr", eymdArr);
-			valiMap.put("workTimeCode", dataMap.get("gubun").toString());
-			valiMap.put("requestCd", requestTypeCd);
-			valiMap.put("note", note);
-			valiMap.put("applCd", dataMap.get("applCd").toString());
-			valiMap.put("applId", dataMap.get("applId"));
-
-			rp = regaApplService.validate(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, valiMap);
-
-			resultMap.put("data", dataMap);
-			rp.put("result", resultMap);
 		}
+
+		if(note == null || "".equals(note)) {
+			throw new Exception("사유를 입력해주세요.");
+		}
+
+		WtmTaaCode wtmTaaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, dataMap.get("gubun").toString());
+
+		String requestTypeCd = "";
+		if(wtmTaaCode != null) {
+			requestTypeCd = wtmTaaCode.getTaaTypeCd();
+		}
+
+		List<String> symdArr          = new ArrayList<String>();
+		List<String> eymdArr          = new ArrayList<String>();
+		List<String> requestTypeCdArr = new ArrayList<String>();
+		List<String> taaTypeCdArr     = new ArrayList<String>();
+
+		symdArr.add(symd);
+		eymdArr.add(eymd);
+		requestTypeCdArr.add(requestTypeCd);
+		taaTypeCdArr.add(dataMap.get("gubun").toString());
+
+		Map<String, Object> valiMap = new HashMap<String, Object>();
+		valiMap.put("taaSdateArr", symdArr);
+		valiMap.put("taaEdateArr", eymdArr);
+		valiMap.put("workTimeCode", requestTypeCd);
+		valiMap.put("requestCd", "");
+		valiMap.put("note", note);
+		valiMap.put("applCd", dataMap.get("applCd").toString());
+
+		rp = regaApplService.validate(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, valiMap);
+
+		resultMap.put("data", dataMap);
+		rp.put("result", resultMap);
 		return rp;
 
 	}
