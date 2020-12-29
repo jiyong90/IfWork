@@ -1,15 +1,14 @@
 package com.isu.ifw.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.common.entity.CommTenantModule;
-import com.isu.ifw.common.repository.CommTenantModuleRepository;
-import com.isu.ifw.entity.*;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmInterfaceMapper;
-import com.isu.ifw.repository.*;
-import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.ReturnParam;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,9 +18,50 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.common.entity.CommTenantModule;
+import com.isu.ifw.common.repository.CommTenantModuleRepository;
+import com.isu.ifw.entity.WtmAppl;
+import com.isu.ifw.entity.WtmFlexibleStdMgr;
+import com.isu.ifw.entity.WtmIfTaaHis;
+import com.isu.ifw.entity.WtmIntfCode;
+import com.isu.ifw.entity.WtmIntfEmp;
+import com.isu.ifw.entity.WtmIntfEmpAddr;
+import com.isu.ifw.entity.WtmIntfGnt;
+import com.isu.ifw.entity.WtmIntfHoliday;
+import com.isu.ifw.entity.WtmIntfOrg;
+import com.isu.ifw.entity.WtmIntfOrgChart;
+import com.isu.ifw.entity.WtmIntfOrgConc;
+import com.isu.ifw.entity.WtmIntfTaaAppl;
+import com.isu.ifw.entity.WtmTaaAppl;
+import com.isu.ifw.entity.WtmTaaApplDet;
+import com.isu.ifw.entity.WtmTaaCode;
+import com.isu.ifw.entity.WtmTimeCdMgr;
+import com.isu.ifw.entity.WtmWorkCalendar;
+import com.isu.ifw.entity.WtmWorkDayResult;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmInterfaceMapper;
+import com.isu.ifw.repository.WtmApplRepository;
+import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
+import com.isu.ifw.repository.WtmIfTaaHisRepository;
+import com.isu.ifw.repository.WtmIntfCodeRepository;
+import com.isu.ifw.repository.WtmIntfEmpAddrRepository;
+import com.isu.ifw.repository.WtmIntfEmpRepository;
+import com.isu.ifw.repository.WtmIntfGntRepository;
+import com.isu.ifw.repository.WtmIntfHolidayRepository;
+import com.isu.ifw.repository.WtmIntfOrgChartRepository;
+import com.isu.ifw.repository.WtmIntfOrgConcRepository;
+import com.isu.ifw.repository.WtmIntfOrgRepository;
+import com.isu.ifw.repository.WtmIntfTaaApplRepository;
+import com.isu.ifw.repository.WtmTaaApplDetRepository;
+import com.isu.ifw.repository.WtmTaaApplRepository;
+import com.isu.ifw.repository.WtmTaaCodeRepository;
+import com.isu.ifw.repository.WtmTimeCdMgrRepository;
+import com.isu.ifw.repository.WtmWorkCalendarRepository;
+import com.isu.ifw.repository.WtmWorkDayResultRepository;
+import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
 
 @Service("wtmInterfaceService")
 public class WtmInterfaceServiceImpl implements WtmInterfaceService {
@@ -84,8 +124,6 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	
 	@Autowired
 	WtmApplRepository wtmApplRepo;
-
-	@Autowired private WtmTimeBreakMgrRepository wtmTimeBreakMgrRepo;
 	
 	@Autowired private WtmValidatorService validatorService;
 	
@@ -1466,7 +1504,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 //		        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 					}
 				}
-
+				
 				ifHisMap.put("ifStatus", "OK");
 				retMsg = "근태신청서 처리완료";
 			} else if("END".equals(retCode)) {
@@ -2100,7 +2138,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			statusList.add("OK");
 //			statusList.add("FAIL");
 //			statusList.add("ERR");
-			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByTenantIdAndIfStatusNotInOrIfStatusNull(tenantId, statusList);
+			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(statusList); 
 			if(list == null || list.size() == 0) {
 				logger.debug("setTaaApplBatchIfPostProcess 대상없음 종료");
 				return ;
@@ -2259,6 +2297,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	 * 
 	 * @param tenantId
 	 * @param enterCd
+	 * @param sabun
 	 * @param ifApplNo
 	 * @param status
 	 * @param works [ 
@@ -2555,7 +2594,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					 		  ELSE 0 END AS workMinute				 		  
 							*/
 							if(det.getShm() != null && !"".equals(det.getShm())
-									&& det.getEhm() != null && !"".equals(det.getEhm())
+									&& det.getEhm() != null && !"".equals(det.getEhm()) && !"0".equals(det.getShm()) && !"0".equals(det.getEhm())
 									) {
 								workMinute = calcService.WtmCalcMinute(det.getShm(), det.getEhm(), null, null, null);
 							}else if(det.getTaaMinute() != null && !"".equals(det.getTaaMinute())) {
@@ -2611,7 +2650,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 									
 									Integer workMinute = 0;
 									if(det.getShm() != null && !"".equals(det.getShm())
-											&& det.getEhm() != null && !"".equals(det.getEhm())
+											&& det.getEhm() != null && !"".equals(det.getEhm()) && !"0".equals(det.getShm()) && !"0".equals(det.getEhm())
 											) {
 										workMinute = calcService.WtmCalcMinute(det.getShm(), det.getEhm(), null, null, null);
 									//}else if(det.getTaaMinute() != null && !"".equals(det.getTaaMinute())) {
@@ -2636,9 +2675,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 											edate = c.getTime();
 										}
 									}else {
-										//기본근무가 아닐때는 계획된 근무시간을 가져오도록 한다.
+										//기본근무시간
 										if(!"BASE".equals(flexibleStdMgr.getWorkTypeCd())) {
-											Map<String, Object> workPlanMinMax = workDayResultRepo.findByMinMaxPlanDate(tenantId, enterCd, sabun, ymd, "OT");
+											Map<String, Object> workPlanMinMax = workDayResultRepo.findByMinMaxPlanDate(tenantId, enterCd, sabun, d);
 											try {
 												sdate = (Date) workPlanMinMax.get("planSdate");
 												edate = (Date) workPlanMinMax.get("planEdate");
@@ -2647,9 +2686,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 												e.printStackTrace();
 												sdate = null; edate = null;
 											}
-
 										} else {
-											//기본근무시간
 											try {
 												sdate = ymdhm.parse(d+timeCdMgr.getWorkShm());
 												edate = ymdhm.parse(d+timeCdMgr.getWorkEhm());
@@ -2664,36 +2701,12 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 											c.add(Calendar.DATE, 1);
 											edate = c.getTime();
 										}
-
 										// 근무시간이 없으면 근태코드별 시간을 조정해야함.
 										logger.debug("반차는 근무시간을 변경함 : " + taaCode.getRequestTypeCd());
 										if("P".equals(taaCode.getRequestTypeCd())) {
 											if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
-
 												//반차는 근무시간을 변경함
 												sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-
-												List<WtmTimeBreakMgr> wtmTimeBreakMgrList = wtmTimeBreakMgrRepo.findByTimeCdMgrId(timeCdMgr.getTimeCdMgrId());
-												SimpleDateFormat HHmm = new SimpleDateFormat("HHmm");
-												SimpleDateFormat YYYYmmdd = new SimpleDateFormat("YYYYMMDD");
-
-												String shm = HHmm.format(sdate);
-												String ehm = HHmm.format(edate);
-												String sYmd = YYYYmmdd.format(sdate);
-
-												for(WtmTimeBreakMgr wtmTimeBreakMgr : wtmTimeBreakMgrList) {
-													if(Integer.parseInt(shm) < Integer.parseInt(wtmTimeBreakMgr.getEhm()) &&
-													   Integer.parseInt(ehm) > Integer.parseInt(wtmTimeBreakMgr.getShm())) {
-														if(wtmTimeBreakMgr.getEhm().equals(shm)) {
-															try {
-																sdate =  ymdhm.parse(ymd.format(String.valueOf(sdate))+wtmTimeBreakMgr.getShm());
-															} catch (ParseException e) {
-																e.printStackTrace();
-															}
-														}
-													}
-												}
-
 											}else {
 												Calendar calendar = Calendar.getInstance();
 												calendar.setTime(sdate);
@@ -3310,9 +3323,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	        		setTermMap.put("symd", ymd);
 	        		setTermMap.put("eymd", ymd);
 	        		setTermMap.put("pId", "TAAIF");
-
-					calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(data.getTenantId(), enterCd, sabun, ymd, ymd);
 //				    wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
+					calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(data.getTenantId(), enterCd, sabun, ymd, ymd);
 				}
 			}
 //						
@@ -3342,7 +3354,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 //		List<String> enterCds = new ArrayList<String>();
 //		enterCds.add("ISU_ABX");http://localhost/ifw/schedule/colseDay?tenantId=98
 //		enterCds.add("ISU_AMC");
-		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotInOrIfStatusNull(status);
+		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(status);
 //		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotInAndEnterCdNotIn(status, enterCds);
 //		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndIfStatusNotInGroupBy();
 		if(list == null || list.size() == 0) {

@@ -379,8 +379,36 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 
 	@Override
 	public Map<String, Object> getSumWorkPatt(Map<String, Object> paramMap) {
-		
-		return flexStdMapper.getSumWorkPatt(paramMap);
+
+		List<Map<String, Object>> workPattList = this.getWorkPattList(Long.parseLong(paramMap.get("flexibleStdMgrId").toString()));
+
+		Map<String, Object> sumWorkPatt = new HashMap<String, Object>();
+
+		int planMinute = 0;
+		int otaMinute = 0;
+		int otbMinute = 0;
+		int otMinute = 0;
+		int repeatCnt = 1;
+
+		for(Map<String, Object> workPatt : workPattList) {
+			if(workPatt.get("planMinute") != null ) {
+				planMinute = planMinute + Integer.parseInt(workPatt.get("planMinute").toString());
+			}
+			if(workPatt.get("otaMinute") != null ) {
+				otaMinute = otaMinute + Integer.parseInt(workPatt.get("otaMinute").toString());
+			}
+			if(workPatt.get("otbMinute") != null ) {
+				otbMinute = otbMinute + Integer.parseInt(workPatt.get("otbMinute").toString());
+			}
+
+		}
+		otMinute = otaMinute + otbMinute;
+
+		sumWorkPatt.put("planMinute", planMinute);
+		sumWorkPatt.put("otMinute", otMinute );
+		sumWorkPatt.put("repeatCnt", repeatCnt);
+
+		return sumWorkPatt;
 	}
 	
 	@Override
