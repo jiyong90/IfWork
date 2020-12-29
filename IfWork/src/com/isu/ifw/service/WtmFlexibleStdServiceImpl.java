@@ -234,13 +234,14 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 				workPatt.put("planShm", timeCdMgr.getWorkShm());//l.getPlanShm());
 				workPatt.put("planEhm", timeCdMgr.getWorkEhm());//l.getPlanEhm());
 
-				if(timeCdMgr.getWorkShm() != null && !timeCdMgr.getWorkShm().equals("")
-						&& timeCdMgr.getWorkEhm() != null && !timeCdMgr.getWorkEhm().equals("")) {
+//				if(timeCdMgr.getWorkShm() != null && !timeCdMgr.getWorkShm().equals("")
+//						&& timeCdMgr.getWorkEhm() != null && !timeCdMgr.getWorkEhm().equals("")) {
 					Date calcSdate = null, calcEdate = null;
 					try {
-						
-						calcSdate = yMdHm.parse(yMd.format(new Date())+""+timeCdMgr.getWorkShm());
-						calcEdate = yMdHm.parse(yMd.format(new Date())+""+timeCdMgr.getWorkEhm());
+						if(timeCdMgr.getWorkShm() != null && !timeCdMgr.getWorkShm().equals("") && timeCdMgr.getWorkEhm() != null && !timeCdMgr.getWorkEhm().equals("")) {
+							calcSdate = yMdHm.parse(yMd.format(new Date())+""+timeCdMgr.getWorkShm());
+							calcEdate = yMdHm.parse(yMd.format(new Date())+""+timeCdMgr.getWorkEhm());
+						}
 					} catch (ParseException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -277,9 +278,9 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 						}
 						
 						workPatt.put("note", l.getNote());
-						workPattList.add(workPatt);
 					}
-				}
+//				}
+					workPattList.add(workPatt);
 			}
 		}
 		
