@@ -1788,6 +1788,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		if(breakTimes != null && breakTimes.size() > 0) {
 			//int timesSize = breakTimes.size();
 			boolean isLast = false;
+			int preMinute = 0;
 			for(int i=0; i< breakTimes.size(); i++) {
 				if(breakTimes.size() == (i+1)) {
 					isLast = true;
@@ -1834,12 +1835,47 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				logger.debug("### BREAK_TYPE_TIME apprMinute : " + apprMinute);
 				logger.debug("### BREAK_TYPE_TIME isLast : " + isLast);
 				if( apprMinute > (wMinute + nextBMinute) && !isLast ) {
+					preMinute = wMinute;
 					continue;
 				}else {
-					breakMinute = bMinute;
+					//245 일 경우 브레이크 타임이 5분이 넘어가야하는데 0으로 넘어가고 있다 
+					// 240  0 
+					// 480 60 으로 셋팅되어있음.
+					int bm = apprMinute - (wMinute + bMinute);
+					logger.debug("### BREAK_TYPE_TIME bm : " + bm);
+					if(bm < 0) {
+						breakMinute = apprMinute - preMinute;
+						if(breakMinute > bMinute) {
+							breakMinute = bMinute;
+						}
+						logger.debug("### BREAK_TYPE_TIME breakMinute1 : " + breakMinute);
+					}else {
+						if((bMinute + nextBMinute) > bm ) {
+							breakMinute = bMinute+ bm;
+							logger.debug("### BREAK_TYPE_TIME breakMinute2 : " + breakMinute);
+						}else {
+							breakMinute = bMinute;
+							logger.debug("### BREAK_TYPE_TIME breakMinute3 : " + breakMinute);
+						}
+					}
+					/*
+					if((bMinute + nextBMinute) > bm ) {
+						logger.debug("### BREAK_TYPE_TIME bMinute : " + bMinute);
+						logger.debug("### BREAK_TYPE_TIME bm : " + bm);
+						if(bm < 0) {
+							breakMinute = bm;
+						}else {
+							breakMinute = bMinute;
+						}
+						logger.debug("### BREAK_TYPE_TIME breakMinute1 : " + breakMinute);
+					}else {
+						breakMinute = bm;
+						logger.debug("### BREAK_TYPE_TIME breakMinute2 : " + breakMinute);
+					}
+					*/
+					//breakMinute = bMinute + (apprMinute - (wMinute + bMinute));
 					break;
 				}
-				
 			}
 		}
 		return breakMinute;

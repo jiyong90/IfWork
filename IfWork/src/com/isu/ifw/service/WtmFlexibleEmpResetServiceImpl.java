@@ -559,10 +559,17 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				
 				if("Y".equals(flexStdMgr.getHolExceptYn()) && holList.indexOf(currYmd) > -1 ) {
 					calendar.setHolidayYn("Y");
+					//휴일이면 휴일의 시간표를 넣어준다.
+					if(!timeCdMgr.getHolYn().equals("Y")) {
+						calendar.setTimeCdMgrId(timeCdMgr.getHolTimeCdMgrId());
+					}
 				}else {
 					//휴일이면
 					if(!"".equals(timeCdMgr.getHolYn()) &&  "Y".equals(timeCdMgr.getHolYn())) {
 						calendar.setHolidayYn("Y");
+						if(!timeCdMgr.getHolYn().equals("Y")) {
+							calendar.setTimeCdMgrId(timeCdMgr.getHolTimeCdMgrId());
+						}
 					}else {
 						calendar.setHolidayYn("N");
 					}
