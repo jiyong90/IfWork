@@ -2706,7 +2706,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										if("P".equals(taaCode.getRequestTypeCd())) {
 											if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
 												//반차는 근무시간을 변경함
-												sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+												//sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+												sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, -240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 											}else {
 												Calendar calendar = Calendar.getInstance();
 												calendar.setTime(sdate);
@@ -2717,7 +2718,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 											//calcService.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgrId, null)
 										}else if("A".equals(taaCode.getRequestTypeCd())) {
 											if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
-												edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, -240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+												//edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, -240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+												edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+
 											}else {
 												Calendar calendar = Calendar.getInstance();
 												calendar.setTime(edate);

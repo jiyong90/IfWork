@@ -405,8 +405,9 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 		otMinute = otaMinute + otbMinute;
 
 		sumWorkPatt.put("planMinute", planMinute);
-		sumWorkPatt.put("otMinute", otMinute );
+		sumWorkPatt.put("otMinute", otMinute);
 		sumWorkPatt.put("repeatCnt", repeatCnt);
+		logger.debug("planMinute : " + planMinute + "  planMinute : " + planMinute + "  repeatCnt : " + repeatCnt);
 
 		return sumWorkPatt;
 	}

@@ -289,9 +289,9 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 			
 			for(Map<String, Object> t : chgTargetList) {
 
+				String sabun = t.get("sabun").toString();
 				if("BASE".equals(t.get("timeTypeCd"))) {
 					WtmTimeChgHis history = new WtmTimeChgHis();
-					String sabun = t.get("sabun").toString();
 					paramMap.put("sabun", sabun);
 
 					history.setTenantId(tenantId);
@@ -301,36 +301,38 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 					history.setTimeTypeCd(t.get("timeTypeCd").toString());
 					history.setTimeCdMgrId(Long.valueOf(t.get("timeCdMgrId").toString()));
 
-					if(t.get("planSdate")!=null && !"".equals(t.get("planSdate"))) {
+					if (t.get("planSdate") != null && !"".equals(t.get("planSdate"))) {
 						history.setPlanSdate(WtmUtil.toDate(t.get("planSdate").toString(), "yyyyMMddHHmmss"));
 					}
-					if(t.get("planEdate")!=null && !"".equals(t.get("planEdate"))) {
+					if (t.get("planEdate") != null && !"".equals(t.get("planEdate"))) {
 						history.setPlanEdate(WtmUtil.toDate(t.get("planEdate").toString(), "yyyyMMddHHmmss"));
 					}
-					if(t.get("planMinute")!=null && !"".equals(t.get("planMinute"))) {
+					if (t.get("planMinute") != null && !"".equals(t.get("planMinute"))) {
 						String planMinute = t.get("planMinute").toString();
 						String[] hm = planMinute.split(":");
 
 						int hour = 0;
 						int min = 0;
-						if(hm[0]!=null && !"".equals(hm[0])) {
+						if (hm[0] != null && !"".equals(hm[0])) {
 							hour = Integer.valueOf(hm[0]);
 							hour *= 60;
 						}
-						if(hm[1]!=null && !"".equals(hm[1])) {
+						if (hm[1] != null && !"".equals(hm[1])) {
 							min = Integer.valueOf(hm[1]);
 						}
 
-						history.setPlanMinute(hour+min);
+						history.setPlanMinute(hour + min);
 					}
 
 					history.setUpdateId(userId);
 
 					histories.add(history);
-
+				}
 					//calendar timeCdMgrId 변경
 					WtmWorkCalendar calendar = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
+				    WtmTimeCdMgr timeCdMgrMap = timeCdMgrRepo.findByTenantIdAndEnterCdAndTimeCdMgrId(tenantId, enterCd, Long.parseLong(timeCdMgrId.toString()));
 					calendar.setTimeCdMgrId(timeCdMgrId);
+					calendar.setHolidayYn(timeCdMgrMap.getHolYn());
 					calendar = workCalendarRepo.save(calendar);
 					
 					WtmTimeCdMgr timeCdMgr = timeCdMgrRepo.findById(timeCdMgrId).get();
@@ -407,7 +409,7 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 						empService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
 					}
 					*/
-				}
+//				}
 
 			}
 			timeChgHisRepo.saveAll(histories);

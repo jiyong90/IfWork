@@ -4845,13 +4845,20 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			Long flexibleApplyId = Long.parseLong(searchSabun.get("flexibleApplyId").toString());
 			
 			WtmFlexibleEmp saveFlexibleEmp = null;
+			String endYmd = "";
 			
 			for(int i = 0; i < ymdList.size(); i++) {
 				String sYmd = ymdList.get(i).get("symd").toString();
 				String eYmd = ymdList.get(i).get("eymd").toString();
+				endYmd = eYmd;
 				
 				searchSabun.put("symd", sYmd);
 				searchSabun.put("eymd", eYmd);
+
+				List<WtmFlexibleEmp> delFlexEmpList = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndSymdAndEymd(tenantId, enterCd, sabun, sYmd, eYmd);
+				for(WtmFlexibleEmp flexEmp : delFlexEmpList) {
+					flexEmpRepo.delete(flexEmp);
+				}
 
 				WtmFlexibleEmp flexibleEmp = new WtmFlexibleEmp();
 				flexibleEmp.setEnterCd(searchSabun.get("enterCd").toString());
@@ -5004,10 +5011,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							if(result.size()>0) {
 								workDayResultRepo.saveAll(result);
 								//workDayResultRepo.flush();
-								
 							}
 						}
-						
 					} else {
 						// 근무제도 시행시 시행할 기간의 근무제도가 기본근무의 정보는 지워야함.
 						//유연근무 승인 시 해당 구간 내의 result는 지워야 한다. //리셋 프로시져에서 지우지 않음.  
@@ -5023,7 +5028,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							workDayResultRepo.deleteAll(results);
 							//workDayResultRepo.flush();
 						}
+
 					}
+					flexibleEmpResetSerevice.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, sYmd, eYmd, "ADMIN");
 				//}
 			}
 			logger.debug("[setApply] updateWorkMinuteOfWtmFlexibleEmp " +tenantId+enterCd+sabun);
@@ -5041,12 +5048,14 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			cal.add(Calendar.DATE, -1);
 			
 			//String sd = ymd.format(cal.getTime());
-			String sd = y.format(new Date())+"0101";
-			
+//			String sd = y.format(new Date())+"0101";
+			String sd = endYmd;
 			cal.setTime(ymd.parse(searchSabun.get("useEymd")+""));
 			cal.add(Calendar.DATE, 1);
 			//String ed = ymd.format(cal.getTime());
-			String ed = y.format(new Date())+"1231";
+//			String ed = y.format(new Date())+"1231";
+			String ed = endYmd.substring(0, 4)+"1231";
+
 
 			workDayResultRepo.flush();
 			
