@@ -2667,7 +2667,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 											e.printStackTrace();
 											sdate = null; edate = null;
 										}
-
+										if(sdate == null || edate == null) {
+											cal1.add(Calendar.DATE, 1);
+											d1 = cal1.getTime();
+											continue;
+										}
 										if(sdate.compareTo(edate) > 0) {
 											Calendar c = Calendar.getInstance();
 											c.setTime(edate);
@@ -2685,6 +2689,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 											} catch (Exception e) {
 												e.printStackTrace();
 												sdate = null; edate = null;
+												logger.debug("계획시각이 없다.");
 											}
 										} else {
 											try {
@@ -2693,7 +2698,13 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 											} catch (ParseException e) {
 												e.printStackTrace();
 												sdate = null; edate = null;
+												logger.debug("시간표의 기준 시각이 없다.");
 											}
+										}
+										if(sdate == null || edate == null) {
+											cal1.add(Calendar.DATE, 1);
+											d1 = cal1.getTime();
+											continue;
 										}
 										if(sdate.compareTo(edate) > 0) {
 											Calendar c = Calendar.getInstance();

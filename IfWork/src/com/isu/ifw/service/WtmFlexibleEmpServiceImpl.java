@@ -4834,6 +4834,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	@Transactional
 	public ReturnParam setApply(Map<String, Object> searchSabun, List<Map<String, Object>> ymdList) {
 
+		logger.debug("### START setApply :: " + ymdList.toString());
 		ReturnParam rp = new ReturnParam();
 
 		int cnt = 0;
@@ -4845,12 +4846,31 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			Long flexibleApplyId = Long.parseLong(searchSabun.get("flexibleApplyId").toString());
 			
 			WtmFlexibleEmp saveFlexibleEmp = null;
-			String endYmd = "";
+			//String endYmd = "";
+			
+			String minSymd = "";
+			String maxEymd = "";
 			
 			for(int i = 0; i < ymdList.size(); i++) {
 				String sYmd = ymdList.get(i).get("symd").toString();
 				String eYmd = ymdList.get(i).get("eymd").toString();
-				endYmd = eYmd;
+				if(minSymd.equals("")) {
+					minSymd = sYmd;
+				}
+				if(Integer.parseInt(minSymd) > Integer.parseInt(sYmd)) {
+					minSymd = sYmd;
+				}
+				
+				if(maxEymd.equals("")) {
+					maxEymd = eYmd;
+				}
+				if(Integer.parseInt(maxEymd) < Integer.parseInt(eYmd)) {
+					maxEymd = eYmd;
+				}
+				
+			
+				
+				//endYmd = eYmd;
 				
 				searchSabun.put("symd", sYmd);
 				searchSabun.put("eymd", eYmd);
@@ -5030,7 +5050,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}
 
 					}
-					flexibleEmpResetSerevice.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, sYmd, eYmd, "ADMIN");
+					//flexibleEmpResetSerevice.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, sYmd, eYmd, "ADMIN");
 				//}
 			}
 			logger.debug("[setApply] updateWorkMinuteOfWtmFlexibleEmp " +tenantId+enterCd+sabun);
@@ -5043,6 +5063,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
 			SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
 			SimpleDateFormat y = new SimpleDateFormat("yyyy");
+			/*
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(ymd.parse(searchSabun.get("useSymd")+""));
 			cal.add(Calendar.DATE, -1);
@@ -5055,7 +5076,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//String ed = ymd.format(cal.getTime());
 //			String ed = y.format(new Date())+"1231";
 			String ed = endYmd.substring(0, 4)+"1231";
-
+*/
+			String sd = minSymd;
+			String ed = maxEymd.substring(0, 4)+"1231";
 
 			workDayResultRepo.flush();
 			

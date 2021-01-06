@@ -13,6 +13,7 @@ public interface WtmFlexibleEmpResetService {
 	final static String WORK_TYPE_BASE_WORKTEAM = "WORKTEAM";
 	final static String WORK_TYPE_BASE = "BASE";
 	final static String WORK_TYPE_FLEX = "FLEX";
+	final static String WORK_TYPE_ELAS = "ELAS";
 	final static String WORK_TYPE_DIFF = "DIFF";
 	
 	
