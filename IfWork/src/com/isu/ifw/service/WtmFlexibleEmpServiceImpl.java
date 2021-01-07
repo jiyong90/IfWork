@@ -4137,13 +4137,18 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						paramMap.put("sabun", emp.get("sabun").toString());
 						
 						// 신청중인 OT신청서 시간도 차감 하자.
-						
+
+						int totOtMin = 0;
 						int restOtMin = 0;
 						int restWorkMin = 0;
 						Integer applOtMin = 0;
 						Integer applHolOtMin = 0;
 						Integer otMin = 0;
 						Integer holOtMin = 0;
+						if(emp.containsKey("totOtMinute") && emp.get("totOtMinute")!=null && !"".equals(emp.get("totOtMinute"))) {
+							totOtMin = Integer.parseInt(emp.get("totOtMinute").toString());
+							
+						}
 						if(emp.get("restOtMinute")!=null && !"".equals(emp.get("restOtMinute"))) {
 							restOtMin = Integer.parseInt(emp.get("restOtMinute").toString());
 							
@@ -4157,7 +4162,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							if(applOtMin == null) {
 								applOtMin = 0;
 							}
-						}
+						} 
+						
 						//신청중인 휴일연장근무 시간을 분리... 기본근로시간부터 차감이 필요하기때문이다. 
 						if(weekInfo != null && weekInfo.get("applHolOtMinute") != null && !weekInfo.get("applHolOtMinute").equals("")) {
 							applHolOtMin = Integer.parseInt(weekInfo.get("applHolOtMinute")+"");
@@ -4183,6 +4189,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						//2020.1207jyp  왜 신청서말고 기존 계산된거까지 빼지? 
 						applHolOtMin = applHolOtMin;// + holOtMin;
 						applOtMin = applOtMin;// + otMin;
+						
+
+						if("ELAS".equals(emp.get("workTypeCd"))) {
+							restOtMin = totOtMin - otMin;
+						}
+						logger.debug("totOtMin ::: " + totOtMin);
+						logger.debug("otMin ::: " + otMin);
 						
 						//휴일근무이며
 						if(emp.get("holidayYn") != null && "Y".equals(emp.get("holidayYn"))) {
