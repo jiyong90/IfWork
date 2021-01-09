@@ -41,7 +41,8 @@ public interface WtmCalcService {
 	public Map<String, Object> calcApprMinute(Date sDate, Date eDate, String breakTypeCd, long timeCdMgrId, int unitMinute);
 	
 	public Date P_WTM_DATE_ADD_FOR_BREAK_MGR(Date sDate, int addMinute, long timeCdMgrId, Integer unitMinute);
-	
+	public Date P_WTM_DATE_ADD_FOR_BREAK_MGR2(Date eDate, int addMinute, long timeCdMgrId, Integer unitMinute);
+
 	public Map<String, Integer> calcDayCnt(Long tenantId, String enterCd, String symd, String eymd);
 	
 	public void P_WTM_FLEXIBLE_EMP_WORKTERM_C(Long tenantId, String enterCd, String sabun, String sYmd, String eYmd);

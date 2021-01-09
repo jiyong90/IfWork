@@ -542,7 +542,7 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 	public ReturnParam validate(Long tenantId, String enterCd, String sabun, String workTypeCd, Map<String, Object> work) throws ParseException {
 
 		ReturnParam rp = new ReturnParam();
-		rp.setSuccess("저장이 성공하였습니다.");
+		rp.setSuccess("");
 
 
 		String workTimeCode = work.get("workTimeCode").toString();

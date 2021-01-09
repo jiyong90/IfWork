@@ -624,17 +624,17 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 				eymd = dataMap.get("eymd").toString().replace(".", "");
 			}
 
-			if (dataMap.get("reason") == null || "".equals(dataMap.get("reason"))) {
-				rp.setFail("사유를 입력해주세요");
-				return rp;
-			} else {
-				note = dataMap.get("reason").toString();
-			}
+//			if (dataMap.get("reason") == null || "".equals(dataMap.get("reason"))) {
+//				rp.setFail("사유를 입력해주세요");
+//				return rp;
+//			} else {
+//				note = dataMap.get("reason").toString();
+//			}
 		}
 
-		if(note == null || "".equals(note)) {
-			throw new Exception("사유를 입력해주세요.");
-		}
+//		if(note == null || "".equals(note)) {
+//			throw new Exception("사유를 입력해주세요.");
+//		}
 
 		WtmTaaCode wtmTaaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, dataMap.get("gubun").toString());
 
@@ -656,7 +656,7 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		Map<String, Object> valiMap = new HashMap<String, Object>();
 		valiMap.put("taaSdateArr", symdArr);
 		valiMap.put("taaEdateArr", eymdArr);
-		valiMap.put("workTimeCode", requestTypeCd);
+		valiMap.put("workTimeCode", dataMap.get("gubun").toString());
 		valiMap.put("requestCd", "");
 		valiMap.put("note", note);
 		valiMap.put("applCd", dataMap.get("applCd").toString());
@@ -665,8 +665,8 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 
 		resultMap.put("data", dataMap);
 		rp.put("result", resultMap);
-		return rp;
 
+		return rp;
 	}
 
 	@Override
@@ -764,7 +764,7 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		Map<String, Object> valiMap = new HashMap<String, Object>();
 		valiMap.put("taaSdateArr", symdArr);
 		valiMap.put("taaEdateArr", eymdArr);
-		valiMap.put("workTimeCode", requestTypeCd);
+		valiMap.put("workTimeCode", dataMap.get("gubun").toString());
 		valiMap.put("requestCd", "");
 		valiMap.put("note", note);
 		valiMap.put("applCd", dataMap.get("applCd").toString());
