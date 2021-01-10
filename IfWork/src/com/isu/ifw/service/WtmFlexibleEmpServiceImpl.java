@@ -5191,7 +5191,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//종료일 퇴직일로 변경
 			flexibleEmp.setEymd(retireYmd);
 			flexEmpRepo.save(flexibleEmp);
-			
+			flexEmpRepo.flush();
 			Map<String, Object> paramMap = new HashMap<String, Object>();
 			paramMap.put("tenantId", tenantId);
 			paramMap.put("enterCd", enterCd);
@@ -5213,6 +5213,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			rp.put("sabun", flexibleEmp.getSabun());
 			rp.put("symd", h.getSymd());
 			rp.put("eymd", h.getEymd());
+			rp.put("retireYmd", retireYmd);
 			
 		}
 		
