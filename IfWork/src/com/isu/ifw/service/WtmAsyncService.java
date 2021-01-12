@@ -74,11 +74,12 @@ public class WtmAsyncService {
 	
 	@Autowired private WtmWorkDayResultRepository workDayResultRepo;
 	@Autowired private WtmInterfaceService interfaceService;
-
+	@Autowired private WtmFlexibleEmpResetService flexibleEmpResetSerevice; 
 
 	@Async("threadPoolTaskExecutor")
 	@Transactional
 	public void createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, String symd, String eymd, String userId, boolean initResult) {
+		/*
 		Map<String, Object> paramMap = new HashMap<>();
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
@@ -90,8 +91,19 @@ public class WtmAsyncService {
 		
 		if(initResult)
 			wtmFlexibleEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(paramMap);
+		*/
+		if(initResult) {
+			try {
+				flexibleEmpResetSerevice.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, symd, eymd, "ADMIN");
+				calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, symd, eymd);
+				
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 
-		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, symd, eymd);
+		
 	}
 	
 	/**
