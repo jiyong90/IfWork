@@ -1720,7 +1720,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			//타각 시간이 계획시간보다 작을 경우 정상
 			if(rDt.compareTo(dt) < 1) {
 				return dt;
-			}else {
+			} else {
 				// 분으로 계산
 				//int totMinute = h * m;
 				// 지각은 단위시간으로 계산 시 이후 시간으로 해야한다 . 
@@ -1728,8 +1728,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				
 				//단위 시간 적용
 				int calcM = ((m + unitMinute) - (m + unitMinute)%unitMinute)%60 - ((unitMinute==1)?1:0)  ;
-
+//				((30+30) - (30+30)%30)%60;
 				Calendar cal = Calendar.getInstance();
+				if(calcM == 0){
+					calcM = m;
+				}
 				try {
 					cal.setTime(df.parse(dYmd.format(rDt)+String.format("%02d",h)+String.format("%02d",calcM)));
 				} catch (ParseException e) {
@@ -1748,7 +1751,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			logger.debug("rDt.compareTo(dt) :: " + rDt.compareTo(dt));
 			if(rDt.compareTo(dt) > 0) {
 				return dt;
-			} else {  
+			} else {
 				int namerge = m%unitMinute;
 				//단위 시간 적용
 				int calcM = m - m%unitMinute;
