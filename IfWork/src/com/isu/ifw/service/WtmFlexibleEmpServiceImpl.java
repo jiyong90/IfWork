@@ -5271,7 +5271,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 			try {
 				List<String> timeTypeCds = new ArrayList<String>();
-				timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
+//				timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
 				timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
 				timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 				timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
