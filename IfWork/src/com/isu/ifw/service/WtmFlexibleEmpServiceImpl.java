@@ -3149,7 +3149,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		String sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 		if(paramMap.containsKey("sYmd") && paramMap.get("sYmd")!=null && !"".equals(paramMap.get("sYmd"))) {
-			sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+			sYmd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 		}
 		
 		List<String> auths = getAuth(tenantId, enterCd, sabun);

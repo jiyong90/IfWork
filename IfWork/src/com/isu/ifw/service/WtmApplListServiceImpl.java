@@ -43,12 +43,12 @@ public class WtmApplListServiceImpl implements WtmApplListService{
 			
 			String sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 			if(paramMap.get("sYmd")!=null && !"".equals("sYmd")) {
-				sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+				sYmd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 				paramMap.put("sYmd", sYmd);
 			}
 			String eYmd = paramMap.get("eYmd").toString();
 			if(paramMap.get("eYmd")!=null && !"".equals("eYmd")) {
-				eYmd = paramMap.get("eYmd").toString().replaceAll("-", "");
+				eYmd = paramMap.get("eYmd").toString().replaceAll("[-.]", "");
 				paramMap.put("eYmd", eYmd);
 			}
 			
@@ -80,12 +80,12 @@ public class WtmApplListServiceImpl implements WtmApplListService{
 			
 			String sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 			if(paramMap.get("sYmd")!=null && !"".equals("sYmd")) {
-				sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+				sYmd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 				paramMap.put("sYmd", sYmd);
 			}
 			String eYmd = paramMap.get("eYmd").toString();
 			if(paramMap.get("eYmd")!=null && !"".equals("eYmd")) {
-				eYmd = paramMap.get("eYmd").toString().replaceAll("-", "");
+				eYmd = paramMap.get("eYmd").toString().replaceAll("[-.]", "");
 				paramMap.put("eYmd", eYmd);
 			}
 			
@@ -118,12 +118,12 @@ public class WtmApplListServiceImpl implements WtmApplListService{
 
 			String sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 			if(paramMap.get("sYmd")!=null && !"".equals("sYmd")) {
-				sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+				sYmd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 				paramMap.put("sYmd", sYmd);
 			}
 			String eYmd = paramMap.get("eYmd").toString();
 			if(paramMap.get("eYmd")!=null && !"".equals("eYmd")) {
-				eYmd = paramMap.get("eYmd").toString().replaceAll("-", "");
+				eYmd = paramMap.get("eYmd").toString().replaceAll("[-.]", "");
 				paramMap.put("eYmd", eYmd);
 			}
 

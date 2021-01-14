@@ -81,7 +81,7 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 //		if(dataMap.get("workTypeCd")!=null && !"".equals(dataMap.get("workTypeCd")))
 //			workTypeCd = dataMap.get("workTypeCd").toString();
 
-		String ymd = dataMap.get("ymd").toString().replace(".", "").replace("-", "");
+		String ymd = dataMap.get("ymd").toString().replaceAll("[.-]", "");
 		String cSHm = dataMap.get("cSHm")!=null?ymd+dataMap.get("cSHm").toString().replace(":", ""):null;
 		String cEHm = dataMap.get("cEHm")!=null?ymd+dataMap.get("cEHm").toString().replace(":", ""):null;
 
@@ -470,7 +470,7 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 	}
 	
 	private void setOtData(Map<String, Object> dataMap) {
-		dataMap.put("ymd", dataMap.get("ymd").toString().replace(".", ""));
+		dataMap.put("ymd", dataMap.get("ymd").toString().replaceAll("[.-]", ""));
 		//입력 항목으로 validation check
 		if(!dataMap.containsKey("ehm")) {
 			dataMap.put("ehm", "");
@@ -485,7 +485,7 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		if(!dataMap.containsKey("subsSymd")) {
 			dataMap.put("subsSymd", "");
 		} else {
-			dataMap.put("subsSymd", dataMap.get("subsSymd").toString().replace(".", ""));
+			dataMap.put("subsSymd", dataMap.get("subsSymd").toString().replaceAll("[.-]", ""));
 		}
 		if(!dataMap.containsKey("subsShm")) {
 			dataMap.put("subsShm", "");

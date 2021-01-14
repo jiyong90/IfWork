@@ -43,8 +43,8 @@ public class WtmAnnualUsedServiceImpl implements WtmAnnualUsedService{
 		annualUsed.setEnterCd(enterCd);
 		annualUsed.setSabun(sabun);
 		annualUsed.setYy(yy);
-		annualUsed.setSymd(symd.replaceAll("-", ""));
-		annualUsed.setEymd(eymd.replaceAll("-", ""));
+		annualUsed.setSymd(symd.replaceAll("[-.]", ""));
+		annualUsed.setEymd(eymd.replaceAll("[-.]", ""));
 		annualUsed.setCreateCnt(createCnt);
 		annualUsed.setUpdateId(userId);
 		annualUsed.setTaaTypeCd(taaTypeCd);

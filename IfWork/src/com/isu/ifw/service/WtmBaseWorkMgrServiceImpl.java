@@ -43,7 +43,7 @@ public class WtmBaseWorkMgrServiceImpl implements WtmBaseWorkMgrService{
 		
 		String sYmd = null;
 		if(paramMap.get("sYmd")!=null && !"".equals(paramMap.get("sYmd").toString())) {
-			sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+			sYmd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 		} else {
 			sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 		}

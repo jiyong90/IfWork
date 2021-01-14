@@ -593,8 +593,8 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 
 									for (int i = 0; i < symdArr.size(); i++) {
 
-										String symd = symdArr.get(i).replaceAll("-", "");
-										String eymd = eymdArr.get(i).replaceAll("-", "");
+										String symd = symdArr.get(i).replaceAll("[-.]", "");
+										String eymd = eymdArr.get(i).replaceAll("[-.]", "");
 										String taaCd = taaTypeCdArr.get(i);
 
 
@@ -716,8 +716,8 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 
 				for (int i = 0; i < symdArr.size(); i++) {
 
-					String symd         = symdArr.get(i).replaceAll("-", "");
-					String eymd         = eymdArr.get(i).replaceAll("-", "");
+					String symd         = symdArr.get(i).replaceAll("[-.]", "");
+					String eymd         = eymdArr.get(i).replaceAll("[-.]", "");
 					String requestCd    = requestTypeCdArr.get(i);
 					String workTimeCode = taaTypeCdArr.get(i);
 
