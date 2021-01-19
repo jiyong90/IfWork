@@ -81,7 +81,7 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 //		if(dataMap.get("workTypeCd")!=null && !"".equals(dataMap.get("workTypeCd")))
 //			workTypeCd = dataMap.get("workTypeCd").toString();
 
-		String ymd = dataMap.get("ymd").toString().replace(".", "");
+		String ymd = dataMap.get("ymd").toString().replaceAll("[.-]", "");
 		String cSHm = dataMap.get("cSHm")!=null?ymd+dataMap.get("cSHm").toString().replace(":", ""):null;
 		String cEHm = dataMap.get("cEHm")!=null?ymd+dataMap.get("cEHm").toString().replace(":", ""):null;
 
@@ -132,8 +132,8 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		//서비스에서 사용하는게 좀 달라서...
 		//연장근무 시작,종료 일자 추가
 		if(dataMap.containsKey("otSymd") && dataMap.containsKey("otEymd")) {
-			dataMap.put("otEdate", dataMap.get("otEymd").toString().replace(".", "") + dataMap.get("ehm").toString());
-			dataMap.put("otSdate", dataMap.get("otSymd").toString().replace(".", "") + dataMap.get("shm").toString());
+			dataMap.put("otEdate", dataMap.get("otEymd").toString().replace(".", "").replace("-", "") + dataMap.get("ehm").toString());
+			dataMap.put("otSdate", dataMap.get("otSymd").toString().replace(".", "").replace("-", "") + dataMap.get("shm").toString());
 		} else {
 			dataMap.put("otSdate", dataMap.get("ymd").toString() + dataMap.get("shm").toString());
 			dataMap.put("otEdate", dataMap.get("ymd").toString() + dataMap.get("ehm").toString());
@@ -161,7 +161,7 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		dataMap.put("applSabun", sabun);
 		dataMap.put("sabun", sabun);
 //		if(eventSource.equals("ymd")) {
-		dataMap.put("ymd", dataMap.get("ymd").toString().replace(".", ""));		
+		dataMap.put("ymd", dataMap.get("ymd").toString().replace(".", "").replace("-", ""));
 		dataMap = wtmCalendarService.getEmpWorkCalendarDayInfo(dataMap);
 		if(dataMap == null) {
 			rp.setFail("해당일은 근무시간 정정이 불가합니다.");
@@ -185,7 +185,7 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 			dataMap.put("tenantId", tenantId);
 			dataMap.put("enterCd", enterCd);
 			dataMap.put("sabun", sabun);
-			dataMap.put("ymd", dataMap.get("ymd").toString().replace(".", ""));		
+			dataMap.put("ymd", dataMap.get("ymd").toString().replace(".", "").replace("-", ""));
 			dataMap = wtmCalendarService.getEmpWorkCalendarDayInfo(dataMap);
 			dataMap.put("ymd", dataMap.get("ymd").toString().substring(0, 4)+"."+dataMap.get("ymd").toString().substring(4, 6) +"."+dataMap.get("ymd").toString().substring(6, 8));
 		}
@@ -330,8 +330,8 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 			Date edate = null;
 					
 			if(!dataMap.get("shm").equals("") && !dataMap.get("ehm").equals("")) {
-				String otSdate = dataMap.get("otSymd").toString().replace(".", "")+dataMap.get("shm").toString();
-				String otEdate = dataMap.get("otEymd").toString().replace(".", "")+dataMap.get("ehm").toString();
+				String otSdate = dataMap.get("otSymd").toString().replace(".", "").replace("-", "")+dataMap.get("shm").toString();
+				String otEdate = dataMap.get("otEymd").toString().replace(".", "").replace("-", "")+dataMap.get("ehm").toString();
 				
 				sdate = WtmUtil.toDate(otSdate, "yyyyMMddHHmm");
 				edate = WtmUtil.toDate(otEdate, "yyyyMMddHHmm");
@@ -470,7 +470,7 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 	}
 	
 	private void setOtData(Map<String, Object> dataMap) {
-		dataMap.put("ymd", dataMap.get("ymd").toString().replace(".", ""));
+		dataMap.put("ymd", dataMap.get("ymd").toString().replaceAll("[.-]", ""));
 		//입력 항목으로 validation check
 		if(!dataMap.containsKey("ehm")) {
 			dataMap.put("ehm", "");
@@ -485,7 +485,7 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		if(!dataMap.containsKey("subsSymd")) {
 			dataMap.put("subsSymd", "");
 		} else {
-			dataMap.put("subsSymd", dataMap.get("subsSymd").toString().replace(".", ""));
+			dataMap.put("subsSymd", dataMap.get("subsSymd").toString().replaceAll("[.-]", ""));
 		}
 		if(!dataMap.containsKey("subsShm")) {
 			dataMap.put("subsShm", "");
@@ -541,14 +541,14 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 				rp.setFail("휴가시작일을 입력해주세요");
 				return rp;
 			} else {
-				symd = dataMap.get("symd").toString().replace(".", "");
+				symd = dataMap.get("symd").toString().replace(".", "").replace("-", "");
 			}
 
 			if(dataMap.get("eymd")  == null) {
 				rp.setFail("휴가종료일을 입력해주세요");
 				return rp;
 			} else {
-				eymd = dataMap.get("eymd").toString().replace(".", "");
+				eymd = dataMap.get("eymd").toString().replace(".", "").replace("-", "");
 			}
 
 			if(dataMap.get("reason") == null || "".equals(dataMap.get("reason"))) {
@@ -609,19 +609,19 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		String eymd = "";
 		String note = "";
 
-		if(dataMap.get("symd") != null && dataMap.get("eymd")  != null && dataMap.get("reason") != null) {
+		if(dataMap.get("symd") != null && dataMap.get("eymd")  != null ) {
 			if (dataMap.get("symd") == null) {
 				rp.setFail("휴가시작일을 입력해주세요");
 				return rp;
 			} else {
-				symd = dataMap.get("symd").toString().replace(".", "");
+				symd = dataMap.get("symd").toString().replace(".", "").replace("-", "");
 			}
 
 			if (dataMap.get("eymd") == null) {
 				rp.setFail("휴가종료일을 입력해주세요");
 				return rp;
 			} else {
-				eymd = dataMap.get("eymd").toString().replace(".", "");
+				eymd = dataMap.get("eymd").toString().replace(".", "").replace("-", "");
 			}
 
 //			if (dataMap.get("reason") == null || "".equals(dataMap.get("reason"))) {
@@ -630,41 +630,42 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 //			} else {
 //				note = dataMap.get("reason").toString();
 //			}
+			WtmTaaCode wtmTaaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, dataMap.get("gubun").toString());
+
+			String requestTypeCd = "";
+			if(wtmTaaCode != null) {
+				requestTypeCd = wtmTaaCode.getTaaTypeCd();
+			}
+
+			List<String> symdArr          = new ArrayList<String>();
+			List<String> eymdArr          = new ArrayList<String>();
+			List<String> requestTypeCdArr = new ArrayList<String>();
+			List<String> taaTypeCdArr     = new ArrayList<String>();
+
+			symdArr.add(symd);
+			eymdArr.add(eymd);
+			requestTypeCdArr.add(requestTypeCd);
+			taaTypeCdArr.add(dataMap.get("gubun").toString());
+
+			Map<String, Object> valiMap = new HashMap<String, Object>();
+			valiMap.put("taaSdateArr", symdArr);
+			valiMap.put("taaEdateArr", eymdArr);
+			valiMap.put("workTimeCode", dataMap.get("gubun").toString());
+			valiMap.put("requestCd", "");
+			valiMap.put("note", note);
+			valiMap.put("applCd", dataMap.get("applCd").toString());
+
+			rp = regaApplService.validate(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, valiMap);
+
+			resultMap.put("data", dataMap);
+			rp.put("result", resultMap);
 		}
 
 //		if(note == null || "".equals(note)) {
 //			throw new Exception("사유를 입력해주세요.");
 //		}
 
-		WtmTaaCode wtmTaaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, dataMap.get("gubun").toString());
 
-		String requestTypeCd = "";
-		if(wtmTaaCode != null) {
-			requestTypeCd = wtmTaaCode.getTaaTypeCd();
-		}
-
-		List<String> symdArr          = new ArrayList<String>();
-		List<String> eymdArr          = new ArrayList<String>();
-		List<String> requestTypeCdArr = new ArrayList<String>();
-		List<String> taaTypeCdArr     = new ArrayList<String>();
-
-		symdArr.add(symd);
-		eymdArr.add(eymd);
-		requestTypeCdArr.add(requestTypeCd);
-		taaTypeCdArr.add(dataMap.get("gubun").toString());
-
-		Map<String, Object> valiMap = new HashMap<String, Object>();
-		valiMap.put("taaSdateArr", symdArr);
-		valiMap.put("taaEdateArr", eymdArr);
-		valiMap.put("workTimeCode", dataMap.get("gubun").toString());
-		valiMap.put("requestCd", "");
-		valiMap.put("note", note);
-		valiMap.put("applCd", dataMap.get("applCd").toString());
-
-		rp = regaApplService.validate(tenantId, enterCd, sabun, WtmApplService.TIME_TYPE_REGA, valiMap);
-
-		resultMap.put("data", dataMap);
-		rp.put("result", resultMap);
 
 		return rp;
 	}
@@ -701,8 +702,8 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 		List<String> requestTypeCdArr = new ArrayList<String>();
 		List<String> taaTypeCdArr     = new ArrayList<String>();
 
-		symdArr.add(dataMap.get("symd").toString().replace(".", ""));
-		eymdArr.add(dataMap.get("eymd").toString().replace(".", ""));
+		symdArr.add(dataMap.get("symd").toString().replace(".", "").replace("-", ""));
+		eymdArr.add(dataMap.get("eymd").toString().replace(".", "").replace("-", ""));
 		requestTypeCdArr.add(requestTypeCd);
 		taaTypeCdArr.add(dataMap.get("gubun").toString());
 

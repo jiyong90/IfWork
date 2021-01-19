@@ -50,7 +50,7 @@ public class WtmCodeServiceImpl implements WtmCodeService{
 	@Override
 	public List<Map<String, Object>> getCodeListWeb(Long tenantId, String enterCd, String grpCodeCd, String ymd) {
 		List<Map<String, Object>> codeList = new ArrayList();	
-		List<WtmCode> list = codeRepository.findByTenantIdAndEnterCdAndYmdAndGrpCodeCd(tenantId, enterCd, ymd.replaceAll("-", ""), grpCodeCd);
+		List<WtmCode> list = codeRepository.findByTenantIdAndEnterCdAndYmdAndGrpCodeCd(tenantId, enterCd, ymd.replaceAll("[-.]", ""), grpCodeCd);
 		
 		for(WtmCode l : list) {
 			Map<String, Object> code = new HashMap();

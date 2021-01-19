@@ -72,7 +72,7 @@ public class WtmTimeCdMgrServiceImpl implements WtmTimeCdMgrService{
 		
 		String ymd = null;
 		if(paramMap.get("sYmd")!=null && !"".equals(paramMap.get("sYmd"))) {
-			ymd = paramMap.get("sYmd").toString().replaceAll("-", "");
+			ymd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 		} else {
 			ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 		}

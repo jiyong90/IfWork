@@ -29,8 +29,8 @@ public class WtmHolidayMgrServiceImpl implements WtmHolidayMgrService{
 			paramMap.put("tenantId", tenantId);
 			paramMap.put("enterCd", enterCd);
 			
-			paramMap.put("symd", paramMap.get("symd").toString().replaceAll("-", ""));
-			paramMap.put("eymd", paramMap.get("eymd").toString().replaceAll("-", ""));
+			paramMap.put("symd", paramMap.get("symd").toString().replaceAll("[-.]", ""));
+			paramMap.put("eymd", paramMap.get("eymd").toString().replaceAll("[-.]", ""));
 			
 			holidayList = holidayMapper.getHolidayList(paramMap);
 		} catch(Exception e) {

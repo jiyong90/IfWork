@@ -80,7 +80,7 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 			
 			String sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 			if(paramMap.get("sYmd")!=null && !"".equals("sYmd")) {
-				sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+				sYmd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 				paramMap.put("sYmd", sYmd);
 			}
 			
@@ -133,12 +133,12 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 			
 			String sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 			if(paramMap.get("sYmd")!=null && !"".equals("sYmd")) {
-				sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+				sYmd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 				paramMap.put("sYmd", sYmd);
 			}
 			
 			if(paramMap.get("eYmd")!=null && !"".equals("eYmd")) {
-				String eYmd = paramMap.get("eYmd").toString().replaceAll("-", "");
+				String eYmd = paramMap.get("eYmd").toString().replaceAll("[-.]", "");
 				paramMap.put("eYmd", eYmd);
 			}
 			
@@ -170,12 +170,12 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 			
 			String sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 			if(paramMap.get("sYmd")!=null && !"".equals("sYmd")) {
-				sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+				sYmd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 				paramMap.put("sYmd", sYmd);
 			}
 			
 			if(paramMap.get("eYmd")!=null && !"".equals("eYmd")) {
-				String eYmd = paramMap.get("eYmd").toString().replaceAll("-", "");
+				String eYmd = paramMap.get("eYmd").toString().replaceAll("[-.]", "");
 				paramMap.put("eYmd", eYmd);
 			}
 			
@@ -209,7 +209,7 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 			if(!paramMap.containsKey("ymd")) {
 				paramMap.put("ymd", "");
 			} else {
-				ymd = paramMap.get("ymd").toString().replaceAll("-", "");
+				ymd = paramMap.get("ymd").toString().replaceAll("[-.]", "");
 				paramMap.put("ymd", ymd);
 			}
 			
@@ -437,7 +437,7 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 
 			String ymd = "";
 			if(paramMap.get("ymd") != null && !"".equals((String)paramMap.get("ymd"))) {
-				ymd = ((String) paramMap.get("ymd")).replace("-", "");
+				ymd = ((String) paramMap.get("ymd")).replaceAll("[.-]", "");
 				paramMap.put("ymd", ymd);
 				paramMap.put("sYmd", ymd+"01");
 				paramMap.put("eYmd", ymd+"31");
@@ -481,8 +481,8 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 			String now = sdf.format(date);
 			String ymd = "";
 			if(paramMap.get("ymd") != null && !"".equals((String)paramMap.get("ymd"))) {
-				ymd = ((String) paramMap.get("ymd")).replace("-", "");
-				paramMap.put("ymd", ((String) paramMap.get("ymd")).replace("-", ""));
+				ymd = ((String) paramMap.get("ymd")).replaceAll("-", "");
+				paramMap.put("ymd", ((String) paramMap.get("ymd")).replaceAll("[.-]", ""));
 			}
 
 			List<String> auths = empService.getAuth(tenantId, enterCd, sabun);
