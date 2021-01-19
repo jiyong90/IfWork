@@ -79,9 +79,9 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 		
 		String sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 		if(!paramMap.containsKey("sYmd")) {
-			paramMap.put("sYmd", "");
+			paramMap.put("sYmd", null); 
 		} else {
-			sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+			sYmd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 			paramMap.put("sYmd", sYmd);
 		}
 		
@@ -157,7 +157,7 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 		
 		String ymd = null;
 		if(paramMap.get("sYmd")!=null && !"".equals(paramMap.get("sYmd"))) {
-			ymd = paramMap.get("sYmd").toString().replaceAll("-", "");
+			ymd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 		} else {
 			ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 		}
@@ -304,6 +304,8 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 						Map<String, Object> pMap = new HashMap<String, Object>();
 						pMap.put("encryptStr", tenantId+""+enterCd+""+m.get("sabun").toString());
 						pMap.put("encryptKey", aesKey);
+						pMap.put("enterCd", enterCd);
+						System.out.println("pMap : " + pMap.toString());
 						Map<String, Object> encryptMap = (Map<String, Object>) encryptionMapper.getAesEncrypt(pMap);
 						if(encryptMap!=null) {
 							empHis.setEmpId(encryptMap.get("encryptStr").toString());
@@ -320,7 +322,7 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 				
 				//comm_user에 넣어줌
 				if(!hrInterfaceYn) {
-					wtmEmpHisMapper.insertCommUser(tenantId);
+					//wtmEmpHisMapper.insertCommUser(tenantId);
 					
 					//비밀번호 사번으로 변경
 					List<Map<String, Object>> pwList = new ArrayList<Map<String, Object>>();
@@ -334,19 +336,27 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 						for(String sabun : sabunList) {
 							Map<String, Object> pwMap = new HashMap<String, Object>();
 							String password = Sha256.getHash(sabun, encKey, repeatCount);
-							pwMap.put("sabun", sabun);
-							pwMap.put("password", password);
-							pwList.add(pwMap);
+							
+							Map<String, Object> insMap = new HashMap<>();
+							insMap.put("tenantId", tenantId);
+							insMap.put("sabun", sabun);
+							insMap.put("password", password);
+							
+							wtmEmpHisMapper.insertCommUser(insMap);
+//							
+//							pwMap.put("sabun", sabun);
+//							pwMap.put("password", password);
+//							pwList.add(pwMap);
 						}
-						
-						if(pwList.size()>0) {
-							Map<String, Object> pMap = new HashMap<String, Object>();
-							pMap.put("tenantId", tenantId);
-							pMap.put("enterCd", enterCd);
-							pMap.put("aesKey", aesKey);
-							pMap.put("pwList", pwList);
-							wtmEmpHisMapper.updateCommUserPw(pMap);
-						}
+//						
+//						if(pwList.size()>0) {
+//							Map<String, Object> pMap = new HashMap<String, Object>();
+//							pMap.put("tenantId", tenantId);
+//							pMap.put("enterCd", enterCd);
+//							pMap.put("aesKey", aesKey);
+//							pMap.put("pwList", pwList);
+//							wtmEmpHisMapper.updateCommUserPw(pMap);
+//						}
 						
 					}
 				}
@@ -369,7 +379,7 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 						Map<String, Object> pMap = new HashMap<String, Object>();
 						pMap.put("aesKey", aesKey);
 						pMap.put("empHisIds", empHisIds);
-						wtmEmpHisMapper.updateCommUserPw(pMap);
+						wtmEmpHisMapper.deleteCommUser(pMap);
 					}
 					
 					empHisRepository.deleteByEmpHisIdsIn(empHisIds);

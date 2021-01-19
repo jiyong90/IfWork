@@ -574,9 +574,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			dayInfo.put("annualUsedCnt", df.format(Float.parseFloat(usedCnt)));
 			dayInfo.put("annualNoUsedCnt", df.format(Float.parseFloat(noUsedCnt)));
 		}catch(NullPointerException ne) {
-			dayInfo.put("annualTotalCnt", df.format(Float.parseFloat("0")));
-			dayInfo.put("annualUsedCnt", df.format(Float.parseFloat("0")));
-			dayInfo.put("annualNoUsedCnt", df.format(Float.parseFloat("0")));
+			if(dayInfo != null) {
+				dayInfo.put("annualTotalCnt", df.format(Float.parseFloat("0")));
+				dayInfo.put("annualUsedCnt", df.format(Float.parseFloat("0")));
+				dayInfo.put("annualNoUsedCnt", df.format(Float.parseFloat("0")));
+			}
 		}
 
 		return dayInfo;
@@ -3149,7 +3151,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		String sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 		if(paramMap.containsKey("sYmd") && paramMap.get("sYmd")!=null && !"".equals(paramMap.get("sYmd"))) {
-			sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+			sYmd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 		}
 		
 		List<String> auths = getAuth(tenantId, enterCd, sabun);
@@ -5271,7 +5273,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 			try {
 				List<String> timeTypeCds = new ArrayList<String>();
-				timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
+//				timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
 				timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
 				timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 				timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
