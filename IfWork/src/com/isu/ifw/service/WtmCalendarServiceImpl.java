@@ -117,8 +117,8 @@ public class WtmCalendarServiceImpl implements WtmCalendarService{
 		paramMap.put("ymd", ymd);
 		
 		if(paramMap.get("sYmd")!=null && paramMap.get("eYmd")!=null) {
-			paramMap.put("sYmd", paramMap.get("sYmd").toString().replaceAll("-", ""));
-			paramMap.put("eYmd", paramMap.get("eYmd").toString().replaceAll("-", ""));
+			paramMap.put("sYmd", paramMap.get("sYmd").toString().replaceAll("[-.]", ""));
+			paramMap.put("eYmd", paramMap.get("eYmd").toString().replaceAll("[-.]", ""));
 		}
 		
 		List<String> auths = empService.getAuth(tenantId, enterCd, sabun);

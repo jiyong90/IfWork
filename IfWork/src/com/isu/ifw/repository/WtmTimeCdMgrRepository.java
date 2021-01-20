@@ -1,6 +1,7 @@
 package com.isu.ifw.repository;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,5 +21,7 @@ public interface WtmTimeCdMgrRepository extends JpaRepository<WtmTimeCdMgr, Long
 	
 	//symd <= #{ymd} AND eymd >= #{ymd}
 	public List<WtmTimeCdMgr> findByTenantIdAndEnterCdAndSymdLessThanEqualAndEymdGreaterThanEqual(Long tenantId, String enterCd, String eymd, String symd);
-	
+
+	public WtmTimeCdMgr findByTenantIdAndEnterCdAndTimeCdMgrId(Long tenantId, String enterCd, Long timeCdMgrId);
+
 }

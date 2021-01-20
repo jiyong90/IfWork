@@ -460,8 +460,8 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 
 						for (int i = 0; i < taaSdateArr.size(); i++) {
 
-							String taaSdate = taaSdateArr.get(i).replaceAll("-", "");
-							String taaEdate = taaEdateArr.get(i).replaceAll("-", "");
+							String taaSdate = taaSdateArr.get(i).replace(".", "").replace("-", "");
+							String taaEdate = taaEdateArr.get(i).replace(".", "").replace("-", "");
 //							String shm = startHmArr.get(i).replaceAll(":", "");
 //							String ehm = endHmArr.get(i).replaceAll(":", "");
 
@@ -542,7 +542,7 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 	public ReturnParam validate(Long tenantId, String enterCd, String sabun, String workTypeCd, Map<String, Object> work) throws ParseException {
 
 		ReturnParam rp = new ReturnParam();
-		rp.setSuccess("저장이 성공하였습니다.");
+		rp.setSuccess("");
 
 
 		String workTimeCode = work.get("workTimeCode").toString();
@@ -560,8 +560,8 @@ public class WtmRegaApplServiceImpl implements WtmApplService {
 		if (taaSdateArr.size() > 0) {
 			for (int i = 0; i < taaSdateArr.size(); i++) {
 
-				String taaSdate = taaSdateArr.get(i).replaceAll("-", "");
-				String taaEdate = taaEdateArr.get(i).replaceAll("-", "");
+				String taaSdate = taaSdateArr.get(i).replace(".", "").replace("-", "");
+				String taaEdate = taaEdateArr.get(i).replace("-", "").replace(".", "");
 
 				Map<String, Object> tmpMap = new HashMap<String, Object>();
 				tmpMap.put("startYmd", taaSdate);

@@ -134,7 +134,7 @@ public class WtmInOutChangeServiceImpl implements WtmInOutChangeService{
 			if(!paramMap.containsKey("sYmd")) {
 				paramMap.put("ymd", "");
 			} else {
-				ymd = paramMap.get("sYmd").toString().replaceAll("-", "");
+				ymd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 				paramMap.put("ymd", ymd);
 			}
 			
@@ -163,7 +163,7 @@ public class WtmInOutChangeServiceImpl implements WtmInOutChangeService{
 			
 			String ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 			if(paramMap.get("ymd")!=null && !"".equals("ymd")) {
-				ymd = paramMap.get("ymd").toString().replaceAll("-", "");
+				ymd = paramMap.get("ymd").toString().replaceAll("[-.]", "");
 				paramMap.put("ymd", ymd);
 			}
 			

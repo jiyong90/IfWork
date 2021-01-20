@@ -1720,7 +1720,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			//타각 시간이 계획시간보다 작을 경우 정상
 			if(rDt.compareTo(dt) < 1) {
 				return dt;
-			}else {
+			} else {
 				// 분으로 계산
 				//int totMinute = h * m;
 				// 지각은 단위시간으로 계산 시 이후 시간으로 해야한다 . 
@@ -1728,8 +1728,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				
 				//단위 시간 적용
 				int calcM = ((m + unitMinute) - (m + unitMinute)%unitMinute)%60 - ((unitMinute==1)?1:0)  ;
-
+//				((30+30) - (30+30)%30)%60;
 				Calendar cal = Calendar.getInstance();
+				if(calcM == 0){
+					calcM = m;
+				}
 				try {
 					cal.setTime(df.parse(dYmd.format(rDt)+String.format("%02d",h)+String.format("%02d",calcM)));
 				} catch (ParseException e) {
@@ -1748,7 +1751,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			logger.debug("rDt.compareTo(dt) :: " + rDt.compareTo(dt));
 			if(rDt.compareTo(dt) > 0) {
 				return dt;
-			} else {  
+			} else {
 				int namerge = m%unitMinute;
 				//단위 시간 적용
 				int calcM = m - m%unitMinute;
@@ -1788,6 +1791,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		if(breakTimes != null && breakTimes.size() > 0) {
 			//int timesSize = breakTimes.size();
 			boolean isLast = false;
+			int preMinute = 0;
 			for(int i=0; i< breakTimes.size(); i++) {
 				if(breakTimes.size() == (i+1)) {
 					isLast = true;
@@ -1834,12 +1838,47 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				logger.debug("### BREAK_TYPE_TIME apprMinute : " + apprMinute);
 				logger.debug("### BREAK_TYPE_TIME isLast : " + isLast);
 				if( apprMinute > (wMinute + nextBMinute) && !isLast ) {
+					preMinute = wMinute;
 					continue;
 				}else {
-					breakMinute = bMinute;
+					//245 일 경우 브레이크 타임이 5분이 넘어가야하는데 0으로 넘어가고 있다 
+					// 240  0 
+					// 480 60 으로 셋팅되어있음.
+					int bm = apprMinute - (wMinute + bMinute);
+					logger.debug("### BREAK_TYPE_TIME bm : " + bm);
+					if(bm < 0) {
+						breakMinute = apprMinute - preMinute;
+						if(breakMinute > bMinute) {
+							breakMinute = bMinute;
+						}
+						logger.debug("### BREAK_TYPE_TIME breakMinute1 : " + breakMinute);
+					}else {
+						if((bMinute + nextBMinute) > bm ) {
+							breakMinute = bMinute+ bm;
+							logger.debug("### BREAK_TYPE_TIME breakMinute2 : " + breakMinute);
+						}else {
+							breakMinute = bMinute;
+							logger.debug("### BREAK_TYPE_TIME breakMinute3 : " + breakMinute);
+						}
+					}
+					/*
+					if((bMinute + nextBMinute) > bm ) {
+						logger.debug("### BREAK_TYPE_TIME bMinute : " + bMinute);
+						logger.debug("### BREAK_TYPE_TIME bm : " + bm);
+						if(bm < 0) {
+							breakMinute = bm;
+						}else {
+							breakMinute = bMinute;
+						}
+						logger.debug("### BREAK_TYPE_TIME breakMinute1 : " + breakMinute);
+					}else {
+						breakMinute = bm;
+						logger.debug("### BREAK_TYPE_TIME breakMinute2 : " + breakMinute);
+					}
+					*/
+					//breakMinute = bMinute + (apprMinute - (wMinute + bMinute));
 					break;
 				}
-				
 			}
 		}
 		return breakMinute;
@@ -1855,8 +1894,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	public Map<String, Object> getBreakMinuteIfBreakTimeMGR(Date sDate, Date eDate, long timeCdMgrId) {
 		int sumBreakMinute = 0;
 		int breakMinute = 0;
+		String minShm = null;
 		String maxEhm = null;
-		
+
 		Map<String, Object> resMap = new HashMap<>();
 		if(sDate.compareTo(eDate) < 1) {
 			SimpleDateFormat HHmm = new SimpleDateFormat("HHmm");
@@ -1878,6 +1918,10 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					if(maxEhm == null || Integer.parseInt(maxEhm) < Integer.parseInt(timeBreakMgr.getEhm())){
 						maxEhm = timeBreakMgr.getEhm();
 					}
+
+					if(minShm == null || Integer.parseInt(minShm) < Integer.parseInt(timeBreakMgr.getShm())){
+						minShm = timeBreakMgr.getShm();
+					}
 					//20~60 일 경우 40분이 나와야하는데 60분이 나와서 수정함.
 					//20200901 
 					//sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), null, null, null);
@@ -1894,6 +1938,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			//return this.WtmCalcMinute(HHmm.format(sDate), HHmm.format(eDate), null, null, unitMinute) - sumBreakMinute;
 		}
 		logger.debug("sumBreakMinute :: "+ sumBreakMinute);
+		resMap.put("minShm", minShm);
 		resMap.put("maxEhm", maxEhm);
 		//마지막에 적용된 휴게시간 정보를 보내자
 		resMap.put("breakMinute", sumBreakMinute);
@@ -1923,14 +1968,46 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			for(WtmTimeBreakMgr timeBreakMgr : timeBreakMgrs) {
 				logger.debug("timeBreakMgr.getShm() :: "+ timeBreakMgr.getShm());
 				logger.debug("timeBreakMgr.getEhm() :: "+ timeBreakMgr.getEhm());
-				if(Integer.parseInt(timeBreakMgr.getEhm()) > Integer.parseInt(shm) 
-						&& Integer.parseInt(timeBreakMgr.getShm()) < Integer.parseInt(ehm)
-						) {
-					if(!yyyyMMdd.format(sDate).equals(yyyyMMdd.format(eDate))) {
-						sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), "0000", unitMinute);
-						sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), "0000", HHmm.format(eDate), unitMinute);
-					}else {
-						sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), HHmm.format(eDate), unitMinute);
+				if(Integer.parseInt(shm) > Integer.parseInt(ehm)){
+					String e = "2400";
+					if (Integer.parseInt(timeBreakMgr.getEhm()) > Integer.parseInt(shm)
+							&& Integer.parseInt(timeBreakMgr.getShm()) < Integer.parseInt(e)
+					) {
+						sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), shm, e, unitMinute);
+						/*
+						if (!yyyyMMdd.format(sDate).equals(yyyyMMdd.format(eDate))) {
+							sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), "0000", unitMinute);
+							sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), "0000", HHmm.format(eDate), unitMinute);
+						} else {
+							sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), HHmm.format(eDate), unitMinute);
+						}
+						*/
+					}
+					String s = "0000";
+					if (Integer.parseInt(timeBreakMgr.getEhm()) > Integer.parseInt(s)
+							&& Integer.parseInt(timeBreakMgr.getShm()) < Integer.parseInt(ehm)
+					) {
+						sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), s, ehm, unitMinute);
+						/*
+						if (!yyyyMMdd.format(sDate).equals(yyyyMMdd.format(eDate))) {
+							sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), "0000", unitMinute);
+							sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), "0000", HHmm.format(eDate), unitMinute);
+						} else {
+							sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), HHmm.format(eDate), unitMinute);
+						}
+						 */
+					}
+
+				}else {
+					if (Integer.parseInt(timeBreakMgr.getEhm()) > Integer.parseInt(shm)
+							&& Integer.parseInt(timeBreakMgr.getShm()) < Integer.parseInt(ehm)
+					) {
+						if (!yyyyMMdd.format(sDate).equals(yyyyMMdd.format(eDate))) {
+							sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), "0000", unitMinute);
+							sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), "0000", HHmm.format(eDate), unitMinute);
+						} else {
+							sumBreakMinute = sumBreakMinute + this.WtmCalcMinute(timeBreakMgr.getShm(), timeBreakMgr.getEhm(), HHmm.format(sDate), HHmm.format(eDate), unitMinute);
+						}
 					}
 				}
 					
@@ -2019,7 +2096,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		// 0 이럼 되는데.
 
 		SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
-		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddhhmm");
+		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
 		Map<String, Object> breakMap = this.getBreakMinuteIfBreakTimeMGR(cSdate, cEdate, timeCdMgrId);
 		int totBreakMinute = 0;
 		int addBreakMinute = 0;
@@ -2128,6 +2205,99 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			return cEdate;
 		}
 	}
+
+
+	/**
+	 * 종료시간에서 시작시간을 찾는다
+	 * @param eDate
+	 * @param addMinute
+	 * @param timeCdMgrId
+	 * @param unitMinute
+	 * @return
+	 */
+	@Override
+	public Date P_WTM_DATE_ADD_FOR_BREAK_MGR2(Date eDate, int addMinute, long timeCdMgrId, Integer unitMinute) {
+
+		boolean isNegative = false;
+		if(addMinute > 0) {
+			isNegative = true;
+		}
+
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(eDate);
+		cal.add(Calendar.MINUTE, addMinute);
+
+		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: eDate = "+ eDate);
+		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: addMinute = "+ addMinute);
+		Date sDate = cal.getTime();
+		logger.debug("P_WTM_DATE_ADD_FOR_BREAK_MGR :: sDate = "+ sDate);
+
+		int breakMinute = 0;
+		String minShm =  null;
+
+		Date cSdate = sDate;
+		Date cEdate = eDate;
+		if(isNegative) {
+			cSdate = eDate;
+			cEdate = sDate;
+		}
+
+		SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+		SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
+		Map<String, Object> breakMap = this.getBreakMinuteIfBreakTimeMGR(cSdate, cEdate, timeCdMgrId);
+		int totBreakMinute = 0;
+		int addBreakMinute = 0;
+
+		if(breakMap != null) {
+			totBreakMinute = (int) breakMap.get("totBreakMinute");
+			minShm = breakMap.get("minShm") + "";
+		}
+		Date minBreakDate = null;
+		if(minShm != null && !"null".equals(minShm) && !"".equals(minShm)) {
+			try {
+				minBreakDate = ymdhm.parse(ymd.format(cSdate)+minShm+"");
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		//Date reCalcEdate = null;
+		if(totBreakMinute > 0) {
+			cal.setTime(cSdate);
+			if(isNegative) {
+				cal.add(Calendar.MINUTE, totBreakMinute);
+			}else {
+				cal.add(Calendar.MINUTE, totBreakMinute * -1);
+			}
+			cSdate = cal.getTime();
+
+
+			Map<String, Object> reBreakMap = null;
+
+			reBreakMap = this.getBreakMinuteIfBreakTimeMGR(minBreakDate, cSdate, timeCdMgrId);
+
+
+			if(reBreakMap != null) {
+				addBreakMinute = (int) reBreakMap.get("breakMinute");
+			}else {
+				addBreakMinute = 0;
+			}
+		}
+		if(addBreakMinute > 0) {
+			if(isNegative) {
+				return P_WTM_DATE_ADD_FOR_BREAK_MGR2(cEdate, addBreakMinute , timeCdMgrId, unitMinute);
+			}else {
+				return P_WTM_DATE_ADD_FOR_BREAK_MGR2(cSdate, addBreakMinute * -1, timeCdMgrId, unitMinute);
+			}
+		}
+
+		if(isNegative) {
+			return cEdate;
+		}else {
+			return cSdate;
+		}
+	}
+
 
 	@Override
 	public Map<String, Integer> calcDayCnt(Long tenantId, String enterCd, String symd, String eymd) {

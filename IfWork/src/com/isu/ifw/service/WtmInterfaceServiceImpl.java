@@ -1452,6 +1452,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						rp.setFail(retMsg);
 			    		return rp;
 					} else {
+//						this.resetTaaResult(Long.parseLong(reqDayMap.get("tenantId").toString()), reqDayMap.get("enterCd").toString(), reqDayMap.get("sabun").toString(), reqDayMap.get("sYmd").toString());
 						// 오류가 아니면.. 근태시간을 생성체크하자
 						String taaSetYn = reqDayMap.get("taaSetYn").toString();
 						if("I".equals(taaSetYn)) {
@@ -1481,15 +1482,15 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 									, Long.parseLong(reqDayMap.get("applId").toString())
 									, "0");
 						}
-						
-						
+
+
 						String chkYmd = nowDataTime.substring(0, 8);
 						Long tenantId = Long.parseLong(reqDayMap.get("tenantId").toString());
 						String enterCd = reqDayMap.get("enterCd").toString();
 		        		String sabun = reqDayMap.get("sabun").toString();
 
 						resetTaaResult(tenantId, enterCd, sabun, reqDayMap.get("sYmd").toString());
-		        		
+
 		        		// 오늘 이전이면 근무마감을 다시 돌려야함.
 						if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd) && ("D".equals(taaSetYn) || "I".equals(taaSetYn))) {
 							wtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
@@ -2595,7 +2596,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					 		  ELSE 0 END AS workMinute				 		  
 							*/
 							if(det.getShm() != null && !"".equals(det.getShm())
-									&& det.getEhm() != null && !"".equals(det.getEhm())
+									&& det.getEhm() != null && !"".equals(det.getEhm()) && !"0".equals(det.getShm()) && !"0".equals(det.getEhm())
 									) {
 								workMinute = calcService.WtmCalcMinute(det.getShm(), det.getEhm(), null, null, null);
 							}else if(det.getTaaMinute() != null && !"".equals(det.getTaaMinute())) {
@@ -2651,7 +2652,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 									
 									Integer workMinute = 0;
 									if(det.getShm() != null && !"".equals(det.getShm())
-											&& det.getEhm() != null && !"".equals(det.getEhm())
+											&& det.getEhm() != null && !"".equals(det.getEhm()) && !"0".equals(det.getShm()) && !"0".equals(det.getEhm())
 											) {
 										workMinute = calcService.WtmCalcMinute(det.getShm(), det.getEhm(), null, null, null);
 									//}else if(det.getTaaMinute() != null && !"".equals(det.getTaaMinute())) {
@@ -2668,7 +2669,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 											e.printStackTrace();
 											sdate = null; edate = null;
 										}
-
+										if(sdate == null || edate == null) {
+											cal1.add(Calendar.DATE, 1);
+											d1 = cal1.getTime();
+											continue;
+										}
 										if(sdate.compareTo(edate) > 0) {
 											Calendar c = Calendar.getInstance();
 											c.setTime(edate);
@@ -2677,12 +2682,31 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										}
 									}else {
 										//기본근무시간
-										try {
-											sdate = ymdhm.parse(d+timeCdMgr.getWorkShm());
-											edate = ymdhm.parse(d+timeCdMgr.getWorkEhm());
-										} catch (ParseException e) {
-											e.printStackTrace();
-											sdate = null; edate = null;
+										if(!"BASE".equals(flexibleStdMgr.getWorkTypeCd()) && !"D".equals(taaCode.getRequestTypeCd())) {
+											Map<String, Object> workPlanMinMax = workDayResultRepo.findByMinMaxPlanDate(tenantId, enterCd, sabun, d);
+											try {
+												sdate = (Date) workPlanMinMax.get("planSdate");
+												edate = (Date) workPlanMinMax.get("planEdate");
+
+											} catch (Exception e) {
+												e.printStackTrace();
+												sdate = null; edate = null;
+												logger.debug("계획시각이 없다.");
+											}
+										} else {
+											try {
+												sdate = ymdhm.parse(d+timeCdMgr.getWorkShm());
+												edate = ymdhm.parse(d+timeCdMgr.getWorkEhm());
+											} catch (ParseException e) {
+												e.printStackTrace();
+												sdate = null; edate = null;
+												logger.debug("시간표의 기준 시각이 없다.");
+											}
+										}
+										if(sdate == null || edate == null) {
+											cal1.add(Calendar.DATE, 1);
+											d1 = cal1.getTime();
+											continue;
 										}
 										if(sdate.compareTo(edate) > 0) {
 											Calendar c = Calendar.getInstance();
@@ -2695,7 +2719,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										if("P".equals(taaCode.getRequestTypeCd())) {
 											if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
 												//반차는 근무시간을 변경함
-												sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+//												sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+												sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR2(edate, -240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 											}else {
 												Calendar calendar = Calendar.getInstance();
 												calendar.setTime(sdate);
@@ -2706,7 +2731,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 											//calcService.getBreakMinuteIfBreakTimeMGR(sDate, eDate, timeCdMgrId, null)
 										}else if("A".equals(taaCode.getRequestTypeCd())) {
 											if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
-												edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, -240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+												//edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(edate, -240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+												edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 240, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+
 											}else {
 												Calendar calendar = Calendar.getInstance();
 												calendar.setTime(edate);
@@ -3312,7 +3339,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	        		setTermMap.put("symd", ymd);
 	        		setTermMap.put("eymd", ymd);
 	        		setTermMap.put("pId", "TAAIF");
-				    wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
+//				    wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
+					calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(data.getTenantId(), enterCd, sabun, ymd, ymd);
 				}
 			}
 //						
@@ -3339,12 +3367,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 //		status.add("FAIL");
 //		status.add("ERR");
 
-//		List<String> enterCds = new ArrayList<String>();
-//		enterCds.add("ISU_ABX");http://localhost/ifw/schedule/colseDay?tenantId=98
-//		enterCds.add("ISU_AMC");
 		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(status);
-//		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotInAndEnterCdNotIn(status, enterCds);
-//		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndIfStatusNotInGroupBy();
+
 		if(list == null || list.size() == 0) {
 			System.out.println("setTaaApplBatchIfPostProcess 대상없음 종료");
 			return ;

@@ -81,7 +81,7 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 		if(!paramMap.containsKey("sYmd")) {
 			paramMap.put("sYmd", "");
 		} else {
-			sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+			sYmd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 			paramMap.put("sYmd", sYmd);
 		}
 		
@@ -157,7 +157,7 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 		
 		String ymd = null;
 		if(paramMap.get("sYmd")!=null && !"".equals(paramMap.get("sYmd"))) {
-			ymd = paramMap.get("sYmd").toString().replaceAll("-", "");
+			ymd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 		} else {
 			ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 		}

@@ -2269,12 +2269,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					logger.debug("4.(출근)타각 자동 업데이트.  r.getPlanSdate() is null : " + r.getSabun() + " : " + r.getEnterCd() + " : " + r.getTimeTypeCd());
 				}
 			}
-			
+
 			//퇴근 자동 생성
 			if(!flexStdMgr.getDayCloseType().equals("N")) {
 				
 				if(tenantId == 102) { //그린캐미컬 타각정보 강제로 계획시간으로 엎어버리기
-					if(dayPlanSdate != null) {
+					if(r.getPlanEdate() != null) {
 						if( (flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
 								|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)  || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) ))){
 							
@@ -3149,7 +3149,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		String sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 		if(paramMap.containsKey("sYmd") && paramMap.get("sYmd")!=null && !"".equals(paramMap.get("sYmd"))) {
-			sYmd = paramMap.get("sYmd").toString().replaceAll("-", "");
+			sYmd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 		}
 		
 		List<String> auths = getAuth(tenantId, enterCd, sabun);
@@ -4137,13 +4137,18 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						paramMap.put("sabun", emp.get("sabun").toString());
 						
 						// 신청중인 OT신청서 시간도 차감 하자.
-						
+
+						int totOtMin = 0;
 						int restOtMin = 0;
 						int restWorkMin = 0;
 						Integer applOtMin = 0;
 						Integer applHolOtMin = 0;
 						Integer otMin = 0;
 						Integer holOtMin = 0;
+						if(emp.containsKey("totOtMinute") && emp.get("totOtMinute")!=null && !"".equals(emp.get("totOtMinute"))) {
+							totOtMin = Integer.parseInt(emp.get("totOtMinute").toString());
+							
+						}
 						if(emp.get("restOtMinute")!=null && !"".equals(emp.get("restOtMinute"))) {
 							restOtMin = Integer.parseInt(emp.get("restOtMinute").toString());
 							
@@ -4157,7 +4162,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							if(applOtMin == null) {
 								applOtMin = 0;
 							}
-						}
+						} 
+						
 						//신청중인 휴일연장근무 시간을 분리... 기본근로시간부터 차감이 필요하기때문이다. 
 						if(weekInfo != null && weekInfo.get("applHolOtMinute") != null && !weekInfo.get("applHolOtMinute").equals("")) {
 							applHolOtMin = Integer.parseInt(weekInfo.get("applHolOtMinute")+"");
@@ -4183,6 +4189,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						//2020.1207jyp  왜 신청서말고 기존 계산된거까지 빼지? 
 						applHolOtMin = applHolOtMin;// + holOtMin;
 						applOtMin = applOtMin;// + otMin;
+						
+
+						if("ELAS".equals(emp.get("workTypeCd"))) {
+							restOtMin = totOtMin - otMin;
+						}
+						logger.debug("totOtMin ::: " + totOtMin);
+						logger.debug("otMin ::: " + otMin);
 						
 						//휴일근무이며
 						if(emp.get("holidayYn") != null && "Y".equals(emp.get("holidayYn"))) {
@@ -4834,6 +4847,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	@Transactional
 	public ReturnParam setApply(Map<String, Object> searchSabun, List<Map<String, Object>> ymdList) {
 
+		logger.debug("### START setApply :: " + ymdList.toString());
 		ReturnParam rp = new ReturnParam();
 
 		int cnt = 0;
@@ -4845,13 +4859,39 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			Long flexibleApplyId = Long.parseLong(searchSabun.get("flexibleApplyId").toString());
 			
 			WtmFlexibleEmp saveFlexibleEmp = null;
+			//String endYmd = "";
+			
+			String minSymd = "";
+			String maxEymd = "";
 			
 			for(int i = 0; i < ymdList.size(); i++) {
 				String sYmd = ymdList.get(i).get("symd").toString();
 				String eYmd = ymdList.get(i).get("eymd").toString();
+				if(minSymd.equals("")) {
+					minSymd = sYmd;
+				}
+				if(Integer.parseInt(minSymd) > Integer.parseInt(sYmd)) {
+					minSymd = sYmd;
+				}
+				
+				if(maxEymd.equals("")) {
+					maxEymd = eYmd;
+				}
+				if(Integer.parseInt(maxEymd) < Integer.parseInt(eYmd)) {
+					maxEymd = eYmd;
+				}
+				
+			
+				
+				//endYmd = eYmd;
 				
 				searchSabun.put("symd", sYmd);
 				searchSabun.put("eymd", eYmd);
+
+				List<WtmFlexibleEmp> delFlexEmpList = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndSymdAndEymd(tenantId, enterCd, sabun, sYmd, eYmd);
+				for(WtmFlexibleEmp flexEmp : delFlexEmpList) {
+					flexEmpRepo.delete(flexEmp);
+				}
 
 				WtmFlexibleEmp flexibleEmp = new WtmFlexibleEmp();
 				flexibleEmp.setEnterCd(searchSabun.get("enterCd").toString());
@@ -5004,10 +5044,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							if(result.size()>0) {
 								workDayResultRepo.saveAll(result);
 								//workDayResultRepo.flush();
-								
 							}
 						}
-						
 					} else {
 						// 근무제도 시행시 시행할 기간의 근무제도가 기본근무의 정보는 지워야함.
 						//유연근무 승인 시 해당 구간 내의 result는 지워야 한다. //리셋 프로시져에서 지우지 않음.  
@@ -5023,7 +5061,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							workDayResultRepo.deleteAll(results);
 							//workDayResultRepo.flush();
 						}
+
 					}
+					//flexibleEmpResetSerevice.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, sYmd, eYmd, "ADMIN");
 				//}
 			}
 			logger.debug("[setApply] updateWorkMinuteOfWtmFlexibleEmp " +tenantId+enterCd+sabun);
@@ -5036,17 +5076,22 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
 			SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
 			SimpleDateFormat y = new SimpleDateFormat("yyyy");
+			/*
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(ymd.parse(searchSabun.get("useSymd")+""));
 			cal.add(Calendar.DATE, -1);
 			
 			//String sd = ymd.format(cal.getTime());
-			String sd = y.format(new Date())+"0101";
-			
+//			String sd = y.format(new Date())+"0101";
+			String sd = endYmd;
 			cal.setTime(ymd.parse(searchSabun.get("useEymd")+""));
 			cal.add(Calendar.DATE, 1);
 			//String ed = ymd.format(cal.getTime());
-			String ed = y.format(new Date())+"1231";
+//			String ed = y.format(new Date())+"1231";
+			String ed = endYmd.substring(0, 4)+"1231";
+*/
+			String sd = minSymd;
+			String ed = maxEymd.substring(0, 4)+"1231";
 
 			workDayResultRepo.flush();
 			
@@ -5146,7 +5191,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//종료일 퇴직일로 변경
 			flexibleEmp.setEymd(retireYmd);
 			flexEmpRepo.save(flexibleEmp);
-			
+			flexEmpRepo.flush();
 			Map<String, Object> paramMap = new HashMap<String, Object>();
 			paramMap.put("tenantId", tenantId);
 			paramMap.put("enterCd", enterCd);
@@ -5168,6 +5213,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			rp.put("sabun", flexibleEmp.getSabun());
 			rp.put("symd", h.getSymd());
 			rp.put("eymd", h.getEymd());
+			rp.put("retireYmd", retireYmd);
 			
 		}
 		
@@ -5225,7 +5271,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 			try {
 				List<String> timeTypeCds = new ArrayList<String>();
-				timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
+//				timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
 				timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
 				timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 				timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);

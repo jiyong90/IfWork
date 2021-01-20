@@ -74,11 +74,12 @@ public class WtmAsyncService {
 	
 	@Autowired private WtmWorkDayResultRepository workDayResultRepo;
 	@Autowired private WtmInterfaceService interfaceService;
-
+	@Autowired private WtmFlexibleEmpResetService flexibleEmpResetSerevice; 
 
 	@Async("threadPoolTaskExecutor")
 	@Transactional
 	public void createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, String symd, String eymd, String userId, boolean initResult) {
+		/*
 		Map<String, Object> paramMap = new HashMap<>();
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
@@ -90,8 +91,19 @@ public class WtmAsyncService {
 		
 		if(initResult)
 			wtmFlexibleEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(paramMap);
+		*/
+		if(initResult) {
+			try {
+				flexibleEmpResetSerevice.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, symd, eymd, "ADMIN");
+				calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, symd, eymd);
+				
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 
-		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, symd, eymd);
+		
 	}
 	
 	/**
@@ -130,10 +142,13 @@ public class WtmAsyncService {
 
 		for (WtmEmpHis empHis : empList){
 			logger.debug("### EMP_RESET EMP::" + empHis.getSabun());
+			System.out.println("### EMP_RESET EMP::" + empHis.getSabun());
 			try {
-			flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, empHis.getSabun(), ymd.substring(0,4)+"0101", ymd.substring(0,4)+"1231", empHis.getSabun());
-			
-			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, empHis.getSabun(), ymd.substring(0,4)+"0101", ymd.substring(0,4)+"1231");
+				System.out.println("P_WTM_FLEXIBLE_EMP_RESET start");
+				flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, empHis.getSabun(), ymd.substring(0,4)+"0101", ymd.substring(0,4)+"1231", empHis.getSabun());
+				System.out.println("P_WTM_FLEXIBLE_EMP_RESET end");
+				calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, empHis.getSabun(), ymd.substring(0,4)+"0101", ymd.substring(0,4)+"1231");
+				System.out.println("P_WTM_FLEXIBLE_EMP_WORKTERM_C start");
 			
 			}catch(Exception e) {
 				e.printStackTrace();

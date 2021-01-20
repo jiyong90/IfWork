@@ -1,13 +1,12 @@
 package com.isu.ifw.service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
+import com.isu.ifw.entity.WtmTimeBreakMgr;
+import com.isu.ifw.entity.WtmTimeBreakTime;
+import com.isu.ifw.entity.WtmTimeCdMgr;
+import com.isu.ifw.entity.WtmWorkPattDet;
+import com.isu.ifw.mapper.WtmTimeCdMgrMapper;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.util.WtmUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -15,19 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.isu.ifw.entity.WtmTimeBreakMgr;
-import com.isu.ifw.entity.WtmTimeBreakTime;
-import com.isu.ifw.entity.WtmTimeCdMgr;
-import com.isu.ifw.mapper.WtmTimeCdMgrMapper;
-import com.isu.ifw.repository.WtmTimeBreakMgrRepository;
-import com.isu.ifw.repository.WtmTimeBreakTimeRepository;
-import com.isu.ifw.repository.WtmTimeCdMgrRepository;
-import com.isu.ifw.util.WtmUtil;
+import javax.annotation.Resource;
+import java.util.*;
+
 //20.07.02 안흥규 삭제 시 체크
-import com.isu.ifw.entity.WtmFlexibleStdMgr;
-import com.isu.ifw.entity.WtmWorkPattDet;
-import com.isu.ifw.repository.WtmFlexibleStdMgrRepository; 
-import com.isu.ifw.repository.WtmWorkPattDetRepository; 
 
 @Transactional
 @Service
@@ -82,7 +72,7 @@ public class WtmTimeCdMgrServiceImpl implements WtmTimeCdMgrService{
 		
 		String ymd = null;
 		if(paramMap.get("sYmd")!=null && !"".equals(paramMap.get("sYmd"))) {
-			ymd = paramMap.get("sYmd").toString().replaceAll("-", "");
+			ymd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 		} else {
 			ymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 		}
@@ -327,7 +317,7 @@ public class WtmTimeCdMgrServiceImpl implements WtmTimeCdMgrService{
 	public List<Map<String, Object>> getTimeCodeList(Long tenantId, String enterCd, String holYn) {
 		List<Map<String, Object>> timeList = new ArrayList();	
 				List<WtmTimeCdMgr> list = timeCdMgrRepository.findByTenantIdAndEnterCdAndHolYnAndYmd(tenantId, enterCd, holYn, WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
-		
+
 		for(WtmTimeCdMgr l : list) {
 			Map<String, Object> time = new HashMap();
 			time.put("timeCdMgrId", l.getTimeCdMgrId());
@@ -344,6 +334,8 @@ public class WtmTimeCdMgrServiceImpl implements WtmTimeCdMgrService{
 			time.put("leaveChkYn", l.getLeaveChkYn());
 			time.put("absenceChkYn", l.getAbsenceChkYn());
 			time.put("note", l.getNote());
+			time.put("otaMinute", l.getOtaMinute());
+			time.put("otbMinute", l.getOtbMinute());
 			timeList.add(time);
 		}
 		return timeList;

@@ -77,12 +77,12 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 			String symd = null;
 			String eymd = null;
 			if(paramMap.get("sYmd")!=null && !"".equals(paramMap.get("sYmd"))) {
-				symd = paramMap.get("sYmd").toString().replaceAll("-", "");
+				symd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 			} else {
 				symd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 			}
 			if(paramMap.get("eYmd")!=null && !"".equals(paramMap.get("eYmd"))) {
-				eymd = paramMap.get("eYmd").toString().replaceAll("-", "");
+				eymd = paramMap.get("eYmd").toString().replaceAll("[-.]", "");
 			} else {
 				eymd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 			}

@@ -1,46 +1,30 @@
 package com.isu.ifw.service;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.common.entity.CommManagementInfomation;
+import com.isu.ifw.common.repository.CommManagementInfomationRepository;
+import com.isu.ifw.entity.WtmPushMgr;
+import com.isu.ifw.entity.WtmPushSendHis;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmInterfaceMapper;
+import com.isu.ifw.mapper.WtmScheduleMapper;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.util.WtmUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.common.entity.CommManagementInfomation;
-import com.isu.ifw.common.repository.CommManagementInfomationRepository;
-import com.isu.ifw.entity.WtmFlexibleEmp;
-import com.isu.ifw.entity.WtmFlexibleStdMgr;
-import com.isu.ifw.entity.WtmPushMgr;
-import com.isu.ifw.entity.WtmPushSendHis;
-import com.isu.ifw.entity.WtmTimeCdMgr;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmInterfaceMapper;
-import com.isu.ifw.mapper.WtmScheduleMapper;
-import com.isu.ifw.repository.WtmEmpHisRepository;
-import com.isu.ifw.repository.WtmFlexibleEmpRepository;
-import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
-import com.isu.ifw.repository.WtmPushMgrRepository;
-import com.isu.ifw.repository.WtmPushSendHisRepository;
-import com.isu.ifw.repository.WtmTimeCdMgrRepository;
-import com.isu.ifw.util.WtmUtil;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service
 public class WtmScheduleServiceImpl implements WtmScheduleService {
@@ -127,7 +111,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
     	// logger.debug("********** closeType : " + closeType);
     	//closeType = "A";
     	getDateMap = new HashMap();
-    	// beforeYmd = "20200710";
+//    	beforeYmd = "20210111";
     	// closeType = "A";
     	getDateMap.put("tenantId", tenantId);
     	getDateMap.put("ymd", beforeYmd);	// 마감은 전일임으로 계산된 전일을 셋팅해야함

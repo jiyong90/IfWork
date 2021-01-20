@@ -146,7 +146,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 						}
 					}else if(flexEmp.getWorkTypeCd().equals("ELAS")) {
 						logger.debug("### EMP_RESET ::" + sabun + " 탄근제이다");
-						this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), loopSymd, loopEymd, WtmFlexibleEmpResetService.WORK_TYPE_FLEX, null, userId);
+						this.P_WTM_WORK_CALENDAR_RESET(flexStdMgr, pattDets, flexEmp.getSabun(), loopSymd, loopEymd, WtmFlexibleEmpResetService.WORK_TYPE_ELAS, null, userId);
 					}else {
 						logger.debug("### EMP_RESET ::" + sabun + " 기본근무제이다.");
 						logger.debug("### EMP_RESET ::" + sabun + " 현재 근무제가 기본근무 일 경우 기본근무 인지 근무조 인지 알수가 없다. 시작일 기준으로 근무조정보가 있는지 확인한다.");
@@ -483,7 +483,8 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				//mgrId
 			}else if(workType.equals(this.WORK_TYPE_FLEX)) {
 				mgrSdate = ymd.parse(flexStdMgr.getUseSymd());
-				
+			}else if(workType.equals(this.WORK_TYPE_ELAS)) {	
+				mgrSdate = sDate;
 			}
 			logger.debug("mgrSdate :" + mgrSdate);
 			logger.debug("sDate :" + sDate);
@@ -559,10 +560,17 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				
 				if("Y".equals(flexStdMgr.getHolExceptYn()) && holList.indexOf(currYmd) > -1 ) {
 					calendar.setHolidayYn("Y");
+					//휴일이면 휴일의 시간표를 넣어준다.
+					if(!timeCdMgr.getHolYn().equals("Y")) {
+						calendar.setTimeCdMgrId(timeCdMgr.getHolTimeCdMgrId());
+					}
 				}else {
 					//휴일이면
 					if(!"".equals(timeCdMgr.getHolYn()) &&  "Y".equals(timeCdMgr.getHolYn())) {
 						calendar.setHolidayYn("Y");
+						if(!timeCdMgr.getHolYn().equals("Y")) {
+							calendar.setTimeCdMgrId(timeCdMgr.getHolTimeCdMgrId());
+						}
 					}else {
 						calendar.setHolidayYn("N");
 					}
@@ -573,7 +581,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				calendar = workCalendarRepo.save(calendar);
 				logger.debug("calendar save : " + calendar);
 				
-				if(!workType.equals(this.WORK_TYPE_FLEX)) {
+				if(!workType.equals(this.WORK_TYPE_FLEX) && !workType.equals(this.WORK_TYPE_ELAS)) {
 					int breakMinute = 0;
 					if(calendar.getHolidayYn().equals("N")) {
 						if(timeCdMgr.getWorkShm() != null && timeCdMgr.getWorkEhm() != null
@@ -655,6 +663,18 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 								wtmWorkDayResultRepo.save(r);
 							}
 							
+							//21.01.05 JYP
+							//탄근제에서 취소의 경우 OT를 만들어주고 있기 때문에 applId가 없는 OT는 지우자 NIGHT도..
+							List<String> tTypeCds= new ArrayList<String>();
+							tTypeCds.add(WtmApplService.TIME_TYPE_OT);
+							tTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
+							tTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
+							tTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
+								
+							List<WtmWorkDayResult> dRes = wtmWorkDayResultRepo.findByTimeTypeCdInAndTenantIdAndEnterCdAndSabunAndYmdAndApprMinuteIsNullAndAndApplIdIsNull(tTypeCds, calendar.getTenantId(), calendar.getEnterCd(), sabun, currYmd);
+							if(dRes != null && dRes.size() > 0) {
+								wtmWorkDayResultRepo.deleteAll(dRes);
+							}
 							
 
 							if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {

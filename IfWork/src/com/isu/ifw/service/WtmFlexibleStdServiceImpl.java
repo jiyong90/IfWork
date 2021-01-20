@@ -234,13 +234,14 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 				workPatt.put("planShm", timeCdMgr.getWorkShm());//l.getPlanShm());
 				workPatt.put("planEhm", timeCdMgr.getWorkEhm());//l.getPlanEhm());
 
-				if(timeCdMgr.getWorkShm() != null && !timeCdMgr.getWorkShm().equals("")
-						&& timeCdMgr.getWorkEhm() != null && !timeCdMgr.getWorkEhm().equals("")) {
+//				if(timeCdMgr.getWorkShm() != null && !timeCdMgr.getWorkShm().equals("")
+//						&& timeCdMgr.getWorkEhm() != null && !timeCdMgr.getWorkEhm().equals("")) {
 					Date calcSdate = null, calcEdate = null;
 					try {
-						
-						calcSdate = yMdHm.parse(yMd.format(new Date())+""+timeCdMgr.getWorkShm());
-						calcEdate = yMdHm.parse(yMd.format(new Date())+""+timeCdMgr.getWorkEhm());
+						if(timeCdMgr.getWorkShm() != null && !timeCdMgr.getWorkShm().equals("") && timeCdMgr.getWorkEhm() != null && !timeCdMgr.getWorkEhm().equals("")) {
+							calcSdate = yMdHm.parse(yMd.format(new Date())+""+timeCdMgr.getWorkShm());
+							calcEdate = yMdHm.parse(yMd.format(new Date())+""+timeCdMgr.getWorkEhm());
+						}
 					} catch (ParseException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -277,9 +278,9 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 						}
 						
 						workPatt.put("note", l.getNote());
-						workPattList.add(workPatt);
 					}
-				}
+//				}
+					workPattList.add(workPatt);
 			}
 		}
 		
@@ -378,8 +379,37 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 
 	@Override
 	public Map<String, Object> getSumWorkPatt(Map<String, Object> paramMap) {
-		
-		return flexStdMapper.getSumWorkPatt(paramMap);
+
+		List<Map<String, Object>> workPattList = this.getWorkPattList(Long.parseLong(paramMap.get("flexibleStdMgrId").toString()));
+
+		Map<String, Object> sumWorkPatt = new HashMap<String, Object>();
+
+		int planMinute = 0;
+		int otaMinute = 0;
+		int otbMinute = 0;
+		int otMinute = 0;
+		int repeatCnt = 1;
+
+		for(Map<String, Object> workPatt : workPattList) {
+			if(workPatt.get("planMinute") != null ) {
+				planMinute = planMinute + Integer.parseInt(workPatt.get("planMinute").toString());
+			}
+			if(workPatt.get("otaMinute") != null ) {
+				otaMinute = otaMinute + Integer.parseInt(workPatt.get("otaMinute").toString());
+			}
+			if(workPatt.get("otbMinute") != null ) {
+				otbMinute = otbMinute + Integer.parseInt(workPatt.get("otbMinute").toString());
+			}
+
+		}
+		otMinute = otaMinute + otbMinute;
+
+		sumWorkPatt.put("planMinute", planMinute);
+		sumWorkPatt.put("otMinute", otMinute);
+		sumWorkPatt.put("repeatCnt", repeatCnt);
+		logger.debug("planMinute : " + planMinute + "  planMinute : " + planMinute + "  repeatCnt : " + repeatCnt);
+
+		return sumWorkPatt;
 	}
 	
 	@Override
