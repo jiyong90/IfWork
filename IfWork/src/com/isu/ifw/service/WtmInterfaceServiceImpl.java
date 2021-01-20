@@ -1412,56 +1412,56 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						rp.setFail(retMsg);
 			    		return rp;
 					} else {
-						this.resetTaaResult(Long.parseLong(reqDayMap.get("tenantId").toString()), reqDayMap.get("enterCd").toString(), reqDayMap.get("sabun").toString(), ymd);
+//						this.resetTaaResult(Long.parseLong(reqDayMap.get("tenantId").toString()), reqDayMap.get("enterCd").toString(), reqDayMap.get("sabun").toString(), reqDayMap.get("sYmd").toString());
 						// 오류가 아니면.. 근태시간을 생성체크하자
-//						String taaSetYn = reqDayMap.get("taaSetYn").toString();
-//						if("I".equals(taaSetYn)) {
-//							// 근태생성
-//							wtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
-//									  Long.parseLong(reqDayMap.get("tenantId").toString())
-//									, reqDayMap.get("enterCd").toString()
-//									, ymd
-//									, reqDayMap.get("sabun").toString()
-//									, reqDayMap.get("timeTypeCd").toString()
-//									, reqDayMap.get("taaCd").toString()
-//									, dt.parse(reqDayMap.get("taaSdate").toString())
-//									, dt.parse(reqDayMap.get("taaEdate").toString())
-//									, Long.parseLong(reqDayMap.get("applId").toString())
-//									, "0");
-//						} else if ("D".equals(taaSetYn)) {
-//							// 근태삭제
-//							wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
-//									  Long.parseLong(reqDayMap.get("tenantId").toString())
-//									, reqDayMap.get("enterCd").toString()
-//									, ymd
-//									, reqDayMap.get("sabun").toString()
-//									, reqDayMap.get("timeTypeCd").toString()
-//									, reqDayMap.get("taaCd").toString()
-//									, dt.parse(reqDayMap.get("taaSdate").toString())
-//									, dt.parse(reqDayMap.get("taaEdate").toString())
-//									, Long.parseLong(reqDayMap.get("applId").toString())
-//									, "0");
-//						}
-//
-//
-//						String chkYmd = nowDataTime.substring(0, 8);
-//						Long tenantId = Long.parseLong(reqDayMap.get("tenantId").toString());
-//						String enterCd = reqDayMap.get("enterCd").toString();
-//		        		String sabun = reqDayMap.get("sabun").toString();
-//
-//		        		// 오늘 이전이면 근무마감을 다시 돌려야함.
-//						if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd) && ("D".equals(taaSetYn) || "I".equals(taaSetYn))) {
-//							wtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
-//						}
-//						// 근무시간합산은 재정산한다
-//		        		HashMap<String, Object> setTermMap = new HashMap();
-//		        		setTermMap.put("tenantId", tenantId);
-//		        		setTermMap.put("enterCd", enterCd);
-//		        		setTermMap.put("sabun", sabun);
-//		        		setTermMap.put("symd", ymd);
-//		        		setTermMap.put("eymd", ymd);
-//		        		setTermMap.put("pId", "TAAIF");
-//		        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
+						String taaSetYn = reqDayMap.get("taaSetYn").toString();
+						if("I".equals(taaSetYn)) {
+							// 근태생성
+							wtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
+									  Long.parseLong(reqDayMap.get("tenantId").toString())
+									, reqDayMap.get("enterCd").toString()
+									, ymd
+									, reqDayMap.get("sabun").toString()
+									, reqDayMap.get("timeTypeCd").toString()
+									, reqDayMap.get("taaCd").toString()
+									, dt.parse(reqDayMap.get("taaSdate").toString())
+									, dt.parse(reqDayMap.get("taaEdate").toString())
+									, Long.parseLong(reqDayMap.get("applId").toString())
+									, "0");
+						} else if ("D".equals(taaSetYn)) {
+							// 근태삭제
+							wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
+									  Long.parseLong(reqDayMap.get("tenantId").toString())
+									, reqDayMap.get("enterCd").toString()
+									, ymd
+									, reqDayMap.get("sabun").toString()
+									, reqDayMap.get("timeTypeCd").toString()
+									, reqDayMap.get("taaCd").toString()
+									, dt.parse(reqDayMap.get("taaSdate").toString())
+									, dt.parse(reqDayMap.get("taaEdate").toString())
+									, Long.parseLong(reqDayMap.get("applId").toString())
+									, "0");
+						}
+
+
+						String chkYmd = nowDataTime.substring(0, 8);
+						Long tenantId = Long.parseLong(reqDayMap.get("tenantId").toString());
+						String enterCd = reqDayMap.get("enterCd").toString();
+		        		String sabun = reqDayMap.get("sabun").toString();
+
+		        		// 오늘 이전이면 근무마감을 다시 돌려야함.
+						if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd) && ("D".equals(taaSetYn) || "I".equals(taaSetYn))) {
+							wtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
+						}
+						// 근무시간합산은 재정산한다
+		        		HashMap<String, Object> setTermMap = new HashMap();
+		        		setTermMap.put("tenantId", tenantId);
+		        		setTermMap.put("enterCd", enterCd);
+		        		setTermMap.put("sabun", sabun);
+		        		setTermMap.put("symd", ymd);
+		        		setTermMap.put("eymd", ymd);
+		        		setTermMap.put("pId", "TAAIF");
+		        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 					}
 				}
 				
@@ -2033,16 +2033,16 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 									
 								} else {
 									// 취소이면 근태삭제
-									wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
-											Long.parseLong(taaDetMap.get("tenantId").toString())
-											, taaDetMap.get("enterCd").toString()
-											, taaDetMap.get("ymd").toString()
-											, taaDetMap.get("sabun").toString()
-											, timeTypeCd
-											, taaDetMap.get("taaCd").toString()
-											, dt.parse(taaSdate)
-											, dt.parse(taaEdate)
-											, Long.parseLong(taaDetMap.get("applId").toString())
+											wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
+													Long.parseLong(taaDetMap.get("tenantId").toString())
+													, taaDetMap.get("enterCd").toString()
+													, taaDetMap.get("ymd").toString()
+													, taaDetMap.get("sabun").toString()
+													, timeTypeCd
+													, taaDetMap.get("taaCd").toString()
+													, dt.parse(taaSdate)
+													, dt.parse(taaEdate)
+													, Long.parseLong(taaDetMap.get("applId").toString())
 											, "TAAIF");
 									
 									// 오늘 이전이면 근무마감을 다시 돌려야함.
@@ -2096,8 +2096,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 
 			List<String> statusList = new ArrayList<String>();
 			statusList.add("OK");
-//			statusList.add("FAIL");
-//			statusList.add("ERR");
+			statusList.add("FAIL");
+			statusList.add("ERR");
 			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(statusList); 
 			if(list == null || list.size() == 0) {
 				logger.debug("setTaaApplBatchIfPostProcess 대상없음 종료");
@@ -2449,11 +2449,23 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					|| status.equals(WtmApplService.APPL_STATUS_APPR_REJECT) 
 					|| status.equals(WtmApplService.APPL_STATUS_CANCEL)) {
 				for(Map<String, Object> w : works) {
+
 					List<Map<String, Object>> worksDet = (List<Map<String, Object>>) w.get("worksDet");
 					for(Map<String, Object> work : worksDet) {
 
 						logger.debug("============================== resetTaaResult : " + w.get("sabun")+" : " + work.get("startYmd")+"");
-						this.resetTaaResult(tenantId, enterCd, w.get("sabun")+"", work.get("startYmd")+"");
+
+						try {
+							this.resetTaaResult(tenantId, enterCd, w.get("sabun")+"", work.get("startYmd")+"");
+						} catch(Exception e) {
+							if(status.equals(WtmApplService.APPL_STATUS_CANCEL)) {
+
+							}
+
+						}
+
+
+
 					}
 					
 				}
@@ -3325,12 +3337,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 //		status.add("FAIL");
 //		status.add("ERR");
 
-//		List<String> enterCds = new ArrayList<String>();
-//		enterCds.add("ISU_ABX");http://localhost/ifw/schedule/colseDay?tenantId=98
-//		enterCds.add("ISU_AMC");
 		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(status);
-//		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotInAndEnterCdNotIn(status, enterCds);
-//		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndIfStatusNotInGroupBy();
+
 		if(list == null || list.size() == 0) {
 			System.out.println("setTaaApplBatchIfPostProcess 대상없음 종료");
 			return ;

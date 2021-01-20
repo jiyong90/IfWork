@@ -2269,12 +2269,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					logger.debug("4.(출근)타각 자동 업데이트.  r.getPlanSdate() is null : " + r.getSabun() + " : " + r.getEnterCd() + " : " + r.getTimeTypeCd());
 				}
 			}
-			
+
 			//퇴근 자동 생성
 			if(!flexStdMgr.getDayCloseType().equals("N")) {
 				
 				if(tenantId == 102) { //그린캐미컬 타각정보 강제로 계획시간으로 엎어버리기
-					if(dayPlanSdate != null) {
+					if(r.getPlanEdate() != null) {
 						if( (flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
 								|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)  || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) ))){
 							
