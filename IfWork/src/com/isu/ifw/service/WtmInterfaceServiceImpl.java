@@ -1487,6 +1487,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						Long tenantId = Long.parseLong(reqDayMap.get("tenantId").toString());
 						String enterCd = reqDayMap.get("enterCd").toString();
 		        		String sabun = reqDayMap.get("sabun").toString();
+
+						resetTaaResult(tenantId, enterCd, sabun, reqDayMap.get("sYmd").toString());
 		        		
 		        		// 오늘 이전이면 근무마감을 다시 돌려야함.
 						if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd) && ("D".equals(taaSetYn) || "I".equals(taaSetYn))) {

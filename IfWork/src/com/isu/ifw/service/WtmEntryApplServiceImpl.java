@@ -236,6 +236,8 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 			paramMap.put("typeCd", "APPL");
 			paramMap.put("userId", userId);
 			paramMap.put("stdYmd", ymd);
+			paramMap.put("paramSdate", ymd);
+			paramMap.put("paramEdate", ymd);
 			List<Map<String, Object>> insertRows = new ArrayList<Map<String, Object>>();
 			insertRows.add(paramMap);
 			paramMap.put("insertRows", insertRows);
@@ -249,6 +251,10 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 			if(unplannedYn!=null && unplannedYn.get("unplannedYn")!=null) {
 				rp.put("unplannedYn", unplannedYn.get("unplannedYn").toString());
 			}
+
+			// 근태사유서 신청한 날의 마감을 다시 돌려 주도록 한다.
+			// 주말근무시에는 마감을 다시 돌려줘야 보상휴가가 있을경우 다시 생성이 된다.
+			flexibleEmpService.finishDay((Map<String, Object>)paramMap, tenantId, enterCd, applSabun, userId);
 		}
 		
 		List<String> emps = new ArrayList();
