@@ -1,48 +1,28 @@
 package com.isu.ifw.service;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-import javax.net.ssl.HttpsURLConnection;
-
+import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.WtmCalendarMapper;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmInoutHisMapper;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.entity.WtmAppl;
-import com.isu.ifw.entity.WtmEmpHis;
-import com.isu.ifw.entity.WtmFlexibleEmp;
-import com.isu.ifw.entity.WtmFlexibleStdMgr;
-import com.isu.ifw.entity.WtmTimeCdMgr;
-import com.isu.ifw.entity.WtmWorkCalendar;
-import com.isu.ifw.entity.WtmWorkDayResult;
-import com.isu.ifw.mapper.WtmCalendarMapper;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmInoutHisMapper;
-import com.isu.ifw.repository.WtmEmpHisRepository;
-import com.isu.ifw.repository.WtmFlexibleEmpRepository;
-import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
-import com.isu.ifw.repository.WtmTimeCdMgrRepository;
-import com.isu.ifw.repository.WtmWorkCalendarRepository;
-import com.isu.ifw.repository.WtmWorkDayResultRepository;
-import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.ReturnParam;
+import javax.annotation.Resource;
+import javax.net.ssl.HttpsURLConnection;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service("inoutService")
 public class WtmInoutServiceImpl implements WtmInoutService{
@@ -925,7 +905,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 //			transactionManager.commit(status);
 		
 			List<String> timeTypeCds = new ArrayList<String>();
-			timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
+//			timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
 			timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
 			timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 			timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);

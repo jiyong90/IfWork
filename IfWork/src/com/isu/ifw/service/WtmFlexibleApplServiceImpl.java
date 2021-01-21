@@ -148,6 +148,13 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 	WtmInboxService inbox;
 	
 	@Autowired private WtmCalcService calcService;
+
+	@Autowired private WtmTimeCdMgrRepository timeCdMgrRepo;
+
+	@Autowired private WtmWorkPattDetRepository workPattRepo;
+
+	@Autowired private WtmDayMgrRepository dayMgrRepo;
+	@Autowired private WtmHolidayMgrRepository holidayMgrRepo;
 	
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
@@ -842,7 +849,9 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		
 		List<WtmFlexibleApplDet> workList = new ArrayList<WtmFlexibleApplDet>();
 		List<WtmFlexibleApplDetVO> patterns = flexApplMapper.getWorkPattern(paramMap);
-		
+
+		Map<Long, WtmTimeCdMgr> timeMap = new HashMap<Long, WtmTimeCdMgr>();
+
 		if(patterns!=null && patterns.size()>0) {
 			
 			System.out.println("sYmd ::: " + sYmd);
@@ -862,30 +871,120 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 				fd.setYmd(p.getYmd());
 				fd.setTimeCdMgrId(p.getTimeCdMgrId());
 				fd.setHolidayYn(p.getHolidayYn());
-				
-				//임시저장된 근무계획의 timeCdMgrId와 패턴의 timeCdMgrId이 다를 경우엔 
-				//계획된 시간은 두고 패턴의 timeCdMgrId를 보도록 함.
-				Date planSdate = null;
-				if(fd.getPlanSdate()==null && p.getPlanSdate()!=null && !"".equals(p.getPlanSdate())) {
-					planSdate = WtmUtil.toDate(p.getPlanSdate(), "yyyyMMddHHmm");
-					fd.setPlanSdate(planSdate);
+
+
+				WtmTimeCdMgr timeCdMgr = null;
+
+				if(timeMap.containsKey(p.getTimeCdMgrId())) {
+					timeCdMgr = timeMap.get(p.getTimeCdMgrId());
+				}else {
+					timeCdMgr = timeCdMgrRepo.findById(p.getTimeCdMgrId()).get();
+					timeMap.put(timeCdMgr.getTimeCdMgrId(), timeCdMgr);
 				}
-				
-				Date planEdate = null;
-				if(fd.getPlanEdate()==null && p.getPlanEdate()!=null && !"".equals(p.getPlanEdate())) {
-					planEdate = WtmUtil.toDate(p.getPlanEdate(), "yyyyMMddHHmm");
-					fd.setPlanEdate(planEdate);
+
+				if(timeCdMgr.getWorkShm() != null && timeCdMgr.getWorkEhm() != null && !"".equals(timeCdMgr.getWorkShm()) && !"".equals(timeCdMgr.getWorkEhm()) && !"Y".equals(timeCdMgr.getHolYn())) {
+					logger.debug("timeCdMgr is not null ");
+					String shm = timeCdMgr.getWorkShm();
+					String ehm = timeCdMgr.getWorkEhm();
+					String d = p.getYmd();
+					//String sYmd = calendar.getYmd();
+					//String eYmd = calendar.getYmd();
+					Date sd = null, ed = null;
+					SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+					SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+					SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
+					Calendar cal = Calendar.getInstance();
+
+					try {
+						sd = ymdhm.parse(d+shm);
+						ed = ymdhm.parse(d+ehm);
+						//종료시분이 시작시분보다 작으면 기준일을 다음날로 본다.
+						if(Integer.parseInt(shm) > Integer.parseInt(ehm)) {
+							cal.setTime(ed);
+							cal.add(Calendar.DATE, 1);
+							ed = cal.getTime();
+							//eYmd = ymd.format(cal.getTime());
+						}
+					} catch (ParseException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					fd.setPlanSdate(sd);
+					fd.setPlanEdate(ed);
+
+					Map<String, Object> resMap = calcService.calcApprMinute(sd, ed, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+					if(resMap.containsKey("apprMinute")) {
+						fd.setPlanMinute(Integer.parseInt(resMap.get("apprMinute")+""));
+						//breakMinute = Integer.parseInt(resMap.get("breakMinute")+"");
+					}
+
+					/*
+					 * timeCdMgr otbMinute 조출 이 있을 경우 생성해준다.
+					 */
+					if(timeCdMgr.getOtbMinute() != null && !timeCdMgr.getOtbMinute().equals("")) {
+						Date earlyOtSdate = calcService.F_WTM_DATE_ADD(sd, timeCdMgr.getOtbMinute() * -1, timeCdMgr, flexibleStdMgr.getUnitMinute());
+						fd.setOtbSdate(earlyOtSdate);
+						fd.setOtbEdate(sd);
+						//int breakMinute = 0;
+						Map<String, Object> resOtMap = calcService.calcApprMinute(earlyOtSdate, sd, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+						if(resOtMap.containsKey("apprMinute")) {
+							fd.setOtbMinute(Integer.parseInt(resOtMap.get("apprMinute")+""));
+							//breakMinute = Integer.parseInt(resMap.get("breakMinute")+"");
+						}
+					}
+					/*
+					 * timeCdMgr otAMinute 잔업 이 있을 경우 생성해준다.
+					 */
+					if(timeCdMgr.getOtaMinute() != null && !timeCdMgr.getOtaMinute().equals("")) {
+						Date otEdate = calcService.F_WTM_DATE_ADD(ed, timeCdMgr.getOtaMinute(), timeCdMgr, flexibleStdMgr.getUnitMinute());
+
+						fd.setOtaSdate(ed);
+						fd.setOtaEdate(otEdate);
+						//int breakMinute = 0;
+						Map<String, Object> resOtMap = calcService.calcApprMinute(ed, otEdate, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+						if(resOtMap.containsKey("apprMinute")) {
+							fd.setOtaMinute(Integer.parseInt(resOtMap.get("apprMinute")+""));
+							//breakMinute = Integer.parseInt(resMap.get("breakMinute")+"");
+						}
+					}
+
+
+					fd.setUpdateDate(new Date());
+					fd.setUpdateId(userId);
+
+					workList.add(fd);
+
+				} else {
+					fd.setUpdateDate(new Date());
+					fd.setUpdateId(userId);
+
+					workList.add(fd);
 				}
-				
-				if((fd.getOtbMinute()==null || fd.getOtbMinute()==0) && p.getOtbMinute()!=0)
-					fd.setOtbMinute(p.getOtbMinute());
-				
-				if((fd.getOtaMinute()==null || fd.getOtaMinute()==0) && p.getOtaMinute()!=0)
-					fd.setOtaMinute(p.getOtaMinute());
-				
-				fd.setUpdateDate(new Date());
-				fd.setUpdateId(userId);
-				workList.add(fd);
+
+//				//임시저장된 근무계획의 timeCdMgrId와 패턴의 timeCdMgrId이 다를 경우엔
+//				//계획된 시간은 두고 패턴의 timeCdMgrId를 보도록 함.
+//				Date planSdate = null;
+//				if(fd.getPlanSdate()==null && p.getPlanSdate()!=null && !"".equals(p.getPlanSdate())) {
+//					planSdate = WtmUtil.toDate(p.getPlanSdate(), "yyyyMMddHHmm");
+//					fd.setPlanSdate(planSdate);
+//				}
+//
+//				Date planEdate = null;
+//				if(fd.getPlanEdate()==null && p.getPlanEdate()!=null && !"".equals(p.getPlanEdate())) {
+//					planEdate = WtmUtil.toDate(p.getPlanEdate(), "yyyyMMddHHmm");
+//					fd.setPlanEdate(planEdate);
+//				}
+//
+//				if((fd.getOtbMinute()==null || fd.getOtbMinute()==0) && p.getOtbMinute()!=0)
+//					fd.setOtbMinute(p.getOtbMinute());
+//
+//				if((fd.getOtaMinute()==null || fd.getOtaMinute()==0) && p.getOtaMinute()!=0)
+//					fd.setOtaMinute(p.getOtaMinute());
+//
+//				fd.setUpdateDate(new Date());
+//				fd.setUpdateId(userId);
+//				workList.add(fd);
 			}
 			
 			wtmFlexibleApplDetRepo.saveAll(workList);
@@ -989,12 +1088,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
-	
-	@Autowired private WtmWorkPattDetRepository workPattRepo;
-	@Autowired private WtmTimeCdMgrRepository timeCdMgrRepo;
-	@Autowired private WtmDayMgrRepository dayMgrRepo;
-	@Autowired private WtmHolidayMgrRepository holidayMgrRepo;
+
 	
 	public void createWtmFlexibleApplDetAsPattern(Long tenantId, String enterCd, WtmFlexibleAppl flexibleAppl) {
 		logger.debug("call createWtmFlexibleApplDetAsPattern ::");

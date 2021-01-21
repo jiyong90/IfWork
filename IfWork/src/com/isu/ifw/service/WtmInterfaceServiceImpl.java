@@ -1,15 +1,14 @@
 package com.isu.ifw.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.common.entity.CommTenantModule;
-import com.isu.ifw.common.repository.CommTenantModuleRepository;
-import com.isu.ifw.entity.*;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmInterfaceMapper;
-import com.isu.ifw.repository.*;
-import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.ReturnParam;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,9 +18,50 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.common.entity.CommTenantModule;
+import com.isu.ifw.common.repository.CommTenantModuleRepository;
+import com.isu.ifw.entity.WtmAppl;
+import com.isu.ifw.entity.WtmFlexibleStdMgr;
+import com.isu.ifw.entity.WtmIfTaaHis;
+import com.isu.ifw.entity.WtmIntfCode;
+import com.isu.ifw.entity.WtmIntfEmp;
+import com.isu.ifw.entity.WtmIntfEmpAddr;
+import com.isu.ifw.entity.WtmIntfGnt;
+import com.isu.ifw.entity.WtmIntfHoliday;
+import com.isu.ifw.entity.WtmIntfOrg;
+import com.isu.ifw.entity.WtmIntfOrgChart;
+import com.isu.ifw.entity.WtmIntfOrgConc;
+import com.isu.ifw.entity.WtmIntfTaaAppl;
+import com.isu.ifw.entity.WtmTaaAppl;
+import com.isu.ifw.entity.WtmTaaApplDet;
+import com.isu.ifw.entity.WtmTaaCode;
+import com.isu.ifw.entity.WtmTimeCdMgr;
+import com.isu.ifw.entity.WtmWorkCalendar;
+import com.isu.ifw.entity.WtmWorkDayResult;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmInterfaceMapper;
+import com.isu.ifw.repository.WtmApplRepository;
+import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
+import com.isu.ifw.repository.WtmIfTaaHisRepository;
+import com.isu.ifw.repository.WtmIntfCodeRepository;
+import com.isu.ifw.repository.WtmIntfEmpAddrRepository;
+import com.isu.ifw.repository.WtmIntfEmpRepository;
+import com.isu.ifw.repository.WtmIntfGntRepository;
+import com.isu.ifw.repository.WtmIntfHolidayRepository;
+import com.isu.ifw.repository.WtmIntfOrgChartRepository;
+import com.isu.ifw.repository.WtmIntfOrgConcRepository;
+import com.isu.ifw.repository.WtmIntfOrgRepository;
+import com.isu.ifw.repository.WtmIntfTaaApplRepository;
+import com.isu.ifw.repository.WtmTaaApplDetRepository;
+import com.isu.ifw.repository.WtmTaaApplRepository;
+import com.isu.ifw.repository.WtmTaaCodeRepository;
+import com.isu.ifw.repository.WtmTimeCdMgrRepository;
+import com.isu.ifw.repository.WtmWorkCalendarRepository;
+import com.isu.ifw.repository.WtmWorkDayResultRepository;
+import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
 
 @Service("wtmInterfaceService")
 public class WtmInterfaceServiceImpl implements WtmInterfaceService {
@@ -1412,56 +1452,58 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						rp.setFail(retMsg);
 			    		return rp;
 					} else {
-						this.resetTaaResult(Long.parseLong(reqDayMap.get("tenantId").toString()), reqDayMap.get("enterCd").toString(), reqDayMap.get("sabun").toString(), ymd);
+//						this.resetTaaResult(Long.parseLong(reqDayMap.get("tenantId").toString()), reqDayMap.get("enterCd").toString(), reqDayMap.get("sabun").toString(), reqDayMap.get("sYmd").toString());
 						// 오류가 아니면.. 근태시간을 생성체크하자
-//						String taaSetYn = reqDayMap.get("taaSetYn").toString();
-//						if("I".equals(taaSetYn)) {
-//							// 근태생성
-//							wtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
-//									  Long.parseLong(reqDayMap.get("tenantId").toString())
-//									, reqDayMap.get("enterCd").toString()
-//									, ymd
-//									, reqDayMap.get("sabun").toString()
-//									, reqDayMap.get("timeTypeCd").toString()
-//									, reqDayMap.get("taaCd").toString()
-//									, dt.parse(reqDayMap.get("taaSdate").toString())
-//									, dt.parse(reqDayMap.get("taaEdate").toString())
-//									, Long.parseLong(reqDayMap.get("applId").toString())
-//									, "0");
-//						} else if ("D".equals(taaSetYn)) {
-//							// 근태삭제
-//							wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
-//									  Long.parseLong(reqDayMap.get("tenantId").toString())
-//									, reqDayMap.get("enterCd").toString()
-//									, ymd
-//									, reqDayMap.get("sabun").toString()
-//									, reqDayMap.get("timeTypeCd").toString()
-//									, reqDayMap.get("taaCd").toString()
-//									, dt.parse(reqDayMap.get("taaSdate").toString())
-//									, dt.parse(reqDayMap.get("taaEdate").toString())
-//									, Long.parseLong(reqDayMap.get("applId").toString())
-//									, "0");
-//						}
-//
-//
-//						String chkYmd = nowDataTime.substring(0, 8);
-//						Long tenantId = Long.parseLong(reqDayMap.get("tenantId").toString());
-//						String enterCd = reqDayMap.get("enterCd").toString();
-//		        		String sabun = reqDayMap.get("sabun").toString();
-//
-//		        		// 오늘 이전이면 근무마감을 다시 돌려야함.
-//						if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd) && ("D".equals(taaSetYn) || "I".equals(taaSetYn))) {
-//							wtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
-//						}
-//						// 근무시간합산은 재정산한다
-//		        		HashMap<String, Object> setTermMap = new HashMap();
-//		        		setTermMap.put("tenantId", tenantId);
-//		        		setTermMap.put("enterCd", enterCd);
-//		        		setTermMap.put("sabun", sabun);
-//		        		setTermMap.put("symd", ymd);
-//		        		setTermMap.put("eymd", ymd);
-//		        		setTermMap.put("pId", "TAAIF");
-//		        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
+						String taaSetYn = reqDayMap.get("taaSetYn").toString();
+						if("I".equals(taaSetYn)) {
+							// 근태생성
+							wtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
+									  Long.parseLong(reqDayMap.get("tenantId").toString())
+									, reqDayMap.get("enterCd").toString()
+									, ymd
+									, reqDayMap.get("sabun").toString()
+									, reqDayMap.get("timeTypeCd").toString()
+									, reqDayMap.get("taaCd").toString()
+									, dt.parse(reqDayMap.get("taaSdate").toString())
+									, dt.parse(reqDayMap.get("taaEdate").toString())
+									, Long.parseLong(reqDayMap.get("applId").toString())
+									, "0");
+						} else if ("D".equals(taaSetYn)) {
+							// 근태삭제
+							wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
+									  Long.parseLong(reqDayMap.get("tenantId").toString())
+									, reqDayMap.get("enterCd").toString()
+									, ymd
+									, reqDayMap.get("sabun").toString()
+									, reqDayMap.get("timeTypeCd").toString()
+									, reqDayMap.get("taaCd").toString()
+									, dt.parse(reqDayMap.get("taaSdate").toString())
+									, dt.parse(reqDayMap.get("taaEdate").toString())
+									, Long.parseLong(reqDayMap.get("applId").toString())
+									, "0");
+						}
+
+
+						String chkYmd = nowDataTime.substring(0, 8);
+						Long tenantId = Long.parseLong(reqDayMap.get("tenantId").toString());
+						String enterCd = reqDayMap.get("enterCd").toString();
+		        		String sabun = reqDayMap.get("sabun").toString();
+
+						resetTaaResult(tenantId, enterCd, sabun, reqDayMap.get("sYmd").toString());
+
+		        		// 오늘 이전이면 근무마감을 다시 돌려야함.
+						if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd) && ("D".equals(taaSetYn) || "I".equals(taaSetYn))) {
+							wtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
+						}
+						// 근무시간합산은 재정산한다
+		        		HashMap<String, Object> setTermMap = new HashMap();
+		        		setTermMap.put("tenantId", tenantId);
+		        		setTermMap.put("enterCd", enterCd);
+		        		setTermMap.put("sabun", sabun);
+		        		setTermMap.put("symd", ymd);
+		        		setTermMap.put("eymd", ymd);
+		        		setTermMap.put("pId", "TAAIF");
+		        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 					}
 				}
 				
@@ -2160,11 +2202,11 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						List<Map<String, Object>> worksDet = new ArrayList<Map<String,Object>>();
 						for(WtmIfTaaHis data : taaHis) {
 							//첫데이터를 담는다 기준이 없어서..
-							tId = data.getTenantId();
-							enterCd = data.getEnterCd();
-							applSabun = data.getSabun();
-							ifApplNo = data.getApplNo();
-							status = data.getStatus();
+							if(tId == null) { tId = data.getTenantId();}
+							if(enterCd == null) { enterCd = data.getEnterCd();}
+							if(applSabun == null) { applSabun = data.getSabun();}
+							if(ifApplNo == null) { ifApplNo = data.getApplNo();}
+							if(status == null) { status = data.getStatus();}
 							
 							SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
 							Calendar cal1 = Calendar.getInstance();
@@ -3325,12 +3367,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 //		status.add("FAIL");
 //		status.add("ERR");
 
-//		List<String> enterCds = new ArrayList<String>();
-//		enterCds.add("ISU_ABX");http://localhost/ifw/schedule/colseDay?tenantId=98
-//		enterCds.add("ISU_AMC");
 		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(status);
-//		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotInAndEnterCdNotIn(status, enterCds);
-//		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndIfStatusNotInGroupBy();
+
 		if(list == null || list.size() == 0) {
 			System.out.println("setTaaApplBatchIfPostProcess 대상없음 종료");
 			return ;
