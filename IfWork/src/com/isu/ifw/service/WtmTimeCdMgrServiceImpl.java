@@ -1,5 +1,6 @@
 package com.isu.ifw.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmTimeBreakMgr;
 import com.isu.ifw.entity.WtmTimeBreakTime;
 import com.isu.ifw.entity.WtmTimeCdMgr;
@@ -94,7 +95,9 @@ public class WtmTimeCdMgrServiceImpl implements WtmTimeCdMgrService{
 				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("mergeRows");
 				List<WtmTimeCdMgr> saveList = new ArrayList();
 				if(iList != null && iList.size() > 0) {
+					ObjectMapper mapper = new ObjectMapper();
 					for(Map<String, Object> l : iList) {
+						logger.debug("###l : " + mapper.writeValueAsString(l));
 						WtmTimeCdMgr code = new WtmTimeCdMgr();
 						code.setTimeCdMgrId(l.get("timeCdMgrId").toString().equals("") ? null : Long.parseLong(l.get("timeCdMgrId").toString()));
 						code.setTenantId(tenantId);

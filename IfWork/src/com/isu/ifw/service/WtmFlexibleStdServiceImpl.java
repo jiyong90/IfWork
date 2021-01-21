@@ -111,13 +111,33 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 		try {
 			if(convertMap.containsKey("insertRows") && ((List)convertMap.get("insertRows")).size() > 0) {
 				List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("insertRows");
-				List<Map<String, Object>> insertList = new ArrayList();	// 추가용
+				//List<Map<String, Object>> insertList = new ArrayList();	// 추가용
+				List<WtmFlexibleStdMgr> flexList = new ArrayList<>();
 				if(iList != null && iList.size() > 0) {
+					
 					for(Map<String, Object> l : iList) {
+						WtmFlexibleStdMgr stdMgr = new WtmFlexibleStdMgr();
+						stdMgr.setTenantId(tenantId);
+						stdMgr.setEnterCd(enterCd);
+						
+						String workTypeCd = l.get("workTypeCd").toString();
+						stdMgr.setWorkTypeCd(workTypeCd);
+						stdMgr.setFlexibleNm(l.get("flexibleNm").toString());
+						stdMgr.setUseSymd(l.get("useSymd").toString());
+						stdMgr.setUseEymd(l.get("useEymd").toString());
+						if("BASE".equals(workTypeCd) || "WORKTEAM".equals(workTypeCd)) {
+							stdMgr.setBaseWorkYn("Y");
+						} else {
+							stdMgr.setBaseWorkYn("N");
+						}
+						stdMgr.setNote(l.get("note").toString());
+						stdMgr.setUpdateId(userId);
+						
+						flexList.add(stdMgr);
+						/*
 						Map<String, Object> saveMap = new HashMap();
 						saveMap.put("tenantId", tenantId);
 						saveMap.put("enterCd", enterCd);
-						String workTypeCd = l.get("workTypeCd").toString();
 						saveMap.put("workTypeCd", workTypeCd);
 						saveMap.put("flexibleNm", l.get("flexibleNm").toString());
 						saveMap.put("useSymd", l.get("useSymd").toString());
@@ -130,15 +150,18 @@ public class WtmFlexibleStdServiceImpl implements WtmFlexibleStdService {
 						saveMap.put("note", l.get("note").toString());
 						saveMap.put("userId", userId);
 						insertList.add(saveMap);
+						*/
 					}
+					flexibleStdRepository.saveAll(flexList);
 				}
-				
+				/*
 				if(insertList != null && insertList.size() > 0) {
 					System.out.println("insertList : " + insertList.size());
 					cnt = flexStdMapper.insertFlexibleStd(insertList);
 				}
 				
 				MDC.put("insert cnt", "" + cnt);
+				*/
 			}
 			
 			if(convertMap.containsKey("updateRows") && ((List)convertMap.get("updateRows")).size() > 0) {

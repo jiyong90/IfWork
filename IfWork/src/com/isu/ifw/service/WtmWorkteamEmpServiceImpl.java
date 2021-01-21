@@ -51,6 +51,9 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 	@Autowired
 	WtmWorkDayResultRepository workDayResultRepo;
 
+	@Autowired WtmFlexibleEmpResetService flexibleEmpResetService;
+	@Autowired WtmCalcService calcService;
+	
 	@Override
 	public List<Map<String, Object>> getWorkteamList(Long tenantId, String enterCd, Map<String, Object> paramMap) {
 		List<Map<String, Object>> timeList = new ArrayList();	
@@ -159,6 +162,7 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 	 * @return
 	 * @throws Exception
 	 */
+	@Transactional
 	public ReturnParam setWorkteamListSave(Long tenantId, String enterCd, String userId, List<Map<String, Object>> convertMap) throws Exception{
 		ReturnParam rp = new ReturnParam();
 		Map<String, Object> paramMap = new HashMap();
@@ -307,7 +311,25 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 					workDayResultRepo.flush();
 				}						
 				
-				flexEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(paramMap);
+				//flexEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(paramMap);
+				//try {
+					
+					String s = sYmd.substring(0,4);
+					String e = eYmd.substring(0,4);
+					
+					flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, s+"0101", s+"1231", "ADMIN");
+					calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, s+"0101", s+"1231");
+					if(!s.equals(e)) {
+						flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, e+"0101", e+"1231", "ADMIN");
+						calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, e+"0101", e+"1231");
+					}
+				/*	
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				*/
+				
 			}
 				//saveList = workteamRepository.saveAll(saveList);
 				//cnt += saveList.size();
