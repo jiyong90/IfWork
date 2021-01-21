@@ -694,7 +694,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 								wtmWorkDayResultRepo.deleteAll(delFixResults);
 							}
 							
-							if(flexStdMgr.getFixotUseType().equals("DAY")) {
+							if(flexStdMgr.getFixotUseType() != null && flexStdMgr.getFixotUseType().equals("DAY")) {
 								Date calcEdate = null;
 								Integer fixOtMinute = 0;
 								if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {

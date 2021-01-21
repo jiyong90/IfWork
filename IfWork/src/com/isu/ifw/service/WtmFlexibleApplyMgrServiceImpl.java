@@ -160,7 +160,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 						code.setRepeatCnt(l.get("repeatCnt").toString().equals("") ? null : Integer.parseInt(l.get("repeatCnt").toString()));
 						code.setWorkMinute(l.get("workMinute").toString().equals("") ? null : Integer.parseInt(l.get("workMinute").toString()));
 						code.setOtMinute(l.get("otMinute").toString().equals("") ? null : Integer.parseInt(l.get("otMinute").toString()));
-						code.setApplyYn(l.get("applyYn").toString());
+						code.setApplyYn(l.get("applyYn").toString().equals("") ? "N" : l.get("applyYn").toString());
 						code.setNote(l.get("note").toString());
 						code.setUpdateId(userId);
 						
@@ -1083,6 +1083,7 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 			paramMap.put("totalYn", "N");
 			for(Map<String, Object> t : elasDetails) {
 				paramMap.put("symd", t.get("startYmd").toString());
+				logger.debug("### paramMap : " + paramMap);
 				List<Map<String, Object>> details = flexApplMapper.getElasApplDetail(paramMap);
 				t.put("details", details);
 			}

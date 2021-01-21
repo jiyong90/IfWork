@@ -106,10 +106,12 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			paramMap.put("sabun", sabun);
 			List<Map<String, Object>> otApplList = wtmOtApplMapper.otApplfindByApplId(paramMap);
 
+			/*
 			ObjectMapper mapper = new ObjectMapper();
 			
 			System.out.println("otApplList : " + mapper.writeValueAsString(otApplList));
-			
+			*/
+			logger.debug("###otApplList : " + otApplList.size());
 			Map<String, Object> otAppl = null;
 			if(otApplList!=null && otApplList.size()>0) {
 				
@@ -193,7 +195,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				otAppl.put("recoveryYn", isRecovery);
 				otAppl.put("applLine", applLine);
 			}
-			System.out.println("otAppl : " + mapper.writeValueAsString(otAppl));
+			//System.out.println("otAppl : " + mapper.writeValueAsString(otAppl));
 			return otAppl;
 			
 		}catch(Exception e) {
