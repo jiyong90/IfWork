@@ -128,7 +128,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	@Autowired private WtmWorkPattDetRepository workPattDetRepo;
 	
 	@Autowired private WtmInterfaceService interfaceService;
-	
+
+	@Autowired private WtmTimeBreakMgrRepository wtmTimeBreakMgrRepository;
+
 	@Override
 	public List<Map<String, Object>> getFlexibleEmpList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
 		// TODO Auto-generated method stub 
@@ -2216,6 +2218,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		//외출복귀데이터를 따로 담아두자. 인정근무 계산할때 외복귀시간은 제외한다. 
 		List<WtmWorkDayResult> gobackResults = new ArrayList<WtmWorkDayResult>();
 		List<WtmWorkDayResult> dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
+
+		List<WtmTimeBreakMgr>  timeBreakMgrs = wtmTimeBreakMgrRepository.findByTimeCdMgrId(calendar.getTimeCdMgrId());
+
+		SimpleDateFormat yyyyMMddhhmm = new SimpleDateFormat("yyyyMMddHHmm");
+		SimpleDateFormat yyyyMMdd = new SimpleDateFormat("yyyyMMdd");
+		SimpleDateFormat hm = new SimpleDateFormat("HHmm");
+
 		for(WtmWorkDayResult r : dayResults) {
 			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_GOBACK)) {
 				gobackResults.add(r);
@@ -2463,9 +2472,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					Date minEntrySdate = null;
 				
 					for(WtmWorkDayResult result : dayResults) {
-						if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA)
-								&& result.getTaaCd().equals(lateTaaCode.getTaaCd())
-								) {
+						if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA) && result.getTaaCd().equals(lateTaaCode.getTaaCd())) {
 							logger.debug("result.getTimeTypeCd() : " + result.getTimeTypeCd() + " / result.getTaaCd() " + result.getTaaCd() + " 인 데이터가 있는 날은 생성하지 않는다.");
 							isCreateLate = false;
 						}
@@ -2503,7 +2510,34 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					}
 					 
 					if(isCreateLate && minSdate != null && minEntrySdate != null) {
-						if(minSdate.compareTo(minEntrySdate) < 0) {
+
+						// 오전반차일때 근무 오후근무 스케쥴이 휴게시간 전으로 짤린다.
+						// 오후 출근시 휴게시간 사이에 출근을 하게 되면 지각이라는 근태코드가 생성이 됨.
+						// 휴게시간 사이에 출근을 하게 되면 지각으라는 코드는 생성하지 않게 처리한다.
+						Date minBreakSdate = minEntrySdate;
+						if(timeBreakMgrs != null && timeBreakMgrs.size() > 0 && timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+							for(WtmTimeBreakMgr timeBreakMgr : timeBreakMgrs) {
+								String ymd = yyyyMMdd.format(minEntrySdate);
+
+								String ymdShm = ymd + timeBreakMgr.getShm();
+								String ymdEhm = ymd + timeBreakMgr.getEhm();
+
+								try {
+									Date sDate = yyyyMMddhhmm.parse(ymdShm);
+									Date eDate = yyyyMMddhhmm.parse(ymdEhm);
+
+									if(minEntrySdate.compareTo(sDate) > 0 && minEntrySdate.compareTo(eDate) < 0) {
+										minBreakSdate = sDate;
+									}
+
+								}catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+						}
+
+//						if(minSdate.compareTo(minEntrySdate)) {
+						if(minSdate.compareTo(minBreakSdate) < 0) {
 							logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각!");
 							WtmWorkDayResult lateResult = new WtmWorkDayResult();
 							lateResult.setTenantId(tenantId);
@@ -2708,8 +2742,34 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				}
 				*/
 				logger.debug("10. ***********************  " + maxPlanEdate_BASE + ",  " + calendar.getEntryEdate());
-				if(minPlanSdate_BASE != null && !minPlanSdate_BASE.equals("") && maxPlanEdate_BASE != null  && !maxPlanEdate_BASE.equals("")  && maxPlanEdate_BASE.compareTo(calendar.getEntryEdate()) > 0) {
-					
+
+
+				// 오후반차일때 근무 오전근무 스케쥴이 휴게시간 후로 짤린다.
+				// 오전 퇴근시 휴게시간 사이에 출근을 하게 되면 조퇴이라는 근태코드가 생성이 됨.
+				// 휴게시간 사이에 퇴근을 하게 되면 조퇴라는 코드는 생성하지 않게 처리한다.
+				Date maxBreakEdate = calendar.getEntryEdate();
+				if(timeBreakMgrs != null && timeBreakMgrs.size() > 0 && timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+					for(WtmTimeBreakMgr timeBreakMgr : timeBreakMgrs) {
+						String ymd = yyyyMMdd.format(maxBreakEdate);
+
+						String ymdShm = ymd + timeBreakMgr.getShm();
+						String ymdEhm = ymd + timeBreakMgr.getEhm();
+
+						try {
+							Date sDate = yyyyMMddhhmm.parse(ymdShm);
+							Date eDate = yyyyMMddhhmm.parse(ymdEhm);
+
+							if(maxBreakEdate.compareTo(sDate) > 0 && maxBreakEdate.compareTo(eDate) < 0) {
+								maxBreakEdate = eDate;
+							}
+
+						}catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				}
+
+				if(minPlanSdate_BASE != null && !minPlanSdate_BASE.equals("") && maxPlanEdate_BASE != null  && !maxPlanEdate_BASE.equals("")  && maxPlanEdate_BASE.compareTo(maxBreakEdate) > 0) {
 				
 					WtmTaaCode leaveTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LEAVE);
 					// 이곳은 출/퇴근 타각데이터가 있는 사람에 한한다.. 
@@ -3033,13 +3093,15 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		return workDayResult;
 
 	}
-	
+
 	/**
 	 * 일근무 다건 저장(관리자용)
 	 * @param tenantId
 	 * @param enterCd
-	 * @param workCalendarId
+	 * @param userId
+	 * @param convertMap
 	 * @return
+	 * @throws Exception
 	 */
 	@Override
 	public int saveEmpDayResults(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) throws Exception {
@@ -3663,12 +3725,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		return flexibleEmp;
 	}
-	
+
 	/**
 	 * 유연근무 변경/취소 확인
-	 * @param tenantId
-	 * @param enterCd
-	 * @param workCalendarId
+	 * @param paramMap
 	 * @return
 	 */
 	@Override
@@ -3702,20 +3762,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		return paramMap;
 
 	}
-	
+
 	/**
 	 * 유연근무 변경/취소 적용
-	 * @param tenantId
-	 * @param enterCd
-	 * @param flexibleEmpId
-	 * @param flexibleStdMgrId
-	 * @param sYmd
-	 * @param eYmd
-	 * @param symd
-	 * @param eymd
-	 * @param sabun
-	 * @param hisId
-	 * @param userId
+	 * @param paramMap
 	 * @return
 	 */
 	@Override
