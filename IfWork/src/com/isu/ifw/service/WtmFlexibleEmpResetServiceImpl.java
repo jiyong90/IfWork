@@ -757,6 +757,22 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 					}
 					
 					
+				}else {
+					
+					if(workType.equals(this.WORK_TYPE_ELAS)) {
+						//21.01.05 JYP
+						//탄근제에서 취소의 경우 OT를 만들어주고 있기 때문에 applId가 없는 OT는 지우자 NIGHT도..
+						List<String> tTypeCds= new ArrayList<String>();
+						tTypeCds.add(WtmApplService.TIME_TYPE_OT);
+						tTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
+						tTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
+						tTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
+							
+						List<WtmWorkDayResult> dRes = wtmWorkDayResultRepo.findByTimeTypeCdInAndTenantIdAndEnterCdAndSabunAndYmdAndApprMinuteIsNullAndAndApplIdIsNull(tTypeCds, calendar.getTenantId(), calendar.getEnterCd(), sabun, currYmd);
+						if(dRes != null && dRes.size() > 0) {
+							wtmWorkDayResultRepo.deleteAll(dRes);
+						}
+					}
 				}
 				
 				
