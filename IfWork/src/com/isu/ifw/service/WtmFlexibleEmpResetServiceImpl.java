@@ -112,8 +112,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				for(WtmFlexibleEmp flexEmp : emps) {
 					//계산 구간을 정하자. 유연근무제는 근무제 전체 기간을 체크하지만 기본근무제들은 재생성하려는 구간만 돌자
 					String loopSymd = flexEmp.getSymd();
-					String loopEymd = flexEmp.getEymd();
-					logger.debug("### EMP_RESET ::" + sabun + "flexEmp : " + flexEmp);
+					String loopEymd = flexEmp.getEymd();logger.debug("### EMP_RESET ::" + sabun + "flexEmp : " + flexEmp);
 					WtmFlexibleStdMgr flexStdMgr = flexStdMgrRepo.findByFlexibleStdMgrId(flexEmp.getFlexibleStdMgrId());
 					logger.debug("### EMP_RESET ::" + sabun + "flexStdMgr : " + flexStdMgr);
 					List<WtmWorkPattDet> pattDets = workPattDetRepo.findByFlexibleStdMgrId(flexStdMgr.getFlexibleStdMgrId());
@@ -774,9 +773,10 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 						}
 					}
 				}
-				
-				
-				
+
+
+				cal.setTime(chkDate);
+
 				cal.add(Calendar.DATE, 1);
 				//기준일이기때문에 다음날에 대한 일자 정보를 담아야한다.
 				chkDate = cal.getTime();

@@ -195,7 +195,7 @@ public class WtmWorkCalendar {
 
 	@Override
 	public String toString() {
-		return "WtmWorkCalendar [workCalendarId=" + workCalendarId + ", tenantId=" + tenantId + ", enterCd=" + enterCd
+		return "WtmWorkCalendar [workCalendarId=" + workCalendarId + ", tenantId=" + tenantId + ", enterCd=" + enterCd + ", ymd=" + ymd
 				+ ", timeCdMgrId=" + timeCdMgrId + ", sabun=" + sabun + ", entrySdate=" + entrySdate + ", entryEdate=" + entryEdate
 				+ ", holidayYn=" + holidayYn + ", workCloseYn=" + workCloseYn + ", note=" + note + ", updateDate=" + updateDate + ", updateId=" + updateId
 				+ "]";
