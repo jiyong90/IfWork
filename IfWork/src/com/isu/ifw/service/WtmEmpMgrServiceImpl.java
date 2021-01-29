@@ -79,7 +79,7 @@ public class WtmEmpMgrServiceImpl implements WtmEmpMgrService{
 		
 		String sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
 		if(!paramMap.containsKey("sYmd")) {
-			paramMap.put("sYmd", null); 
+			paramMap.put("sYmd", "");
 		} else {
 			sYmd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
 			paramMap.put("sYmd", sYmd);

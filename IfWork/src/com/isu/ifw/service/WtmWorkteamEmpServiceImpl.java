@@ -1,20 +1,5 @@
 package com.isu.ifw.service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.isu.ifw.entity.WtmFlexibleEmp;
 import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.entity.WtmWorkteamEmp;
@@ -27,6 +12,14 @@ import com.isu.ifw.repository.WtmWorkteamEmpRepository;
 import com.isu.ifw.repository.WtmWorkteamMgrRepository;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.*;
 
 @Service
 public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
@@ -330,10 +323,11 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 				}
 				*/
 				
+				workteamRepository.flush();
 			}
 				//saveList = workteamRepository.saveAll(saveList);
 				//cnt += saveList.size();
-			}
+		}
 		
 		return rp;
 	}

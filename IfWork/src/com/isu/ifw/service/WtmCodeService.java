@@ -20,4 +20,6 @@ public interface WtmCodeService {
 	
 	public int setCodeGrpList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap);
 
+	public List<Map<String, Object>> getOrgCode(Long tenantId, String enterCd, Map<String, Object> paramMap);
+
 }

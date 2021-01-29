@@ -34,26 +34,21 @@ public class WtmWorkPlanTimeMonServiceImpl implements WtmWorkPlanTimeMonService{
 
 	@Override
 	public List<Map<String, Object>> getWorkPlanTimeMonList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
+
 		List<Map<String, Object>> workPlanTimeMonList = null;
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("ymd", paramMap.get("ymd").toString().replaceAll("[-.]", "" ));
+		paramMap.put("sabun", sabun);
+
 		try {
-			paramMap.put("tenantId", tenantId);
-			paramMap.put("enterCd", enterCd);
-			paramMap.put("yyyyMM", paramMap.get("yyyyMM").toString().replaceAll("[-.]", "" ));
 
-
-			String sYmd = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
-			sYmd = sYmd.replaceAll("[-.]", "");
-			paramMap.put("sYmd", sYmd);
-
-
-			List<String> auths = empService.getAuth(tenantId, enterCd, sabun);
-			if(auths!=null && !auths.contains("FLEX_SETTING") && auths.contains("FLEX_SUB")) {
-				//하위 조직 조회
-				paramMap.put("orgList", empService.getLowLevelOrgList(tenantId, enterCd, sabun, sYmd));
+			if(paramMap.containsKey("adm") && paramMap.get("adm") != null && (Boolean) paramMap.get("adm")) {
+				workPlanTimeMonList = workPlanTimeMonMapper.getWorkPlanTimeMonListAdm(paramMap);
+			} else {
+				workPlanTimeMonList = workPlanTimeMonMapper.getWorkPlanTimeMonList(paramMap);
 			}
 
-
-			workPlanTimeMonList = workPlanTimeMonMapper.getWorkPlanTimeMonList(paramMap);
 		} catch(Exception e) {
 			e.printStackTrace();
 			logger.debug(e.toString(), e);
@@ -62,7 +57,7 @@ public class WtmWorkPlanTimeMonServiceImpl implements WtmWorkPlanTimeMonService{
 			logger.debug("getWorkPlanTimeMonList End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
 
 		}
-		
+
 		return workPlanTimeMonList;
 	}
 

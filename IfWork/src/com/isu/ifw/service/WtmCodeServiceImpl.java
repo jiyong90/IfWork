@@ -2,15 +2,20 @@ package com.isu.ifw.service;
 
 import com.isu.ifw.entity.WtmCode;
 import com.isu.ifw.entity.WtmCodeGrp;
+import com.isu.ifw.entity.WtmOrgCode;
+import com.isu.ifw.mapper.WtmOrgCodeMapper;
 import com.isu.ifw.repository.WtmCodeGrpRepository;
 import com.isu.ifw.repository.WtmCodeRepository;
+import com.isu.ifw.repository.WtmOrgCodeRepository;
 import com.isu.ifw.util.WtmUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service("codeService")
@@ -22,7 +27,13 @@ public class WtmCodeServiceImpl implements WtmCodeService{
 	WtmCodeRepository codeRepository;
 	
 	@Resource
-	WtmCodeGrpRepository codeGrpRepository; 
+	WtmCodeGrpRepository codeGrpRepository;
+
+	@Resource
+	WtmOrgCodeRepository orgCodeRepository;
+
+	@Autowired
+	WtmOrgCodeMapper wtmOrgCodeMapper;
 
 	@Override
 	public List<Map<String, Object>> getCodeList(Long tenantId, String enterCd, String grpCodeCd) {
@@ -204,6 +215,22 @@ public class WtmCodeServiceImpl implements WtmCodeService{
 			MDC.clear();
 		}
 		return cnt;
+	}
+
+	@Override
+	public List<Map<String, Object>> getOrgCode(Long tenantId, String enterCd, Map<String, Object> paramMap) {
+		List<Map<String, Object>> searchList = new ArrayList();
+
+
+		String ymd = paramMap.get("ymd").toString().replaceAll("[-]", "");
+
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("ymd", ymd);
+		searchList = wtmOrgCodeMapper.getOrgCodeComboList(paramMap);
+
+		return searchList;
+
 	}
 
 }

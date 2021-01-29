@@ -2682,7 +2682,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										}
 									}else {
 										//기본근무시간
-										if(!"BASE".equals(flexibleStdMgr.getWorkTypeCd()) && !"D".equals(taaCode.getRequestTypeCd())) {
+										//브로제는 계획이 없다. 그래서 제외
+										if(!"BASE".equals(flexibleStdMgr.getWorkTypeCd()) && !"D".equals(taaCode.getRequestTypeCd()) && 38 != tenantId) {
 											Map<String, Object> workPlanMinMax = workDayResultRepo.findByMinMaxPlanDate(tenantId, enterCd, sabun, d);
 											try {
 												sdate = (Date) workPlanMinMax.get("planSdate");

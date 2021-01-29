@@ -7,5 +7,6 @@ public interface WtmWorkPlanTimeMonMapper {
 	
 
 	public List<Map<String, Object>> getWorkPlanTimeMonList(Map<String, Object> paramMap);
+	public List<Map<String, Object>> getWorkPlanTimeMonListAdm(Map<String, Object> paramMap);
 
 }

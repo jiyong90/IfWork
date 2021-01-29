@@ -338,6 +338,13 @@ public class WtmMobileApplServiceImpl implements WtmMobileApplService{
 				
 				Date chkD = WtmUtil.addDate(sdate, 1);
 
+				// 시작종료 시간 확인
+				int compareOtTerm = sdate.compareTo(edate);
+				if(compareOtTerm > 0) {
+					rp.setFail("연장근무 시작시간이 종료시간보다 클 수 없습니다.");
+					return rp;
+				}
+
 				//연장근무 신청 기간이 1일 이상이어서도 안된다! 미쳐가지고..
 				int compare = chkD.compareTo(edate);
 				//시작일보다 하루 더한 날과 비교하여 크면 안됨

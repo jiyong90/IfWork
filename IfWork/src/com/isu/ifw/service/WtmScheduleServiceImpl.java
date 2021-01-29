@@ -248,7 +248,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 		cal.setTime(today);
 		cal.add(Calendar.DATE, -1);
 		String beforeYmd = (sdf.format(cal.getTime())).substring(0, 8);
-		// logger.debug("********** beforeYmd : " + beforeYmd);
+		// logger.debug("********** beforeYmd : " + beforeYmd);`
     	// 마감구분 A:자정(당일퇴근자 마감), B:익일4시(익일심야근무 퇴근자 마감)
     	String closeType = "A";
     	if(tenantId == 52 && "04".equals(ymdh.substring(8, 10))) {
@@ -625,10 +625,10 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 						pushSendHis.setReceiveMail(data.getKey());
 						pushSendHis.setSendMsg(contents);
 						pushSendHis.setUpdateId("SYSTEM");
-						pushHisRepository.save(pushSendHis);
+//						pushHisRepository.save(pushSendHis);
 						if(push.getMobileYn().equals("Y")) {
 							logger.debug("[근로시간 초과자 리스트] " + pushSendHis.toString());
-							inboxService.sendPushMessage(push.getTenantId(), push.getEnterCd(), "INFO", data.getKey(), title, contents);
+//							inboxService.sendPushMessage(push.getTenantId(), push.getEnterCd(), "INFO", data.getKey(), title, contents);
 						}
 					}
 				} 
