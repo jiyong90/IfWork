@@ -1252,7 +1252,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		
 		if(works != null) {
 			//Result -> Result_O		
-			calcApprDayInfo0(tenantId, enterCd, sabun, "BASE", sYmd, eYmd);
+			//calcApprDayInfo0(tenantId, enterCd, sabun, "BASE", sYmd, eYmd);
 
 			List<String> timeTypeCds = new ArrayList<String>();
 			timeTypeCds.add(WtmApplService.TIME_TYPE_BASE);
@@ -1261,7 +1261,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 //			timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 //			timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
 			//인정시간 초기화
-			calcApprDayInfoApprReset(tenantId, enterCd, sabun, timeTypeCds, sYmd, eYmd);
+			calcApprDayInfoApprReset(tenantId, enterCd, sabun, "BASE", sYmd, eYmd);
 			
 			for(WtmWorkCalendar calendar : works) {
 				WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, calendar.getYmd());
@@ -1370,11 +1370,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 	
 	@Transactional
-	public void calcApprDayInfoApprReset(Long tenantId, String enterCd, String sabun, List<String> timeTypeCds, String sYmd, String eYmd) {
+	public void calcApprDayInfoApprReset(Long tenantId, String enterCd, String sabun, String timeTypeCd, String sYmd, String eYmd) {
 		logger.debug("calcApprDayInfoApprReset");
 		
-//		List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, sabun, timeTypeCd, sYmd, eYmd);
-		List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetween(tenantId, enterCd, sabun, timeTypeCds, sYmd, eYmd);
+		List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, sabun, timeTypeCd, sYmd, eYmd);
 
 		logger.debug("calcApprDayInfoApprReset results : " + results.size());
 		for(WtmWorkDayResult r : results) {
@@ -1415,7 +1414,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			if(!"".equals(flexStdMgr.getCreateOtIfOutOfPlanYn()) && "Y".equals(flexStdMgr.getCreateOtIfOutOfPlanYn())) {
 				logger.debug("flexStdMgr.getCreateOtIfOutOfPlanYn() : " + flexStdMgr.getCreateOtIfOutOfPlanYn());
 				//사이 데이터는 무시한다. 앞위 데이터를 만들어 주고 이후 로직을 태워보자 .
-
+				
 				
 				//Result전체 체크
 				List<WtmWorkDayResult> ress = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdOrderByPlanSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd());
@@ -1901,27 +1900,24 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		timeTypeCds.add(WtmApplService.TIME_TYPE_REGA_NIGHT);
 		List<WtmWorkDayResult> r = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), timeTypeCds, calendar.getYmd(), calendar.getYmd());
 		for(WtmWorkDayResult res : r) {
-			if(res.getPlanSdate() != null && res.getPlanEdate() != null) {
-
-				this.addWtmDayResultInBaseTimeType(res.getTenantId()
-													 , res.getEnterCd()
-													 , res.getYmd()
-													 , res.getSabun()
-													 , res.getTimeTypeCd()
-													 ,""
-													 , res.getPlanSdate()
-													 , res.getPlanEdate()
-													 , null
-													 , "rega reset timeblock"
-													 , false);
-				res.setApprSdate(res.getPlanSdate());
-				res.setApprEdate(res.getPlanEdate());
-				res.setApprMinute(res.getPlanMinute());
-				res.setUpdateDate(new Date());
-				res.setUpdateId("rega appr");
-				workDayResultRepo.save(res);
-			}
-
+			this.addWtmDayResultInBaseTimeType(res.getTenantId()
+												 , res.getEnterCd()
+												 , res.getYmd()
+												 , res.getSabun()
+												 , res.getTimeTypeCd()
+												 ,""
+												 , res.getPlanSdate()
+												 , res.getPlanEdate()
+												 , null
+												 , "rega reset timeblock"
+												 , false);
+			res.setApprSdate(res.getPlanSdate());
+			res.setApprEdate(res.getPlanEdate());
+			res.setApprMinute(res.getPlanMinute());
+			res.setUpdateDate(new Date());
+			res.setUpdateId("rega appr");
+			workDayResultRepo.save(res);
+			
 		}
 		List<WtmWorkDayResult> taa = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), WtmApplService.TIME_TYPE_TAA, calendar.getYmd(), calendar.getYmd());
 		for(WtmWorkDayResult res : taa) {
