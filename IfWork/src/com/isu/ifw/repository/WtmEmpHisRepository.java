@@ -48,4 +48,7 @@ public interface WtmEmpHisRepository extends JpaRepository<WtmEmpHis, Long> {
 	public List<WtmEmpHis> findByTenantIdAndEnterCdAndEmpIdOrderBySymdDesc(Long tenantId, String enterCd, String empId);
 	
 	public List<WtmEmpHis> findByTenantIdAndEnterCdAndNoteOrderBySymdDesc(Long tenantId, String enterCd, String note);
+	
+	@Query(value="SELECT H FROM WtmEmpHis H WHERE H.tenantId = :tenantId AND H.enterCd = :enterCd AND :ymd BETWEEN H.symd AND H.eymd  And H.statusCd IN (:statusCds) AND H.empYmd is not null ")
+	public List<WtmEmpHis> findByTenantIdAndEnterCdAndYmdAndStatusCdInAndEmpYmdIsNotNull(@Param(value="tenantId")Long tenantId, @Param(value="enterCd")String enterCd, @Param(value="ymd")String ymd, @Param(value="statusCds") List<String> statusCds);
 }

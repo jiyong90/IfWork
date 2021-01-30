@@ -105,6 +105,14 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 			this.initWtmFlexibleEmp(tenantId, enterCd, sabun, sYmd, eYmd, userId);
 			logger.debug("### EMP_RESET ::" + sabun + "1. 초기화 END");
 			wtmFlexibleEmpRepo.flush();
+			
+			//20210130 JYP 과거의 캘린더는 재생성하지 않는다. 변경된 근무정보가 있을 경우 초기화 되기 때문에 문제가 발생
+			//오늘 포함한 미래일만 작업을 하자.
+			SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+			String today = ymd.format(new Date());
+			if(Integer.parseInt(today) > Integer.parseInt(sYmd)) {
+				sYmd = today;
+			}
 
 			List<WtmFlexibleEmp> emps = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndEymdGreaterThanEqualAndSymdLessThanEqual(tenantId, enterCd, sabun, sYmd, eYmd);
 			if(emps != null) {

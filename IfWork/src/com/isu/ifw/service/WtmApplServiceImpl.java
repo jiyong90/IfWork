@@ -108,7 +108,8 @@ public class WtmApplServiceImpl implements WtmApplService {
 		paramMap.put("empNo", empNo);
 		
 		String applType = paramMap.get("applType").toString();
-		
+
+		paramMap.put("typeCd", applType);
 		//System.out.println("applType::::: " + applType);
 		
 		List<Map<String, Object>> apprList = null;

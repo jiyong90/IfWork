@@ -704,7 +704,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		List<Map<String, Object>> emps = wtmOtApplMapper.getRestOtMinute(empParamMap);
 		int restMin = 0;
 		try {
-			System.out.println(mapper.writeValueAsString(emps));
+			logger.debug("### otMinute : " + mapper.writeValueAsString(emps));
 		} catch (JsonProcessingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -726,7 +726,12 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 							한주에 대한 정보 조회 계획 및 인정 근무 시간의 합 - 결근 제외 
 						 */
 						Map<String, Object> weekInfo = wtmFlexibleEmpMapper.weekWorkTimeByEmp(paramMap);
-						
+						try {
+							logger.debug("### otMinute weekInfo : " + mapper.writeValueAsString(weekInfo));
+						} catch (JsonProcessingException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 						if(weekInfo != null && weekInfo.get("workMinute") != null && !weekInfo.get("workMinute").equals("")) {
 							//한주기본근로시간 40시간   * 60  = 2400
 							int weekWorkMinute = Integer.parseInt(weekInfo.get("weekWorkMinute")+"");
@@ -734,8 +739,9 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 							if(weekInfo.get("exMinute") != null && !weekInfo.get("exMinute").equals("")) {
 								exMinute = Integer.parseInt(weekInfo.get("exMinute")+"");
 							}
-							
-							restMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute ;
+							int restOtMinute = Integer.parseInt(emp.get("restOtMinute").toString());
+							int otMinute = Integer.parseInt(weekInfo.get("otMinute").toString());
+							restMin = (weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute) + (restOtMinute - otMinute) ;
 							//restMinuteMap.put("restWorkMinute", restMin);
 						}
 					}

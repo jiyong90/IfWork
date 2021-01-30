@@ -1301,7 +1301,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		List<String> timeTypeCd = new ArrayList<>();
 		timeTypeCd.add(WtmApplService.TIME_TYPE_LLA);
 		timeTypeCd.add(WtmApplService.TIME_TYPE_EXCEPT);
-		if(flexStdMgr.getFixotUseType().equals("ALL")) {
+		if(flexStdMgr.getFixotUseType() != null && flexStdMgr.getFixotUseType().equals("ALL")) {
 			timeTypeCd.add(WtmApplService.TIME_TYPE_FIXOT); //20200805 jyp 추가
 		}
 		
@@ -1760,13 +1760,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
 									
 									//1개면 좋다. 
-									if(flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
+									if(flexStdMgr.getApplyEntrySdateYn() != null && flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
 										sDate = calendar.getEntrySdate();
 									}else {
 										sDate = result.getPlanSdate();
 									}
 									
-									if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
+									if(flexStdMgr.getApplyEntryEdateYn() != null && flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
 										eDate = calendar.getEntryEdate();
 									}else {
 										eDate = result.getPlanEdate();
@@ -1774,10 +1774,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 									isUpdate = true;
 								}else {
 									//없을 경우 타각시간 구간을 새로 생성한다. 
-									if(flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
+									if(flexStdMgr.getApplyEntrySdateYn() != null && flexStdMgr.getApplyEntrySdateYn().equalsIgnoreCase("Y")) {
 										sDate = calendar.getEntrySdate();
 									}
-									if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
+									if(flexStdMgr.getApplyEntryEdateYn() != null && flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y")) {
 										eDate = calendar.getEntryEdate();
 									}
 									if(sDate != null && eDate != null && sDate.compareTo(eDate) < 0) {
@@ -2394,7 +2394,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		 * 선근제가 아니며 BASE정보가 없을 경우에는 결근으로 보지 않는다.
 		 */
 		//if(!flexStdMgr.getWorkTypeCd().startsWith("SELE_")) {
-		if(!flexStdMgr.getUnplannedYn().equals("Y")) {
+		if(flexStdMgr.getUnplannedYn() == null || !flexStdMgr.getUnplannedYn().equals("Y")) {
 			if(minPlanSdate_BASE == null) {
 				isCreateAbsence = false; 
 			}
@@ -5808,7 +5808,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					workDayResultRepo.deleteAll(delFixResults);
 				}
 				
-				if(flexibleStdMgr.getFixotUseType().equals("DAY")) {
+				if(flexibleStdMgr.getFixotUseType() != null && flexibleStdMgr.getFixotUseType().equals("DAY")) {
 					Date calcEdate = null;
 					Integer fixOtMinute = 0;
 					if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {

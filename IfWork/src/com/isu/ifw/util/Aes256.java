@@ -22,8 +22,8 @@ public class Aes256 {
 		public static void main (String[] args){
 			Aes256 a256;
 			try {
-				a256 = new Aes256("thisisaencryptionkey");
-				String str = a256.encrypt("특정문자열");
+				a256 = new Aes256("ifb1THumbC0rpK0r2a1SUsyst2mka0n1");
+				String str = a256.encrypt("b1thumBC0rpsr");
 				System.out.println(str);
 				String dstr = a256.decrypt(str);
 				System.out.println(dstr);
@@ -60,7 +60,7 @@ public class Aes256 {
 
 	        this.keySpec = keySpec;
 	    }
-	    
+	    // iSusYSTems01Ut10ndeVe10pM2ntt2am
 	    public Aes256(String key, int keyByte) throws UnsupportedEncodingException {
 	        this.iv = key.substring(0, 16);
 	        byte[] keyBytes = new byte[keyByte];
