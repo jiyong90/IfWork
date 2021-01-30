@@ -17,8 +17,6 @@ import javax.crypto.spec.SecretKeySpec;
  *
  */
 public class Aes256 {
-
-	
 		public static void main (String[] args){
 			Aes256 a256;
 			try {
