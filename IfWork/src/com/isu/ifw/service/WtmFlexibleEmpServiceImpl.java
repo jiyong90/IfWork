@@ -1261,7 +1261,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 //			timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
 //			timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
 			//인정시간 초기화
-			calcApprDayInfoApprReset(tenantId, enterCd, sabun, "BASE", sYmd, eYmd);
+			calcApprDayInfoApprReset(tenantId, enterCd, sabun, timeTypeCds, sYmd, eYmd);
 			
 			for(WtmWorkCalendar calendar : works) {
 				WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, calendar.getYmd());
@@ -1370,10 +1370,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	}
 	
 	@Transactional
-	public void calcApprDayInfoApprReset(Long tenantId, String enterCd, String sabun, String timeTypeCd, String sYmd, String eYmd) {
+	public void calcApprDayInfoApprReset(Long tenantId, String enterCd, String sabun, List<String> timeTypeCds, String sYmd, String eYmd) {
 		logger.debug("calcApprDayInfoApprReset");
 		
-		List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, sabun, timeTypeCd, sYmd, eYmd);
+//		List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(tenantId, enterCd, sabun, timeTypeCd, sYmd, eYmd);
+		List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetween(tenantId, enterCd, sabun, timeTypeCds, sYmd, eYmd);
 
 		logger.debug("calcApprDayInfoApprReset results : " + results.size());
 		for(WtmWorkDayResult r : results) {
