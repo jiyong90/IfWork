@@ -1,19 +1,9 @@
 package com.isu.ifw.entity;
 
-import java.util.Date;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-
 import org.springframework.format.annotation.DateTimeFormat;
+
+import javax.persistence.*;
+import java.util.Date;
 
 @Entity
 @Table(name="WTM_WORKTEAM_EMP")
@@ -39,6 +29,8 @@ public class WtmWorkteamEmp {
 	private Date updateDate;
 	@Column(name="UPDATE_ID")
 	private String updateId;
+	@Column(name="STATUS")
+	private String status;
 	
     public Long getWorkteamEmpId() {
 		return workteamEmpId;
@@ -126,4 +118,11 @@ public class WtmWorkteamEmp {
     	this.updateDate = new Date();
     }
 
+	public String getStatus() {
+		return this.status;
+	}
+
+	public void setStatus(final String status) {
+		this.status = status;
+	}
 }

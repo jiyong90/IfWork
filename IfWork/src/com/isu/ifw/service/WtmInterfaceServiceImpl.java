@@ -2140,7 +2140,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			statusList.add("OK");
 //			statusList.add("FAIL");
 //			statusList.add("ERR");
-			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(statusList); 
+			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByTenantIdAndIfStatusNotInOrIfStatusNull(tenantId,statusList);
 			if(list == null || list.size() == 0) {
 				logger.debug("setTaaApplBatchIfPostProcess 대상없음 종료");
 				return ;
@@ -2352,7 +2352,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		//21 > 44 는 괜찮다. 
 		String preApplStatus = null;
 		WtmAppl appl = null;
-		List<WtmTaaAppl> taaAppls = wtmTaaApplRepo.findByTenantIdAndEnterCdAndIfApplNo(tenantId, enterCd, ifApplNo);
+//		List<WtmTaaAppl> taaAppls = wtmTaaApplRepo.findByTenantIdAndEnterCdAndIfApplNo(tenantId, enterCd, ifApplNo);
+		List<WtmTaaAppl> taaAppls = wtmTaaApplRepo.findByMaxTenantIdAndEnterCdAndIfApplNo(tenantId, enterCd, ifApplNo);
 		SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
 		//기신청 데이터 
 		if(taaAppls == null || taaAppls.size() == 0) {

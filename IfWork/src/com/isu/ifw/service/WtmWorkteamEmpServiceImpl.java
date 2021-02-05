@@ -15,10 +15,11 @@ import com.isu.ifw.vo.ReturnParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.transaction.Transactional;
 import java.util.*;
 
 @Service
@@ -92,12 +93,13 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 		} 		
 		return timeList;
 	}
-	
-	@Transactional
+
 	@Override
 	public ReturnParam setWorkteamList(Long tenantId, String enterCd, String userId, Map<String, Object> convertMap) {
 		ReturnParam rp = new ReturnParam();
 		Map<String, Object> paramMap = new HashMap();
+		List<Map<String, Object>> returnParamMap = new ArrayList<>();
+
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
  
@@ -128,12 +130,14 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 			if(convertMap.containsKey("updateRows") && ((List)convertMap.get("updateRows")).size() > 0) {				
 				List<Map<String, Object>> updateMap = (List<Map<String, Object>>) convertMap.get("updateRows");
 				rp = setWorkteamListSave(tenantId, enterCd, userId, updateMap);
+				returnParamMap.addAll(updateMap);
 			}
 			
 			//신규
 			if(convertMap.containsKey("insertRows") && ((List)convertMap.get("insertRows")).size() > 0) {				
 				List<Map<String, Object>> updateMap = (List<Map<String, Object>>) convertMap.get("insertRows");
 				rp = setWorkteamListSave(tenantId, enterCd, userId, updateMap);
+				returnParamMap.addAll(updateMap);
 			}
 			
 			
@@ -141,7 +145,8 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 			e.printStackTrace();
 			logger.warn(e.toString(), e);
 			rp.setFail(e.toString());
-		} 
+		}
+		rp.put("returnParamMap", returnParamMap);
 		return rp;
 	}
 
@@ -155,6 +160,7 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 	 * @return
 	 * @throws Exception
 	 */
+
 	@Transactional
 	public ReturnParam setWorkteamListSave(Long tenantId, String enterCd, String userId, List<Map<String, Object>> convertMap) throws Exception{
 		ReturnParam rp = new ReturnParam();
@@ -162,7 +168,7 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 		paramMap.put("tenantId", tenantId);
 		paramMap.put("enterCd", enterCd);
  
-		rp.setSuccess("저장에 성공하였습니다.");
+		rp.setSuccess("근무조 생성을 요청하였습니다.");
 		
 			
 		//List<WtmWorkteamEmp> saveList = new ArrayList();
@@ -174,6 +180,14 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 				Long workTeamMgrId =Long.parseLong(l.get("workteamMgrId").toString());
 				
 				logger.debug("setWorkteamList for " + sabun + ", "+sYmd + ", " +eYmd);
+
+				WtmWorkteamEmp workteamEmp =  workteamRepository.findByTenantIdAndEnterCdAndSabunAndSymdAndEymd(tenantId, enterCd, sabun, sYmd, eYmd);
+				if(workteamEmp != null) {
+					if("WTM_WORKTEAM_SAVE_I".equals(workteamEmp.getStatus())) {
+						throw new Exception("사번 : " + sabun + "는 근무조 생성 진행 중 입니다.");
+					}
+				}
+
 				
 				WtmWorkteamMgr mgr = workteamMgrRepository.findByWorkteamMgrId(workTeamMgrId);
 				//근무조 기간이 신청한 기간 안에 포함 안되면 
@@ -197,14 +211,13 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 				workteam.setEymd(eYmd);
 				workteam.setNote(l.get("note").toString());
 				workteam.setSymd(sYmd);
-				
-				//List<Map<String, Object>> dup = workteamRepository.dupCheckByYmd(tenantId, enterCd, l.get("sabun").toString(), l.get("workteamEmpId").toString(), l.get("symd").toString(), l.get("eymd").toString());
-				
+				workteam.setStatus(WTM_WORKTEAM_SAVE_I);
+
 				paramMap.put("sabun", sabun);
 				paramMap.put("workteamEmpId", l.get("workteamEmpId").toString());
 				paramMap.put("sYmd", sYmd);
 				paramMap.put("eYmd", eYmd);
-				
+
 				List<Map<String, Object>> dup = workteamEmpMapper.dupCheckByYmd(paramMap);
 				if(dup != null && dup.size() > 0) {
 					throw new Exception("근무조가 중복된 기간이 존재합니다. (sabun : " + sabun + ")");
@@ -216,119 +229,150 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 
 				//saveList.add(workteam);
 				workteam = workteamRepository.save(workteam);
-				
-				paramMap.put("symd", sYmd);
-				paramMap.put("eymd", eYmd);
-				paramMap.put("sabun", sabun);
-				paramMap.put("userId", userId);
-				logger.debug("setWorkteamList workteamRepository.save " + paramMap.toString());
-				
-				//
-				WtmFlexibleEmp flexibleEmp = new WtmFlexibleEmp();
-				flexibleEmp.setEnterCd(enterCd);
-				flexibleEmp.setEymd(eYmd);
-				flexibleEmp.setFlexibleStdMgrId(mgr.getFlexibleStdMgrId());
-				flexibleEmp.setSabun(sabun);
-				flexibleEmp.setSymd(sYmd);
-				flexibleEmp.setTenantId(tenantId);
-				flexibleEmp.setUpdateId(sabun);
-				flexibleEmp.setWorkTypeCd("WORKTEAM");
-				flexibleEmp.setNote(l.get("note").toString());
-				flexEmpRepo.save(flexibleEmp);
-				flexEmpRepo.flush();
-				
-				List<String> workTypeCds = new ArrayList<String>();
-				workTypeCds.add("BASE");
-				workTypeCds.add("WORKTEAM");
-				List<WtmFlexibleEmp> empList = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCds(tenantId, enterCd, workteam.getSabun(), l.get("symd").toString(), l.get("eymd").toString(), workTypeCds);
-				if(empList != null) {
-					for(WtmFlexibleEmp e : empList) {
-						//신규로 넣은 값을 제외한 다른 값들은 비교하여 처리한다.
-						if(flexibleEmp.getFlexibleEmpId() != e.getFlexibleEmpId() ) {
-							//신청기간내에 시작 종료가 포함되어있을 경우
-							if(Integer.parseInt(sYmd) <= Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) >= Integer.parseInt(e.getEymd())) {
-								flexEmpRepo.delete(e);
-								flexEmpRepo.flush();
-								//신청 시작일과 종료일이 기존 근무정보 내에 있을 경우 
-							} else if(Integer.parseInt(sYmd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(e.getEymd())) {
-								String meymd = e.getEymd();
-								
-								e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
-								// System.out.println("save 1 : " + e.toString());
-								flexEmpRepo.save(e);
-								flexEmpRepo.flush();
-								
-								WtmFlexibleEmp newEmp = new WtmFlexibleEmp();
-								newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
-								newEmp.setTenantId(e.getTenantId());
-								newEmp.setEnterCd(e.getEnterCd());
-								newEmp.setSabun(e.getSabun());
-								newEmp.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(eYmd, ""), 1),null));
-								newEmp.setEymd(meymd);
-								newEmp.setUpdateId(sabun);
-								newEmp.setWorkTypeCd(e.getWorkTypeCd());
-								newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
-								// System.out.println("save 2 : " + newEmp.toString());
-								flexEmpRepo.save(newEmp);
-								flexEmpRepo.flush();
-								
-								//시작일만 포함되어있을 경우 
-							}else if(Integer.parseInt(sYmd) >= Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(e.getEymd())) {
-								//시작일을 신청종료일 다음날로 업데이트 해주자
-								e.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(eYmd, ""), 1),null));
-								// System.out.println("save 3 : " + e.toString());
-								flexEmpRepo.save(e);
-								flexEmpRepo.flush();
-								
-								//종료일만 포함되어있을 경우
-							}else if(Integer.parseInt(sYmd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) <= Integer.parseInt(e.getEymd())) {
-								//종료일을 신청시작일 전날로 업데이트 해주자
-								e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
-								// System.out.println("save 4 : " + e.toString());
-								flexEmpRepo.save(e);
-								flexEmpRepo.flush();
+
+
+				workteamRepository.flush();
+
+
+			}
+//			setApply(tenantId, enterCd, userId, convertMap);
+				//saveList = workteamRepository.saveAll(saveList);
+				//cnt += saveList.size();
+		}
+		
+		return rp;
+	}
+
+
+	@Async
+	@Override
+	public void setApply(Long tenantId, String enterCd, String userId, List<Map<String, Object>> convertMap) throws Exception{
+		Map<String, Object> paramMap = new HashMap();
+
+		if(convertMap != null && convertMap.size() > 0) {
+			for(Map<String, Object> l : convertMap) {
+				try {
+
+					String sabun = l.get("sabun").toString();
+					String sYmd = l.get("symd").toString();
+					String eYmd = l.get("eymd").toString();
+
+
+					paramMap.put("symd", sYmd);
+					paramMap.put("eymd", eYmd);
+					paramMap.put("sabun", sabun);
+					paramMap.put("userId", userId);
+					logger.debug("setWorkteamList workteamRepository.save " + paramMap.toString());
+
+					Long workTeamMgrId =Long.parseLong(l.get("workteamMgrId").toString());
+					WtmWorkteamMgr mgr = workteamMgrRepository.findByWorkteamMgrId(workTeamMgrId);
+
+					//
+					WtmFlexibleEmp flexibleEmp = new WtmFlexibleEmp();
+					flexibleEmp.setEnterCd(enterCd);
+					flexibleEmp.setEymd(eYmd);
+					flexibleEmp.setFlexibleStdMgrId(mgr.getFlexibleStdMgrId());
+					flexibleEmp.setSabun(sabun);
+					flexibleEmp.setSymd(sYmd);
+					flexibleEmp.setTenantId(tenantId);
+					flexibleEmp.setUpdateId(sabun);
+					flexibleEmp.setWorkTypeCd("WORKTEAM");
+					flexibleEmp.setNote(l.get("note").toString());
+					flexEmpRepo.save(flexibleEmp);
+					flexEmpRepo.flush();
+
+					List<String> workTypeCds = new ArrayList<String>();
+					workTypeCds.add("BASE");
+					workTypeCds.add("WORKTEAM");
+					List<WtmFlexibleEmp> empList = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCds(tenantId, enterCd, sabun, l.get("symd").toString(), l.get("eymd").toString(), workTypeCds);
+					if(empList != null) {
+						for(WtmFlexibleEmp e : empList) {
+							//신규로 넣은 값을 제외한 다른 값들은 비교하여 처리한다.
+							if(!flexibleEmp.getFlexibleEmpId().equals(e.getFlexibleEmpId())) {
+								//신청기간내에 시작 종료가 포함되어있을 경우
+								if(Integer.parseInt(sYmd) <= Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) >= Integer.parseInt(e.getEymd())) {
+									flexEmpRepo.delete(e);
+									flexEmpRepo.flush();
+									//신청 시작일과 종료일이 기존 근무정보 내에 있을 경우
+								} else if(Integer.parseInt(sYmd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(e.getEymd())) {
+									String meymd = e.getEymd();
+
+									e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
+									// System.out.println("save 1 : " + e.toString());
+									flexEmpRepo.save(e);
+									flexEmpRepo.flush();
+
+									WtmFlexibleEmp newEmp = new WtmFlexibleEmp();
+									newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
+									newEmp.setTenantId(e.getTenantId());
+									newEmp.setEnterCd(e.getEnterCd());
+									newEmp.setSabun(e.getSabun());
+									newEmp.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(eYmd, ""), 1),null));
+									newEmp.setEymd(meymd);
+									newEmp.setUpdateId(sabun);
+									newEmp.setWorkTypeCd(e.getWorkTypeCd());
+									newEmp.setFlexibleStdMgrId(e.getFlexibleStdMgrId());
+									// System.out.println("save 2 : " + newEmp.toString());
+									flexEmpRepo.save(newEmp);
+									flexEmpRepo.flush();
+
+									//시작일만 포함되어있을 경우
+								}else if(Integer.parseInt(sYmd) >= Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) < Integer.parseInt(e.getEymd())) {
+									//시작일을 신청종료일 다음날로 업데이트 해주자
+									e.setSymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(eYmd, ""), 1),null));
+									// System.out.println("save 3 : " + e.toString());
+									flexEmpRepo.save(e);
+									flexEmpRepo.flush();
+
+									//종료일만 포함되어있을 경우
+								}else if(Integer.parseInt(sYmd) > Integer.parseInt(e.getSymd()) && Integer.parseInt(eYmd) <= Integer.parseInt(e.getEymd())) {
+									//종료일을 신청시작일 전날로 업데이트 해주자
+									e.setEymd(WtmUtil.parseDateStr(WtmUtil.addDate(WtmUtil.toDate(sYmd, ""), -1),null));
+									// System.out.println("save 4 : " + e.toString());
+									flexEmpRepo.save(e);
+									flexEmpRepo.flush();
+								}
 							}
 						}
 					}
-				}
-				
-				List<String> timeTypCds = new ArrayList<String>();
-				timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
-				timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
-				timeTypCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
-				timeTypCds.add(WtmApplService.TIME_TYPE_OT);
-				
-				List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypCds, sYmd, eYmd);
-				if(results!=null && results.size()>0) {
-					workDayResultRepo.deleteAll(results);
-					workDayResultRepo.flush();
-				}						
-				
-				//flexEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(paramMap);
-				//try {
-					
+
+					List<String> timeTypCds = new ArrayList<String>();
+					timeTypCds.add(WtmApplService.TIME_TYPE_BASE);
+					timeTypCds.add(WtmApplService.TIME_TYPE_FIXOT);
+					timeTypCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
+					timeTypCds.add(WtmApplService.TIME_TYPE_OT);
+
+					List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypCds, sYmd, eYmd);
+					if(results!=null && results.size()>0) {
+						workDayResultRepo.deleteAll(results);
+						workDayResultRepo.flush();
+					}
+
+					//flexEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(paramMap);
+					//try {
+
 					String s = sYmd.substring(0,4);
 					String e = eYmd.substring(0,4);
-					
+
 					flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, s+"0101", s+"1231", "ADMIN");
 					calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, s+"0101", s+"1231");
 					if(!s.equals(e)) {
 						flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, e+"0101", e+"1231", "ADMIN");
 						calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, e+"0101", e+"1231");
 					}
-				/*	
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
+
+					WtmWorkteamEmp workteamEmp =  workteamRepository.findByTenantIdAndEnterCdAndSabunAndSymdAndEymd(tenantId, enterCd, sabun, sYmd, eYmd);
+
+					if(workteamEmp != null) {
+						workteamEmp.setStatus(WTM_WORKTEAM_SAVE_Y);
+
+						workteamRepository.save(workteamEmp);
+					}
+
+				}catch (Exception e) {
 					e.printStackTrace();
 				}
-				*/
-				
-				workteamRepository.flush();
 			}
-				//saveList = workteamRepository.saveAll(saveList);
-				//cnt += saveList.size();
 		}
-		
-		return rp;
 	}
 }

@@ -1,14 +1,12 @@
 package com.isu.ifw.repository;
 
-import java.util.List;
-import java.util.Map;
-
+import com.isu.ifw.entity.WtmWorkteamEmp;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.isu.ifw.entity.WtmWorkteamEmp;
+import java.util.List;
 
 @Repository
 public interface WtmWorkteamEmpRepository extends JpaRepository<WtmWorkteamEmp, Long> {
@@ -34,4 +32,9 @@ public interface WtmWorkteamEmpRepository extends JpaRepository<WtmWorkteamEmp, 
 */
 	@Query("SELECT e FROM WtmWorkteamEmp e JOIN WtmWorkteamMgr m ON e.workteamMgrId = m.workteamMgrId WHERE m.tenantId = :tenantId AND m.enterCd = :enterCd AND e.sabun = :sabun AND e.symd <= :eYmd AND e.eymd >= :sYmd ORDER BY e.symd")
 	public List<WtmWorkteamEmp> findByTenantIdAndEnterCdAndSabunAndEymdGreaterThanEqualAndSymdLessThanEqualOrderBySymdAsc(@Param("tenantId") Long tenantId, @Param("enterCd") String enterCd, @Param("sabun") String sabun, @Param("sYmd") String sYmd, @Param("eYmd") String eYmd);
+
+	@Query("SELECT e FROM WtmWorkteamEmp e JOIN WtmWorkteamMgr m ON e.workteamMgrId = m.workteamMgrId WHERE m.tenantId = :tenantId AND m.enterCd = :enterCd AND e.sabun = :sabun AND e.symd = :sYmd AND e.eymd = :eYmd ")
+	public WtmWorkteamEmp findByTenantIdAndEnterCdAndSabunAndSymdAndEymd(Long tenantId, String enterCd, String sabun, String sYmd, String eYmd);
+
+
 }

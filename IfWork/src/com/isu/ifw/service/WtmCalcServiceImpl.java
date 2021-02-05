@@ -1703,12 +1703,18 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		SimpleDateFormat dM = new SimpleDateFormat("m");
 		SimpleDateFormat dYmd = new SimpleDateFormat("yyyyMMdd");
 		SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmm");
+		SimpleDateFormat hhMM = new SimpleDateFormat("HHmm");
 
 		//시
 		int h = Integer.parseInt(dH.format(rDt));
 		//분
 		int m = Integer.parseInt(dM.format(rDt));
-		
+
+		//시
+		int h2 = Integer.parseInt(dH.format(dt));
+		//분
+		int m2 = Integer.parseInt(dM.format(dt));
+
 		// 지각일 경우 
 		if(calcType.equals("S")) {
 			/**
@@ -1725,26 +1731,32 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				//int totMinute = h * m;
 				// 지각은 단위시간으로 계산 시 이후 시간으로 해야한다 . 
 				// 10분 단위 일 경우 9시 8분일 경우 9시 10분으로 인정되어햔다.
-				
+
+				Calendar cal2 = Calendar.getInstance();
+
+				cal2.setTime(rDt);
 				//단위 시간 적용
-				int calcM = ((m + unitMinute) - (m + unitMinute)%unitMinute)%60 - ((unitMinute==1)?1:0)  ;
+				int calcM = (((m2 + unitMinute) - ((m + unitMinute)%unitMinute)%60) - ((unitMinute==1)?1:unitMinute)) % unitMinute  ;
 //				((30+30) - (30+30)%30)%60;
 				Calendar cal = Calendar.getInstance();
 				if(calcM == 0){
 					calcM = m;
 				}
 				try {
-					cal.setTime(df.parse(dYmd.format(rDt)+String.format("%02d",h)+String.format("%02d",calcM)));
-				} catch (ParseException e) {
+					cal.setTime(rDt);
+					cal.add(Calendar.MINUTE,calcM);
+
+//					cal.setTime(df.parse(dYmd.format(rDt)+String.format("%02d",h)+String.format("%02d",calcM)));
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
 				
 				// 9시 58분의 경우 10시가 되어야 하고
 				// 23시 58분의 경우 다음날 0시가 되어야 한다 .
-				if(m > calcM) {
-					//58 > 0 이라 1시간을 더하자
-					cal.add(Calendar.HOUR, 1);
-				}
+//				if(m > calcM) {
+//					//58 > 0 이라 1시간을 더하자
+//					cal.add(Calendar.HOUR, 1);
+//				}
 				return cal.getTime();
 			}
 		} else {

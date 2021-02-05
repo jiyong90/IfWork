@@ -648,7 +648,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		}
 		
 		Map<String, Object> resultMap = null;
-		if(!"SUBS_CHG".equals(workTypeCd)) {
+		if(!"SUBS_CHG".equals(workTypeCd) && 22 != tenantId) {
 		
 			resultMap = validatorService.checkDuplicateWorktime(tenantId, enterCd, sabun, otSdate, otEdate, applId); 
 			/*
