@@ -203,7 +203,7 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 								Map<String, Object> weekDate = wtmOtApplMapper.getWeekSdateEdate(empParamMap);
 								if(weekDate != null) {
 									paramMap.put("weekSdate", weekDate.get("weekSdate").toString());
-									paramMap.put("weekEdate", weekDate.get("weekSdate").toString());
+									paramMap.put("weekEdate", weekDate.get("weekEdate").toString());
 								}
 
 								Map<String, Object> weekInfo = wtmFlexibleEmpMapper.weekWorkTimeByEmp(paramMap);

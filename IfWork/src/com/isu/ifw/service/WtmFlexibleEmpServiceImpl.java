@@ -4215,7 +4215,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						Map<String, Object> weekDate = otApplMapper.getWeekSdateEdate(paramMap);
 						if(weekDate != null) {
 							paramMap.put("weekSdate", weekDate.get("weekSdate").toString());
-							paramMap.put("weekEdate", weekDate.get("weekSdate").toString());
+							paramMap.put("weekEdate", weekDate.get("weekEdate").toString());
 						}
 
 						
