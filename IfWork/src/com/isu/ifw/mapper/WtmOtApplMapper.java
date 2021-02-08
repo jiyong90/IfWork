@@ -110,4 +110,8 @@ public interface WtmOtApplMapper {
 	
 	//연장근무 신청 시 시간에 아무 계획이 없는지 확인
 	public Map<String, Object> getCheckPlanDateCnt(Map<String, Object> paramMap);
+
+
+	// 회사의 주 시작일과 종료일을 가지고 온다.
+	public Map<String, Object> getWeekSdateEdate(Map<String, Object> paramMap);
 }

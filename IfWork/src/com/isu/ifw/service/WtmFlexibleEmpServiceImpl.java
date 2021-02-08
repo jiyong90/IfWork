@@ -4210,6 +4210,14 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							restOtMin = Integer.parseInt(emp.get("restOtMinute").toString());
 							
 						}
+						//주간 시작일과 종료일을 구한다.
+						//회사별 properties 테이블 기준으로 조회한다.
+						Map<String, Object> weekDate = otApplMapper.getWeekSdateEdate(paramMap);
+						if(weekDate != null) {
+							paramMap.put("weekSdate", weekDate.get("weekSdate").toString());
+							paramMap.put("weekEdate", weekDate.get("weekSdate").toString());
+						}
+
 						
 						Map<String, Object> weekInfo = flexEmpMapper.weekWorkTimeByEmp(paramMap);
 						System.out.println(mapper.writeValueAsString(weekInfo));

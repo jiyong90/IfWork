@@ -701,6 +701,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
 		List<Map<String, Object>> emps = wtmOtApplMapper.getRestOtMinute(empParamMap);
 		int restMin = 0;
 		try {
@@ -722,8 +723,17 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				if(emp.get("holidayYn") != null && "Y".equals(emp.get("holidayYn"))) {
 					//기본근무 / 시차출퇴근 / 근무조 일때는 휴일에 잔여 기본근로 시간을 사용할 수 잇다. 
 					if(emp.get("workTypeCd") != null && ("BASE".equals(emp.get("workTypeCd")) || "DIFF".equals(emp.get("workTypeCd")) || "WORKTEAM".equals(emp.get("workTypeCd")) ) ) {
+
+						//주간 시작일과 종료일을 구한다.
+						//회사별 properties 테이블 기준으로 조회한다.
+						Map<String, Object> weekDate = wtmOtApplMapper.getWeekSdateEdate(empParamMap);
+						if(weekDate != null) {
+							paramMap.put("weekSdate", weekDate.get("weekSdate").toString());
+							paramMap.put("weekEdate", weekDate.get("weekSdate").toString());
+						}
+
 						/*
-							한주에 대한 정보 조회 계획 및 인정 근무 시간의 합 - 결근 제외 
+							한주에 대한 정보 조회 계획 및 인정 근무 시간의 합 - 결근 제외
 						 */
 						Map<String, Object> weekInfo = wtmFlexibleEmpMapper.weekWorkTimeByEmp(paramMap);
 						try {

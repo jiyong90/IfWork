@@ -198,6 +198,14 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 								/*
 									한주에 대한 정보 조회 계획 및 인정 근무 시간의 합 - 결근 제외 
 								 */
+								//주간 시작일과 종료일을 구한다.
+								//회사별 properties 테이블 기준으로 조회한다.
+								Map<String, Object> weekDate = wtmOtApplMapper.getWeekSdateEdate(empParamMap);
+								if(weekDate != null) {
+									paramMap.put("weekSdate", weekDate.get("weekSdate").toString());
+									paramMap.put("weekEdate", weekDate.get("weekSdate").toString());
+								}
+
 								Map<String, Object> weekInfo = wtmFlexibleEmpMapper.weekWorkTimeByEmp(paramMap);
 								
 								if(weekInfo != null && weekInfo.get("workMinute") != null && !weekInfo.get("workMinute").equals("")) {
