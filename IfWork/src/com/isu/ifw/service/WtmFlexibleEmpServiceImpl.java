@@ -4202,6 +4202,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						Integer applHolOtMin = 0;
 						Integer otMin = 0;
 						Integer holOtMin = 0;
+						Integer resultOtMinute = 0;
 						if(emp.containsKey("totOtMinute") && emp.get("totOtMinute")!=null && !"".equals(emp.get("totOtMinute"))) {
 							totOtMin = Integer.parseInt(emp.get("totOtMinute").toString());
 							
@@ -4251,13 +4252,21 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								holOtMin = 0;
 							}
 						}
-						//2020.1207jyp  왜 신청서말고 기존 계산된거까지 빼지? 
+
+						if(weekInfo != null && weekInfo.get("resultOtMinute") != null && !weekInfo.get("resultOtMinute").equals("")) {
+							resultOtMinute = Integer.parseInt(weekInfo.get("resultOtMinute")+"");
+							if(resultOtMinute == null) {
+								resultOtMinute = 0;
+							}
+						}
+
+						//2020.1207jyp  왜 신청서말고 기존 계산된거까지 빼지?
 						applHolOtMin = applHolOtMin;// + holOtMin;
 						applOtMin = applOtMin;// + otMin;
 						
 
 						if("ELAS".equals(emp.get("workTypeCd"))) {
-							restOtMin = totOtMin - otMin;
+							restOtMin = totOtMin - otMin- resultOtMinute;
 						}
 						logger.debug("totOtMin ::: " + totOtMin);
 						logger.debug("otMin ::: " + otMin);
@@ -4283,8 +4292,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 									System.out.println("weekWorkMinute : " + weekWorkMinute);
 									System.out.println("workMinute : " + Integer.parseInt(weekInfo.get("workMinute")+""));
 									System.out.println("exMinute : " + exMinute);
-//									restWorkMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute;
-									restWorkMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute - exceptMinute;
+									restWorkMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute;
+//									restWorkMin = weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute - exceptMinute;
 									System.out.println("restMin : " + restWorkMin);
 									
 								}

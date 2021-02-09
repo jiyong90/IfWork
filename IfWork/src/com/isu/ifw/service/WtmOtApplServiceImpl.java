@@ -751,7 +751,9 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 							}
 							int restOtMinute = Integer.parseInt(emp.get("restOtMinute").toString());
 							int otMinute = Integer.parseInt(weekInfo.get("otMinute").toString());
-							restMin = (weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute) + (restOtMinute - otMinute) ;
+							int applOtMinute = Integer.parseInt(weekInfo.get("applOtMinute").toString());
+							int applHolOtMinute = Integer.parseInt(weekInfo.get("applHolOtMinute").toString());
+							restMin = (weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute) + (restOtMinute - otMinute - applOtMinute - applHolOtMinute) ;
 							//restMinuteMap.put("restWorkMinute", restMin);
 						}
 					}
@@ -768,7 +770,9 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		//restMin
 		//잔여 기본 근로시간으로 모두 계산 시 연장근무 시간 체크를 하지 않는다. 
 		boolean isOtCheck = true;
-		//잔여 기본 근로 시간이 있을 경우 기본근로 시간을 먼저 구한다. 
+		//잔여 기본 근로 시간이 있을 경우 기본근로 시간을 먼저 구한다.
+
+		int calcMinute = 0 ;
 		if(restMin > 0) {
 			//신청 근무시간 과 잔여 기본근로 시간을 체크하자.
 			//분을 구하자
@@ -782,24 +786,25 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			*/
 
 			//신청서의 시간을 구하고
-			int calcMinute =Integer.parseInt(calcMinuteMap.get("calcMinute").toString());
+			calcMinute =Integer.parseInt(calcMinuteMap.get("calcMinute").toString()) - Integer.parseInt(calcMinuteMap.get("breakMinute").toString());
 			//잔여 기본근로시간보다 큰지를 판단
 			if(restMin < calcMinute) {
+
 				restMin = calcMinute - restMin;
 				isOtCheck = true;
-				
+
 				Map<String, Object> calcMap = new HashMap<>();
 				calcMap.put("tenantId", tenantId);
 				calcMap.put("enterCd", enterCd);
 				calcMap.put("sabun", sabun);
 				calcMap.put("ymd", ymd);
 				calcMap.put("sDate", sdf.format(sd));
-				calcMap.put("addMinute", restMin); 
-				calcMap.put("retDate", ""); 
+				calcMap.put("addMinute", restMin);
+				calcMap.put("retDate", "");
 				wtmFlexibleEmpMapper.addMinuteWithBreakMGR(calcMap);
-				
+
 				//String sHm = WtmUtil.parseDateStr(sd, "HHmm");
-				
+
 				String baseEdateStr = calcMap.get("retDate")+"";
 				System.out.println("retDate.toString() : " + calcMap.toString());
 				System.out.println("baseEdate : "+ baseEdateStr);
@@ -821,8 +826,9 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		if(isOtCheck) {
 			//현재 신청할 연장근무 시간 계산
 			resultMap.putAll(wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun));
-			
-			Integer calcMinute = Integer.parseInt(resultMap.get("calcMinute").toString());
+
+			Integer calcM = Integer.parseInt(resultMap.get("calcMinute").toString());
+//			Integer calcMinute = Integer.parseInt(resultMap.get("calcMinute").toString());
 			Integer breakMinute = 0;
 			if(resultMap.containsKey("breakMinute"))
 				breakMinute = Integer.parseInt(resultMap.get("breakMinute").toString());
@@ -937,7 +943,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				if(rMap != null && rMap.get("totOtMinute") != null && !rMap.get("totOtMinute").equals("")) {
 					totOtMinute = Integer.parseInt(rMap.get("totOtMinute")+"");
 				}
-				Float f = (float) ((totOtMinute + (calcMinute-breakMinute)) / 60.0f);
+				Float f = (float) ((totOtMinute + (calcMinute -breakMinute)) / 60.0f);
 				//if(f > 12) {
 				// 20200714 이효정 연장근무 가능시간은 프로퍼티에서 가져와야함.
 				Float baseOt = (float)0;
@@ -961,7 +967,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			logger.debug("### sumOtMinute : " + sumOtMinute);
 			//otMinute 연장근무 가능 시간이 0이면 체크 하지말자 우선!!
 			if(otMinute != null && otMinute > 0) {
-				int t = (((sumOtMinute!=null)?sumOtMinute:0) + ((calcMinute!=null)?calcMinute:0));
+				int t = (((sumOtMinute!=null)?sumOtMinute:0) + ((calcMinute!=0)?calcMinute:0));
 				//연장 가능 시간보다 이미 신청중이거나 연장근무시간과 신청 시간의 합이 크면 안되유.
 				if(otMinute < t ) {
 					rp.setFail("연장근무 가능시간은 " + otMinute + " 시간 입니다. 신청 가능 시간은 " + (otMinute-((sumOtMinute!=null)?sumOtMinute:0)) + " 시간 입니다. 추가 신청이 필요한 경우 담당자에게 문의하세요" );

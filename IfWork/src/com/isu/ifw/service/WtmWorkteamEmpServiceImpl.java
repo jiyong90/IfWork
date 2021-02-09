@@ -354,12 +354,13 @@ public class WtmWorkteamEmpServiceImpl implements WtmWorkteamEmpService{
 					String s = sYmd.substring(0,4);
 					String e = eYmd.substring(0,4);
 
-					flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, s+"0101", s+"1231", "ADMIN");
-					calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, s+"0101", s+"1231");
-					if(!s.equals(e)) {
-						flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, e+"0101", e+"1231", "ADMIN");
-						calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, e+"0101", e+"1231");
-					}
+//					flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, s+"0101", s+"1231", "ADMIN");
+					flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, sYmd, eYmd, "ADMIN");
+					calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, s+"0101", e+"1231");
+//					if(!s.equals(e)) {
+//						flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, e+"0101", e+"1231", "ADMIN");
+//						calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, e+"0101", e+"1231");
+//					}
 
 					WtmWorkteamEmp workteamEmp =  workteamRepository.findByTenantIdAndEnterCdAndSabunAndSymdAndEymd(tenantId, enterCd, sabun, sYmd, eYmd);
 

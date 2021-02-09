@@ -145,7 +145,7 @@ public class WtmAsyncService {
 			System.out.println("### EMP_RESET EMP::" + empHis.getSabun());
 			try {
 				System.out.println("P_WTM_FLEXIBLE_EMP_RESET start");
-				flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, empHis.getSabun(), ymd.substring(0,4)+"0101", ymd.substring(0,4)+"1231", empHis.getSabun());
+				flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, empHis.getSabun(), ymd, ymd.substring(0,4)+"1231", empHis.getSabun());
 				System.out.println("P_WTM_FLEXIBLE_EMP_RESET end");
 				calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, empHis.getSabun(), ymd.substring(0,4)+"0101", ymd.substring(0,4)+"1231");
 				System.out.println("P_WTM_FLEXIBLE_EMP_WORKTERM_C start");

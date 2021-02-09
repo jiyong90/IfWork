@@ -91,6 +91,9 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 		//sYmd = "2020" + "0101"; 
 		//eYmd = "2020" + "1231";
 
+		String sy = sYmd.substring(0,4);
+		String ey = eYmd.substring(0,4);
+
 
 		try {
 			String empYmd = empHisRepo.findMaxEmpYmdByTenantIdAndEnterCdAndSabun(tenantId, enterCd, sabun);
@@ -102,7 +105,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 
 
 			logger.debug("### EMP_RESET ::" + sabun + " 1. 초기화");
-			this.initWtmFlexibleEmp(tenantId, enterCd, sabun, sYmd, eYmd, userId);
+			this.initWtmFlexibleEmp(tenantId, enterCd, sabun,sy+"0101", eYmd, userId);
 			logger.debug("### EMP_RESET ::" + sabun + "1. 초기화 END");
 			wtmFlexibleEmpRepo.flush();
 			
