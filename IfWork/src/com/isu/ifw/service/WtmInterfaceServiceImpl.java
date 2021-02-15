@@ -1,14 +1,15 @@
 package com.isu.ifw.service;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.common.entity.CommTenantModule;
+import com.isu.ifw.common.repository.CommTenantModuleRepository;
+import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmInterfaceMapper;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,50 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.common.entity.CommTenantModule;
-import com.isu.ifw.common.repository.CommTenantModuleRepository;
-import com.isu.ifw.entity.WtmAppl;
-import com.isu.ifw.entity.WtmFlexibleStdMgr;
-import com.isu.ifw.entity.WtmIfTaaHis;
-import com.isu.ifw.entity.WtmIntfCode;
-import com.isu.ifw.entity.WtmIntfEmp;
-import com.isu.ifw.entity.WtmIntfEmpAddr;
-import com.isu.ifw.entity.WtmIntfGnt;
-import com.isu.ifw.entity.WtmIntfHoliday;
-import com.isu.ifw.entity.WtmIntfOrg;
-import com.isu.ifw.entity.WtmIntfOrgChart;
-import com.isu.ifw.entity.WtmIntfOrgConc;
-import com.isu.ifw.entity.WtmIntfTaaAppl;
-import com.isu.ifw.entity.WtmTaaAppl;
-import com.isu.ifw.entity.WtmTaaApplDet;
-import com.isu.ifw.entity.WtmTaaCode;
-import com.isu.ifw.entity.WtmTimeCdMgr;
-import com.isu.ifw.entity.WtmWorkCalendar;
-import com.isu.ifw.entity.WtmWorkDayResult;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmInterfaceMapper;
-import com.isu.ifw.repository.WtmApplRepository;
-import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
-import com.isu.ifw.repository.WtmIfTaaHisRepository;
-import com.isu.ifw.repository.WtmIntfCodeRepository;
-import com.isu.ifw.repository.WtmIntfEmpAddrRepository;
-import com.isu.ifw.repository.WtmIntfEmpRepository;
-import com.isu.ifw.repository.WtmIntfGntRepository;
-import com.isu.ifw.repository.WtmIntfHolidayRepository;
-import com.isu.ifw.repository.WtmIntfOrgChartRepository;
-import com.isu.ifw.repository.WtmIntfOrgConcRepository;
-import com.isu.ifw.repository.WtmIntfOrgRepository;
-import com.isu.ifw.repository.WtmIntfTaaApplRepository;
-import com.isu.ifw.repository.WtmTaaApplDetRepository;
-import com.isu.ifw.repository.WtmTaaApplRepository;
-import com.isu.ifw.repository.WtmTaaCodeRepository;
-import com.isu.ifw.repository.WtmTimeCdMgrRepository;
-import com.isu.ifw.repository.WtmWorkCalendarRepository;
-import com.isu.ifw.repository.WtmWorkDayResultRepository;
-import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.ReturnParam;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service("wtmInterfaceService")
 public class WtmInterfaceServiceImpl implements WtmInterfaceService {
@@ -1503,7 +1463,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		        		setTermMap.put("symd", ymd);
 		        		setTermMap.put("eymd", ymd);
 		        		setTermMap.put("pId", "TAAIF");
-		        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
+						calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId,enterCd, sabun, ymd, ymd);
+//		        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 					}
 				}
 				

@@ -704,6 +704,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 
 		List<Map<String, Object>> emps = wtmOtApplMapper.getRestOtMinute(empParamMap);
 		int restMin = 0;
+		int restOtMin = 0;
 		try {
 			logger.debug("### otMinute : " + mapper.writeValueAsString(emps));
 		} catch (JsonProcessingException e) {
@@ -754,6 +755,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 							int applOtMinute = Integer.parseInt(weekInfo.get("applOtMinute").toString());
 							int applHolOtMinute = Integer.parseInt(weekInfo.get("applHolOtMinute").toString());
 							restMin = (weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute) + (restOtMinute - otMinute - applOtMinute - applHolOtMinute) ;
+							restOtMin = restOtMinute - otMinute - applOtMinute - applHolOtMinute ;
 							//restMinuteMap.put("restWorkMinute", restMin);
 						}
 					}
@@ -784,6 +786,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				isOtCheck = false;
 			} 
 			*/
+
+
 
 			//신청서의 시간을 구하고
 			calcMinute =Integer.parseInt(calcMinuteMap.get("calcMinute").toString()) - Integer.parseInt(calcMinuteMap.get("breakMinute").toString());
@@ -821,14 +825,19 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			} else {
 				isOtCheck = false;
 			}
+
+			if(restOtMin < calcMinute) {
+				rp.setFail("연장근무 신청 가능 시간을 초과하였습니다.");
+				return rp;
+			}
 		}
 		logger.debug("### isOtCheck : "+ isOtCheck);
 		if(isOtCheck) {
 			//현재 신청할 연장근무 시간 계산
 			resultMap.putAll(wtmFlexibleEmpService.calcMinuteExceptBreaktime(tenantId, enterCd, sabun, paramMap, sabun));
 
-			Integer calcM = Integer.parseInt(resultMap.get("calcMinute").toString());
-//			Integer calcMinute = Integer.parseInt(resultMap.get("calcMinute").toString());
+//			Integer calcM = Integer.parseInt(resultMap.get("calcMinute").toString());
+			calcMinute = Integer.parseInt(resultMap.get("calcMinute").toString());
 			Integer breakMinute = 0;
 			if(resultMap.containsKey("breakMinute"))
 				breakMinute = Integer.parseInt(resultMap.get("breakMinute").toString());
@@ -838,7 +847,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 			
 			//회사의 주 시작요일을 가지고 온다.
 			paramMap.put("d", ymd);
-			
+
 			//7일전 ~ 7일 후 범위 지정
 			Date date = WtmUtil.toDate(ymd, "yyyyMMdd");
 	        

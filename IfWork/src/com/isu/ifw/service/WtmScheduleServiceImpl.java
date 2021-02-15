@@ -135,6 +135,20 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
     		int cnt = wtmScheduleMapper.setUpdateLocalOut(getDateMap);
     		logger.debug("schedule_closeday taaLocalOut cnt : "+ cnt);
     	}
+
+		// 마감일+1 현출 갱신
+		// 현출코드가 있으면 마감일익일 현출 출근시간 갱신
+		if(!"".equals(taaLocalIn)) {
+			getDateMap.put("taaLocalIn", taaLocalIn);
+			cal.setTime(today);
+			String nextYmd = (sdf.format(cal.getTime())).substring(0, 8);
+			// nextYmd = "20200708";	// 임시용
+			getDateMap.put("nextYmd", nextYmd);
+			logger.debug("schedule_closeday taaLocalIn : "+ getDateMap.toString());
+			int cnt = wtmScheduleMapper.setUpdateLocalIn(getDateMap);
+			logger.debug("schedule_closeday taaLocalIn cnt : "+ cnt);
+		}
+
     	
     	// 타각갱신이 완료되면, 출퇴근 기록완성자의 근무시간을 갱신해야한다.
 		List<Map<String, Object>> closeList = new ArrayList();
@@ -214,18 +228,7 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 			logger.debug("schedule_closeday tenantId : "+ tenantId + " tot cnt" + closeList.size() + " end ");
 		}
 		
-		// 마감일+1 현출 갱신
-		// 현출코드가 있으면 마감일익일 현출 출근시간 갱신
-    	if(!"".equals(taaLocalIn)) {
-    		getDateMap.put("taaLocalIn", taaLocalIn);
-    		cal.setTime(today);
-    		String nextYmd = (sdf.format(cal.getTime())).substring(0, 8);
-    		// nextYmd = "20200708";	// 임시용
-    		getDateMap.put("nextYmd", nextYmd);
-    		logger.debug("schedule_closeday taaLocalIn : "+ getDateMap.toString());
-    		int cnt = wtmScheduleMapper.setUpdateLocalIn(getDateMap);
-    		logger.debug("schedule_closeday taaLocalIn cnt : "+ cnt);
-    	}
+
 	}
 	
 	@Override
