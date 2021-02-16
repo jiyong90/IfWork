@@ -1637,7 +1637,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 												if(flexStdMgr.getApplyEntryEdateYn().equalsIgnoreCase("Y") && result.getPlanEdate().compareTo(calendar.getEntryEdate()) < 0) {	//종료시간을 타각시간으로 갱신시에만
 													//다음 데이터를 체크 한다.
 													preResult = result;
-													preResult.setPlanSdate(calendar.getEntrySdate());
+//													preResult.setPlanSdate(calendar.getEntrySdate());
 												}else {
 													Date nSdate =  calendar.getEntrySdate();
 													Date nEdate = result.getPlanEdate();
@@ -2471,6 +2471,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				e.printStackTrace();	
 			}
 			logger.debug("timeCdMgr.getLateChkYn() : " + timeCdMgr.getLateChkYn() + " 가 Y면 지각 데이터 체크 ");
+
+			//지각데이터 체크후 시작시간 변경
+			Date calcMinSdate = null;
+
 			if(timeCdMgr.getLateChkYn().equalsIgnoreCase("Y")) {
 				dayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, calendar.getYmd());
 				if(dayResults != null && dayResults.size() > 0) {
@@ -2542,6 +2546,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								}
 							}
 						}
+						calcMinSdate = minBreakSdate;
 
 //						if(minSdate.compareTo(minEntrySdate)) {
 						if(minSdate.compareTo(minBreakSdate) < 0) {
@@ -2554,7 +2559,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							lateResult.setTimeTypeCd(WtmApplService.TIME_TYPE_LLA);
 							lateResult.setTaaCd(lateTaaCode.getTaaCd());
 							Date calcSdate = calcService.WorkTimeCalcApprDate(minSdate, minSdate, flexStdMgr.getUnitMinute(), "S");
-							Date calcEdate = calcService.WorkTimeCalcApprDate(minEntrySdate, minEntrySdate, flexStdMgr.getUnitMinute(), "E");
+							Date calcEdate = calcService.WorkTimeCalcApprDate(minEntrySdate, minSdate, flexStdMgr.getUnitMinute(), "E");
 	
 							lateResult.setPlanSdate(calcSdate);
 							lateResult.setPlanEdate(calcEdate);
@@ -2569,6 +2574,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							lateResult.setUpdateId(sabun);
 							logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각 여기 " + lateResult.toString());
 							workDayResultRepo.save(lateResult);
+
+							calcMinSdate = calcEdate;
 							logger.debug("출근 타각 시간이 계획시간 보다 늦으면 지각 끝 " + lateResult.toString());
 						}
 					}
@@ -2586,6 +2593,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//기본근로시간의 경우 출퇴근 타각기록으로만 판단 >> 결근 데이터가 있는 날은 빼야한다.
 			paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_LLA);
 			paramMap.put("taaCd", absenceTaaCode.getTaaCd());
+
+
 	
 			if(flexStdMgr.getWorkTypeCd().equals("SELE_F")) {
 				try { logger.debug("9. APPLY_ENTRY_SDATE_YN / APPLY_ENTRY_EDATE_YN 여부에 따라 타각 시간을 계획시간으로 업데이트 한다. 그리고 인정시간을 다시 계산한다. 계획시간이 변경되었기 때문에 ", mapper.writeValueAsString(paramMap), "call P_WTM_WORK_DAY_RESULT_CREATE_F"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
@@ -2603,7 +2612,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				List<WtmWorkDayResult> apprResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCd, calendar.getYmd(), calendar.getYmd());
 				for(WtmWorkDayResult r : apprResults) {
 					Date sDate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
-					Date eDate = calcService.WorkTimeCalcApprDate(calendar.getEntryEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
+					Date eDate = calcService.WorkTimeCalcApprDate(r.getPlanEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
 					if(sDate.compareTo(eDate) < 0) {
 						
 						boolean isAppr = true;
@@ -2661,8 +2670,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				//flexEmpMapper.updateApprDatetimeByYmdAndSabun(paramMap);
 				List<WtmWorkDayResult> apprResults = workDayResultRepo.findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd(calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), WtmApplService.TIME_TYPE_LLA, absenceTaaCode.getTaaCd(), calendar.getSabun());
 				for(WtmWorkDayResult r : apprResults) {
-					Date sDate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
-					Date eDate = calcService.WorkTimeCalcApprDate(calendar.getEntryEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
+					Date sDate = calcService.WorkTimeCalcApprDate(calcMinSdate, r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
+					Date eDate = r.getPlanEdate();
+					if(calendar.getEntryEdate().compareTo(r.getPlanEdate()) < 0) {
+						eDate = calcService.WorkTimeCalcApprDate(calendar.getEntryEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
+					}else {
+						eDate = calcService.WorkTimeCalcApprDate(r.getPlanEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "S");
+					}
 					if(sDate.compareTo(eDate) < 0) {
 						boolean isAppr = true;
 						/**
@@ -2793,7 +2807,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					laaResult.setSabun(calendar.getSabun());
 					laaResult.setApplId(null);
 					Date calcSdate = calcService.WorkTimeCalcApprDate(calendar.getEntryEdate(), calendar.getEntryEdate(), flexStdMgr.getUnitMinute(), "S");
-					Date calcEdate = calcService.WorkTimeCalcApprDate(maxPlanEdate_BASE, maxPlanEdate_BASE, flexStdMgr.getUnitMinute(), "E");
+					Date calcEdate = calcService.WorkTimeCalcApprDate(maxPlanEdate_BASE, maxPlanEdate_BASE, flexStdMgr.getUnitMinute(), "S");
 					laaResult.setPlanSdate(calcSdate);
 					laaResult.setPlanEdate(calcEdate);
 					laaResult.setApprSdate(calcSdate);

@@ -100,18 +100,34 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 					logger.debug("CREATE_F :: flexStdMgr.getApplyEntrySdateYn() = " + flexStdMgr.getApplyEntrySdateYn());
 					logger.debug("CREATE_F :: flexStdMgr.getApplyEntryEdateYn() = " + flexStdMgr.getApplyEntryEdateYn());
 					WtmWorkCalendar calendar = workCalandarRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
+
+					Boolean lastData = false;
 					for(WtmWorkDayResult result : results) {
 						
 						logger.debug("CREATE_F :: cnt = " + cnt);
 						
 						Date sDate = null;
 						Date eDate = null;
-						
+
+						if(results.size() == cnt) {
+							lastData = true;
+						}
 						//타각시간에서 벗어난 데이터는 패스 한다 .
 						if(calendar.getEntrySdate().compareTo(result.getPlanEdate()) < 0
 								&& calendar.getEntryEdate().compareTo(result.getPlanSdate()) > 0) {
-							sDate = result.getPlanSdate();
-							eDate = result.getPlanEdate();
+
+							if(cnt == 1) {
+								sDate = calendar.getEntrySdate();
+							}else {
+								sDate = result.getPlanSdate();
+							}
+
+							if(lastData) {
+								eDate = calendar.getEntryEdate();
+							} else {
+								eDate = result.getPlanEdate();
+							}
+
 							/*
 							 * calcaApprDayReset 여기서 했다 아래는
 							if(results.size() > 1) {
@@ -211,8 +227,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			return 0;
 		}
 		
-		Date calcSdate = this.WorkTimeCalcApprDate(entrySdate, sDate, flexStdMgr.getUnitMinute(), "S");
-		Date calcEdate = this.WorkTimeCalcApprDate(entryEdate, eDate, flexStdMgr.getUnitMinute(), "E");
+		Date calcSdate = this.WorkTimeCalcApprDate(sDate, sDate, flexStdMgr.getUnitMinute(), "S");
+		Date calcEdate = this.WorkTimeCalcApprDate(eDate, eDate, flexStdMgr.getUnitMinute(), "E");
 		
 		logger.debug("UPDATE_T :: calcSdate :: " + calcSdate);
 		logger.debug("UPDATE_T :: calcEdate :: " + calcEdate);
@@ -1732,18 +1748,19 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				// 지각은 단위시간으로 계산 시 이후 시간으로 해야한다 . 
 				// 10분 단위 일 경우 9시 8분일 경우 9시 10분으로 인정되어햔다.
 
+				Calendar cal1 = Calendar.getInstance();
 				Calendar cal2 = Calendar.getInstance();
 
+				cal1.setTime(dt);
 				cal2.setTime(rDt);
 				//단위 시간 적용
-				int calcM = (((m2 + unitMinute) - ((m + unitMinute)%unitMinute)%60) - ((unitMinute==1)?1:unitMinute)) % unitMinute  ;
+//				int calcM = (((m2 + unitMinute) - ((m + unitMinute)%unitMinute)%60) - ((unitMinute==1)?1:unitMinute)) % unitMinute  ;
+				int calcM = (int)(((rDt.getTime() - dt.getTime())/60000/unitMinute)*unitMinute);
+
 //				((30+30) - (30+30)%30)%60;
 				Calendar cal = Calendar.getInstance();
-				if(calcM == 0){
-					calcM = m;
-				}
 				try {
-					cal.setTime(rDt);
+					cal.setTime(dt);
 					cal.add(Calendar.MINUTE,calcM);
 
 //					cal.setTime(df.parse(dYmd.format(rDt)+String.format("%02d",h)+String.format("%02d",calcM)));
@@ -1761,26 +1778,41 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			}
 		} else {
 			logger.debug("rDt.compareTo(dt) :: " + rDt.compareTo(dt));
-			if(rDt.compareTo(dt) > 0) {
-				return dt;
+			if(rDt.compareTo(dt) < 0) {
+				return rDt;
 			} else {
-				int namerge = m%unitMinute;
-				//단위 시간 적용
-				int calcM = m - m%unitMinute;
 
-				logger.debug("calcM : " + calcM);
-				logger.debug("namerge : " + namerge);
-				/*
-				if(namerge > 0)
-					calcM += unitMinute;
-				logger.debug("calcM : " + calcM);
-				*/
+				int calcM = (int)(((rDt.getTime() - dt.getTime())/60000/unitMinute)*unitMinute) + (int)((((rDt.getTime() - dt.getTime())/60000%unitMinute))>0?unitMinute:((rDt.getTime() - dt.getTime())/60000%unitMinute));
+
 				Calendar cal = Calendar.getInstance();
+
 				try {
-					cal.setTime(df.parse(dYmd.format(rDt)+String.format("%02d",h)+String.format("%02d",calcM)));
-				} catch (ParseException e) {
+					cal.setTime(dt);
+					cal.add(Calendar.MINUTE,calcM);
+
+//					cal.setTime(df.parse(dYmd.format(rDt)+String.format("%02d",h)+String.format("%02d",calcM)));
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
+
+//
+//				int namerge = m%unitMinute;
+//				//단위 시간 적용
+//				int calcM = m - m%unitMinute;
+//
+//				logger.debug("calcM : " + calcM);
+//				logger.debug("namerge : " + namerge);
+//				/*
+//				if(namerge > 0)
+//					calcM += unitMinute;
+//				logger.debug("calcM : " + calcM);
+//				*/
+//				Calendar cal = Calendar.getInstance();
+//				try {
+//					cal.setTime(df.parse(dYmd.format(rDt)+String.format("%02d",h)+String.format("%02d",calcM)));
+//				} catch (ParseException e) {
+//					e.printStackTrace();
+//				}
 				return cal.getTime(); 
 			}
 		}

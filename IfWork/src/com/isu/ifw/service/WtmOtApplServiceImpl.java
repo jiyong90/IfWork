@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -29,6 +28,9 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 	
 	@Autowired
 	private WtmApplAfterService wtmApplAfterService;
+
+	@Autowired
+	private WtmCalcService calcService;
 	
 	@Autowired
 	WtmApplMapper applMapper;
@@ -805,6 +807,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				calcMap.put("sDate", sdf.format(sd));
 				calcMap.put("addMinute", restMin);
 				calcMap.put("retDate", "");
+				/* 한성모터스 사용 여부 확인 필요.
 				wtmFlexibleEmpMapper.addMinuteWithBreakMGR(calcMap);
 
 				//String sHm = WtmUtil.parseDateStr(sd, "HHmm");
@@ -821,6 +824,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 						return rp;
 					}
 				}
+				 */
 
 			} else {
 				isOtCheck = false;

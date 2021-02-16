@@ -7,6 +7,7 @@ import com.isu.ifw.common.repository.CommTenantModuleRepository;
 import com.isu.ifw.entity.*;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmInterfaceMapper;
+import com.isu.ifw.mapper.WtmScheduleMapper;
 import com.isu.ifw.repository.*;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
@@ -32,6 +33,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	
 	@Autowired
 	WtmFlexibleEmpMapper wtmFlexibleEmpMapper;
+
+	@Autowired
+	WtmScheduleMapper wtmScheduleMapper;
 	
 	@Autowired
 	private WtmFlexibleEmpService wtmFlexibleEmpService;
@@ -2284,7 +2288,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		logger.debug("applSabun : " + applSabun);
 		logger.debug("ifApplNo : " + ifApplNo);
 		logger.debug("status : " + status);
-		
+
 		List<String> statusList = new ArrayList<String>();
 		statusList.add(WtmApplService.APPL_STATUS_APPLY_ING);
 		statusList.add(WtmApplService.APPL_STATUS_APPLY_REJECT);
@@ -2739,17 +2743,64 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										dayResultRepo.save(newTaa);
 										
 									}else {
-										wtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
-												tenantId
-												, enterCd
-												, d
-												, sabun
-												, timeTypeCd
-												, det.getTaaCd()
-												, sdate
-												, edate
-												, appl.getApplId()
-												, "TAAIF");
+										// 현퇴사용여부, 현출사용여부를 조회하자
+										String taaLocalOut = ""; // 현퇴근태코드
+										String taaLocalIn = "";	// 현출근태코드
+										Map<String, Object> getDateMap = new HashMap<String, Object>();
+										Map<String, Object> getTaaMap = new HashMap<String, Object>();;
+										getDateMap.put("tenantId", tenantId);
+										getDateMap.put("ymd", d);
+										getTaaMap = (HashMap<String, Object>) wtmScheduleMapper.getTaaLocalCode(getDateMap);
+										if(getTaaMap != null && getTaaMap.containsKey("localIn") && !getTaaMap.get("localIn").equals("")) {
+											taaLocalIn = getTaaMap.get("localIn").toString();
+										}
+										if(getTaaMap != null && getTaaMap.containsKey("localOut") && !getTaaMap.get("localOut").equals("")) {
+											taaLocalOut = getTaaMap.get("localOut").toString();
+										}
+
+										if((!"".equals(taaLocalIn) || !"".equals(taaLocalOut)) && (det.getTaaCd().equals(taaLocalIn) || det.getTaaCd().equals(taaLocalOut))) {
+
+											WtmWorkDayResult addDayResult = new WtmWorkDayResult();
+											addDayResult.setApplId(appl.getApplId());
+											addDayResult.setTenantId(tenantId);
+											addDayResult.setEnterCd(enterCd);
+											addDayResult.setYmd(ymd);
+											addDayResult.setSabun(sabun);
+											addDayResult.setTimeTypeCd("TAA");
+											addDayResult.setTaaCd(det.getTaaCd());
+											workDayResultRepo.save(addDayResult);
+
+											// 현퇴코드가 있으면 마감일 현퇴 퇴근시간 갱신
+											if(det.getTaaCd().equals(taaLocalOut)) {
+												getDateMap.put("taaLocalOut", taaLocalOut);
+												logger.debug("schedule_closeday taaLocalOut : "+ getDateMap.toString());
+												int cnt = wtmScheduleMapper.setUpdateLocalOut(getDateMap);
+												logger.debug("schedule_closeday taaLocalOut cnt : "+ cnt);
+											}
+
+											if(det.getTaaCd().equals(taaLocalIn)) {
+												getDateMap.put("taaLocalIn", taaLocalIn);
+												getDateMap.put("nextYmd", d);
+												logger.debug("schedule_closeday taaLocalIn : "+ getDateMap.toString());
+												int cnt = wtmScheduleMapper.setUpdateLocalIn(getDateMap);
+												logger.debug("schedule_closeday taaLocalIn cnt : "+ cnt);
+											}
+
+										} else {
+											wtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
+													tenantId
+													, enterCd
+													, d
+													, sabun
+													, timeTypeCd
+													, det.getTaaCd()
+													, sdate
+													, edate
+													, appl.getApplId()
+													, "TAAIF");
+										}
+
+
 									}
 								}
 							}
