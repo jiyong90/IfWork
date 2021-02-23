@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -2612,7 +2613,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				List<WtmWorkDayResult> apprResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCd, calendar.getYmd(), calendar.getYmd());
 				for(WtmWorkDayResult r : apprResults) {
 					Date sDate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
-					Date eDate = calcService.WorkTimeCalcApprDate(r.getPlanEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
+					Date eDate = calcService.WorkTimeCalcApprDate( r.getPlanEdate(), calendar.getEntryEdate(), flexStdMgr.getUnitMinute(), "E");
 					if(sDate.compareTo(eDate) < 0) {
 						
 						boolean isAppr = true;
@@ -2670,6 +2671,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				//flexEmpMapper.updateApprDatetimeByYmdAndSabun(paramMap);
 				List<WtmWorkDayResult> apprResults = workDayResultRepo.findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd(calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), WtmApplService.TIME_TYPE_LLA, absenceTaaCode.getTaaCd(), calendar.getSabun());
 				for(WtmWorkDayResult r : apprResults) {
+					if(calcMinSdate == null) {
+						calcMinSdate = r.getPlanSdate();
+					}
 					Date sDate = calcService.WorkTimeCalcApprDate(calcMinSdate, r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
 					Date eDate = r.getPlanEdate();
 					if(calendar.getEntryEdate().compareTo(r.getPlanEdate()) < 0) {
@@ -3539,14 +3543,14 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				timeTypeCd.add(WtmApplService.TIME_TYPE_REGA); 
 				
 				List<WtmWorkDayResult> workDayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCd, ymd, ymd);
-				 
+
 				//Date sdate = otSubsAppl.getSubsSdate();
 				//Date edate = otSubsAppl.getSubsEdate();
 				 
 				int cnt = 0;
 				Boolean isPrev = null;
 				for(WtmWorkDayResult res : workDayResults) {
-					 
+
 					if(( res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) ) && res.getPlanSdate().compareTo(removeSdate) == 0 && res.getPlanEdate().compareTo(removeEdate) == 0) {
 						if(cnt == 0) {
 							//시작시간이 대체휴일이면 다음 데이터 여부를 판단하고 다음데이터가 SUBS BASE로 변경하자
@@ -3639,7 +3643,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 									}else {
 										//이후 데이터로 지우려는 데이터의 시작일로 바꿔주면 땡
 										WtmWorkDayResult modiResult = workDayResults.get(cnt+1);
-										modiResult.setPlanSdate(removeSdate); 
+										modiResult.setPlanSdate(removeSdate);
 										workDayResultRepo.deleteById(res.getWorkDayResultId());
 										workDayResultRepo.save(modiResult);
 										break;

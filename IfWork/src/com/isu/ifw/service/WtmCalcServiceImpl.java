@@ -94,7 +94,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			// 기본근로 시간이 이미 다 찼으면 기본근로 시간을 생성하지 않는다. 
 			if( workMinute > sumWorkMinute ) {
 					
-				List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(tenantId, enterCd, sabun, ymd, WtmApplService.TIME_TYPE_BASE);
+//				List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(tenantId, enterCd, sabun, ymd, WtmApplService.TIME_TYPE_BASE);
+				List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(tenantId, enterCd, sabun, ymd);
 				if(results != null && results.size() > 0) {
 					int cnt = 1;
 					logger.debug("CREATE_F :: flexStdMgr.getApplyEntrySdateYn() = " + flexStdMgr.getApplyEntrySdateYn());
@@ -116,13 +117,13 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						if(calendar.getEntrySdate().compareTo(result.getPlanEdate()) < 0
 								&& calendar.getEntryEdate().compareTo(result.getPlanSdate()) > 0) {
 
-							if(cnt == 1) {
+							if(cnt == 1 && tenantId == 22) {
 								sDate = calendar.getEntrySdate();
 							}else {
 								sDate = result.getPlanSdate();
 							}
 
-							if(lastData) {
+							if(lastData && tenantId == 22) {
 								eDate = calendar.getEntryEdate();
 							} else {
 								eDate = result.getPlanEdate();
@@ -181,8 +182,12 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							logger.debug("CREATE_F :: sDate = " + sDate );
 							logger.debug("CREATE_F :: eDate = " + eDate );
 							*/
-							//안에서 생성한 시간을 더해준다.
-							sumWorkMinute = sumWorkMinute + this.P_WTM_WORK_DAY_RESULT_UPDATE_T(flexStdMgr, timeCdMgr, result, sDate, eDate, calendar.getEntrySdate(), calendar.getEntryEdate(),  sumWorkMinute, workMinute, userId);
+
+							if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
+								//안에서 생성한 시간을 더해준다.
+								sumWorkMinute = sumWorkMinute + this.P_WTM_WORK_DAY_RESULT_UPDATE_T(flexStdMgr, timeCdMgr, result, sDate, eDate, calendar.getEntrySdate(), calendar.getEntryEdate(),  sumWorkMinute, workMinute, userId);
+							}
+
 						}
 						cnt++;
 					}
@@ -226,9 +231,20 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		if((workMinute - sumWorkMinute) <= 0) {
 			return 0;
 		}
+
+		Date calcSdate = null;
+		Date calcEdate = null;
+
+		//현대 엔지비 인정시간 계산때문에 분리..
+		if(flexStdMgr.getTenantId() == 22) {
+			calcSdate = this.WorkTimeCalcApprDate(sDate, sDate, flexStdMgr.getUnitMinute(), "S");
+			calcEdate = this.WorkTimeCalcApprDate(eDate, eDate, flexStdMgr.getUnitMinute(), "E");
+		} else {
+			calcSdate = this.WorkTimeCalcApprDate(entrySdate, sDate, flexStdMgr.getUnitMinute(), "S");
+			calcEdate = this.WorkTimeCalcApprDate(eDate, entryEdate, flexStdMgr.getUnitMinute(), "E");
+		}
 		
-		Date calcSdate = this.WorkTimeCalcApprDate(sDate, sDate, flexStdMgr.getUnitMinute(), "S");
-		Date calcEdate = this.WorkTimeCalcApprDate(eDate, eDate, flexStdMgr.getUnitMinute(), "E");
+
 		
 		logger.debug("UPDATE_T :: calcSdate :: " + calcSdate);
 		logger.debug("UPDATE_T :: calcEdate :: " + calcEdate);

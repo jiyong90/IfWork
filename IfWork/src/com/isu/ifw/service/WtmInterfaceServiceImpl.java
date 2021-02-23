@@ -2453,17 +2453,36 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		//이건 상태랑 같으면 무시
 		if(preApplStatus == null || !preApplStatus.equals(status)) {
 
-			if(status.equals(WtmApplService.APPL_STATUS_APPR) 
-					|| status.equals(WtmApplService.APPL_STATUS_APPR_REJECT) 
-					|| status.equals(WtmApplService.APPL_STATUS_CANCEL)) {
+			if(status.equals(WtmApplService.APPL_STATUS_APPR) || status.equals(WtmApplService.APPL_STATUS_APPR_REJECT) || status.equals(WtmApplService.APPL_STATUS_CANCEL)) {
 				for(Map<String, Object> w : works) {
 					List<Map<String, Object>> worksDet = (List<Map<String, Object>>) w.get("worksDet");
 					for(Map<String, Object> work : worksDet) {
 
-						logger.debug("============================== resetTaaResult : " + w.get("sabun")+" : " + work.get("startYmd")+"");
-						this.resetTaaResult(tenantId, enterCd, w.get("sabun")+"", work.get("startYmd")+"");
+						if(status.equals(WtmApplService.APPL_STATUS_APPR)) {
+							logger.debug("============================== resetTaaResult : " + w.get("sabun")+" : " + work.get("startYmd")+"");
+							this.resetTaaResult(tenantId, enterCd, w.get("sabun")+"", work.get("startYmd")+"");
+						} else {
+							List<WtmWorkDayResult> workDayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndApplId(tenantId, enterCd, w.get("sabun").toString(), taaAppls.get(0).getApplId());
+
+							if(workDayResults != null) {
+								for(WtmWorkDayResult result: workDayResults) {
+
+									wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
+									result.getTenantId()
+									, result.getEnterCd()
+									, result.getYmd()
+									, result.getSabun()
+									, result.getTimeTypeCd()
+									, result.getTaaCd()
+									, result.getPlanSdate()
+									, result.getPlanEdate()
+									, result.getApplId()
+									, result.getSabun());
+								}
+							}
+
+						}
 					}
-					
 				}
 			}
 		}

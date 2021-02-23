@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -647,6 +648,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		Long applId = null;
 		if(paramMap.containsKey("applId") && paramMap.get("applId") != null && !paramMap.get("applId").equals("")) {
 			applId = Long.parseLong(paramMap.get("applId")+"");
+		} else {
+			paramMap.put("applId", "");
 		}
 		
 		Map<String, Object> resultMap = null;
@@ -756,8 +759,10 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 							int otMinute = Integer.parseInt(weekInfo.get("otMinute").toString());
 							int applOtMinute = Integer.parseInt(weekInfo.get("applOtMinute").toString());
 							int applHolOtMinute = Integer.parseInt(weekInfo.get("applHolOtMinute").toString());
-							restMin = (weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute) + (restOtMinute - otMinute - applOtMinute - applHolOtMinute) ;
-							restOtMin = restOtMinute - otMinute - applOtMinute - applHolOtMinute ;
+							int applIngOtMinute = Integer.parseInt(weekInfo.get("applIngOtMinute").toString());
+							restMin = (weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute) + (restOtMinute - otMinute - applOtMinute - applHolOtMinute + applIngOtMinute) ;
+							restOtMin = restOtMinute - otMinute - applOtMinute - applHolOtMinute + applIngOtMinute;
+
 							//restMinuteMap.put("restWorkMinute", restMin);
 						}
 					}
@@ -807,7 +812,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				calcMap.put("sDate", sdf.format(sd));
 				calcMap.put("addMinute", restMin);
 				calcMap.put("retDate", "");
-				/* 한성모터스 사용 여부 확인 필요.
+
 				wtmFlexibleEmpMapper.addMinuteWithBreakMGR(calcMap);
 
 				//String sHm = WtmUtil.parseDateStr(sd, "HHmm");
@@ -815,7 +820,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				String baseEdateStr = calcMap.get("retDate")+"";
 				System.out.println("retDate.toString() : " + calcMap.toString());
 				System.out.println("baseEdate : "+ baseEdateStr);
-				//근로시간 선 소진 후 잔여 연장 근무시간에 대해서는 체크 해야한다. 
+				//근로시간 선 소진 후 잔여 연장 근무시간에 대해서는 체크 해야한다.
 				if(isOtCheck) {
 					try {
 						paramMap.put("shm", WtmUtil.parseDateStr(sdf.parse(baseEdateStr), "HHmm"));
@@ -824,13 +829,13 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 						return rp;
 					}
 				}
-				 */
+
 
 			} else {
 				isOtCheck = false;
 			}
 
-			if(restOtMin < calcMinute) {
+			if((restOtMin + calcMinute) < calcMinute) {
 				rp.setFail("연장근무 신청 가능 시간을 초과하였습니다.");
 				return rp;
 			}
