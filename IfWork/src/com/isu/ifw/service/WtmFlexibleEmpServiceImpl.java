@@ -1258,9 +1258,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			List<String> timeTypeCds = new ArrayList<String>();
 			timeTypeCds.add(WtmApplService.TIME_TYPE_BASE);
 			timeTypeCds.add(WtmApplService.TIME_TYPE_OT);
-//			timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
-//			timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
-//			timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
+			timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
+			timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
+			timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
 			//인정시간 초기화
 			calcApprDayInfoApprReset(tenantId, enterCd, sabun, timeTypeCds, sYmd, eYmd);
 			
@@ -2613,7 +2613,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				List<WtmWorkDayResult> apprResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCd, calendar.getYmd(), calendar.getYmd());
 				for(WtmWorkDayResult r : apprResults) {
 					Date sDate = calcService.WorkTimeCalcApprDate(calendar.getEntrySdate(), r.getPlanSdate(), flexStdMgr.getUnitMinute(), "S");
-					Date eDate = calcService.WorkTimeCalcApprDate( r.getPlanEdate(), calendar.getEntryEdate(), flexStdMgr.getUnitMinute(), "E");
+					Date eDate = null ;
+					if( r.getPlanEdate().compareTo(calendar.getEntryEdate()) < 0) {
+						eDate = calcService.WorkTimeCalcApprDate( r.getPlanEdate(), calendar.getEntryEdate(), flexStdMgr.getUnitMinute(), "E");
+					} else {
+						eDate = calcService.WorkTimeCalcApprDate( calendar.getEntryEdate(), r.getPlanEdate(), flexStdMgr.getUnitMinute(), "E");
+					}
 					if(sDate.compareTo(eDate) < 0) {
 						
 						boolean isAppr = true;
