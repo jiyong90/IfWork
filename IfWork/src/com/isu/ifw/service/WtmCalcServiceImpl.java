@@ -241,7 +241,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			calcEdate = this.WorkTimeCalcApprDate(eDate, eDate, flexStdMgr.getUnitMinute(), "E");
 		} else {
 			calcSdate = this.WorkTimeCalcApprDate(entrySdate, sDate, flexStdMgr.getUnitMinute(), "S");
-			calcEdate = this.WorkTimeCalcApprDate(eDate, entryEdate, flexStdMgr.getUnitMinute(), "E");
+			calcEdate = this.WorkTimeCalcApprDate(entryEdate, eDate, flexStdMgr.getUnitMinute(), "E");
 		}
 		
 
@@ -671,8 +671,10 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			}
 		}
 		
-		List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndYmdAndSabunAndApprEdateAfterAndApprSdateBeforeAndApprMinuteGreaterThenAndApprMinuteIsNotNullOrderByApprSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun(), sDate, eDate, 0);
-		
+//		List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndYmdAndSabunAndApprEdateAfterAndApprSdateBeforeAndApprMinuteGreaterThenAndApprMinuteIsNotNullOrderByApprSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun(), sDate, eDate, 0);
+		List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCd(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(),calendar.getYmd(),"BASE");
+
+
 		boolean nextDataCheck = false;
 		//이전 데이터 종료일
 		Date preEdate = null;
@@ -690,57 +692,75 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			if(results.size() > 0) {
 				Date loopSdate = sDate;
 				for(WtmWorkDayResult r : results) {
-					logger.debug("WtmWorkDayResult : " + r);
-					
-					if(nextDataCheck) {
-						if(preEdate.compareTo(r.getApprSdate()) < 0 && eDate.compareTo(r.getApprSdate()) > 0) {
-							Date calcSdate = preEdate; 
-							Date calcEdate = r.getApprSdate();
-							// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다.. 
-							// 근무시간을 계산 하자
-							Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-							sumApprMinute += Integer.parseInt(calcMap.get("apprMinute")+"");
-							loopSdate = r.getApprEdate();
-						}
-						nextDataCheck = false;
-					}
-					if(loopSdate.compareTo(r.getApprSdate()) < 0) {
-						Date calcSdate = loopSdate; 
-						Date calcEdate = r.getApprSdate();
-						
-						// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다.. 
+
+					if(loopSdate.compareTo(r.getPlanSdate()) < 1 && eDate.compareTo(r.getPlanEdate()) > -1) {
+
+						Date calcSdate = loopSdate;
+						Date calcEdate = r.getPlanEdate();
+						// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다..
 						// 근무시간을 계산 하자
 						Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 						sumApprMinute += Integer.parseInt(calcMap.get("apprMinute")+"");
-						loopSdate = r.getApprEdate();
-						
-						if(eDate.compareTo(r.getApprEdate()) > 0) {
-							//다음데이터를 확인해야한다. 
-							nextDataCheck = true;
-							preEdate = r.getApprEdate();
-						}
-						
-					}else if(eDate.compareTo(r.getApprEdate()) > 0) {
-						//다음데이터를 확인해야한다. 
-						nextDataCheck = true;
-						preEdate = r.getApprEdate();
-					}
-					
-				}
-				if(nextDataCheck) {
-					//다음 데이터를 체크해야하는데 없었을 경우 
-					//남은 기간을 생성한다.  
-					if(preEdate.compareTo(eDate) < 0) {
-						Date calcSdate = preEdate; 
+						loopSdate = r.getPlanEdate();
+					} else if(loopSdate.compareTo(r.getPlanSdate()) < 1 && eDate.compareTo(r.getPlanEdate()) < 0) {
+						Date calcSdate = r.getPlanSdate();
 						Date calcEdate = eDate;
-						
-						// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다.. 
-						// 근무시간을 계산 하자
 						Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 						sumApprMinute += Integer.parseInt(calcMap.get("apprMinute")+"");
 					}
-					nextDataCheck = false;
+
+//					logger.debug("WtmWorkDayResult : " + r);
+//
+//					if(nextDataCheck) {
+//						if(preEdate.compareTo(r.getApprSdate()) < 0 && eDate.compareTo(r.getApprSdate()) > 0) {
+//							Date calcSdate = preEdate;
+//							Date calcEdate = r.getApprSdate();
+//							// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다..
+//							// 근무시간을 계산 하자
+//							Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+//							sumApprMinute += Integer.parseInt(calcMap.get("apprMinute")+"");
+//							loopSdate = r.getApprSdate();
+//						}
+//						nextDataCheck = false;
+//					}
+//					if(loopSdate.compareTo(r.getApprSdate()) < 0) {
+//						Date calcSdate = loopSdate;
+//						Date calcEdate = r.getApprSdate();
+//
+//						// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다..
+//						// 근무시간을 계산 하자
+//						Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+//						sumApprMinute += Integer.parseInt(calcMap.get("apprMinute")+"");
+//						loopSdate = r.getApprSdate();
+////						sDate = r.getApprEdate();
+//
+//						if(eDate.compareTo(r.getApprEdate()) > 0) {
+//							//다음데이터를 확인해야한다.
+//							nextDataCheck = true;
+//							preEdate = r.getApprSdate();
+//						}
+//
+//					}else if(eDate.compareTo(r.getApprEdate()) > 0) {
+//						//다음데이터를 확인해야한다.
+//						nextDataCheck = true;
+//						preEdate = r.getApprEdate();
+//					}
+					
 				}
+//				if(nextDataCheck) {
+//					//다음 데이터를 체크해야하는데 없었을 경우
+//					//남은 기간을 생성한다.
+//					if(preEdate.compareTo(eDate) < 0) {
+//						Date calcSdate = preEdate;
+//						Date calcEdate = eDate;
+//
+//						// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다..
+//						// 근무시간을 계산 하자
+//						Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+//						sumApprMinute += Integer.parseInt(calcMap.get("apprMinute")+"");
+//					}
+//					nextDataCheck = false;
+//				}
 				if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
 					sumBreakMinute = getBreakMinuteIfBreakTimeTIME(timeCdMgr.getTimeCdMgrId(), sumApprMinute);
 				} 
@@ -771,111 +791,42 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				for(WtmWorkDayResult r : results) {
 					//잔여시간이 있어야한다. 
 					if(calcWorkMinute > 0) {
-						if(nextDataCheck) {
-							//다음 데이터가 eDate 보다 시작 인정시각이 뒤 일수 없다 그럼 쿼리가 이상
-							if(preEdate.compareTo(r.getApprSdate()) < 0 && eDate.compareTo(r.getApprSdate()) > 0) {
-								Date calcSdate = preEdate; 
-								Date calcEdate = r.getApprSdate();
-								
-								int apprMinute = 0;
-								// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다.. 
-								// 근무시간을 계산 하자
-								Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-								apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
-								
-								logger.debug("createFixOt :: calcWorkMinute = " + calcWorkMinute);
-								logger.debug("createFixOt :: apprMinute = " + apprMinute);
-								//잔여 근무시간이 있을 경우 
-								if( createLimitMinute > 0) {
-									//잔여 근무시간을 초과하지 않을 경우 
-									if( createLimitMinute < (apprMinute )) {
-										//데이터를 만든다. 
-									//} else {
-										//초과할 경우 잔여 시간만큼 생성해야한다. 
-										Calendar cal = Calendar.getInstance();
-										cal.setTime(calcSdate);
-										cal.add(Calendar.MINUTE, createLimitMinute);
-										//잔여시간 만큼만 
-										calcEdate = cal.getTime();
-										
-										//다시 계산한다. 
-										calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-										apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
-				
-										logger.debug("createFixOt re:: apprMinute = " + apprMinute);
-										createLimitMinute = 0;
-									}else {
-										createLimitMinute = createLimitMinute - apprMinute;
-									}
-								}
-								
-								logger.debug("createFixOt :: createLimitMinute = " + createLimitMinute);
-								
-								
-								WtmWorkDayResult newResult = new WtmWorkDayResult();
-								newResult.setTenantId(calendar.getTenantId());
-								newResult.setEnterCd(calendar.getEnterCd());
-								newResult.setYmd(calendar.getYmd());
-								newResult.setSabun(calendar.getSabun());
-								newResult.setPlanSdate(calcSdate);
-								newResult.setPlanEdate(calcEdate);
-								newResult.setApprSdate(calcSdate);
-								newResult.setApprEdate(calcEdate);
-								newResult.setTimeTypeCd(timeTypeCd);
-								
-								newResult.setPlanMinute(apprMinute);
-								newResult.setApprMinute(apprMinute);
-								newResult.setUpdateDate(new Date());
-								newResult.setUpdateId("createFixOt1");
-								
-								workDayResultRepo.save(newResult);
-								
-								loopSdate = calcEdate;
-							}
-							nextDataCheck = false;
-						}
-						
-						// 시작시각 보다 빠를 경우 
-						logger.debug("sDate.compareTo(r.getApprSdate()) : " + sDate.compareTo(r.getApprSdate()));
-						if(loopSdate.compareTo(r.getApprSdate()) < 0) {
-							
-							Date calcSdate = sDate; 
-							Date calcEdate = r.getApprSdate();
-							
-							int apprMinute = 0;
-							// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다.. 
+
+
+						int apprMinute = 0;
+
+						if(loopSdate.compareTo(r.getPlanSdate()) < 1 && eDate.compareTo(r.getPlanEdate()) > -1) {
+
+							Date calcSdate = loopSdate;
+							Date calcEdate = r.getPlanEdate();
+							// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다..
 							// 근무시간을 계산 하자
 							Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-							apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
-							
-							logger.debug("createFixOt :: calcWorkMinute = " + calcWorkMinute);
-							logger.debug("createFixOt :: apprMinute = " + apprMinute);
-							//잔여 근무시간이 있을 경우 
+							apprMinute += Integer.parseInt(calcMap.get("apprMinute")+"");
+
+							loopSdate = r.getPlanEdate();
+
 							if( createLimitMinute > 0) {
-								//잔여 근무시간을 초과하지 않을 경우 
-								if( createLimitMinute < (apprMinute )) {
-									//데이터를 만든다. 
-								//} else {
-									//초과할 경우 잔여 시간만큼 생성해야한다. 
+								//잔여 근무시간을 초과하지 않을 경우
+								if( createLimitMinute < apprMinute) {
+
 									Calendar cal = Calendar.getInstance();
 									cal.setTime(calcSdate);
 									cal.add(Calendar.MINUTE, createLimitMinute);
-									//잔여시간 만큼만 
+									//잔여시간 만큼만
 									calcEdate = cal.getTime();
-									
-									//다시 계산한다. 
+
+									//다시 계산한다.
 									calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 									apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
-			
+
 									logger.debug("createFixOt re:: apprMinute = " + apprMinute);
 									createLimitMinute = 0;
 								}else {
 									createLimitMinute = createLimitMinute - apprMinute;
 								}
 							}
-							
-							logger.debug("createFixOt :: createLimitMinute = " + createLimitMinute);
-							
+
 							WtmWorkDayResult newResult = new WtmWorkDayResult();
 							newResult.setTenantId(calendar.getTenantId());
 							newResult.setEnterCd(calendar.getEnterCd());
@@ -886,28 +837,197 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							newResult.setApprSdate(calcSdate);
 							newResult.setApprEdate(calcEdate);
 							newResult.setTimeTypeCd(timeTypeCd);
-							
+
 							newResult.setPlanMinute(apprMinute);
 							newResult.setApprMinute(apprMinute);
 							newResult.setUpdateDate(new Date());
-							newResult.setUpdateId("createFixOt2");
-							
+							newResult.setUpdateId("createFixOt1");
+
 							workDayResultRepo.save(newResult);
-							loopSdate = calcEdate;
-							
-							//그런데? 종료시간도 포함된 시각이라면?
-							//09:00 ~ 15:00 인데 r 이 10:00~11:00 인지 체크
-							logger.debug("eDate.compareTo(r.getApprEdate()) : " + eDate.compareTo(r.getApprEdate()));
-							if(eDate.compareTo(r.getApprEdate()) > 0) {
-								//다음데이터를 확인해야한다. 
-								nextDataCheck = true;
-								preEdate = r.getApprEdate();
+
+						} else if(loopSdate.compareTo(r.getPlanSdate()) < 1 && eDate.compareTo(r.getPlanEdate()) < 0) {
+							Date calcSdate = r.getPlanSdate();
+							Date calcEdate = eDate;
+							Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+							apprMinute += Integer.parseInt(calcMap.get("apprMinute")+"");
+
+							if( createLimitMinute > 0) {
+								//잔여 근무시간을 초과하지 않을 경우
+								if( createLimitMinute < apprMinute) {
+
+									Calendar cal = Calendar.getInstance();
+									cal.setTime(calcSdate);
+									cal.add(Calendar.MINUTE, createLimitMinute);
+									//잔여시간 만큼만
+									calcEdate = cal.getTime();
+
+									//다시 계산한다.
+									calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+									apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+
+									logger.debug("createFixOt re:: apprMinute = " + apprMinute);
+									createLimitMinute = 0;
+								}else {
+									createLimitMinute = createLimitMinute - apprMinute;
+								}
 							}
-						}else if(eDate.compareTo(r.getApprEdate()) > 0) {
-							//다음데이터를 확인해야한다. 
-							nextDataCheck = true;
-							preEdate = r.getApprEdate();
+
+							WtmWorkDayResult newResult = new WtmWorkDayResult();
+							newResult.setTenantId(calendar.getTenantId());
+							newResult.setEnterCd(calendar.getEnterCd());
+							newResult.setYmd(calendar.getYmd());
+							newResult.setSabun(calendar.getSabun());
+							newResult.setPlanSdate(calcSdate);
+							newResult.setPlanEdate(calcEdate);
+							newResult.setApprSdate(calcSdate);
+							newResult.setApprEdate(calcEdate);
+							newResult.setTimeTypeCd(timeTypeCd);
+
+							newResult.setPlanMinute(apprMinute);
+							newResult.setApprMinute(apprMinute);
+							newResult.setUpdateDate(new Date());
+							newResult.setUpdateId("createFixOt1");
+
+							workDayResultRepo.save(newResult);
 						}
+
+//						if(nextDataCheck) {
+//							//다음 데이터가 eDate 보다 시작 인정시각이 뒤 일수 없다 그럼 쿼리가 이상
+//							if(preEdate.compareTo(r.getApprSdate()) < 0 && eDate.compareTo(r.getApprSdate()) > 0) {
+//								Date calcSdate = preEdate;
+//								Date calcEdate = r.getApprSdate();
+//
+//								int apprMinute = 0;
+//								// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다..
+//								// 근무시간을 계산 하자
+//								Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+//								apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+//
+//								logger.debug("createFixOt :: calcWorkMinute = " + calcWorkMinute);
+//								logger.debug("createFixOt :: apprMinute = " + apprMinute);
+//								//잔여 근무시간이 있을 경우
+//								if( createLimitMinute > 0) {
+//									//잔여 근무시간을 초과하지 않을 경우
+//									if( createLimitMinute < (apprMinute)) {
+//										//데이터를 만든다.
+//									//} else {
+//										//초과할 경우 잔여 시간만큼 생성해야한다.
+//										Calendar cal = Calendar.getInstance();
+//										cal.setTime(calcSdate);
+//										cal.add(Calendar.MINUTE, createLimitMinute);
+//										//잔여시간 만큼만
+//										calcEdate = cal.getTime();
+//
+//										//다시 계산한다.
+//										calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+//										apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+//
+//										logger.debug("createFixOt re:: apprMinute = " + apprMinute);
+//										createLimitMinute = 0;
+//									}else {
+//										createLimitMinute = createLimitMinute - apprMinute;
+//									}
+//								}
+//
+//								logger.debug("createFixOt :: createLimitMinute = " + createLimitMinute);
+//
+//
+//								WtmWorkDayResult newResult = new WtmWorkDayResult();
+//								newResult.setTenantId(calendar.getTenantId());
+//								newResult.setEnterCd(calendar.getEnterCd());
+//								newResult.setYmd(calendar.getYmd());
+//								newResult.setSabun(calendar.getSabun());
+//								newResult.setPlanSdate(calcSdate);
+//								newResult.setPlanEdate(calcEdate);
+//								newResult.setApprSdate(calcSdate);
+//								newResult.setApprEdate(calcEdate);
+//								newResult.setTimeTypeCd(timeTypeCd);
+//
+//								newResult.setPlanMinute(apprMinute);
+//								newResult.setApprMinute(apprMinute);
+//								newResult.setUpdateDate(new Date());
+//								newResult.setUpdateId("createFixOt1");
+//
+//								workDayResultRepo.save(newResult);
+//
+//								loopSdate = calcEdate;
+//							}
+//							nextDataCheck = false;
+//						}
+//
+//						// 시작시각 보다 빠를 경우
+//						logger.debug("sDate.compareTo(r.getApprSdate()) : " + sDate.compareTo(r.getApprSdate()));
+//						if(loopSdate.compareTo(r.getApprSdate()) < 0) {
+//
+//							Date calcSdate = sDate;
+//							Date calcEdate = r.getApprSdate();
+//
+//							int apprMinute = 0;
+//							// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다..
+//							// 근무시간을 계산 하자
+//							Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+//							apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+//
+//							logger.debug("createFixOt :: calcWorkMinute = " + calcWorkMinute);
+//							logger.debug("createFixOt :: apprMinute = " + apprMinute);
+//							//잔여 근무시간이 있을 경우
+//							if( createLimitMinute > 0) {
+//								//잔여 근무시간을 초과하지 않을 경우
+//								if( createLimitMinute < (apprMinute )) {
+//									//데이터를 만든다.
+//								//} else {
+//									//초과할 경우 잔여 시간만큼 생성해야한다.
+//									Calendar cal = Calendar.getInstance();
+//									cal.setTime(calcSdate);
+//									cal.add(Calendar.MINUTE, createLimitMinute);
+//									//잔여시간 만큼만
+//									calcEdate = cal.getTime();
+//
+//									//다시 계산한다.
+//									calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+//									apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+//
+//									logger.debug("createFixOt re:: apprMinute = " + apprMinute);
+//									createLimitMinute = 0;
+//								}else {
+//									createLimitMinute = createLimitMinute - apprMinute;
+//								}
+//							}
+//
+//							logger.debug("createFixOt :: createLimitMinute = " + createLimitMinute);
+//
+//							WtmWorkDayResult newResult = new WtmWorkDayResult();
+//							newResult.setTenantId(calendar.getTenantId());
+//							newResult.setEnterCd(calendar.getEnterCd());
+//							newResult.setYmd(calendar.getYmd());
+//							newResult.setSabun(calendar.getSabun());
+//							newResult.setPlanSdate(calcSdate);
+//							newResult.setPlanEdate(calcEdate);
+//							newResult.setApprSdate(calcSdate);
+//							newResult.setApprEdate(calcEdate);
+//							newResult.setTimeTypeCd(timeTypeCd);
+//
+//							newResult.setPlanMinute(apprMinute);
+//							newResult.setApprMinute(apprMinute);
+//							newResult.setUpdateDate(new Date());
+//							newResult.setUpdateId("createFixOt2");
+//
+//							workDayResultRepo.save(newResult);
+//							loopSdate = calcEdate;
+//
+//							//그런데? 종료시간도 포함된 시각이라면?
+//							//09:00 ~ 15:00 인데 r 이 10:00~11:00 인지 체크
+//							logger.debug("eDate.compareTo(r.getApprEdate()) : " + eDate.compareTo(r.getApprEdate()));
+//							if(eDate.compareTo(r.getApprEdate()) > 0) {
+//								//다음데이터를 확인해야한다.
+//								nextDataCheck = true;
+//								preEdate = r.getApprEdate();
+//							}
+//						}else if(eDate.compareTo(r.getApprEdate()) > 0) {
+//							//다음데이터를 확인해야한다.
+//							nextDataCheck = true;
+//							preEdate = r.getApprEdate();
+//						}
 						
 					}else {
 						break;
@@ -915,72 +1035,72 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 
 				}
 				
-				if(nextDataCheck &&  createLimitMinute > 0) {
-					//다음 데이터를 체크해야하는데 없었을 경우 
-					//남은 기간을 생성한다.  
-					if(preEdate.compareTo(eDate) < 0) {
-						Date calcSdate = preEdate; 
-						Date calcEdate = eDate;
-						
-						int apprMinute = 0;
-						// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다.. 
-						// 근무시간을 계산 하자
-						Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-						apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
-						
-						logger.debug("createFixOt :: calcWorkMinute = " + calcWorkMinute);
-						logger.debug("createFixOt :: apprMinute = " + apprMinute);
-						//잔여 근무시간이 있을 경우 
-						if( createLimitMinute > 0) {
-							//잔여 근무시간을 초과하지 않을 경우 
-							if( createLimitMinute < (apprMinute )) {
-								//데이터를 만든다. 
-							//} else {
-								//초과할 경우 잔여 시간만큼 생성해야한다. 
-								Calendar cal = Calendar.getInstance();
-								cal.setTime(calcSdate);
-								cal.add(Calendar.MINUTE, createLimitMinute);
-								//잔여시간 만큼만 
-								calcEdate = cal.getTime();
-								
-								//다시 계산한다. 
-								calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
-								apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
-		
-								logger.debug("createFixOt re:: apprMinute = " + apprMinute);
-								createLimitMinute = 0;
-							}else {
-								createLimitMinute = createLimitMinute - apprMinute;
-							}
-						}
-						
-						logger.debug("createFixOt :: createLimitMinute = " + createLimitMinute);
-						
-						WtmWorkDayResult newResult = new WtmWorkDayResult();
-						newResult.setTenantId(calendar.getTenantId());
-						newResult.setEnterCd(calendar.getEnterCd());
-						newResult.setYmd(calendar.getYmd());
-						newResult.setSabun(calendar.getSabun());
-						newResult.setPlanSdate(calcSdate);
-						newResult.setPlanEdate(calcEdate);
-						newResult.setApprSdate(calcSdate);
-						newResult.setApprEdate(calcEdate);
-						newResult.setTimeTypeCd(timeTypeCd);
-						
-						newResult.setPlanMinute(apprMinute);
-						newResult.setApprMinute(apprMinute);
-						newResult.setUpdateDate(new Date());
-						newResult.setUpdateId("createFixOt-last");
-						
-						workDayResultRepo.save(newResult);
-					}
-				}
-				
+//				if(nextDataCheck &&  createLimitMinute > 0) {
+//					//다음 데이터를 체크해야하는데 없었을 경우
+//					//남은 기간을 생성한다.
+//					if(preEdate.compareTo(eDate) < 0) {
+//						Date calcSdate = preEdate;
+//						Date calcEdate = eDate;
+//
+//						int apprMinute = 0;
+//						// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다..
+//						// 근무시간을 계산 하자
+//						Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+//						apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+//
+//						logger.debug("createFixOt :: calcWorkMinute = " + calcWorkMinute);
+//						logger.debug("createFixOt :: apprMinute = " + apprMinute);
+//						//잔여 근무시간이 있을 경우
+//						if( createLimitMinute > 0) {
+//							//잔여 근무시간을 초과하지 않을 경우
+//							if( createLimitMinute < (apprMinute )) {
+//								//데이터를 만든다.
+//							//} else {
+//								//초과할 경우 잔여 시간만큼 생성해야한다.
+//								Calendar cal = Calendar.getInstance();
+//								cal.setTime(calcSdate);
+//								cal.add(Calendar.MINUTE, createLimitMinute);
+//								//잔여시간 만큼만
+//								calcEdate = cal.getTime();
+//
+//								//다시 계산한다.
+//								calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+//								apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+//
+//								logger.debug("createFixOt re:: apprMinute = " + apprMinute);
+//								createLimitMinute = 0;
+//							}else {
+//								createLimitMinute = createLimitMinute - apprMinute;
+//							}
+//						}
+//
+//						logger.debug("createFixOt :: createLimitMinute = " + createLimitMinute);
+//
+//						WtmWorkDayResult newResult = new WtmWorkDayResult();
+//						newResult.setTenantId(calendar.getTenantId());
+//						newResult.setEnterCd(calendar.getEnterCd());
+//						newResult.setYmd(calendar.getYmd());
+//						newResult.setSabun(calendar.getSabun());
+//						newResult.setPlanSdate(calcSdate);
+//						newResult.setPlanEdate(calcEdate);
+//						newResult.setApprSdate(calcSdate);
+//						newResult.setApprEdate(calcEdate);
+//						newResult.setTimeTypeCd(timeTypeCd);
+//
+//						newResult.setPlanMinute(apprMinute);
+//						newResult.setApprMinute(apprMinute);
+//						newResult.setUpdateDate(new Date());
+//						newResult.setUpdateId("createFixOt-last");
+//
+//						workDayResultRepo.save(newResult);
+//					}
+//				}
+
 				//if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
-					// workDayResult 에 휴게시간을 만들어 준다. 
+					// workDayResult 에 휴게시간을 만들어 준다.
 				//	this.createWorkDayResultForBreakTime(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), (timeTypeCd.equals(WtmApplService.TIME_TYPE_BASE))?"BREAK":"BREAK_FIXOT", "APPR", sumBreakMinute, "createWorkDayResultForBreakTime");
 				//}
-				
+
 				logger.debug("createFixOt end");
 			}else {
 				P_WTM_WORK_DAY_RESULT_CREATE_T(flexibleStdMgr, calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), calendar.getYmd(), timeCdMgr.getTimeCdMgrId(), sDate, eDate, flexibleStdMgr.getUnitMinute(), WtmApplService.TIME_TYPE_FIXOT, timeCdMgr.getBreakTypeCd(), limitMinute, useMinute, "fixot");
@@ -1771,7 +1891,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				cal2.setTime(rDt);
 				//단위 시간 적용
 //				int calcM = (((m2 + unitMinute) - ((m + unitMinute)%unitMinute)%60) - ((unitMinute==1)?1:unitMinute)) % unitMinute  ;
-				int calcM = (int)(((rDt.getTime() - dt.getTime())/60000/unitMinute)*unitMinute);
+				int calcM = (int)(((rDt.getTime() - dt.getTime())/60000/unitMinute)*unitMinute) + (int)((((rDt.getTime() - dt.getTime())/60000%unitMinute))>0?unitMinute:((rDt.getTime() - dt.getTime())/60000%unitMinute));
 
 //				((30+30) - (30+30)%30)%60;
 				Calendar cal = Calendar.getInstance();
