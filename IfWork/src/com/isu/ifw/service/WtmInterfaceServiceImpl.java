@@ -98,6 +98,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	@Autowired private WtmCalcService calcService;
 	
 	@Autowired private WtmTimeCdMgrRepository timeCdMgrRepo;
+
+	@Autowired private WtmCodeRepository wtmCodeRepository;
 	
 	@Override
 	public Map<String, Object> getIfLastDate(Long tenantId, String ifType) throws Exception {
@@ -2289,14 +2291,24 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		logger.debug("ifApplNo : " + ifApplNo);
 		logger.debug("status : " + status);
 
+		Date now = new Date();
+		SimpleDateFormat ymdformat = new SimpleDateFormat("yyyyMMdd");
+		String nowYmd = ymdformat.format(now);
+
+		List<WtmCode> wtmCodes = wtmCodeRepository.findByTenantIdAndEnterCdAndYmdAndGrpCodeCd(tenantId, enterCd, nowYmd, "APPL_STATUS_CD");
+
 		List<String> statusList = new ArrayList<String>();
-		statusList.add(WtmApplService.APPL_STATUS_APPLY_ING);
-		statusList.add(WtmApplService.APPL_STATUS_APPLY_REJECT);
-		statusList.add(WtmApplService.APPL_STATUS_APPR);
-		statusList.add(WtmApplService.APPL_STATUS_APPR_ING);
-		statusList.add(WtmApplService.APPL_STATUS_APPR_REJECT);
-		statusList.add(WtmApplService.APPL_STATUS_CANCEL);
-		statusList.add(WtmApplService.APPL_STATUS_IMSI);
+		for(WtmCode wtmCode : wtmCodes) {
+			statusList.add(wtmCode.getCodeCd());
+		}
+
+//		statusList.add(WtmApplService.APPL_STATUS_APPLY_ING);
+//		statusList.add(WtmApplService.APPL_STATUS_APPLY_REJECT);
+//		statusList.add(WtmApplService.APPL_STATUS_APPR);
+//		statusList.add(WtmApplService.APPL_STATUS_APPR_ING);
+//		statusList.add(WtmApplService.APPL_STATUS_APPR_REJECT);
+//		statusList.add(WtmApplService.APPL_STATUS_CANCEL);
+//		statusList.add(WtmApplService.APPL_STATUS_IMSI);
 		
 		if(statusList.indexOf(status) == -1) {
 			throw new RuntimeException("지원하지 않은 신청서 상태코드");
@@ -2423,6 +2435,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						}
 					}
 					
+				} else if(WtmApplService.APPL_STATUS_CANCEL.equals(status)) {
+
 				}
 			}
 		}else {
@@ -2462,7 +2476,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 							logger.debug("============================== resetTaaResult : " + w.get("sabun")+" : " + work.get("startYmd")+"");
 							this.resetTaaResult(tenantId, enterCd, w.get("sabun")+"", work.get("startYmd")+"");
 						} else {
-							List<WtmWorkDayResult> workDayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndApplId(tenantId, enterCd, w.get("sabun").toString(), taaAppls.get(0).getApplId());
+//							List<WtmWorkDayResult> workDayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndApplId(tenantId, enterCd, w.get("sabun").toString(), taaAppls.get(0).getApplId());
+							List<WtmWorkDayResult> workDayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenOrderByYmdAsc(tenantId, enterCd, w.get("sabun").toString(), work.get("startYmd").toString(), work.get("endYmd").toString());
 
 							if(workDayResults != null) {
 								for(WtmWorkDayResult result: workDayResults) {

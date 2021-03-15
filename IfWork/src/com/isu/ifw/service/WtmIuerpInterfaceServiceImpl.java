@@ -578,6 +578,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 								empHis.setEymd(eymd);
 								empHis.setEmpId(empId);
 								empHis.setUpdateId(updateId);
+								empHis.setEmpYmd(symd);
 								
 								try {
 									wtmEmpHisRepo.save(empHis);

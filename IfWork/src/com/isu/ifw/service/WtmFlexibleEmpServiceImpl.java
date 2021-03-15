@@ -1569,6 +1569,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					timeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
 					timeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
 					timeTypeCds.add(WtmApplService.TIME_TYPE_SUBS);
+					timeTypeCds.add(WtmApplService.TIME_TYPE_REGA);
+					timeTypeCds.add(WtmApplService.TIME_TYPE_TAA);
 				/*
 				timeTypeCds.add(WtmApplService.TIME_TYPE_REGA);  // 아래서 하고 있음
 				timeTypeCds.add(WtmApplService.TIME_TYPE_TAA);	// 아래서 하고 있음
