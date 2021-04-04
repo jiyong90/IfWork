@@ -103,7 +103,9 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				sYmd = empYmd;
 			}
 
-
+			/*
+			FLEXIBLE_EMP 초기화
+			 */
 			logger.debug("### EMP_RESET ::" + sabun + " 1. 초기화");
 			this.initWtmFlexibleEmp(tenantId, enterCd, sabun,sy+"0101", eYmd, userId);
 			logger.debug("### EMP_RESET ::" + sabun + "1. 초기화 END");
@@ -234,6 +236,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 		logger.debug("baseWorks.size : " + baseWorks.size());
 		if(baseWorks != null && baseWorks.size() > 0) {
 			dayMap = new HashMap<String, Map<String, String>>();
+			String workTypeCd = "BASE";
 			for(WtmBaseWorkMgr e : baseWorks) {
 				Date d1 = ymd.parse(e.getSymd());
 				Date d2 = ymd.parse(e.getEymd());
@@ -256,7 +259,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 					Map<String, String> m = new HashMap<String, String>();
 					m.put("flexibleStdMgrId", e.getFlexibleStdMgrId()+"");
 					m.put("flexibleNm", "");
-					m.put("type","B");
+					m.put("type",workTypeCd);
 					dayMap.put(ymd.format(d1), m);
 					cal.setTime(d1);
 					cal.add(Calendar.DATE, 1);
@@ -273,7 +276,8 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 				WtmWorkteamMgr mgr = workteamMgrRepo.findByWorkteamMgrId(e.getWorkteamMgrId());
 				Long flexibleStdMgrId = mgr.getFlexibleStdMgrId();
 				String flexibleNm = mgr.getWorkteamNm();
-				
+				String workTypeCd = "WORKTEAM";
+
 				Date d1 = ymd.parse(e.getSymd());
 				Date d2 = ymd.parse(e.getEymd());
 				/*
@@ -288,21 +292,21 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 					continue;
 				}
 				*/
-				
+
 				Calendar cal = Calendar.getInstance();
 				while(d1.compareTo(d2) <= 0) {
 					Map<String, String> m = new HashMap<String, String>();
 					m.put("flexibleStdMgrId", flexibleStdMgrId+"");
 					m.put("flexibleNm",flexibleNm);
-					m.put("type","W");
+					m.put("type",workTypeCd);
 					dayMap.put(ymd.format(d1), m);
 					cal.setTime(d1);
 					cal.add(Calendar.DATE, 1);
 					d1 = cal.getTime();
 				}
-				 
+
 			}
-		}  
+		}
 
 		//마지막으로 유연근무제 정보로 지운다
 		if(dayMap != null && emps != null && emps.size() > 0) {
@@ -408,7 +412,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 						insEmp.setEymd(e);
 						insEmp.setFlexibleNm("");
 						insEmp.setFlexibleStdMgrId(Long.parseLong(tmp1));
-						insEmp.setWorkTypeCd("BASE");
+						insEmp.setWorkTypeCd(tmp2);
 						insEmp.setUpdateId(userId);
 						
 						wtmFlexibleEmpRepo.save(insEmp);
@@ -453,7 +457,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 							insEmp.setEymd(e);
 							insEmp.setFlexibleNm("");
 							insEmp.setFlexibleStdMgrId(Long.parseLong(tmp1));
-							insEmp.setWorkTypeCd("BASE");
+							insEmp.setWorkTypeCd(tmp2);
 							insEmp.setUpdateId(userId);
 							
 							wtmFlexibleEmpRepo.save(insEmp);

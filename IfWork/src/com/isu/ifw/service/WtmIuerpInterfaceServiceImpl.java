@@ -619,6 +619,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 								newEmp.setEymd(eymd);
 								newEmp.setEmpId(empId);
 								newEmp.setUpdateId(updateId);
+								newEmp.setEmpYmd(symd);
 								
 								try {
 									wtmEmpHisRepo.save(newEmp);
@@ -650,6 +651,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 						newEmp.setEymd(eymd);
 						newEmp.setEmpId(empId);
 						newEmp.setUpdateId(updateId);
+						newEmp.setEmpYmd(symd);
 						
 						try {
 							wtmEmpHisRepo.save(newEmp);

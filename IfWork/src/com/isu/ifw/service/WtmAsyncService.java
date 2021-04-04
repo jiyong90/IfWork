@@ -176,6 +176,9 @@ public class WtmAsyncService {
 
 				try {
 					flexibleEmpResetService.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, sYmd, eYmd, userId);
+
+					calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, sYmd.substring(0,4)+"0101", eYmd.substring(0,4)+"1231");
+
 				} catch (Exception e) {
 
 					WtmAsyncLogDet logDet = new WtmAsyncLogDet();
@@ -253,6 +256,10 @@ public class WtmAsyncService {
 									interfaceService.resetTaaResult(tenantId, enterCd, sabun, ymd);
 								}
 							}
+							String s = sYmd.substring(0, 4);
+							String e = eYmd.substring(0, 4);
+
+							calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, s+"0101", e+"1231");
 						} catch (Exception e) {
 							e.printStackTrace();
 						};

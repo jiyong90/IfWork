@@ -2477,7 +2477,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 							this.resetTaaResult(tenantId, enterCd, w.get("sabun")+"", work.get("startYmd")+"");
 						} else {
 //							List<WtmWorkDayResult> workDayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndApplId(tenantId, enterCd, w.get("sabun").toString(), taaAppls.get(0).getApplId());
-							List<WtmWorkDayResult> workDayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenOrderByYmdAsc(tenantId, enterCd, w.get("sabun").toString(), work.get("startYmd").toString(), work.get("endYmd").toString());
+							List<WtmWorkDayResult> workDayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndTaaCdOrderByYmdAsc(tenantId, enterCd, w.get("sabun").toString(), work.get("startYmd").toString(), work.get("endYmd").toString(), work.get("workTimeCode").toString());
 
 							if(workDayResults != null) {
 								for(WtmWorkDayResult result: workDayResults) {

@@ -60,10 +60,16 @@ public interface WtmFlexibleEmpRepository extends JpaRepository<WtmFlexibleEmp, 
 	
 	@Query("SELECT E FROM WtmFlexibleEmp E WHERE E.tenantId = ?1 AND E.enterCd = ?2 AND E.sabun = ?3 AND (?4 BETWEEN E.symd AND E.eymd OR  ?5 BETWEEN E.symd AND E.eymd) AND E.workTypeCd IN ?6 ")
 	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAndWorkTypeCds(Long tenantId, String enterCd, String sabun, String symd, String eymd, List<String> workTypeCd);
+
+	@Query("SELECT e FROM WtmFlexibleEmp e JOIN WtmFlexibleStdMgr m ON e.flexibleStdMgrId = m.flexibleStdMgrId WHERE e.tenantId = :tenantId AND e.enterCd = :enterCd AND e.sabun = :sabun AND e.symd <= :eYmd AND e.eymd >= :sYmd ")
+	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymdAll(@Param("tenantId") Long tenantId, @Param("enterCd") String enterCd, @Param("sabun") String sabun, @Param("sYmd") String sYmd, @Param("eYmd") String eYmd);
 	
 	//'20200928' <= EYMD AND '20201004' >= SYMD
 	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndSabunAndEymdGreaterThanEqualAndSymdLessThanEqual(Long tenantId, String enterCd, String sabun, String symd, String eymd);
 	 
 	@Query("SELECT e FROM WtmFlexibleEmp e JOIN WtmFlexibleStdMgr m ON e.flexibleStdMgrId = m.flexibleStdMgrId WHERE e.tenantId = :tenantId AND e.enterCd = :enterCd AND e.sabun = :sabun AND e.symd <= :eYmd AND e.eymd >= :sYmd AND m.baseWorkYn = 'Y' AND e.workTypeCd = 'BASE' ")
 	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndEymdGreaterThanEqualAndSymdLessThanEqualAndBaseWorkYnIsYAndWorkTypeCdIsBASE(@Param("tenantId") Long tenantId, @Param("enterCd") String enterCd, @Param("sabun") String sabun, @Param("sYmd") String sYmd, @Param("eYmd") String eYmd);
+
+	@Query("SELECT e FROM WtmFlexibleEmp e JOIN WtmFlexibleStdMgr m ON e.flexibleStdMgrId = m.flexibleStdMgrId WHERE e.tenantId = :tenantId AND e.enterCd = :enterCd AND e.sabun = :sabun AND e.symd <= :eYmd AND e.eymd >= :sYmd AND e.workTypeCd IN ('BASE', 'WORKTEAM') ")
+	public List<WtmFlexibleEmp> findByTenantIdAndEnterCdAndEymdGreaterThanEqualAndSymdLessThanEqualAndBaseWorkYnIsYAndWorkTypeCdIsBASEWORKTEAM(@Param("tenantId") Long tenantId, @Param("enterCd") String enterCd, @Param("sabun") String sabun, @Param("sYmd") String sYmd, @Param("eYmd") String eYmd);
 }
