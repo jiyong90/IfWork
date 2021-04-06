@@ -2583,6 +2583,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							int nMinute = 0;
 							int eOMinute = 0;
 							int eNMinute = 0;
+							String tempYmd = null;
 							
 							//int holOMinute = 0;
 							
@@ -2760,7 +2761,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 										}
 											
 									}
-									workDayCnt++;
+									// 근무일 카운트는 건별로 보기보다는 날짜로 보기 위해 추가
+									if(tempYmd == null || !tempYmd.equals(result.getYmd())) {
+										workDayCnt++;
+										tempYmd = result.getYmd();
+									}
 								}
 							}
 							/*
