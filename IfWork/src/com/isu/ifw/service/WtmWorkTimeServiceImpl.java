@@ -503,4 +503,42 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 
 		return closeDayList;
 	}
+
+
+	@Override
+	public List<Map<String, Object>> getWorktimeCheckAllList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap) {
+		List<Map<String, Object>> WorktimeCheckAllList = null;
+		try {
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+
+			String now = WtmUtil.parseDateStr(new Date(), "yyyyMMdd");
+			String sYmd = now;
+			String eYmd = now;
+
+			if(paramMap.get("sYmd")!=null && !"".equals("sYmd")) {
+				sYmd = paramMap.get("sYmd").toString().replaceAll("[-.]", "");
+				paramMap.put("sYmd", sYmd);
+			}
+
+			if(paramMap.get("eYmd")!=null && !"".equals("eYmd")) {
+				eYmd = paramMap.get("eYmd").toString().replaceAll("[-.]", "");
+				paramMap.put("eYmd", eYmd);
+			}
+
+			List<String> auths = empService.getAuth(tenantId, enterCd, sabun);
+			if(auths!=null && !auths.contains("FLEX_SETTING") && auths.contains("FLEX_SUB")) {
+				//하위 조직 조회
+				paramMap.put("orgList", empService.getLowLevelOrgList(tenantId, enterCd, sabun, sYmd));
+			}
+			WorktimeCheckAllList = worktimeMapper.getWorktimeCheckAllList(paramMap);
+		} catch(Exception e) {
+			e.printStackTrace();
+			logger.debug(e.toString(), e);
+		} finally {
+			MDC.clear();
+			logger.debug("getWorktimeCheckAllList End", MDC.get("sessionId"), MDC.get("logId"), MDC.get("type"));
+		}
+		return WorktimeCheckAllList;
+	}
 }

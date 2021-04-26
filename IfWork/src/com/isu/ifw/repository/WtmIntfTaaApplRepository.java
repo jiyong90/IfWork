@@ -13,4 +13,6 @@ public interface WtmIntfTaaApplRepository extends JpaRepository<WtmIntfTaaAppl, 
 
 	List<WtmIntfTaaAppl> findByYyyymmddhhmissGreaterThanAndTenantIdAndSabunOrderByIntfId(String yyyymmddhhmiss, Long tenantId, String sabun);
 
+	List<WtmIntfTaaAppl> findByYyyymmddhhmissGreaterThanAndTenantIdAndApplStatusCdOrderByIntfId(String yyyymmddhhmiss, Long tenantId, String applStatusCd);
+
 }

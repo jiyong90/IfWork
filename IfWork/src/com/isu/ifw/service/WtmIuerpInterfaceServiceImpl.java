@@ -48,6 +48,9 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 	@Autowired
 	@Qualifier("flexibleEmpService")
 	private WtmFlexibleEmpService flexibleEmpService;
+
+	@Autowired
+	private WtmFlexibleEmpResetService flexibleEmpResetSerevice;
 	
 	@Autowired
 	WtmPropertieRepository propertieRepo;
@@ -68,7 +71,10 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 	WtmInterfaceMapper wtmInterfaceMapper;
 	
 	@Autowired private WtmEmpHisRepository wtmEmpHisRepo;
-	
+
+	@Autowired
+	private WtmCalcService calcService;
+
 	@Transactional
 	@Override
 	public void applyIntf(Long tenantId, String type) {
@@ -137,7 +143,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 			logger.debug(">"+type+" message : " + rp.get("message").toString());
 			System.out.println(">"+type+" message : " + rp.get("message").toString());
 		}
-			
+
 		interfaceMapper.insertIfHis(ifHisMap);
 	}
 	
@@ -594,7 +600,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 						}else {
 							if(Integer.parseInt(empHis.getSymd()) < Integer.parseInt(symd)) {
 								Calendar cal = Calendar.getInstance();
-								cal.setTime(new Date(symd));
+								cal.setTime(new Date(Long.parseLong(symd)));
 								cal.add(Calendar.DATE, -1);
 								empHis.setEymd(ymd.format(cal.getTime()));
 								wtmEmpHisRepo.save(empHis);
@@ -693,10 +699,13 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 					    	pMap.put("pId", updateId);
 					    	
 					    	flexibleEmpMapper.initWtmFlexibleEmpOfWtmWorkDayResult(pMap);
+//							flexibleEmpResetSerevice.P_WTM_FLEXIBLE_EMP_RESET(tenantId, enterCd, sabun, symd, eymd, "ADMIN");
+
 							flexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(pMap);
+//							calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, symd, eymd);
 					    }
 					}
-					
+
 				}
 			}
 			
@@ -966,8 +975,9 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 		ReturnParam rp = new ReturnParam();
 		
 		try {
-			
+
 			List<WtmIntfTaaAppl> taaAppls = intfTaaApplRepo.findByYyyymmddhhmissGreaterThanAndTenantIdOrderByIntfId(paramMap.get("ymdhis").toString(), Long.valueOf(paramMap.get("tenantId").toString()));
+
 			System.out.println("============================== " + taaAppls.size());
 			int total = 0;
 			int success = 0;

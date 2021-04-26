@@ -3309,79 +3309,82 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		for(WtmWorkDayResult r : base) {
 			logger.debug("********************** r " + r.toString()); 
 			//근무 계획 시작시간과 종료시간의 범위를 절대 벗어날수 없다. 그렇다 한다. ㅋ
-			boolean isDelete = false;
-			//시종시간이 동일하면 기본근무 계획시간을 지운다.
-			if(r.getPlanSdate().compareTo(addSdate) == 0 && r.getPlanEdate().compareTo(addEdate) == 0) {
-				logger.debug("********************** r IF 1"); 
-				isDelete = true;
-			//감싸고 있으면 지워야지..
-			}else if(r.getPlanSdate().compareTo(addSdate) >= 0 && r.getPlanEdate().compareTo(addEdate) <= 0) {
-					logger.debug("********************** r IF 1-1"); 
+			if(r.getPlanSdate() != null && r.getPlanEdate() != null) {
+				boolean isDelete = false;
+				//시종시간이 동일하면 기본근무 계획시간을 지운다.
+				if(r.getPlanSdate().compareTo(addSdate) == 0 && r.getPlanEdate().compareTo(addEdate) == 0) {
+					logger.debug("********************** r IF 1");
 					isDelete = true;
-			// 타켓 시간 8~11의 시간에서 휴게시간이 13~15시가 왔을 때는 패쓰 || 반대의케이스도 ㅋ
-			}else if(r.getPlanEdate().compareTo(addSdate) <= 0 || r.getPlanSdate().compareTo(addEdate) >= 0) {
-				logger.debug("********************** r IF 2");
-				continue;
-			//시작시간은 같지만 계획 종료 시간 보다 대체휴일종료 시간이 작을 경우
-			}else if((r.getPlanSdate().compareTo(addSdate) > 0  || r.getPlanSdate().compareTo(addSdate) == 0) && r.getPlanEdate().compareTo(addEdate) > 0) {
-				logger.debug("********************** r IF 3");
-				r.setPlanSdate(addEdate); // 계획의 시작일은 휴일대체 종료로 변경한다
-				 
-			//종료시간은 같지만 계획 시작시간 보다 대체휴일시작시간이 클경우 && //시작시간만 중간에 껴있을 경우
-			}else if(r.getPlanSdate().compareTo(addSdate) < 0 && (r.getPlanEdate().compareTo(addEdate) == 0 || r.getPlanEdate().compareTo(addEdate) < 0) ) {
-				logger.debug("********************** r IF 4");
-				r.setPlanEdate(addSdate); // 계획의 종료일을 휴일대체 시작일로 변경한다
-			 
-			//계회의 시종 시간 중간에!! 대체휴일 시종시간이 있을 경우! 거지같넹.. 앞에데이터는 수정하고 뒤에 데이터는 만들어줘야한다.. 
-			}else if(r.getPlanSdate().compareTo(addSdate) < 0 && r.getPlanEdate().compareTo(addEdate) > 0) {
-				logger.debug("********************** r IF 5");
-				Date oriEdate = r.getPlanEdate();
-				r.setPlanEdate(addSdate);
-				
-				WtmWorkDayResult addR = new WtmWorkDayResult();
-				addR.setApplId(r.getApplId());
-				addR.setTaaCd(r.getTaaCd());
-				addR.setTenantId(r.getTenantId());
-				addR.setEnterCd(enterCd);
-				addR.setYmd(r.getYmd());
-				addR.setSabun(r.getSabun());
-				addR.setPlanSdate(addEdate);
-				addR.setPlanEdate(oriEdate);
+					//감싸고 있으면 지워야지..
+				}else if(r.getPlanSdate().compareTo(addSdate) >= 0 && r.getPlanEdate().compareTo(addEdate) <= 0) {
+					logger.debug("********************** r IF 1-1");
+					isDelete = true;
+					// 타켓 시간 8~11의 시간에서 휴게시간이 13~15시가 왔을 때는 패쓰 || 반대의케이스도 ㅋ
+				}else if(r.getPlanEdate().compareTo(addSdate) <= 0 || r.getPlanSdate().compareTo(addEdate) >= 0) {
+					logger.debug("********************** r IF 2");
+					continue;
+					//시작시간은 같지만 계획 종료 시간 보다 대체휴일종료 시간이 작을 경우
+				}else if((r.getPlanSdate().compareTo(addSdate) > 0  || r.getPlanSdate().compareTo(addSdate) == 0) && r.getPlanEdate().compareTo(addEdate) > 0) {
+					logger.debug("********************** r IF 3");
+					r.setPlanSdate(addEdate); // 계획의 시작일은 휴일대체 종료로 변경한다
 
-				Map<String, Object> addMap = new HashMap<>();
-				addMap.putAll(pMap);
-				
-				String shm = sdf.format(addEdate);
-				String ehm = sdf.format(oriEdate); 
-				addMap.put("shm", shm);
-				addMap.put("ehm", ehm);
-				Map<String, Object> addPlanMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, addMap, userId);
-				addR.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+""));
-				addR.setTimeTypeCd(r.getTimeTypeCd());
-				addR.setUpdateId(userId);
+					//종료시간은 같지만 계획 시작시간 보다 대체휴일시작시간이 클경우 && //시작시간만 중간에 껴있을 경우
+				}else if(r.getPlanSdate().compareTo(addSdate) < 0 && (r.getPlanEdate().compareTo(addEdate) == 0 || r.getPlanEdate().compareTo(addEdate) < 0) ) {
+					logger.debug("********************** r IF 4");
+					r.setPlanEdate(addSdate); // 계획의 종료일을 휴일대체 시작일로 변경한다
 
-				addR.setApprSdate(null);
-				addR.setApprEdate(null);
-				addR.setApprMinute(null);
-				workDayResultRepo.save(addR);
-				
+					//계회의 시종 시간 중간에!! 대체휴일 시종시간이 있을 경우! 거지같넹.. 앞에데이터는 수정하고 뒤에 데이터는 만들어줘야한다..
+				}else if(r.getPlanSdate().compareTo(addSdate) < 0 && r.getPlanEdate().compareTo(addEdate) > 0) {
+					logger.debug("********************** r IF 5");
+					Date oriEdate = r.getPlanEdate();
+					r.setPlanEdate(addSdate);
+
+					WtmWorkDayResult addR = new WtmWorkDayResult();
+					addR.setApplId(r.getApplId());
+					addR.setTaaCd(r.getTaaCd());
+					addR.setTenantId(r.getTenantId());
+					addR.setEnterCd(enterCd);
+					addR.setYmd(r.getYmd());
+					addR.setSabun(r.getSabun());
+					addR.setPlanSdate(addEdate);
+					addR.setPlanEdate(oriEdate);
+
+					Map<String, Object> addMap = new HashMap<>();
+					addMap.putAll(pMap);
+
+					String shm = sdf.format(addEdate);
+					String ehm = sdf.format(oriEdate);
+					addMap.put("shm", shm);
+					addMap.put("ehm", ehm);
+					Map<String, Object> addPlanMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, addMap, userId);
+					addR.setPlanMinute(Integer.parseInt(addPlanMinuteMap.get("calcMinute")+""));
+					addR.setTimeTypeCd(r.getTimeTypeCd());
+					addR.setUpdateId(userId);
+
+					addR.setApprSdate(null);
+					addR.setApprEdate(null);
+					addR.setApprMinute(null);
+					workDayResultRepo.save(addR);
+
+				}
+				if(!isDelete) {
+					String shm = sdf.format(r.getPlanSdate());
+					String ehm = sdf.format(r.getPlanEdate());
+					pMap.put("shm", shm);
+					pMap.put("ehm", ehm);
+					Map<String, Object> planMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId);
+					r.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
+
+					r.setApprSdate(null);
+					r.setApprEdate(null);
+					r.setApprMinute(null);
+					logger.debug("********************** r workDayResultRepo.save " + r.toString());
+					workDayResultRepo.save(r);
+				}else {
+					workDayResultRepo.delete(r);
+				}
 			}
-			if(!isDelete) {
-				String shm = sdf.format(r.getPlanSdate());
-				String ehm = sdf.format(r.getPlanEdate()); 
-				pMap.put("shm", shm);
-				pMap.put("ehm", ehm);
-				Map<String, Object> planMinuteMap = calcMinuteExceptBreaktime(tenantId, enterCd, sabun, pMap, userId);
-				r.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
-				
-				r.setApprSdate(null);
-				r.setApprEdate(null);
-				r.setApprMinute(null);
-				logger.debug("********************** r workDayResultRepo.save " + r.toString());
-				workDayResultRepo.save(r);
-			}else {
-				workDayResultRepo.delete(r);
-			}
+
 		}
 		
 		//신규 타임 블럭 생성 여부에 따라 추가 한다.

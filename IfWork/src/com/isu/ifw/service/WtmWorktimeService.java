@@ -93,4 +93,14 @@ public interface WtmWorktimeService{
 
 
 	public List<Map<String, Object>> getCloseDayList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap);
+
+    /**
+     * 근무시간 전체조회
+     * @param tenantId
+     * @param enterCd
+     * @param sabun
+     * @param paramMap
+     * @return
+     */
+	public List<Map<String, Object>> getWorktimeCheckAllList(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap);
 }

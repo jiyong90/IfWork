@@ -1418,22 +1418,22 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						rp.setFail(retMsg);
 			    		return rp;
 					} else {
-//						this.resetTaaResult(Long.parseLong(reqDayMap.get("tenantId").toString()), reqDayMap.get("enterCd").toString(), reqDayMap.get("sabun").toString(), reqDayMap.get("sYmd").toString());
 						// 오류가 아니면.. 근태시간을 생성체크하자
 						String taaSetYn = reqDayMap.get("taaSetYn").toString();
 						if("I".equals(taaSetYn)) {
-							// 근태생성
-							wtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
-									  Long.parseLong(reqDayMap.get("tenantId").toString())
-									, reqDayMap.get("enterCd").toString()
-									, ymd
-									, reqDayMap.get("sabun").toString()
-									, reqDayMap.get("timeTypeCd").toString()
-									, reqDayMap.get("taaCd").toString()
-									, dt.parse(reqDayMap.get("taaSdate").toString())
-									, dt.parse(reqDayMap.get("taaEdate").toString())
-									, Long.parseLong(reqDayMap.get("applId").toString())
-									, "0");
+							this.resetTaaResult(Long.parseLong(reqDayMap.get("tenantId").toString()), reqDayMap.get("enterCd").toString(), reqDayMap.get("sabun").toString(), reqDayMap.get("sYmd").toString());
+//							// 근태생성
+//							wtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
+//									  Long.parseLong(reqDayMap.get("tenantId").toString())
+//									, reqDayMap.get("enterCd").toString()
+//									, ymd
+//									, reqDayMap.get("sabun").toString()
+//									, reqDayMap.get("timeTypeCd").toString()
+//									, reqDayMap.get("taaCd").toString()
+//									, dt.parse(reqDayMap.get("taaSdate").toString())
+//									, dt.parse(reqDayMap.get("taaEdate").toString())
+//									, Long.parseLong(reqDayMap.get("applId").toString())
+//									, "0");
 						} else if ("D".equals(taaSetYn)) {
 							// 근태삭제
 							wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
@@ -1447,30 +1447,29 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 									, dt.parse(reqDayMap.get("taaEdate").toString())
 									, Long.parseLong(reqDayMap.get("applId").toString())
 									, "0");
-						}
 
+
+						}
 
 						String chkYmd = nowDataTime.substring(0, 8);
 						Long tenantId = Long.parseLong(reqDayMap.get("tenantId").toString());
 						String enterCd = reqDayMap.get("enterCd").toString();
-		        		String sabun = reqDayMap.get("sabun").toString();
+						String sabun = reqDayMap.get("sabun").toString();
 
-						resetTaaResult(tenantId, enterCd, sabun, reqDayMap.get("sYmd").toString());
-
-		        		// 오늘 이전이면 근무마감을 다시 돌려야함.
+						// 오늘 이전이면 근무마감을 다시 돌려야함.
 						if (Integer.parseInt(chkYmd) > Integer.parseInt(ymd) && ("D".equals(taaSetYn) || "I".equals(taaSetYn))) {
 							wtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, ymd, ymd, sabun);
 						}
 						// 근무시간합산은 재정산한다
-		        		HashMap<String, Object> setTermMap = new HashMap();
-		        		setTermMap.put("tenantId", tenantId);
-		        		setTermMap.put("enterCd", enterCd);
-		        		setTermMap.put("sabun", sabun);
-		        		setTermMap.put("symd", ymd);
-		        		setTermMap.put("eymd", ymd);
-		        		setTermMap.put("pId", "TAAIF");
+						HashMap<String, Object> setTermMap = new HashMap();
+						setTermMap.put("tenantId", tenantId);
+						setTermMap.put("enterCd", enterCd);
+						setTermMap.put("sabun", sabun);
+						setTermMap.put("symd", ymd);
+						setTermMap.put("eymd", ymd);
+						setTermMap.put("pId", "TAAIF");
 						calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId,enterCd, sabun, ymd, ymd);
-//		        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
+
 					}
 				}
 				
@@ -2107,7 +2106,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			statusList.add("OK");
 //			statusList.add("FAIL");
 //			statusList.add("ERR");
-			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByTenantIdAndIfStatusNotInOrIfStatusNull(tenantId,statusList);
+			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByTenantIdAndIfStatusNotIn(tenantId,statusList);
 			if(list == null || list.size() == 0) {
 				logger.debug("setTaaApplBatchIfPostProcess 대상없음 종료");
 				return ;
@@ -2266,7 +2265,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	 * 
 	 * @param tenantId
 	 * @param enterCd
-	 * @param sabun
+	 * @param applSabun
 	 * @param ifApplNo
 	 * @param status
 	 * @param works [ 
@@ -2509,6 +2508,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	@Transactional
 	@Override
 	public void resetTaaResult(Long tenantId, String enterCd, String sabun,String ymd) {
+
 		List<WtmTaaApplDet> dets = wtmTaaApplDetRepo.findByMaxApplInfo(tenantId, enterCd, sabun, ymd);
 		logger.debug("dets : " + dets);
 		if(dets != null && dets.size() > 0) {

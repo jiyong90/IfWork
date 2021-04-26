@@ -33,4 +33,11 @@ public interface WtmWorktimeMapper {
 	public List<Map<String, Object>> getWorkTimeList(Map<String, Object> paramMap);
 	
 	public List<Map<String, Object>> getCloseDayList(Map<String, Object> paramMap);
+
+	/**
+	 * 근무시간 조회
+	 * @param paramMap
+	 * @return
+	 */
+	public List<Map<String, Object>> getWorktimeCheckAllList(Map<String, Object> paramMap);
 }
