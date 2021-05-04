@@ -170,10 +170,10 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndYmdAndSabunAndApplIdIsNull(Long tenantId, String enterCd, String ymd, String sabun);
 
-	@Query("SELECT MIN(R.planSdate) AS planSdate , MIN(R.planEdate) AS planEdate FROM WtmWorkDayResult R WHERE R.tenantId = ?1 AND R.enterCd = ?2 AND R.sabun = ?3 AND R.ymd = ?4 AND R.timeTypeCd NOT IN (?5) ")
+	@Query("SELECT MIN(R.planSdate) AS planSdate , MAX(R.planEdate) AS planEdate FROM WtmWorkDayResult R WHERE R.tenantId = ?1 AND R.enterCd = ?2 AND R.sabun = ?3 AND R.ymd = ?4 AND R.timeTypeCd NOT IN (?5) ")
 	public Map<String, Object> findByMinMaxPlanDate(Long tenantId, String enterCd, String sabun, String ymd, String timeTypeCd);
 
-	@Query("SELECT MIN(R.planSdate) AS planSdate , MIN(R.planEdate) AS planEdate FROM WtmWorkDayResult R WHERE R.tenantId = ?1 AND R.enterCd = ?2 AND R.sabun = ?3 AND R.ymd = ?4 AND R.timeTypeCd IN ('BASE', 'REGA', 'TAA') ")
+	@Query("SELECT MIN(R.planSdate) AS planSdate , MAX(R.planEdate) AS planEdate FROM WtmWorkDayResult R WHERE R.tenantId = ?1 AND R.enterCd = ?2 AND R.sabun = ?3 AND R.ymd = ?4 AND R.timeTypeCd IN ('BASE', 'REGA', 'TAA') ")
 	public Map<String, Object> findByMinMaxPlanDate(Long tenantId, String enterCd, String sabun, String ymd);
 
 	public List<WtmWorkDayResult> findByTimeTypeCdInAndTenantIdAndEnterCdAndSabunAndYmdAndApprMinuteIsNullAndAndApplIdIsNull(List<String> timeTypeCds, Long tenantId, String enterCd, String sabun, String ymd);

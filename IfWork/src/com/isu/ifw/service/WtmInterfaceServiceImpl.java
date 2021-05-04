@@ -100,7 +100,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	@Autowired private WtmTimeCdMgrRepository timeCdMgrRepo;
 
 	@Autowired private WtmCodeRepository wtmCodeRepository;
-	
+
 	@Override
 	public Map<String, Object> getIfLastDate(Long tenantId, String ifType) throws Exception {
 		// TODO Auto-generated method stub
@@ -2127,7 +2127,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						s.put(data.getSabun(), new ArrayList<WtmIfTaaHis>());
 					}
 				}
-				
+
 				List<WtmIfTaaHis> hiss = s.get(data.getSabun());
 				hiss.add(data);
 				s.put(data.getSabun(), hiss);
@@ -2434,8 +2434,6 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						}
 					}
 					
-				} else if(WtmApplService.APPL_STATUS_CANCEL.equals(status)) {
-
 				}
 			}
 		}else {
@@ -3415,7 +3413,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 //		status.add("FAIL");
 //		status.add("ERR");
 
-		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotIn(status);
+		List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByIfStatusNotInOrIfStatusNull(status);
 
 		if(list == null || list.size() == 0) {
 			System.out.println("setTaaApplBatchIfPostProcess 대상없음 종료");

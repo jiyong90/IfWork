@@ -2351,19 +2351,22 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		 * 간주근무의 경우 출퇴근 타각정보가 있으면 출퇴근 타각정보를 갱신하지 않는다. 
 		 * 간주근무는 계획된 시각 모두 인정한다. 출퇴근 시간은 출퇴근 시간으로 인정근무를 생성해야할 경우에만 사용한다. NGV 케이스
 		 */
-		if(tenantId != 95) {
-			if(isRega && calendar.getEntrySdate() == null && calendar.getEntryEdate() == null) {
-				try { logger.debug("3. 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다. " + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
-				//flexEmpMapper.updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
+		if(isRega && (calendar.getEntrySdate() == null || calendar.getEntryEdate() == null)) {
+			try { logger.debug("3. 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다. " + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+			//flexEmpMapper.updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
+			if(calendar.getEntrySdate() == null) {
 				calendar.setEntrySdate(minPlanSdate_REGA);
 				calendar.setEntryStypeCd(WtmApplService.TIME_TYPE_REGA);
+			}
+			if(calendar.getEntryEdate() == null) {
 				calendar.setEntryEdate(maxPlanEdate_REGA);
 				calendar.setEntryEtypeCd(WtmApplService.TIME_TYPE_REGA);
-				workCalendarRepo.save(calendar);
-			}else {
-				try { logger.debug("3. 간주근무 없음." + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 			}
+			workCalendarRepo.save(calendar);
+		}else {
+			try { logger.debug("3. 간주근무 없음." + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 		}
+
 		
 		// 출근시간 자동 여부 -- 출근이 자유인 경운 지각이 없다고 본다?? 일단 ㅋ
 		// 출근시간 자동에 대해 일괄 업데이트 한다.
@@ -2523,7 +2526,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					logger.debug("minSdate : " + minSdate);
 					logger.debug("minEntrySdate : " + minEntrySdate);
 					logger.debug("calendar.getEntrySdate() : " + calendar.getEntrySdate());
-					if(minEntrySdate == null || minEntrySdate.compareTo(calendar.getEntrySdate()) > 0 ) {
+					if(minEntrySdate == null ||  (calendar.getEntrySdate() != null &&  minEntrySdate.compareTo(calendar.getEntrySdate()) > 0 )) {
 						minEntrySdate = calendar.getEntrySdate();
 					}
 					 
@@ -4543,16 +4546,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								}
 							}
 						}
-						
 					}
-					
-							
 				}
-				
 				logger.debug("휴일 대체 생성 end >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 			}
 		}
-			
 	}
 	
 	@Override
