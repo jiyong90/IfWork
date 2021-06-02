@@ -1116,6 +1116,11 @@ public class WtmTaaApplServiceImpl implements WtmApplService{
 		return null;
 	}
 
+	@Override
+	public List<Map<String, Object>> getApprovalApplList(Long tenantId, String enterCd, String empNo, Map<String, Object> paramMap, String userId) {
+		return null;
+	}
+
 	protected WtmApplCode getApplInfo(Long tenantId,String enterCd,String applCd) {
 		return wtmApplCodeRepo.findByTenantIdAndEnterCdAndApplCd(tenantId, enterCd, applCd);
 	}

@@ -1,26 +1,21 @@
 package com.isu.ifw.service;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
+import com.isu.ifw.entity.WtmAppl;
+import com.isu.ifw.entity.WtmTaaApplDet;
+import com.isu.ifw.entity.WtmTaaCanAppl;
+import com.isu.ifw.entity.WtmTaaCode;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.vo.ReturnParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.isu.ifw.entity.WtmAppl;
-import com.isu.ifw.entity.WtmTaaApplDet;
-import com.isu.ifw.entity.WtmTaaCanAppl;
-import com.isu.ifw.entity.WtmTaaCode;
-import com.isu.ifw.repository.WtmApplRepository;
-import com.isu.ifw.repository.WtmTaaApplDetRepository;
-import com.isu.ifw.repository.WtmTaaApplRepository;
-import com.isu.ifw.repository.WtmTaaCanApplRepository;
-import com.isu.ifw.repository.WtmTaaCodeRepository;
-import com.isu.ifw.vo.ReturnParam;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Service("WtmTaaCanApplService")
 public class WtmTaaCanServiceImpl implements WtmApplService{
@@ -180,7 +175,12 @@ public class WtmTaaCanServiceImpl implements WtmApplService{
 	public ReturnParam saveWtmApplSts(Long tenantId, String enterCd, String sabun, String userId, Map<String, Object> convertMap) {
 		return null;
 	}
-	
+
+	@Override
+	public List<Map<String, Object>> getApprovalApplList(Long tenantId, String enterCd, String empNo, Map<String, Object> paramMap, String userId) {
+		return null;
+	}
+
 	@Autowired WtmTaaApplDetRepository taaApplDetRepo;
 	@Autowired WtmTaaCodeRepository taaCodeRepo;
 	

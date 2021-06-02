@@ -1,37 +1,23 @@
 package com.isu.ifw.service;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmWorkteamEmpMapper;
+import com.isu.ifw.mapper.WtmWorktimeMapper;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.util.WtmUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.entity.WtmFlexibleEmp;
-import com.isu.ifw.entity.WtmFlexibleStdMgr;
-import com.isu.ifw.entity.WtmTimeCdMgr;
-import com.isu.ifw.entity.WtmTimeChgHis;
-import com.isu.ifw.entity.WtmWorkCalendar;
-import com.isu.ifw.entity.WtmWorkDayResult;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmWorkteamEmpMapper;
-import com.isu.ifw.mapper.WtmWorktimeMapper;
-import com.isu.ifw.repository.WtmBaseWorkMgrRepository;
-import com.isu.ifw.repository.WtmFlexibleEmpRepository;
-import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
-import com.isu.ifw.repository.WtmTimeCdMgrRepository;
-import com.isu.ifw.repository.WtmTimeChgHisRepository;
-import com.isu.ifw.repository.WtmWorkCalendarRepository;
-import com.isu.ifw.repository.WtmWorkDayResultRepository;
-import com.isu.ifw.repository.WtmWorkPattDetRepository;
-import com.isu.ifw.util.WtmUtil;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
@@ -526,11 +512,11 @@ public class WtmWorkTimeServiceImpl implements WtmWorktimeService{
 				paramMap.put("eYmd", eYmd);
 			}
 
-			List<String> auths = empService.getAuth(tenantId, enterCd, sabun);
-			if(auths!=null && !auths.contains("FLEX_SETTING") && auths.contains("FLEX_SUB")) {
-				//하위 조직 조회
-				paramMap.put("orgList", empService.getLowLevelOrgList(tenantId, enterCd, sabun, sYmd));
-			}
+//			List<String> auths = empService.getAuth(tenantId, enterCd, sabun);
+//			if(auths!=null && !auths.contains("FLEX_SETTING") && auths.contains("FLEX_SUB")) {
+//				//하위 조직 조회
+//				paramMap.put("orgList", empService.getLowLevelOrgList(tenantId, enterCd, sabun, sYmd));
+//			}
 			WorktimeCheckAllList = worktimeMapper.getWorktimeCheckAllList(paramMap);
 		} catch(Exception e) {
 			e.printStackTrace();

@@ -760,8 +760,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 							int applOtMinute = Integer.parseInt(weekInfo.get("applOtMinute").toString());
 							int applHolOtMinute = Integer.parseInt(weekInfo.get("applHolOtMinute").toString());
 							int applIngOtMinute = Integer.parseInt(weekInfo.get("applIngOtMinute").toString());
-							restMin = (weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute) + (restOtMinute - otMinute - applOtMinute - applHolOtMinute + applIngOtMinute) ;
-							restOtMin = restOtMinute - otMinute - applOtMinute - applHolOtMinute + applIngOtMinute;
+							restMin = (weekWorkMinute - Integer.parseInt(weekInfo.get("workMinute")+"") - exMinute) + (restOtMinute - applOtMinute - applHolOtMinute + applIngOtMinute) ;
+							restOtMin = restOtMinute -  applOtMinute - applHolOtMinute + applIngOtMinute;
 
 							//restMinuteMap.put("restWorkMinute", restMin);
 						}
@@ -835,7 +835,7 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				isOtCheck = false;
 			}
 
-			if((restOtMin + calcMinute) < calcMinute) {
+			if(restOtMin   < calcMinute) {
 				rp.setFail("연장근무 신청 가능 시간을 초과하였습니다.");
 				return rp;
 			}
@@ -1527,5 +1527,10 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		}
 		
 		return rp;
+	}
+
+	@Override
+	public List<Map<String, Object>> getApprovalApplList(Long tenantId, String enterCd, String empNo, Map<String, Object> paramMap, String userId) {
+		return null;
 	}
 }

@@ -1,33 +1,20 @@
 package com.isu.ifw.service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.WtmApplMapper;
+import com.isu.ifw.mapper.WtmOtApplMapper;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.vo.WtmApplLineVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.entity.WtmAppl;
-import com.isu.ifw.entity.WtmApplCode;
-import com.isu.ifw.entity.WtmApplLine;
-import com.isu.ifw.entity.WtmOtAppl;
-import com.isu.ifw.entity.WtmOtSubsAppl;
-import com.isu.ifw.mapper.WtmApplMapper;
-import com.isu.ifw.mapper.WtmOtApplMapper;
-import com.isu.ifw.repository.WtmApplCodeRepository;
-import com.isu.ifw.repository.WtmApplLineRepository;
-import com.isu.ifw.repository.WtmApplRepository;
-import com.isu.ifw.repository.WtmOtApplRepository;
-import com.isu.ifw.repository.WtmOtSubsApplRepository;
-import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.ReturnParam;
-import com.isu.ifw.vo.WtmApplLineVO;
+import java.util.*;
 
 @Service("wtmOtSubsChgApplService")
 public class WtmOtSubsChgApplServiceImpl implements WtmApplService {
@@ -469,5 +456,10 @@ public class WtmOtSubsChgApplServiceImpl implements WtmApplService {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
+	@Override
+	public List<Map<String, Object>> getApprovalApplList(Long tenantId, String enterCd, String empNo, Map<String, Object> paramMap, String userId) {
+		return null;
+	}
+
 }

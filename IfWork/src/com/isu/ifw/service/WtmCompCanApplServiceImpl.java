@@ -1,13 +1,12 @@
 package com.isu.ifw.service;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.*;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.vo.WtmApplLineVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,29 +14,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.entity.WtmAppl;
-import com.isu.ifw.entity.WtmApplCode;
-import com.isu.ifw.entity.WtmApplLine;
-import com.isu.ifw.entity.WtmCompAppl;
-import com.isu.ifw.entity.WtmCompCanAppl;
-import com.isu.ifw.entity.WtmTaaCode;
-import com.isu.ifw.entity.WtmWorkDayResult;
-import com.isu.ifw.mapper.WtmApplMapper;
-import com.isu.ifw.mapper.WtmCompApplMapper;
-import com.isu.ifw.mapper.WtmCompCanApplMapper;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmInterfaceMapper;
-import com.isu.ifw.repository.WtmApplCodeRepository;
-import com.isu.ifw.repository.WtmApplLineRepository;
-import com.isu.ifw.repository.WtmApplRepository;
-import com.isu.ifw.repository.WtmCompApplRepository;
-import com.isu.ifw.repository.WtmCompCanApplRepository;
-import com.isu.ifw.repository.WtmTaaCodeRepository;
-import com.isu.ifw.repository.WtmWorkDayResultRepository;
-import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.ReturnParam;
-import com.isu.ifw.vo.WtmApplLineVO;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service("wtmCompCanApplService")
 public class WtmCompCanApplServiceImpl implements WtmApplService {
@@ -678,6 +657,11 @@ public class WtmCompCanApplServiceImpl implements WtmApplService {
 	public ReturnParam saveWtmApplSts(Long tenantId, String enterCd, String sabun, String userId,
 			Map<String, Object> convertMap) {
 		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Map<String, Object>> getApprovalApplList(Long tenantId, String enterCd, String empNo, Map<String, Object> paramMap, String userId) {
 		return null;
 	}
 

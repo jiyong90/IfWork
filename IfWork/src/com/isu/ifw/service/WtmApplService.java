@@ -172,5 +172,8 @@ public interface WtmApplService {
 	 * @return
 	 */
 	public ReturnParam saveWtmApplSts(Long tenantId, String enterCd, String sabun, String userId, Map<String, Object> convertMap);
+
+
+	public List<Map<String, Object>> getApprovalApplList(Long tenantId, String enterCd, String empNo, Map<String, Object> paramMap, String userId);
 	
 }

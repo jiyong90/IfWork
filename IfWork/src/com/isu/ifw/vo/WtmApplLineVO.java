@@ -11,7 +11,8 @@ public class WtmApplLineVO {
 	private String apprStatusCd;
 	private String apprStatusNm;
 	private String apprOpinion;
-	
+	private String apprYmdhis;
+
 	public String getApprTypeCd() {
 		return apprTypeCd;
 	}
@@ -63,14 +64,15 @@ public class WtmApplLineVO {
 	public String getApprOpinion() {
 		return apprOpinion;
 	}
-	public void setApprOpinion(String apprOpinion) {
-		this.apprOpinion = apprOpinion;
-	}
+	public void setApprOpinion(String apprOpinion) { this.apprOpinion = apprOpinion; }
+	public String getApprYmdhis() { return apprYmdhis;}
+	public void setApprYmdhis(String apprYmdhis) { this.apprYmdhis = apprYmdhis; }
+
 	@Override
 	public String toString() {
 		return "WtmApplLineVO [apprTypeCd=" + apprTypeCd + ", apprTypeNm=" + apprTypeNm + ", apprSeq=" + apprSeq
 				+ ", sabun=" + sabun + ", empNm=" + empNm + ", apprDate=" + apprDate + ", apprStatusCd=" + apprStatusCd
-				+ ", apprStatusNm=" + apprStatusNm + ", apprOpinion=" + apprOpinion + "]";
+				+ ", apprStatusNm=" + apprStatusNm + ", apprOpinion=" + apprOpinion + ", apprYmdhis=" + apprYmdhis + "]";
 	}
 	
 	

@@ -2431,10 +2431,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
 			laaResult.setPlanMinute(apprMinute);
 			laaResult.setApprMinute(apprMinute);
-			
+
 			laaResult.setUpdateId(WtmApplService.TIME_TYPE_LLA + absenceTaaCode.getTaaCd());
-			workDayResultRepo.save(laaResult);
-			isAbsence = true;
+			if(apprMinute != 0) {
+				workDayResultRepo.save(laaResult);
+				isAbsence = true;
+			}
 		}
 		
 		//결근이면 이후꺼는 안타도 될듯 

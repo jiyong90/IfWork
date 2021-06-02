@@ -1420,7 +1420,21 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					} else {
 						// 오류가 아니면.. 근태시간을 생성체크하자
 						String taaSetYn = reqDayMap.get("taaSetYn").toString();
-						if("I".equals(taaSetYn)) {
+						if("D".equals(taaSetYn)) {
+							// 근태삭제
+							wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
+									Long.parseLong(reqDayMap.get("tenantId").toString())
+									, reqDayMap.get("enterCd").toString()
+									, ymd
+									, reqDayMap.get("sabun").toString()
+									, reqDayMap.get("timeTypeCd").toString()
+									, reqDayMap.get("taaCd").toString()
+									, dt.parse(reqDayMap.get("taaSdate").toString())
+									, dt.parse(reqDayMap.get("taaEdate").toString())
+									, Long.parseLong(reqDayMap.get("applId").toString())
+									, "0");
+
+						} else {
 							this.resetTaaResult(Long.parseLong(reqDayMap.get("tenantId").toString()), reqDayMap.get("enterCd").toString(), reqDayMap.get("sabun").toString(), reqDayMap.get("sYmd").toString());
 //							// 근태생성
 //							wtmFlexibleEmpService.addWtmDayResultInBaseTimeType(
@@ -1434,21 +1448,6 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 //									, dt.parse(reqDayMap.get("taaEdate").toString())
 //									, Long.parseLong(reqDayMap.get("applId").toString())
 //									, "0");
-						} else if ("D".equals(taaSetYn)) {
-							// 근태삭제
-							wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
-									  Long.parseLong(reqDayMap.get("tenantId").toString())
-									, reqDayMap.get("enterCd").toString()
-									, ymd
-									, reqDayMap.get("sabun").toString()
-									, reqDayMap.get("timeTypeCd").toString()
-									, reqDayMap.get("taaCd").toString()
-									, dt.parse(reqDayMap.get("taaSdate").toString())
-									, dt.parse(reqDayMap.get("taaEdate").toString())
-									, Long.parseLong(reqDayMap.get("applId").toString())
-									, "0");
-
-
 						}
 
 						String chkYmd = nowDataTime.substring(0, 8);
@@ -2071,7 +2070,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				        		setTermMap.put("symd", taaDetMap.get("ymd").toString());
 				        		setTermMap.put("eymd", taaDetMap.get("ymd").toString());
 				        		setTermMap.put("pId", "TAAIF");
-				        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
+
+								calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, taaDetMap.get("enterCd").toString(), taaDetMap.get("sabun").toString(), taaDetMap.get("ymd").toString(), taaDetMap.get("ymd").toString());
+//				        		wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 							}
 						} 
 					}	
@@ -2104,9 +2105,14 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 
 			List<String> statusList = new ArrayList<String>();
 			statusList.add("OK");
-//			statusList.add("FAIL");
+//			statusList.add("FAIL");/iuerp
 //			statusList.add("ERR");
-			List<WtmIfTaaHis> list = wtmIfTaaHisRepo.findByTenantIdAndIfStatusNotIn(tenantId,statusList);
+			List<WtmIfTaaHis> list = null;
+			if(tenantId == 92) {
+				list = wtmIfTaaHisRepo.findByTenantIdAndIfStatusNotInOrIfStatusIsNull(tenantId,statusList);
+			} else {
+				list = wtmIfTaaHisRepo.findByTenantIdAndIfStatusNotIn(tenantId,statusList);
+			}
 			if(list == null || list.size() == 0) {
 				logger.debug("setTaaApplBatchIfPostProcess 대상없음 종료");
 				return ;
@@ -2236,15 +2242,25 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						logger.debug("intfTaaAppl works : " + mapper.writeValueAsString(works));
 						
 						this.taaResult(tId, enterCd, applSabun, ifApplNo, status, works);
-						
-						List<WtmIfTaaHis> ifTaaHisList = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndApplNoAndIfStatusNotIn(tId, enterCd, ifApplNo, "OK");
+
+						List<WtmIfTaaHis> ifTaaHisList = null;
+						if(tId != 92) {
+							ifTaaHisList = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndApplNoAndIfStatusNotInOrIfStatusIsNull(tId, enterCd, ifApplNo, "OK");
+						} else {
+							ifTaaHisList = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndApplNoAndIfStatusNotIn(tId, enterCd, ifApplNo, "OK");
+						}
 						for(WtmIfTaaHis h : ifTaaHisList) {
 							h.setIfStatus("OK");
 						}
 						wtmIfTaaHisRepo.saveAll(ifTaaHisList);
 			    	} catch (Exception e) {
 			    		e.printStackTrace();
-			    		List<WtmIfTaaHis> ifTaaHisList = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndApplNoAndIfStatusNotIn(tId, enterCd, ifApplNo, "OK");
+						List<WtmIfTaaHis> ifTaaHisList = null;
+						if(tId != 92) {
+							ifTaaHisList = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndApplNoAndIfStatusNotInOrIfStatusIsNull(tId, enterCd, ifApplNo, "OK");
+						} else {
+							ifTaaHisList = wtmIfTaaHisRepo.findByTenantIdAndEnterCdAndApplNoAndIfStatusNotIn(tId, enterCd, ifApplNo, "OK");
+						}
 						for(WtmIfTaaHis h : ifTaaHisList) {
 				    		h.setIfStatus("FAIL");
 				    		h.setIfMsg(e.getMessage());

@@ -556,6 +556,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 
 					if(empHis != null) {
 						if(empHis.getSymd().equals(symd)) {
+							System.out.println("SABUN : " + sabun + "   empNm : " + empNm);
 							if(!empHis.getEmpNm().equals(empNm)
 									|| !empHis.getEmpEngNm().equals(empEngNm)
 									|| !empHis.getStatusCd().equals(statusCd)

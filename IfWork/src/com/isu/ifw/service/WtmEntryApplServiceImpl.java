@@ -435,5 +435,10 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
+	@Override
+	public List<Map<String, Object>> getApprovalApplList(Long tenantId, String enterCd, String empNo, Map<String, Object> paramMap, String userId) {
+		return null;
+	}
+
 }

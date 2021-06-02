@@ -22,4 +22,8 @@ public interface WtmIfTaaHisRepository extends JpaRepository<WtmIfTaaHis, Long> 
 	public List<WtmIfTaaHis> findByTenantIdAndEnterCdAndIfStatusNotIn(Long tenantId, String enterCd, String ifStatus);
 
 	public List<WtmIfTaaHis> findByTenantIdAndApplNo(Long tenantId, String applNo);
+
+	public List<WtmIfTaaHis> findByTenantIdAndIfStatusNotInOrIfStatusIsNull(Long tenantId, List<String> ifStatus);
+
+	public List<WtmIfTaaHis> findByTenantIdAndEnterCdAndApplNoAndIfStatusNotInOrIfStatusIsNull(Long tenantId, String enterCd, String applNo, String ifStatus);
 }

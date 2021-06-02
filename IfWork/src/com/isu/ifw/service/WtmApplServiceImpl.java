@@ -308,4 +308,44 @@ public class WtmApplServiceImpl implements WtmApplService {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public List<Map<String, Object>> getApprovalApplList(Long tenantId, String enterCd, String empNo, Map<String, Object> paramMap, String userId) {
+		// TODO Auto-generated method stub
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+		paramMap.put("empNo", empNo);
+
+		String applType = paramMap.get("applType").toString();
+
+		if(paramMap.get("sYmd") != null && !"".equals(paramMap.get("sYmd").toString())) {
+			String sYmd = paramMap.get("sYmd").toString().replaceAll("[.-]", "");
+			paramMap.put("sYmd", sYmd);
+		}
+		if(paramMap.get("eYmd") != null && !"".equals(paramMap.get("eYmd").toString())) {
+			String eYmd = paramMap.get("eYmd").toString().replaceAll("[.-]", "");
+			paramMap.put("eYmd", eYmd);
+		}
+
+		paramMap.put("typeCd", applType);
+		//System.out.println("applType::::: " + applType);
+
+		List<Map<String, Object>> apprList = null;
+		if(applType.equals(APPL_TYPE_REQUEST))
+			apprList = applMapper.getApprovalApplList01(paramMap);
+		else if(applType.equals(APPL_TYPE_PENDING))
+			apprList = applMapper.getApprovalApplList02(paramMap);
+		else if(applType.equals(APPL_TYPE_COMPLETE))
+			apprList = applMapper.getApprovalApplList03(paramMap);
+
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			logger.debug(">>>>>>>>>>>>>>>>approvalList result: "+ mapper.writeValueAsString(apprList));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return apprList;
+	}
 }

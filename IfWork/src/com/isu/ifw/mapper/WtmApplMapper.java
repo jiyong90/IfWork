@@ -1,9 +1,9 @@
 package com.isu.ifw.mapper;
 
+import com.isu.ifw.vo.WtmApplLineVO;
+
 import java.util.List;
 import java.util.Map;
-
-import com.isu.ifw.vo.WtmApplLineVO;
 
 public interface WtmApplMapper {
 	public List<WtmApplLineVO> getWtmApplLine(Map<String, Object> paramMap);
@@ -38,5 +38,14 @@ public interface WtmApplMapper {
 	 * @return
 	 */
 	public List<Map<String, Object>> getRecLine(Map<String, Object> paramMap);
-	
+
+	/**
+	 * 결재상태리스트
+	 * @param paramMap
+	 * @return
+	 */
+	public List<Map<String, Object>> getApprovalApplList01(Map<String, Object> paramMap);
+	public List<Map<String, Object>> getApprovalApplList02(Map<String, Object> paramMap);
+	public List<Map<String, Object>> getApprovalApplList03(Map<String, Object> paramMap);
+
 }

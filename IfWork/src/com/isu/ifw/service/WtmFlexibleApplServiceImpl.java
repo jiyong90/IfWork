@@ -1,65 +1,22 @@
 package com.isu.ifw.service; 
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.*;
+import com.isu.ifw.repository.*;
+import com.isu.ifw.util.WtmUtil;
+import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.vo.WtmFlexibleApplDetVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isu.ifw.entity.WtmAppl;
-import com.isu.ifw.entity.WtmApplCode;
-import com.isu.ifw.entity.WtmApplLine;
-import com.isu.ifw.entity.WtmDayMgr;
-import com.isu.ifw.entity.WtmFlexibleAppl;
-import com.isu.ifw.entity.WtmFlexibleApplDet;
-import com.isu.ifw.entity.WtmFlexibleApplyDet;
-import com.isu.ifw.entity.WtmFlexibleEmp;
-import com.isu.ifw.entity.WtmFlexibleStdMgr;
-import com.isu.ifw.entity.WtmHolidayMgr;
-import com.isu.ifw.entity.WtmPropertie;
-import com.isu.ifw.entity.WtmTimeCdMgr;
-import com.isu.ifw.entity.WtmWorkDayResult;
-import com.isu.ifw.entity.WtmWorkPattDet;
-import com.isu.ifw.mapper.WtmApplMapper;
-import com.isu.ifw.mapper.WtmFlexibleApplMapper;
-import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
-import com.isu.ifw.mapper.WtmFlexibleStdMapper;
-import com.isu.ifw.mapper.WtmOtApplMapper;
-import com.isu.ifw.mapper.WtmOtCanApplMapper;
-import com.isu.ifw.repository.WtmApplCodeRepository;
-import com.isu.ifw.repository.WtmApplLineRepository;
-import com.isu.ifw.repository.WtmApplRepository;
-import com.isu.ifw.repository.WtmDayMgrRepository;
-import com.isu.ifw.repository.WtmEntryApplRepository;
-import com.isu.ifw.repository.WtmFlexibleApplDetRepository;
-import com.isu.ifw.repository.WtmFlexibleApplRepository;
-import com.isu.ifw.repository.WtmFlexibleApplyDetRepository;
-import com.isu.ifw.repository.WtmFlexibleDayPlanRepository;
-import com.isu.ifw.repository.WtmFlexibleEmpRepository;
-import com.isu.ifw.repository.WtmFlexibleStdMgrRepository;
-import com.isu.ifw.repository.WtmHolidayMgrRepository;
-import com.isu.ifw.repository.WtmOtSubsApplRepository;
-import com.isu.ifw.repository.WtmPropertieRepository;
-import com.isu.ifw.repository.WtmTimeCdMgrRepository;
-import com.isu.ifw.repository.WtmWorkCalendarRepository;
-import com.isu.ifw.repository.WtmWorkDayResultRepository;
-import com.isu.ifw.repository.WtmWorkPattDetRepository;
-import com.isu.ifw.util.WtmUtil;
-import com.isu.ifw.vo.ReturnParam;
-import com.isu.ifw.vo.WtmApplLineVO;
-import com.isu.ifw.vo.WtmFlexibleApplDetVO;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service("wtmFlexibleApplService")
 public class WtmFlexibleApplServiceImpl implements WtmApplService {
@@ -1089,7 +1046,12 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		return null;
 	}
 
-	
+	@Override
+	public List<Map<String, Object>> getApprovalApplList(Long tenantId, String enterCd, String empNo, Map<String, Object> paramMap, String userId) {
+		return null;
+	}
+
+
 	public void createWtmFlexibleApplDetAsPattern(Long tenantId, String enterCd, WtmFlexibleAppl flexibleAppl) {
 		logger.debug("call createWtmFlexibleApplDetAsPattern ::");
 		if(flexibleAppl == null)
