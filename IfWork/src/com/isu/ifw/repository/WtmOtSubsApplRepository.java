@@ -25,6 +25,9 @@ public interface WtmOtSubsApplRepository extends JpaRepository<WtmOtSubsAppl, Lo
 	@Query("DELETE FROM WtmOtSubsAppl a WHERE a.applId = ?1 ")
 	public void deleteByApplId(Long applId);
 	
-	public List<WtmOtSubsAppl> findByOtApplIdAndCancelYnIsNullOrCancelYnNot(Long applId, String canCelYn);
-	
+	public List<WtmOtSubsAppl> findByOtApplIdAndCancelYnIsNullOrCancelYnNot(Long applId, String cancelYn);
+
+	@Query("SELECT s FROM WtmOtSubsAppl s WHERE s.applId = ?1 AND (s.cancelYn = ?2 or s.cancelYn is null) ")
+	public List<WtmOtSubsAppl> findByApplIdAndCancelYnIsNullOrCancelYnNot(Long applId, String cancelYn);
+
 }

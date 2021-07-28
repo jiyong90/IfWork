@@ -25,11 +25,11 @@ import org.springframework.format.annotation.DateTimeFormat;
 @Table(name="WTM_FLEXIBLE_EMP")
 @NamedNativeQuery(name="WtmFlexibleEmp.getTotalWorkMinuteAndRealWorkMinute",
 query="SELECT E.FLEXIBLE_EMP_ID AS flexibleEmpId, E.SYMD AS symd, E.EYMD AS eymd, E.TENANT_ID AS tenantId, E.ENTER_CD AS enterCd, E.SABUN AS sabun, E.WORK_MINUTE AS workMinute \n" + 
-"			    	 , SUM(CASE WHEN R.TIME_TYPE_CD = 'BASE' THEN F_WTM_NVL(R.APPR_MINUTE,0)\n" +
+"			    	 , SUM(CASE WHEN R.TIME_TYPE_CD = 'BASE' THEN F_WTM_NVL(R.APPR_MINUTE,'0')\n" +
 "		                        WHEN R.TIME_TYPE_CD = 'REGA' THEN F_WTM_NVL(R.APPR_MINUTE,R.PLAN_MINUTE)\n" +
 "		                        WHEN M.TAA_TIME_YN = 'Y' AND R.TIME_TYPE_CD = 'TAA' THEN F_WTM_NVL(R.APPR_MINUTE,R.PLAN_MINUTE)\n" +
-"		                        ELSE 0 END ) AS workHour\n" + 
-"		             , SUM(CASE WHEN R.TIME_TYPE_CD = 'EXCEPT' AND  T.TAA_INFO_CD = 'BREAK' THEN F_WTM_NVL(R.APPR_MINUTE,0) ELSE 0 END ) AS breakHour\n" + 
+"		                        ELSE '0' END ) AS workHour\n" +
+"		             , SUM(CASE WHEN R.TIME_TYPE_CD = 'EXCEPT' AND  T.TAA_INFO_CD = 'BREAK' THEN F_WTM_NVL(R.APPR_MINUTE,'0') ELSE '0' END ) AS breakHour\n" +
 "		      FROM WTM_FLEXIBLE_EMP E\n" +
 "			  JOIN WTM_FLEXIBLE_STD_MGR M\n" +
 "				ON E.FLEXIBLE_STD_MGR_ID = M.FLEXIBLE_STD_MGR_ID\n " +
@@ -43,7 +43,7 @@ query="SELECT E.FLEXIBLE_EMP_ID AS flexibleEmpId, E.SYMD AS symd, E.EYMD AS eymd
 "               AND E.ENTER_CD = :enterCd\n" + 
 "               AND E.SABUN = :sabun\n" + 
 "	 		   AND :symd BETWEEN E.SYMD AND E.EYMD\n" + 
-"		     GROUP BY E.WORK_MINUTE\n" + 
+"		     GROUP BY E.FLEXIBLE_EMP_ID, E.SYMD, E.EYMD, E.TENANT_ID, E.ENTER_CD, E.SABUN, E.WORK_MINUTE\n" +
 "			", resultSetMapping="WtmFlexibleEmp.getTotalWorkMinuteAndRealWorkMinute")
 @SqlResultSetMappings({
 	@SqlResultSetMapping(

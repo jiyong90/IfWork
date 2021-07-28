@@ -75,6 +75,12 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 
 	@Autowired private WtmTaaApplDetRepository taaApplDetRepo;
 
+	@Autowired
+	private WtmFlexibleEmpService wtmflexibleEmpService;
+
+	@Autowired
+	private WtmCalcService wtmCalcService;
+
 	@Override
 	public ReturnParam applyStsAfter(Long tenantId, String enterCd, Long applId, Map<String, Object> paramMap, String sabun, String userId) throws Exception {
 		
@@ -239,7 +245,8 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 				boolean isOtSave = true;
 				//잔여기본근로시간이 있을 경우 BASE로 넣어줘야한다 나머지는 OT로 
 				//유급 휴일은 무조건 OT로 인정해야한다.
-				if(restMin > 0 && !"Y".equals(timeCdMgr.getPaidYn())) {
+				//tenantId = 92 는 한성모터스이며 기본근로 생성을 하지 않는다.
+				if(restMin > 0 && !"Y".equals(timeCdMgr.getPaidYn()) && 92 != tenantId) {
 					//dayResult.setPlanMinute(Integer.parseInt(otAppl.getOtMinute()));
 					Map<String, Object> reCalc = new HashMap<>();
 					reCalc.put("tenentId", tenantId);
@@ -678,8 +685,23 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 				rp.put("sabun", otAppl.getSabun());
 				rp.put("symd", otAppl.getYmd());
 				rp.put("eymd", otAppl.getYmd());
-				
+
 				logger.debug("연장근무시간 result에 저장 완료");
+
+				String stdYmd = paramMap.get("ymd").toString();
+				Date today = new Date();
+				SimpleDateFormat sdfYmd = new SimpleDateFormat("yyyyMMdd");
+				String ymd = sdfYmd.format(today);
+				if(Integer.parseInt(ymd) > Integer.parseInt(stdYmd)){ 	// 소급이면 마감돌리기
+					Map<String, Object> pMap = new HashMap<String, Object>();
+					pMap.put("tenantId", tenantId);
+					pMap.put("enterCd", enterCd);
+					pMap.put("stdYmd", rp.get("symd")+"");
+					pMap.put("sabun", rp.get("sabun")+"");
+
+					wtmflexibleEmpService.calcApprDayInfo(tenantId, enterCd, stdYmd, stdYmd, sabun);
+					wtmCalcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, stdYmd, stdYmd);
+				}
 			}
 			
 			rp.put("otApplList", otApplList);

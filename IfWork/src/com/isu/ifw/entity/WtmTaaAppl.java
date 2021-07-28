@@ -32,6 +32,10 @@ public class WtmTaaAppl {
 	private Date updateDate;
 	@Column(name="UPDATE_ID")
 	private String updateId;
+	@Column(name="SYMD")
+	private String symd;
+	@Column(name="EYMD")
+	private String eymd;
 
 	public Long getTaaApplId() {
 		return taaApplId;
@@ -135,5 +139,21 @@ public class WtmTaaAppl {
 
 	public void setTaaCd(String taaCd) {
 		this.taaCd = taaCd;
+	}
+
+	public String getSymd() {
+		return symd;
+	}
+
+	public void setSymd(String symd) {
+		this.symd = symd;
+	}
+
+	public String getEymd() {
+		return eymd;
+	}
+
+	public void setEymd(String eymd) {
+		this.eymd = eymd;
 	}
 }

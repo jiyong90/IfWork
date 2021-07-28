@@ -114,7 +114,8 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 			"   		    AND SR.timeTypeCd = :timeTypeCd " + 
 			"   		    AND SR.taaCd = :taaCd AND SR.ymd = R.ymd )  " +
 			"   AND (C.sabun =  :sabun OR :sabun = '' OR  :sabun IS NULL) " + 
-			"   AND R.timeTypeCd NOT IN ('TAA', 'SUBS') ")
+			"   AND R.timeTypeCd NOT IN ('TAA', 'SUBS') " +
+			"ORDER BY R.planSdate, R.planEdate")
 	public List<WtmWorkDayResult> findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd(@Param(value="tenantId") Long tenantId, @Param(value="enterCd") String enterCd, @Param(value="ymd") String ymd, @Param(value="timeTypeCd") String timeTypeCd, @Param(value="taaCd") String taaCd, @Param(value="sabun") String sabun);
 	
 	/**

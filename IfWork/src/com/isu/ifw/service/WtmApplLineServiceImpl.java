@@ -46,8 +46,17 @@ public class WtmApplLineServiceImpl implements WtmApplLineService{
 		paramMap.put("d", WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
 		
 		List<WtmApplLineVO> result = new ArrayList<WtmApplLineVO>();
-		List<WtmApplLineVO> applLines = applMapper.getWtmApplLine(paramMap);
-		
+
+
+		List<WtmApplLineVO> applLines = null;
+		// 한성 모터스를 위한 결재선..
+		// hr결재선과 같게 해달라고 하여 HR결재선을 조회하도록 한다.
+		if(tenantId == 92) {
+			applLines = applMapper.getWtmApplLineHS(paramMap);
+		} else {
+			applLines = applMapper.getWtmApplLine(paramMap);
+		}
+
 		WtmApplCode applCode = applCodeRepo.findByTenantIdAndEnterCdAndApplCd(tenantId, enterCd, applCd);
 		if(applCode!=null && applCode.getApplLevelCd()!=null && !"".equals(applCode.getApplLevelCd())) {
 			int applLevel = Integer.parseInt(applCode.getApplLevelCd());
@@ -55,10 +64,16 @@ public class WtmApplLineServiceImpl implements WtmApplLineService{
 			int lineCnt = 0; 
 			if(applLines!=null && applLines.size()!=0) {
 				for(WtmApplLineVO applLine : applLines) {
-					if(!WtmApplService.APPL_LINE_S.equals(applLine.getApprTypeCd()) || (WtmApplService.APPL_LINE_S.equals(applLine.getApprTypeCd()) && lineCnt < applLevel)) {
-						result.add(applLine);
+					if(tenantId == 92) {
+						if(!WtmApplService.APPL_LINE_S.equals(applLine.getApprTypeCd()) || (WtmApplService.APPL_LINE_S.equals(applLine.getApprTypeCd()))) {
+							result.add(applLine);
+						}
+
+					} else {
+						if(!WtmApplService.APPL_LINE_S.equals(applLine.getApprTypeCd()) || (WtmApplService.APPL_LINE_S.equals(applLine.getApprTypeCd()) && lineCnt < applLevel)) {
+							result.add(applLine);
+						}
 					}
-					
 					if(WtmApplService.APPL_LINE_S.equals(applLine.getApprTypeCd()))
 						lineCnt++;
 				}

@@ -115,8 +115,13 @@ public class WtmPushMgrServiceImpl implements WtmPushMgrService{
 						code.setSymd(l.get("symd").toString());
 						code.setEymd(l.get("eymd").toString());
 						code.setPushObj(l.get("pushObj").toString());
-						code.setStdMinute(Integer.parseInt(l.get("stdMinute").toString()));
-						if(l.containsKey("stdMinute2") && l.get("stdMinute2") != null) {
+//						code.setStdMinute(Integer.parseInt(l.get("stdMinute").toString()));
+						if(l.containsKey("stdMinute") && l.get("stdMinute") != null && !"".equals(l.get("stdMinute").toString())) {
+							code.setStdMinute(Integer.parseInt(l.get("stdMinute").toString()));
+						}else {
+							code.setStdMinute(null);
+						}
+						if(l.containsKey("stdMinute2") && l.get("stdMinute2") != null && !"".equals(l.get("stdMinute2").toString())) {
 							code.setStdMinute2(Integer.parseInt(l.get("stdMinute2").toString()));
 						}else {
 							code.setStdMinute2(null);

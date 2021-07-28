@@ -194,7 +194,7 @@ public interface WtmFlexibleEmpService {
 	/**
 	 * 타각시간 기준으로 인정시간 계산
 	 */
-	void calcApprDayInfo(Long tenantId, String enterCd, String sYmd, String eYmd, String sabun);
+	public void calcApprDayInfo(Long tenantId, String enterCd, String sYmd, String eYmd, String sabun);
 	/**
 	 * 지각 조퇴 데이터삭제
 	 * @param tenantId

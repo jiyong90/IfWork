@@ -7,7 +7,8 @@ import java.util.Map;
 
 public interface WtmApplMapper {
 	public List<WtmApplLineVO> getWtmApplLine(Map<String, Object> paramMap);
-	
+	public List<WtmApplLineVO> getWtmApplLineHS(Map<String, Object> paramMap);
+
 	public List<WtmApplLineVO> getWtmApplLineByApplId(Long applId);
 	
 	public Map<String, Object> calcWorkDay(Map<String, Object> paramMap);

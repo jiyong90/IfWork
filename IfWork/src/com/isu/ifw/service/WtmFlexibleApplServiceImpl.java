@@ -338,9 +338,9 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 		appl.setApplStatusCd((lastAppr)?APPL_STATUS_APPR:APPL_STATUS_APPLY_ING);
 		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
 		appl.setUpdateId(userId);
-		
+
 		appl = wtmApplRepo.save(appl);
-		
+
 		if(lastAppr) {
 			//대상자의 실제 근무 정보를 반영한다.
 			WtmFlexibleEmp emp = new WtmFlexibleEmp();
@@ -518,6 +518,13 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 				}
 				
 			}
+
+
+
+			String symd = emp.getSymd().substring(0, 4)+"0101";
+			String eymd = emp.getSymd().substring(0, 4)+"1231";
+
+			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, symd, eymd);
 			
 		}
 		

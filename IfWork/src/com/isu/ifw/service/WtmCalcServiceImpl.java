@@ -45,7 +45,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 	
 	@Autowired
 	private WtmCalcMapper calcMapper;
-	
+
 	@Autowired
 	private WtmTaaCodeRepository taaCodeRepo;
 	
@@ -891,7 +891,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 								newResult.setUpdateDate(new Date());
 								newResult.setUpdateId("createFixOt1");
 
-								workDayResultRepo.save(newResult);
+								if(!calcSdate.equals(calcEdate) && apprMinute != 0) {
+									workDayResultRepo.save(newResult);
+								}
 
 								loopSdate = calcEdate;
 							}
@@ -960,7 +962,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 								newResult.setUpdateDate(new Date());
 								newResult.setUpdateId("createFixOt2");
 
-								workDayResultRepo.save(newResult);
+								if(!calcSdate.equals(calcEdate) && apprMinute != 0) {
+									workDayResultRepo.save(newResult);
+								}
 							}
 
 							loopSdate = calcEdate;
@@ -1003,7 +1007,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 				if(nextDataCheck &&  createLimitMinute > 0) {
 					//다음 데이터를 체크해야하는데 없었을 경우
 					//남은 기간을 생성한다.
-					if(preEdate.compareTo(eDate) <= 0) {
+					if(preEdate.compareTo(eDate) <= 0 && preTimeTypeCd.equals(WtmApplService.TIME_TYPE_BASE)) {
 						Date calcSdate = preEdate;
 						Date calcEdate = eDate;
 
@@ -1057,7 +1061,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						newResult.setUpdateDate(new Date());
 						newResult.setUpdateId("createFixOt-last");
 
-						workDayResultRepo.save(newResult);
+						if(!calcSdate.equals(calcEdate) && apprMinute != 0) {
+							workDayResultRepo.save(newResult);
+						}
 					}
 				}
 

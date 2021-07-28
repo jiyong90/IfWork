@@ -2109,7 +2109,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 //			statusList.add("ERR");
 			List<WtmIfTaaHis> list = null;
 			if(tenantId == 92) {
-				list = wtmIfTaaHisRepo.findByTenantIdAndIfStatusNotInOrIfStatusIsNull(tenantId,statusList);
+//				list = wtmIfTaaHisRepo.findByTenantIdAndIfStatusNotInOrIfStatusNull(tenantId,statusList);
+				list = wtmIfTaaHisRepo.findByIfStatusNotInOrIfStatusNull(statusList);
 			} else {
 				list = wtmIfTaaHisRepo.findByTenantIdAndIfStatusNotIn(tenantId,statusList);
 			}
@@ -2377,18 +2378,23 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 						String sabun = w.get("sabun")+"";
 						
 						if(w.containsKey("worksDet") && w.get("worksDet") != null && !"".equals(w.get("worksDet")+"")) {
-							
+
+							List<Map<String, Object>> worksDet = (List<Map<String, Object>>) w.get("worksDet");
+
 							WtmTaaAppl taaAppl = new WtmTaaAppl();
 							taaAppl.setTenantId(tenantId);
 							taaAppl.setEnterCd(enterCd);
 							taaAppl.setApplId(appl.getApplId());
+							taaAppl.setTaaCd(worksDet.get(0).get("workTimeCode").toString());
+							taaAppl.setSymd(worksDet.get(0).get("startYmd").toString());
+							taaAppl.setEymd(worksDet.get(0).get("endYmd").toString());
 							taaAppl.setSabun(sabun);
 							taaAppl.setIfApplNo(ifApplNo);
 							taaAppl.setUpdateId("TAA_INTF");
 							
 							taaAppl = wtmTaaApplRepo.save(taaAppl);
 							
-							List<Map<String, Object>> worksDet = (List<Map<String, Object>>) w.get("worksDet");
+
 							for(Map<String, Object> work : worksDet) {
 							
 								if(work.containsKey("workTimeCode") && work.containsKey("startYmd") && work.containsKey("endYmd")
@@ -2523,7 +2529,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	@Override
 	public void resetTaaResult(Long tenantId, String enterCd, String sabun,String ymd) {
 
+		System.out.println("resetTaaResult >>  tenantId : " + tenantId + "  , enterCd : " + enterCd + "  , sabun : " + sabun + "  , ymd : " + ymd);
 		List<WtmTaaApplDet> dets = wtmTaaApplDetRepo.findByMaxApplInfo(tenantId, enterCd, sabun, ymd);
+
 		logger.debug("dets : " + dets);
 		if(dets != null && dets.size() > 0) {
 			SimpleDateFormat ymdhm = new SimpleDateFormat("yyyyMMddHHmm");
@@ -3444,6 +3452,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	    		data.setIfStatus("FAIL");
 	    		data.setIfMsg(e.getMessage());
 			} finally {
+				System.out.println("data  :: " + data);
 				wtmIfTaaHisRepo.save(data);
 			}
 		}

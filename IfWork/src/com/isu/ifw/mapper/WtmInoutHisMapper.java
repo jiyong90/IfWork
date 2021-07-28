@@ -33,6 +33,7 @@ public interface WtmInoutHisMapper {
 	 * @return
 	 */
 	public int saveWtmInoutHis(Map<String, Object> paramMap) throws Exception;
+
 	
 	/**
 	 * 타각 테이블에 출퇴근 업데이트
@@ -90,5 +91,7 @@ public interface WtmInoutHisMapper {
 	 * @return
 	 */
 	public List<Map<String, Object>> getInoutMonitorList(Map<String, Object> paramMap) throws Exception;
+
+	public int saveWtmInoutHisOrg(Map<String, Object> paramMap) throws Exception;
 
 }
