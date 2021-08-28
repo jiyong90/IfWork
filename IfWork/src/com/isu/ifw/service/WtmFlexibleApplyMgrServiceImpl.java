@@ -247,11 +247,15 @@ public class WtmFlexibleApplyMgrServiceImpl implements WtmFlexibleApplyMgrServic
 		Map<String, Object> searchMap = new HashMap();	
 		Map<String, Object> params = new HashMap();
 		try {
+			if(paramMap.get("repeatTypeCd").toString() != null && !"NO".equals(paramMap.get("repeatTypeCd").toString())) {
+				params.put("symd", paramMap.get("symd").toString());
+				params.put("repeatTypeCd", paramMap.get("repeatTypeCd").toString());
+				params.put("repeatCnt", Integer.parseInt(paramMap.get("repeatCnt").toString()));
+				searchMap =  wtmFlexibleApplyMgrMapper.getEymd(params);
+			} else {
+				searchMap = null;
+			}
 
-			params.put("symd", paramMap.get("symd").toString());
-			params.put("repeatTypeCd", paramMap.get("repeatTypeCd").toString());
-			params.put("repeatCnt", Integer.parseInt(paramMap.get("repeatCnt").toString()));
-			searchMap =  wtmFlexibleApplyMgrMapper.getEymd(params);
 		} catch(Exception e) {
 			e.printStackTrace();
 			logger.debug(e.toString());
