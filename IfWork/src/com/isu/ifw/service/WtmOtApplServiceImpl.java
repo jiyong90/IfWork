@@ -1193,12 +1193,13 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				//1주의 범위가 선근제 기간내에 있는지 체크
 				/*  20200707 JYP 선근제도 체크 한다. 단 기간을 주단위가 아닌 선근제 전체 기간으로 체크 한다.
 				 */
+				// 20210829 >= 20210801 && 20210904 <= 20210831
 				// 20210326 >= 20210402 && 20210403 <= 20210430
-				if(Integer.parseInt(symd) >= Integer.parseInt(emp.getSymd() ) && Integer.parseInt(eymd) <= Integer.parseInt(emp.getEymd())) {
+//				if(Integer.parseInt(symd) >= Integer.parseInt(emp.getSymd() ) && Integer.parseInt(eymd) <= Integer.parseInt(emp.getEymd())) {
 					//선근제는 주단위 연장근무 시간을 체크하지 않는다.
 					weekOtCheck = false;  
 					
-				}
+//				}
 				
 				paramMap.put("symd", emp.getSymd());
 				paramMap.put("eymd", emp.getEymd());
