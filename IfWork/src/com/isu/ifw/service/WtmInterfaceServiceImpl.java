@@ -2462,7 +2462,48 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			//List<String> applCds = new ArrayList<String>();
 			//applCds.add(WtmApplService.TIME_TYPE_TAA);
 			//applCds.add(WtmApplService.TIME_TYPE_REGA);
+			
+			// 상태코드 44 경우 삭제 쿼리 시작
+			if(WtmApplService.APPL_STATUS_CANCEL.equals(status)) {
+				for(Map<String, Object> w2 : works) {
+					String sabun = w2.get("sabun")+"";
+					if(w2.containsKey("worksDet") && w2.get("worksDet") != null && !"".equals(w2.get("worksDet")+"")) {
+						List<Map<String, Object>> worksDets = (List<Map<String, Object>>) w2.get("worksDet");
+						for(Map<String, Object> work : worksDets) {
+							
+							List<WtmWorkDayResult> workDayRsts = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenAndTaaCdOrderByYmdAsc(tenantId, enterCd, 
+									w2.get("sabun").toString(), work.get("startYmd").toString(),
+									work.get("endYmd").toString(), work.get("workTimeCode").toString());
+							
+							if(workDayRsts != null && workDayRsts.size() > 0) {
+								for(WtmWorkDayResult results: workDayRsts) {
+									logger.debug("resetTaaResult remove result : " + results.toString());
+									if(results.getPlanSdate() == null) {
+										workDayResultRepo.delete(results);
+									}else {
+										wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
+											  results.getTenantId()
+											, results.getEnterCd()
+											, results.getYmd()
+											, results.getSabun()
+											, results.getTimeTypeCd()
+											, results.getTaaCd()
+											, results.getPlanSdate()
+											, results.getPlanEdate()
+											, results.getApplId()
+											, results.getSabun()
+										);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			// 상태코드 44 경우 삭제 쿼리 종료
+			
 			appl = wtmApplRepo.findByTenantIdAndEnterCdAndIfApplNo(tenantId, enterCd, ifApplNo);
+			
 			if(appl != null) {
 				preApplStatus = appl.getApplStatusCd();
 				if(!preApplStatus.equals(status)) {
