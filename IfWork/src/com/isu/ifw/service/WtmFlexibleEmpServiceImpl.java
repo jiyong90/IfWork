@@ -2332,7 +2332,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					if(calendar.getEntryEdate() == null
 							&& ( (flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
 							|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)|| r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)  || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT)							|| r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) )))){
-						if(r.getPlanEdate() != null && r.getTimeTypeCd().contains(flexStdMgr.getDayCloseType())) {
+						if(r.getPlanEdate() != null) {
 							if(dayPlanEdate == null || dayPlanEdate.compareTo(r.getPlanEdate()) < 0) {
 								dayPlanEdate = r.getPlanEdate();
 								logger.debug("4.(퇴근)타각 자동 업데이트. dayPlanEdate : " +  dayPlanEdate);
