@@ -306,6 +306,16 @@ public interface WtmFlexibleEmpService {
 	public List<String> getLowLevelOrgList(Long tenantId, String enterCd, String sabun, String ymd);
 	
 	/**
+	 * 하위 부서 조회 (orgcd를 이용해서 조회)
+	 * @param tenantId
+	 * @param enterCd
+	 * @param sabun
+	 * @param ymd
+	 * @return
+	 */
+	public List<String> getLowLevelOrgList2(Long tenantId, String enterCd, String sabun, String ymd, String orgCode);
+	
+	/**
 	 * 근무제 통계 데이터 생성
 	 * @param tenantId
 	 * @param enterCd

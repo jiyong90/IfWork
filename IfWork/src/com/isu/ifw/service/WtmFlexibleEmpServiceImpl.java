@@ -4198,6 +4198,57 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		}
 	}
 	
+	@Override
+	public List<String> getLowLevelOrgList2(Long tenantId, String enterCd, String sabun, String ymd, String orgCode) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		
+		try {
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+			paramMap.put("sabun", sabun);
+			paramMap.put("ymd", ymd);
+			paramMap.put("orgCd", orgCode);
+			logger.debug("### paramMap : " + paramMap.toString());
+			
+			List<String> orgList = null;
+			
+			//하위 조직 조회 
+			// ASIS : 로그인한 사번을 통해 orgCd를 갖고 조회 , TOBE : orgCd를 통한 하위 전체 조회
+			List<Map<String, Object>> lowLevelOrgList = wtmOrgChartMapper.getLowLevelOrg(paramMap); 
+			
+			if(lowLevelOrgList!=null && lowLevelOrgList.size()>0) {
+				orgList = new ArrayList<String>();
+				for(Map<String, Object> orgMap : lowLevelOrgList) {
+					
+					logger.debug("### orgMap : " + orgMap);
+					
+					orgList.add(orgMap.get("orgCd").toString());
+				}
+			}
+
+			//겸직 조회
+			List<WtmOrgConc> orgConcList = orgConcRepo.findByTenantIdAndEnterCdAndSabunAndBetweenSymdAndEymd(tenantId, enterCd, sabun, ymd);
+			if(orgConcList!=null && orgConcList.size()>0) {
+				if(orgList == null)
+					orgList = new ArrayList<String>();
+				
+				for(WtmOrgConc orgConc : orgConcList) {
+					orgList.add(orgConc.getOrgCd());
+				}
+			}
+
+			if(orgList == null) {
+				orgList = new ArrayList<String>();
+				orgList.add(orgCode);
+			}
+			return orgList;
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
 	// 근무제 통계 데이터 생성
 		@Override
 		public Map<String, Object> createWorkTermtimeByEmployee(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
