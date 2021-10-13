@@ -699,8 +699,8 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 					pMap.put("stdYmd", rp.get("symd")+"");
 					pMap.put("sabun", rp.get("sabun")+"");
 
-					wtmflexibleEmpService.calcApprDayInfo(tenantId, enterCd, stdYmd, stdYmd, sabun);
-					wtmCalcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, stdYmd, stdYmd);
+					wtmflexibleEmpService.calcApprDayInfo(tenantId, enterCd, stdYmd, stdYmd, otAppl.getSabun());
+					wtmCalcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, otAppl.getSabun(), stdYmd, stdYmd);
 				}
 			}
 			
