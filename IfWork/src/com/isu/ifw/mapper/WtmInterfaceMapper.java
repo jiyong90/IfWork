@@ -383,4 +383,12 @@ public interface WtmInterfaceMapper {
 	 * @return
 	 */
 	List<HashMap<String, Object>> getTargerMonthlyCloseUserList(HashMap reqMap);
+	
+	/**
+	 * 근무기간 별 근무시간 합계
+	 * @param paramMap
+	 * @return
+	 */
+	public List<Map<String, Object>> getAllWorkTimeList(Map<String, Object> paramMap);
+	
 }

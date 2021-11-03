@@ -4588,4 +4588,27 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		return rp;
 	}
 
+	@Override
+	public List<Map<String, Object>> allWorkTimeCheck(Long tenantId, String enterCd, String sabun,String symd, String eymd) {
+		
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("처리 완료 하였습니다. ");
+		List<Map<String, Object>> allWorkTimeList = new ArrayList();
+		Map<String, Object> paramMap = new HashMap();
+		
+		try {
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+			paramMap.put("sabun", sabun);
+			paramMap.put("symd", symd);
+			paramMap.put("eymd", eymd);
+			
+			allWorkTimeList = wtmInterfaceMapper.getAllWorkTimeList(paramMap);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return allWorkTimeList;
+	}
+
 }

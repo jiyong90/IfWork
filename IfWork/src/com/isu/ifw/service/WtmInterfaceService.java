@@ -264,4 +264,18 @@ public interface WtmInterfaceService {
 	public void intfTaaAppl(Long tenantId) ;
 	public void taaResult(Long tenantId, String enterCd, String Applsabun, String ifApplNo, String status, List<Map<String, Object>> works) throws Exception;
 	public void resetTaaResult(Long tenantId, String enterCd, String sabun,String ymd);
+	
+	
+	/**
+	 * 근무기간 별 근무시간 합계
+	 * @param tenantId - 테넌트 아이디
+	 * @param enterCd - 엔터 코드
+	 * @param sabun - 사번
+	 * @param symd - 시작일
+	 * @param eymd - 종료일
+	 * @return 
+	 * @throws Exception 
+	 */
+	public List<Map<String, Object>> allWorkTimeCheck(Long tenantId, String enterCd, String sabun,String symd, String eymd);
+	
 }
