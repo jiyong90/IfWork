@@ -1266,6 +1266,14 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, sYmd, eYmd);
 			
 			for(WtmWorkCalendar calendar : works) {
+
+				try {
+					// 근태정보 재생성
+					interfaceService.resetTaaResultNoFinish(tenantId, enterCd, sabun , calendar.getYmd());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
 				WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, calendar.getYmd());
 				if(flexEmp == null) {
 					continue;
@@ -2293,8 +2301,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			}
 			
 			//출근 자동 생성
-			if(!flexStdMgr.getDayOpenType().equals("N") && calendar.getEntrySdate() == null
-				&& (
+			if(!flexStdMgr.getDayOpenType().equals("N")
+					&& (calendar.getEntrySdate() == null || (calendar.getEntrySdate() != null &&"AUTO".equals(calendar.getEntryStypeCd())) )
+					&& (
 						(flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
 						|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_OT)  || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_EARLY_NIGHT) || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT)  )
 						    )
@@ -2329,7 +2338,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}
 					}
 				} else {
-					if(calendar.getEntryEdate() == null
+					if((calendar.getEntryEdate() == null || (calendar.getEntryEdate() != null &&"AUTO".equals(calendar.getEntryEtypeCd())) )
 							&& ( (flexStdMgr.getDayCloseType().equals("BASE") && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE))
 							|| (flexStdMgr.getDayCloseType().equals("OT") && (r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)|| r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_OT)  || r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_FIXOT)							|| r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_NIGHT) )))){
 						if(r.getPlanEdate() != null) {
