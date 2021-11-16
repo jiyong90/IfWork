@@ -995,7 +995,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		if("OK".equals(ifHisMap.get("ifStatus"))) {
 			// 4. 기본근무 생성대상자 조회해서 근무를 생성해주자
 			try {
@@ -1005,7 +1005,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 				List<Long> ruleIds = new ArrayList<Long>();
 				Map<String, Object> ruleMap = null;
 				Long targetRuleId =
-				*/ 
+				*/
 				List<Map<String, Object>> getEmpBaseList = null;
 				getEmpBaseList = wtmInterfaceMapper.getEmpBaseList(ifHisMap);
 				if(getEmpBaseList != null && getEmpBaseList.size() > 0) {
@@ -4962,8 +4962,6 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 
 			String chkYmd = WtmUtil.parseDateStr(new Date(), null);
 
-		}else {
-			throw new RuntimeException("신청정보가 없습니다.");
 		}
 	}
 
