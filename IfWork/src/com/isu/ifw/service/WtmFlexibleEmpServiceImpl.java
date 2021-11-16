@@ -1267,13 +1267,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 			for(WtmWorkCalendar calendar : works) {
 
-				try {
-					// 근태정보 재생성
-					interfaceService.resetTaaResultNoFinish(tenantId, enterCd, sabun , calendar.getYmd());
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-
 				WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, calendar.getYmd());
 				if(flexEmp == null) {
 					continue;
@@ -5532,7 +5525,19 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				List<WtmWorkDayResult> delRes = workDayResultRepo.findByTenantIdAndEnterCdAndYmdBetweenAndSabunAndApplIdIsNullAndTimeTypeCdIn(tenantId, enterCd, paramSymd, paramEymd, sabun, timeTypeCds);
 				if(delRes != null && delRes.size() > 0)
 					workDayResultRepo.deleteAll(delRes);
-				
+
+
+				List<WtmWorkCalendar> works = workCalendarRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetweenOrderByYmdAsc(tenantId, enterCd, sabun, paramSymd, paramEymd);
+
+				// 근태정보 재생성
+				for(WtmWorkCalendar calendar : works) {
+					try {
+						interfaceService.resetTaaResultNoFinish(tenantId, enterCd, sabun, calendar.getYmd());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+
 				//마감데이터 재생성
 				calcApprDayInfo(tenantId, enterCd, paramSymd, paramEymd, sabun);
 				
