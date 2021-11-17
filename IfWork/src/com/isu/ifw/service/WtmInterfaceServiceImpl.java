@@ -4944,25 +4944,13 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 													, appl.getApplId()
 													, "TAAIF");
 										}
-
-
 									}
 								}
 							}
-
 						}
 					}
-
-					cal1.add(Calendar.DATE, 1);
-
-					d1 = cal1.getTime();
 				}
-
 			}
-
-			String chkYmd = WtmUtil.parseDateStr(new Date(), null);
-
 		}
 	}
-
 }
