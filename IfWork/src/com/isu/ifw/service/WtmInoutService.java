@@ -21,6 +21,8 @@ public interface WtmInoutService {
 	public Map<String, Object> getMenuContextWeb(Long tenantId, String enterCd, String sabun);
 	//출퇴근정보 업데이트
 	public void updateTimecard2(Map<String, Object> paramMap) throws Exception;
+
+	public String updateTimecard3(Map<String, Object> paramMap) throws Exception;
 	//퇴근취소 업데이트
 	public void updateTimecardCancel(Map<String, Object> paramMap) throws Exception;
 	//휴게정보 업데이트

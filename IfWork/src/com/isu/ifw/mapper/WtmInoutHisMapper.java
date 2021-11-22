@@ -94,4 +94,7 @@ public interface WtmInoutHisMapper {
 
 	public int saveWtmInoutHisOrg(Map<String, Object> paramMap) throws Exception;
 
+
+	public Map<String, Object> getCalData(Map<String, Object> paramMap) throws Exception;
+
 }
