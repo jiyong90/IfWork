@@ -643,9 +643,9 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		// 퇴근일때
 		if(paramMap.get("inoutType") != null && "OUT".equals(paramMap.get("inoutType"))) {
 			// 오늘의 계획S시간 보다 퇴근시간이 더 크면 오늘이다!
-			if((toDayMap.get("planSdate").toString() != null && !"".equals(toDayMap.get("planSdate").toString()))) {
+			if((toDayMap.get("planSdate").toString() != null && !"".equals(toDayMap.get("planSdate").toString())))  {
 
-				if(ymdhis.parse(toDayMap.get("planSdate").toString()).compareTo(ymdhis.parse(paramMap.get("inoutDate").toString())) < 0) {
+				if(ymdhis.parse(toDayMap.get("planSdate").toString()).compareTo(ymdhis.parse(paramMap.get("inoutDate").toString())) < 0 ) {
 					stdYmd = toDayMap.get("ymd").toString();
 					entrySdate = toDayMap.get("entrySdate").toString();
 					entryEdate = toDayMap.get("entryEdate").toString();
@@ -666,11 +666,23 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				}else {
 					stdYmd = toDayMap.get("ymd").toString();
 				}
+			} else if((toDayMap.get("planSdate").toString() == null || "".equals(toDayMap.get("planSdate").toString()))  && "Y".equals(toDayMap.get("unplannedYn"))){
+				if(yesterDayMap.get("planSdate").toString() == null || "".equals(yesterDayMap.get("planSdate").toString())  && "Y".equals(toDayMap.get("unplannedYn"))) {
+					stdYmd = yesterDayMap.get("ymd").toString();
+					entrySdate = yesterDayMap.get("entrySdate").toString();
+					entryEdate = yesterDayMap.get("entryEdate").toString();
+				}else {
+					stdYmd = toDayMap.get("ymd").toString();
+				}
 			} else {
 				throw new Exception("근무 계획시간이 존재 하지 않습니다.");
 			}
 		} else if(paramMap.get("inoutType") != null && "IN".equals(paramMap.get("inoutType"))) {
-			if(toDayMap.get("planSdate").toString() != null && !"".equals(toDayMap.get("planSdate").toString())) {
+			if(toDayMap.get("planSdate").toString() != null && !"".equals(toDayMap.get("planSdate").toString()) ) {
+				stdYmd = toDayMap.get("ymd").toString();
+				entrySdate = toDayMap.get("entrySdate").toString();
+				entryEdate = toDayMap.get("entryEdate").toString();
+			} else if((toDayMap.get("planSdate").toString() == null || "".equals(toDayMap.get("planSdate").toString()) ) && "Y".equals(toDayMap.get("unplannedYn"))) {
 				stdYmd = toDayMap.get("ymd").toString();
 				entrySdate = toDayMap.get("entrySdate").toString();
 				entryEdate = toDayMap.get("entryEdate").toString();
