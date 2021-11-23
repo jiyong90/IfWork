@@ -650,15 +650,17 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					entrySdate = toDayMap.get("entrySdate").toString();
 					entryEdate = toDayMap.get("entryEdate").toString();
 
-				} else if(yesterDayMap.get("planSdate").toString() != null && !"".equals(yesterDayMap.get("planSdate").toString())) {
+				} else if((yesterDayMap.get("planSdate").toString() != null && !"".equals(yesterDayMap.get("planSdate").toString()))
+						   ||(yesterDayMap.get("planSdate").toString() == null || "".equals(yesterDayMap.get("planSdate").toString()))
+				         ) {
 					stdYmd = yesterDayMap.get("ymd").toString();
 					entrySdate = yesterDayMap.get("entrySdate").toString();
 					entryEdate = yesterDayMap.get("entryEdate").toString();
-				}else {
+				} else {
 					stdYmd = toDayMap.get("ymd").toString();
 				}
 
-			} else if((yesterDayMap.get("planSdate").toString() != null && !"".equals(yesterDayMap.get("planSdate").toString()))){
+			} else if((toDayMap.get("planSdate").toString() != null && !"".equals(toDayMap.get("planSdate").toString()))){
 				if(yesterDayMap.get("planSdate").toString() != null && !"".equals(yesterDayMap.get("planSdate").toString())) {
 					stdYmd = yesterDayMap.get("ymd").toString();
 					entrySdate = yesterDayMap.get("entrySdate").toString();
@@ -666,16 +668,30 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				}else {
 					stdYmd = toDayMap.get("ymd").toString();
 				}
-			} else if((toDayMap.get("planSdate").toString() == null || "".equals(toDayMap.get("planSdate").toString()))  && "Y".equals(toDayMap.get("unplannedYn"))){
-				if(yesterDayMap.get("planSdate").toString() == null || "".equals(yesterDayMap.get("planSdate").toString())  && "Y".equals(toDayMap.get("unplannedYn"))) {
+			} else if((toDayMap.get("planSdate").toString() == null || "".equals(toDayMap.get("planSdate").toString())) && "Y".equals(toDayMap.get("unplannedYn")) ){
+				if(yesterDayMap.get("planSdate").toString() == null || "".equals(yesterDayMap.get("planSdate").toString()) && "Y".equals(yesterDayMap.get("unplannedYn")) ) {
 					stdYmd = yesterDayMap.get("ymd").toString();
 					entrySdate = yesterDayMap.get("entrySdate").toString();
 					entryEdate = yesterDayMap.get("entryEdate").toString();
 				}else {
 					stdYmd = toDayMap.get("ymd").toString();
 				}
+			} else if((toDayMap.get("planSdate").toString() == null || "".equals(toDayMap.get("planSdate").toString())) && "N".equals(toDayMap.get("unplannedYn"))) {
+				if(yesterDayMap.get("planSdate").toString() == null || "".equals(yesterDayMap.get("planSdate").toString()) && "N".equals(yesterDayMap.get("unplannedYn")) ) {
+					if("N".equals(toDayMap.get("holidayYn"))) {
+						throw new Exception("근무 계획시간이 존재 하지 않습니다.");
+					} else if( "N".equals(yesterDayMap.get("holidayYn"))  && "Y".equals(toDayMap.get("holidayYn")) ) {
+						stdYmd = yesterDayMap.get("ymd").toString();
+					} else if( "Y".equals(yesterDayMap.get("holidayYn"))  && "Y".equals(toDayMap.get("holidayYn")) ) {
+						stdYmd = yesterDayMap.get("ymd").toString();
+					} else {
+						stdYmd = toDayMap.get("ymd").toString();
+					}
+				} else {
+					stdYmd = toDayMap.get("ymd").toString();
+				}
 			} else {
-				throw new Exception("근무 계획시간이 존재 하지 않습니다.");
+				stdYmd = toDayMap.get("ymd").toString();
 			}
 		} else if(paramMap.get("inoutType") != null && "IN".equals(paramMap.get("inoutType"))) {
 			if(toDayMap.get("planSdate").toString() != null && !"".equals(toDayMap.get("planSdate").toString()) ) {
@@ -686,8 +702,10 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				stdYmd = toDayMap.get("ymd").toString();
 				entrySdate = toDayMap.get("entrySdate").toString();
 				entryEdate = toDayMap.get("entryEdate").toString();
-			} else {
+			} else if((toDayMap.get("planSdate").toString() == null || "".equals(toDayMap.get("planSdate").toString()) ) && "N".equals(toDayMap.get("unplannedYn")) && "N".equals(toDayMap.get("holidayYn"))) {
 				throw new Exception("근무 계획시간이 존재 하지 않습니다.");
+			} else {
+				stdYmd = toDayMap.get("ymd").toString();
 			}
 		}
 
