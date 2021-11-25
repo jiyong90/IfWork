@@ -47,6 +47,7 @@ public class WtmTaaCodeServiceImpl implements WtmTaaCodeService{
 				code.put("note", l.getNote());
 				code.put("taaTypeCd", l.getTaaTypeCd());
 				code.put("apprMaxDays", l.getApprMaxDays());
+				code.put("payYn", l.getPayYn());
 				codeList.add(code);
 			}
 		} catch(Exception e) {
@@ -84,6 +85,7 @@ public class WtmTaaCodeServiceImpl implements WtmTaaCodeService{
 						code.setWorkApprHour(l.get("workApprHour").toString().equals("") ? null : Integer.parseInt(l.get("workApprHour").toString()));
 						code.setApprMaxDays(l.get("apprMaxDays").toString().equals("") ? null : Integer.parseInt(l.get("apprMaxDays").toString()));
 						code.setWorkYn(l.get("workYn").toString());
+						code.setPayYn(l.get("payYn").toString());
 						codes.add(code);
 					}
 					codes = taaCodeRepository.saveAll(codes);

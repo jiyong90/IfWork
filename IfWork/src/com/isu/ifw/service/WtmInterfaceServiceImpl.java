@@ -4949,6 +4949,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 							}
 						}
 					}
+					cal1.add(Calendar.DATE, 1);
+
+					d1 = cal1.getTime();
 				}
 			}
 		}

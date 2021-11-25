@@ -5532,7 +5532,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				// 근태정보 재생성
 				for(WtmWorkCalendar calendar : works) {
 					try {
-						interfaceService.resetTaaResultNoFinish(tenantId, enterCd, sabun, calendar.getYmd());
+						if(tenantId != 98) {
+							interfaceService.resetTaaResultNoFinish(tenantId, enterCd, sabun, calendar.getYmd());
+						}
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
