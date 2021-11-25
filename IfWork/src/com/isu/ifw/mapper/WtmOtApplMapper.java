@@ -114,4 +114,12 @@ public interface WtmOtApplMapper {
 
 	// 회사의 주 시작일과 종료일을 가지고 온다.
 	public Map<String, Object> getWeekSdateEdate(Map<String, Object> paramMap);
+	
+	/**
+	 * 대체휴일 변경 근무 신청서 모바일용
+	 * @param paramMap
+	 * @return totOtMinute
+	 */
+	public Map<String, Object> getOtDetailYmd(Map<String, Object> paramMap);
+	
 }

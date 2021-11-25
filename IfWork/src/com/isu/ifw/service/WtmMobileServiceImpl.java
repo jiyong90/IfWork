@@ -277,6 +277,11 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 			data = null;
 		} else if("REGA".equals(applCd)) {
 			data = wtmTaaApplMapper.getTaaApplMobileList(Long.parseLong(applId));
+		} else if("SUBS_CHG".equals(applCd)) {
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("enterCd", enterCd);
+			paramMap.put("applCd", applCd);
+			data = wtmOtApplMapper.getOtDetailYmd(paramMap);
 		} else if("REGA_CAN".equals(applCd)) {
 			data = null;
 		}
