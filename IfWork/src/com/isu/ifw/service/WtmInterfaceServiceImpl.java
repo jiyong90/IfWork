@@ -4956,4 +4956,43 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			}
 		}
 	}
+
+
+
+	@Override
+	@Transactional
+	@Async("threadPoolTaskExecutor")
+	public void sendCloseData(HashMap reqMap) throws Exception {
+		Long tenantId = Long.parseLong(reqMap.get("tenantId").toString());
+		List<Map<String, Object>> dataList = new ArrayList();
+		dataList = wtmInterfaceMapper.getCloseDataList(reqMap);
+		Map<String, Object> parmaMap = new HashMap();
+		parmaMap.put("tenantId", tenantId);
+
+		String ifUrl = "";
+		Map<String, Object> result = wtmInterfaceMapper.getIfUrl(parmaMap);
+
+		if(result != null && result.size() > 0) {
+			try {
+				System.out.println("info_data : " + result.get("infoData").toString());
+
+				ifUrl = result.get("infoData").toString() + "/workTimeClose";
+				System.out.println("ifUrl : " + ifUrl);
+				parmaMap.put("compList", dataList);
+				HashMap<String, Object> getIfMap = null;
+				try {
+					RestTemplate restTemplate = new RestTemplate();
+					System.out.println(parmaMap.toString());
+					getIfMap = (HashMap<String, Object>) restTemplate.postForObject(ifUrl, parmaMap, Map.class);
+					System.out.println(getIfMap.toString());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+			} catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+		return;
+	}
 }

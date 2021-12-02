@@ -278,5 +278,13 @@ public interface WtmInterfaceService {
 	 * @throws Exception 
 	 */
 	public List<Map<String, Object>> allWorkTimeCheck(Long tenantId, String enterCd, String sabun,String symd, String eymd);
+
+
+	/**
+	 * 마감데이터 전송
+	 * @param reqMap
+	 * @throws Exception
+	 */
+	public void sendCloseData(HashMap reqMap) throws Exception;
 	
 }
