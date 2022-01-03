@@ -4978,7 +4978,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 
 				ifUrl = result.get("infoData").toString() + "/workTimeClose";
 				System.out.println("ifUrl : " + ifUrl);
-				parmaMap.put("compList", dataList);
+				parmaMap.put("data", dataList);
 				HashMap<String, Object> getIfMap = null;
 				try {
 					RestTemplate restTemplate = new RestTemplate();

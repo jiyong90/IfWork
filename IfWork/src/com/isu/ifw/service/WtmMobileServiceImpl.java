@@ -149,8 +149,10 @@ public class WtmMobileServiceImpl implements WtmMobileService{
 			logger.debug("getDataMap " + result.get("Message"));
 			return null;
 		}
-		data.putAll((Map)result.get("DATA"));
-		
+		if(result.get("DATA") != null) {
+			data.putAll((Map)result.get("DATA"));
+		}
+
 		return data;
 	}
 	
