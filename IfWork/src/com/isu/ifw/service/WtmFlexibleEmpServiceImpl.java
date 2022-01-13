@@ -1885,7 +1885,17 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 									result.setPlanSdate(sDate);
 									result.setPlanEdate(eDate);
 
+
 									SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
+/* TO_DO
+									Calendar calStr = Calendar.getInstance();
+									Calendar calEnd = Calendar.getInstance();
+									calStr.setTime(sDate);
+									calEnd.setTime(eDate);
+									long diffSec = (calEnd.getTimeInMillis() - calStr.getTimeInMillis()) / 1000;
+									long days = diffSec / (24*60*60);
+*/
+
 									int apprMinute = calcService.WtmCalcMinute(sdf.format(sDate), sdf.format(eDate), null, null, flexStdMgr.getUnitMinute());
 									int breakMinute = 0;
 									if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {

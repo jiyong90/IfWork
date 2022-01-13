@@ -704,9 +704,25 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 
 							flexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(pMap);
 //							calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, symd, eymd);
+
 					    }
 					}
 
+				}
+
+				// 사용자 입력
+				if(tenantId == 229) {
+					Map<String, Object> getDateMap = new HashMap<String, Object>();
+					getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, "emp");
+					String lastDataTime = getDateMap.get("lastDate").toString();
+					String nowDataTime = getDateMap.get("nowDate").toString();
+
+					HashMap<String, Object> setSpRetMap = new HashMap<>();
+					setSpRetMap.put("tenantId", tenantId);
+					setSpRetMap.put("nowDataTime", nowDataTime);
+					setSpRetMap.put("retCode", "");
+
+					wtmInterfaceMapper.setEmpHis(setSpRetMap);
 				}
 			}
 			
@@ -726,7 +742,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 			insertCnt = iuerpInterfaceMapper.insertWtmEmpHis(paramMap);
 			logger.debug("2.WtmEmpHis insert "+insertCnt+" end");
 			System.out.println("2.WtmEmpHis insert "+insertCnt+" end");
-			
+
 			//근무제 제외 대상자를 제외하고 입사자 reset 호출하여 base 생성
 			if(insertTargets!=null && insertTargets.size()>0) {
 				
@@ -770,7 +786,7 @@ public class WtmIuerpInterfaceServiceImpl implements WtmIuerpInterfaceService {
 				logger.debug("3.입사자 reset end");
 				System.out.println("3.입사자 reset end");
 			}
-			
+
 		*/
 		} catch(Exception e) {
 			e.printStackTrace();

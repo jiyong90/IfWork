@@ -669,7 +669,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					stdYmd = toDayMap.get("ymd").toString();
 				}
 			} else if((toDayMap.get("planSdate").toString() == null || "".equals(toDayMap.get("planSdate").toString())) && "Y".equals(toDayMap.get("unplannedYn")) ){
-				if(yesterDayMap.get("planSdate").toString() == null || "".equals(yesterDayMap.get("planSdate").toString()) && "Y".equals(yesterDayMap.get("unplannedYn")) ) {
+				if(yesterDayMap.get("planSdate").toString() == null || "".equals(yesterDayMap.get("planSdate").toString()) && "Y".equals(yesterDayMap.get("unplannedYn")) && "".equals(toDayMap.get("entrySdate").toString())) {
 					stdYmd = yesterDayMap.get("ymd").toString();
 					entrySdate = yesterDayMap.get("entrySdate").toString();
 					entryEdate = yesterDayMap.get("entryEdate").toString();
