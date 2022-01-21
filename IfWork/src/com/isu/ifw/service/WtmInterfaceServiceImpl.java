@@ -2105,7 +2105,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 
 			List<String> statusList = new ArrayList<String>();
 			statusList.add("OK");
-//			statusList.add("FAIL");/iuerp
+			statusList.add("FAIL");
 //			statusList.add("ERR");
 			List<WtmIfTaaHis> list = null;
 			if(tenantId == 92) {
