@@ -2990,6 +2990,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		   		if (getIfMap != null && getIfMap.size() > 0) {
 		   			String ifMsg = getIfMap.get("message").toString();
 		   			getIfList = (List<Map<String, Object>>) getIfMap.get("ifData");
+					System.out.println("***************************** " );
+					System.out.println("******** getIfList.size() ::: " + getIfList.size());
+					System.out.println("***************************** " );
 		   	    	if(retMsg == null && getIfList != null && getIfList.size() > 0) {
 		   	    		System.out.println("WtmInterfaceServiceImpl tot " + getIfList.size());
 		   	    		
@@ -3002,32 +3005,48 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 //		   	    			if(!"15003".equals(getIfList.get(l).get("SABUN").toString())){
 //		   	    				continue;
 //		   	    			}
-		   	    			
-		   	    			WtmIfTaaHis data = new WtmIfTaaHis();
-		   	    			data.setTenantId(tenantId);
-		   	    			data.setEnterCd(getIfList.get(l).get("ENTER_CD").toString());
-		   	    			data.setSabun(getIfList.get(l).get("SABUN").toString());
-		   	    			data.setStartYmd(getIfList.get(l).get("S_YMD").toString());
-		   	    			data.setEndYmd(getIfList.get(l).get("E_YMD").toString());
-		   	    			data.setWorkTimeCode(getIfList.get(l).get("GNT_CD").toString());
-		   	    			data.setIfYmdhis(yyyymmddhhmiss);
-		   	    			//data.setIfYmdhis(getIfList.get(l).get("APPL_YMD").toString());
-		   	    			if(getIfList.get(l).get("REQ_S_HM") != null) {
-		   	    				data.setStartHm(getIfList.get(l).get("REQ_S_HM").toString());
-		   	    			} else {
-		   	    				data.setStartHm("");
-		   	    			}
-		   	    			if(getIfList.get(l).get("REQ_E_HM") != null) {
-		   	    				data.setEndHm(getIfList.get(l).get("REQ_E_HM").toString());
-		   	    			} else {
-		   	    				data.setEndHm("");
-		   	    			}
-		   	    			data.setApplNo(getIfList.get(l).get("APPL_SEQ").toString());
-		   	    			data.setStatus(getIfList.get(l).get("APPL_STATUS_CD").toString());
-		   	    			data.setIfStatus("");
-		   	    			data.setIfMsg("");
-		   	    			wtmIfTaaHisRepo.save(data);
-		   	    			System.out.println("WtmInterfaceServiceImpl get " + l + " "+ data.toString());
+							List<WtmIfTaaHis> wtmIfTaaHisList = new ArrayList<WtmIfTaaHis>();
+							wtmIfTaaHisList = wtmIfTaaHisRepo.findAllByTenantIdAndEnterCdAndApplNoAndSabunAndWorkTimeCodeAndStatusAndStartYmdAndEndYmd(
+									tenantId,
+									getIfList.get(l).get("ENTER_CD").toString(),
+									getIfList.get(l).get("APPL_SEQ").toString(),
+									getIfList.get(l).get("SABUN").toString(),
+									getIfList.get(l).get("GNT_CD").toString(),
+									getIfList.get(l).get("APPL_STATUS_CD").toString(),
+									getIfList.get(l).get("S_YMD").toString(),
+									getIfList.get(l).get("E_YMD").toString());
+
+							if(wtmIfTaaHisList != null && wtmIfTaaHisList.size() > 0) {
+
+								System.out.println("이미 있음!!!!");
+							} else {
+
+								WtmIfTaaHis data = new WtmIfTaaHis();
+								data.setTenantId(tenantId);
+								data.setEnterCd(getIfList.get(l).get("ENTER_CD").toString());
+								data.setSabun(getIfList.get(l).get("SABUN").toString());
+								data.setStartYmd(getIfList.get(l).get("S_YMD").toString());
+								data.setEndYmd(getIfList.get(l).get("E_YMD").toString());
+								data.setWorkTimeCode(getIfList.get(l).get("GNT_CD").toString());
+								data.setIfYmdhis(yyyymmddhhmiss);
+								//data.setIfYmdhis(getIfList.get(l).get("APPL_YMD").toString());
+								if(getIfList.get(l).get("REQ_S_HM") != null) {
+									data.setStartHm(getIfList.get(l).get("REQ_S_HM").toString());
+								} else {
+									data.setStartHm("");
+								}
+								if(getIfList.get(l).get("REQ_E_HM") != null) {
+									data.setEndHm(getIfList.get(l).get("REQ_E_HM").toString());
+								} else {
+									data.setEndHm("");
+								}
+								data.setApplNo(getIfList.get(l).get("APPL_SEQ").toString());
+								data.setStatus(getIfList.get(l).get("APPL_STATUS_CD").toString());
+								data.setIfStatus("");
+								data.setIfMsg("");
+								wtmIfTaaHisRepo.save(data);
+								System.out.println("WtmInterfaceServiceImpl get " + l + " "+ data.toString());
+							}
 		   	    		}
 		   	    	}
 		   		} else {

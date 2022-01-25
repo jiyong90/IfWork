@@ -171,59 +171,11 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
         		setTermMap.put("symd", closeYmd);
         		setTermMap.put("eymd", closeYmd);
         		setTermMap.put("pId", "DAYCLOSE");
-        		/*
-        		if(gooutCnt > 0) {
-					// create result 호출
-        			WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId, enterCd, sabun, closeYmd);
-    				if(flexEmp == null) {
-    					continue;
-    				}
-        			WtmFlexibleStdMgr flexStdMgr = flexStdMgrRepo.findById(flexEmp.getFlexibleStdMgrId()).get();
-        			// 20200709 일단 급하니깐 테넌트로 분기하자
-        			if(tenantId == 22) {
-        				// 그럼 임시로 f를 불러보자 ngv P_WTM_WORK_DAY_RESULT_CREATE_F 호출시 base 인정근무생성완료
 
-            			Long timeCdMgrId = Long.parseLong(closeList.get(i).get("timeCdMgrId").toString());
-            			WtmTimeCdMgr timeCdMgr = wtmTimeCdMgrRepo.findById(timeCdMgrId).get();
-            			calcService.P_WTM_WORK_DAY_RESULT_CREATE_F(tenantId, enterCd, sabun,  closeYmd, flexStdMgr, timeCdMgr, sabun);
-        			} else {
-        			// ngv는 P_WTM_WORK_DAY_RESULT_CREATE_N 으로 인정근무가 안만들어짐
-        			calcService.P_WTM_WORK_DAY_RESULT_CREATE_N(flexStdMgr, tenantId, enterCd, sabun, closeYmd, 0, sabun);
-        			}
-        			
-        			// wtmFlexibleEmpMapper.resetNoPlanWtmWorkDayResultByFlexibleEmpIdWithFixOt(l);
-        			
-        			// 외출횟수만큼 근무시간을 짤라야함 외출정보를 조회하자
-        			
-        			List<Map<String, Object>> goOutList = new ArrayList();
-        			goOutList = wtmScheduleMapper.setCalcGobackList(setTermMap);
-        			if(goOutList != null && goOutList.size() > 0) {
-        				for(Map<String, Object> f : goOutList) {
-        					
-        					logger.debug("goout send: " + f.toString());
-		        			SimpleDateFormat dt = new SimpleDateFormat("yyyyMMddHHmmss");
-		    				WtmFlexibleEmpService.addApprWtmDayResultInBaseTimeType(
-		    						  tenantId
-		    						, enterCd
-		    						, closeYmd
-		    						, sabun
-		    						, f.get("timeTypeCd").toString()
-		    						, ""
-		    						, dt.parse(f.get("planSdate").toString())
-		    						, dt.parse(f.get("planEdate").toString())
-		    						, null
-		    						, "0"
-		    						, false);
-        				}
-        			}
-        			
-        		}
-        		*/
         		logger.debug("schedule_closeday tenantId : "+ tenantId + " enterCd : " + enterCd + " sabun : " + sabun + ", ymd : " + closeYmd + ", closeType : " + closeType);
         		WtmFlexibleEmpService.calcApprDayInfo(tenantId, enterCd, closeYmd, closeYmd, sabun);
         		
         		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, closeYmd, closeYmd);
-        		//wtmFlexibleEmpMapper.createWorkTermBySabunAndSymdAndEymd(setTermMap);
 			}
 			logger.debug("schedule_closeday tenantId : "+ tenantId + " tot cnt" + closeList.size() + " end ");
 		}
