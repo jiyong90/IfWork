@@ -1263,7 +1263,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//인정시간 초기화
 			calcApprDayInfoApprReset(tenantId, enterCd, sabun, timeTypeCds, sYmd, eYmd);
 
-			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, sYmd, eYmd);
+			// 현대 ngv 때문에 있어야 겠찌?ㅠㅠ
+//			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, sYmd, eYmd);
 			
 			for(WtmWorkCalendar calendar : works) {
 
@@ -5374,7 +5375,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					for(String d : taaYmd) {
 						interfaceService.resetTaaResult(tenantId, enterCd, sabun, d);
 					}
-					
+
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

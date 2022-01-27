@@ -79,8 +79,8 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 
 	
 	@Override
-	//@Transactional
-	@Async("threadPoolTaskExecutor")
+	@Transactional
+//	@Async("threadPoolTaskExecutor")
 	public void setCloseDay(Long tenantId) throws Exception {
 		
 		// 인터페이스용 변수
@@ -184,8 +184,8 @@ public class WtmScheduleServiceImpl implements WtmScheduleService {
 	}
 	
 	@Override
-	//@Transactional
-	@Async("threadPoolTaskExecutor")
+	@Transactional
+	//@Async("threadPoolTaskExecutor")
 	public void setCloseDayUnplaned(Long tenantId) throws Exception {
 		
 		// 인터페이스용 변수

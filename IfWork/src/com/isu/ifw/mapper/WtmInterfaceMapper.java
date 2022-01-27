@@ -14,7 +14,9 @@ public interface WtmInterfaceMapper {
 	 * @return 
 	 */
 	public Map<String, Object> getIfLastDate(Map<String, Object> paramMap);
-	
+
+	public Map<String, Object> getIfLastDateBefore(Map<String, Object> paramMap);
+
 	/**
 	 * 인터페이스 기록시간 조회
 	 * @param paramMap

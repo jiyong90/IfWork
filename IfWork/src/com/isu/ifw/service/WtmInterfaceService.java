@@ -21,7 +21,8 @@ public interface WtmInterfaceService {
 	 * @throws Exception 
 	 */
 	public Map<String, Object> getIfLastDate(Long tenantId, String ifType) throws Exception;
-		
+	public Map<String, Object> getIfLastDateBefore(Long tenantId, String ifType) throws Exception;
+
 	/**
 	 * 인터페이스 서버 호출 
 	 * @param url - 호출경로

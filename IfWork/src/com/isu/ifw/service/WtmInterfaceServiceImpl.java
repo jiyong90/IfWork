@@ -110,11 +110,61 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		Map<String, Object> retMap = new HashMap<>();
 		// 2. 건별 data 저장
 		try {
-			// DATA KEY기준으로 SELECT 
+			// DATA KEY기준으로 SELECT
 			Map<String, Object> paramMap = new HashMap<>();
 			paramMap.put("tenantId", tenantId);
 			paramMap.put("ifType", ifType);
 			Map<String, Object> result = wtmInterfaceMapper.getIfLastDate(paramMap);
+//			for ( String key : result.keySet() ) {
+//    		    System.out.println("key : " + key +" / value : " + result.get(key));
+//    		}
+			// System.out.println("getIfLastDate result : " + result.toString());
+			if(result != null && result.size() > 0) {
+				try {
+					lastDataTime = result.get("lastDate").toString();
+				} catch(Exception e){
+					e.printStackTrace();
+				}
+			} else {
+				// 이관이력이 없으면 그냥 과거부터 쭉쭉 옮기자
+				lastDataTime = "19000101000000";
+			}
+
+			result = wtmInterfaceMapper.getIfNowDate(paramMap);
+			// System.out.println("getIfNowDate result : " + result.toString());
+			if(result != null && result.size() > 0) {
+				try {
+					nowDataTime = result.get("ifDate").toString();
+				} catch(Exception e){
+					e.printStackTrace();
+				}
+			} else {
+				nowDataTime = "19000101000000";
+			}
+			System.out.println("getIfLastDate Ret lastDate : " + lastDataTime + ", nowDate : " + nowDataTime);
+			retMap.put("lastDate", lastDataTime);
+			retMap.put("nowDate", nowDataTime);
+		} catch (Exception e) {
+			System.out.println("getIfLastDate Exception!!!!!!!");
+			e.printStackTrace();
+		}
+		return retMap;
+	}
+
+	@Override
+	public Map<String, Object> getIfLastDateBefore(Long tenantId, String ifType) throws Exception {
+		// TODO Auto-generated method stub
+		System.out.println("getIfLastDate tenantId : " + tenantId + ", ifType : " + ifType);
+		String lastDataTime = null;
+		String nowDataTime = null;
+		Map<String, Object> retMap = new HashMap<>();
+		// 2. 건별 data 저장
+		try {
+			// DATA KEY기준으로 SELECT 
+			Map<String, Object> paramMap = new HashMap<>();
+			paramMap.put("tenantId", tenantId);
+			paramMap.put("ifType", ifType);
+			Map<String, Object> result = wtmInterfaceMapper.getIfLastDateBefore(paramMap);
 //			for ( String key : result.keySet() ) {
 //    		    System.out.println("key : " + key +" / value : " + result.get(key));
 //    		}
@@ -127,7 +177,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		        }
 			} else {
 				// 이관이력이 없으면 그냥 과거부터 쭉쭉 옮기자
-				lastDataTime = "19000101000000";
+				lastDataTime = "20220101000000";
 			}
 			
 			result = wtmInterfaceMapper.getIfNowDate(paramMap);
@@ -139,7 +189,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		            e.printStackTrace();
 		        }
 			} else {
-				nowDataTime = "19000101000000";
+				nowDataTime = "20220101000000";
 			}
 			System.out.println("getIfLastDate Ret lastDate : " + lastDataTime + ", nowDate : " + nowDataTime);
 			retMap.put("lastDate", lastDataTime);
@@ -2094,6 +2144,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	}
 	
 	@Async("threadPoolTaskExecutor")
+	@Transactional
 	@Override
 	public void intfTaaAppl(Long tenantId) {
 		logger.debug("intfTaaAppl START ==================================== ");
@@ -2946,12 +2997,13 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					}
 					
 					// 근무시간합산은 재정산한다 
-		    		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, d, d);
+//		    		calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, d, d);
 	
 					cal1.add(Calendar.DATE, 1);
 					
 					d1 = cal1.getTime();
 				}
+//				calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, ymdFt.format(d1), ymdFt.format(d2));
 			}
 		}else {
 			throw new RuntimeException("신청정보가 없습니다.");
@@ -2978,7 +3030,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     	
     	// 최종 자료 if 시간 조회
     	try {
-    		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
+    		getDateMap = (HashMap<String, Object>) getIfLastDateBefore(tenantId, ifType);
     		lastDataTime = getDateMap.get("lastDate").toString();
     		nowDataTime = getDateMap.get("nowDate").toString();
     		//lastDataTime = "20200201010101";
@@ -3016,10 +3068,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 									getIfList.get(l).get("S_YMD").toString(),
 									getIfList.get(l).get("E_YMD").toString());
 
-							if(wtmIfTaaHisList != null && wtmIfTaaHisList.size() > 0) {
-
-								System.out.println("이미 있음!!!!");
-							} else {
+							if(wtmIfTaaHisList == null || wtmIfTaaHisList.size() == 0) {
 
 								WtmIfTaaHis data = new WtmIfTaaHis();
 								data.setTenantId(tenantId);
