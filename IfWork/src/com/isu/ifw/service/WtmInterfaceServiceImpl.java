@@ -5044,7 +5044,13 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			try {
 				System.out.println("info_data : " + result.get("infoData").toString());
 
-				ifUrl = result.get("infoData").toString() + "/workTimeClose";
+				if(tenantId == 12) {
+					ifUrl = result.get("infoData").toString() + "/infWorktimeClose";
+
+				}else {
+					ifUrl = result.get("infoData").toString() + "/workTimeClose";
+				}
+
 				System.out.println("ifUrl : " + ifUrl);
 				parmaMap.put("data", dataList);
 				HashMap<String, Object> getIfMap = null;
