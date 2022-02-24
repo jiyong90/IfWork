@@ -507,7 +507,15 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		String stdYmd = "";
 		String entrySdate = null;
 		String entryEdate = null;
-
+		Long tenantId = (Long) paramMap.get("tenantId");
+		// JYP 다음날 아침 6시 퇴근 까지 인정
+		SimpleDateFormat nowDay = new SimpleDateFormat("yyyyMMdd");
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(nowDay.parse(today));
+		calendar.add(Calendar.DATE, -1);
+		String yesterday = nowDay.format(calendar.getTime()).substring(0, 8);
+		
+		
 		//계획시간 안에 들어온 타각 먼저 처리(지각, 조퇴), 다음날 퇴근자들이 문제가 많음
 		for(Map<String, Object> time : list) {
 			if(time.get("cYmd") != null) {
@@ -537,8 +545,13 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				} else if(time.get("pSymd") != null && time.get("pSymd").equals(today) && paramMap.get("inoutType").equals("IN")) {
 					stdYmd = time.get("ymd").toString();
 					break;
-				}else if(time.get("pEymd") != null && time.get("pEymd").equals(today) && paramMap.get("inoutType").equals("OUT")) {
+				} else if(time.get("pEymd") != null && time.get("pEymd").equals(today) && paramMap.get("inoutType").equals("OUT")
+						&& time.get("diffYmd").equals(today)) {
 					stdYmd = time.get("ymd").toString();
+					break;
+				} else if( time.get("diffYmd").equals(yesterday) && paramMap.get("inoutType").equals("OUT")	&& tenantId == 41) {
+					// JYP 새벽퇴근 다음날 06시까지 인정
+					stdYmd = yesterday;
 					break;
 				}
 			}
@@ -644,7 +657,6 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		if(paramMap.get("inoutType") != null && "OUT".equals(paramMap.get("inoutType"))) {
 			// 오늘의 계획S시간 보다 퇴근시간이 더 크면 오늘이다!
 			if((toDayMap.get("planSdate").toString() != null && !"".equals(toDayMap.get("planSdate").toString())))  {
-
 				if(ymdhis.parse(toDayMap.get("planSdate").toString()).compareTo(ymdhis.parse(paramMap.get("inoutDate").toString())) < 0 ) {
 					stdYmd = toDayMap.get("ymd").toString();
 					entrySdate = toDayMap.get("entrySdate").toString();
@@ -659,15 +671,15 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				} else {
 					stdYmd = toDayMap.get("ymd").toString();
 				}
-
-			} else if((toDayMap.get("planSdate").toString() != null && !"".equals(toDayMap.get("planSdate").toString()))){
+				
 				if(yesterDayMap.get("planSdate").toString() != null && !"".equals(yesterDayMap.get("planSdate").toString())) {
 					stdYmd = yesterDayMap.get("ymd").toString();
 					entrySdate = yesterDayMap.get("entrySdate").toString();
 					entryEdate = yesterDayMap.get("entryEdate").toString();
-				}else {
+				} else {
 					stdYmd = toDayMap.get("ymd").toString();
-				}
+				} 
+
 			} else if((toDayMap.get("planSdate").toString() == null || "".equals(toDayMap.get("planSdate").toString())) && "Y".equals(toDayMap.get("unplannedYn")) ){
 				if(yesterDayMap.get("planSdate").toString() == null || "".equals(yesterDayMap.get("planSdate").toString()) && "Y".equals(yesterDayMap.get("unplannedYn")) && "".equals(toDayMap.get("entrySdate").toString())) {
 					stdYmd = yesterDayMap.get("ymd").toString();
