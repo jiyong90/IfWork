@@ -912,7 +912,6 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	}
 		
 	@Override
-	@Transactional
 	@Async("threadPoolTaskExecutor")
 	public void getEmpHisIfResult(Long tenantId) throws Exception {
 		// TODO Auto-generated method stub
@@ -2144,7 +2143,6 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	}
 	
 	@Async("threadPoolTaskExecutor")
-	@Transactional
 	@Override
 	public void intfTaaAppl(Long tenantId) {
 		logger.debug("intfTaaAppl START ==================================== ");
