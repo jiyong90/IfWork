@@ -507,7 +507,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     	HashMap<String, Object> getDateMap = null;
     	HashMap<String, Object> getIfMap = null;
     	List<Map<String, Object>> getIfList = null;
-    	
+    	ObjectMapper mapper = new ObjectMapper();
     	// 최종 자료 if 시간 조회
     	try {
     		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
@@ -517,7 +517,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
         		String param = "?lastDataTime="+lastDataTime;
 	        	String ifUrl = setIfUrl(tenantId, "/gntCode", param);  
 	        	getIfMap = getIfRt(ifUrl);
-		   		
+   	        	logger.debug("getIfMap YDH : " + mapper.writeValueAsString(getIfMap));
+   	        	System.out.println("getIfMap  ifData YDH : " + getIfMap.get("ifData").toString());
 		   		if (getIfMap != null && getIfMap.size() > 0) {
 		   			String ifMsg = getIfMap.get("message").toString();
 		   			getIfList = (List<Map<String, Object>>) getIfMap.get("ifData");
@@ -576,7 +577,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			            break;
 	    			}
    	        	}
-        	
+   	        	
 	        	if(retMsg == null || "".equals(retMsg) ) {
 	        		try {
 		        		//수정건이 있으면....
@@ -2148,8 +2149,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		logger.debug("intfTaaAppl START ==================================== ");
 		logger.debug("intfTaaAppl : " + tenantId);
 		
-		if(this.saveWtmIfTaaHisOnlyTaaApplPpType(tenantId)) {
-		//if(true) {
+	//	if(this.saveWtmIfTaaHisOnlyTaaApplPpType(tenantId)) {
+		if(true) {
 			System.out.println("setTaaApplBatchIfPostProcess");
 
 			List<String> statusList = new ArrayList<String>();
@@ -2680,7 +2681,14 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					WtmWorkCalendar cal = workCalendarRepo.findByTenantIdAndEnterCdAndYmdAndSabun(tenantId, enterCd, d, sabun);
 					WtmTimeCdMgr timeCdMgr = timeCdMgrRepo.findById(cal.getTimeCdMgrId()).get();
 					
-					
+					List<WtmWorkDayResult> workDayResult = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, d);
+
+					Boolean planCheck = false ;
+					for(WtmWorkDayResult w : workDayResult) {
+					   if("BASE".equals(w.getTimeTypeCd())) {
+					      planCheck = true;
+					   }
+					}
 				
 					WtmTaaCode taaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, det.getTaaCd());
 					String timeTypeCd = WtmApplService.TIME_TYPE_TAA;
@@ -2695,7 +2703,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					logger.debug("det appl.getApplStatusCd(): " + appl.getApplStatusCd());
 					if(appl.getApplStatusCd().equals(WtmApplService.APPL_STATUS_APPR)) {
 						logger.debug("flexibleStdMgr.getUnplannedYn() : " + flexibleStdMgr.getUnplannedYn());
-						if("Y".equals(flexibleStdMgr.getUnplannedYn())) {
+						if("Y".equals(flexibleStdMgr.getUnplannedYn()) && !planCheck) {
 							WtmWorkDayResult dayResult = new WtmWorkDayResult();
 							Integer workMinute = 0;
 							if(taaCode.getWorkApprHour()!=null) {
@@ -2800,6 +2808,22 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 											try {
 												sdate = (Date) workPlanMinMax.get("planSdate");
 												edate = (Date) workPlanMinMax.get("planEdate");
+
+											} catch (Exception e) {
+												e.printStackTrace();
+												sdate = null; edate = null;
+												logger.debug("계획시각이 없다.");
+											}
+										} else if(!"BASE".equals(flexibleStdMgr.getWorkTypeCd()) && "D".equals(taaCode.getRequestTypeCd()) && 41 == tenantId) {
+											Map<String, Object> workPlanMinMax = workDayResultRepo.findByMinMaxPlanDate(tenantId, enterCd, sabun, d);
+											try {
+												sdate = (Date) workPlanMinMax.get("planSdate");
+												edate = (Date) workPlanMinMax.get("planEdate");
+
+												if(sdate == null)
+													sdate = ymdhm.parse(d+timeCdMgr.getWorkShm());
+												if(edate == null)
+													edate = ymdhm.parse(d+timeCdMgr.getWorkEhm());
 
 											} catch (Exception e) {
 												e.printStackTrace();
