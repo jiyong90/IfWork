@@ -2814,22 +2814,6 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 												sdate = null; edate = null;
 												logger.debug("계획시각이 없다.");
 											}
-										} else if(!"BASE".equals(flexibleStdMgr.getWorkTypeCd()) && "D".equals(taaCode.getRequestTypeCd()) && 41 == tenantId) {
-											Map<String, Object> workPlanMinMax = workDayResultRepo.findByMinMaxPlanDate(tenantId, enterCd, sabun, d);
-											try {
-												sdate = (Date) workPlanMinMax.get("planSdate");
-												edate = (Date) workPlanMinMax.get("planEdate");
-
-												if(sdate == null)
-													sdate = ymdhm.parse(d+timeCdMgr.getWorkShm());
-												if(edate == null)
-													edate = ymdhm.parse(d+timeCdMgr.getWorkEhm());
-
-											} catch (Exception e) {
-												e.printStackTrace();
-												sdate = null; edate = null;
-												logger.debug("계획시각이 없다.");
-											}
 										} else {
 											try {
 												sdate = ymdhm.parse(d+timeCdMgr.getWorkShm());
