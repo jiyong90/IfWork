@@ -545,15 +545,14 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				} else if(time.get("pSymd") != null && time.get("pSymd").equals(today) && paramMap.get("inoutType").equals("IN")) {
 					stdYmd = time.get("ymd").toString();
 					break;
-				} else if(time.get("pEymd") != null && time.get("pEymd").equals(today) && paramMap.get("inoutType").equals("OUT")
-						&& time.get("diffYmd").equals(today)) {
-					stdYmd = time.get("ymd").toString();
-					break;
 				} else if( time.get("diffYmd").equals(yesterday) && paramMap.get("inoutType").equals("OUT")	&& tenantId == 41) {
 					// JYP 새벽퇴근 다음날 06시까지 인정
 					stdYmd = yesterday;
 					break;
-				}
+				} else if(time.get("pEymd") != null && time.get("pEymd").equals(today) && paramMap.get("inoutType").equals("OUT")) {
+					stdYmd = time.get("ymd").toString();
+					break;
+				} 
 			}
 		}
 		logger.debug("############ stdYmd2 " + stdYmd);
