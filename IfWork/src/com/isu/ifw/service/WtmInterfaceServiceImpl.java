@@ -507,7 +507,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
     	HashMap<String, Object> getDateMap = null;
     	HashMap<String, Object> getIfMap = null;
     	List<Map<String, Object>> getIfList = null;
-    	ObjectMapper mapper = new ObjectMapper();
+    	
     	// 최종 자료 if 시간 조회
     	try {
     		getDateMap = (HashMap<String, Object>) getIfLastDate(tenantId, ifType);
@@ -517,8 +517,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
         		String param = "?lastDataTime="+lastDataTime;
 	        	String ifUrl = setIfUrl(tenantId, "/gntCode", param);  
 	        	getIfMap = getIfRt(ifUrl);
-   	        	logger.debug("getIfMap YDH : " + mapper.writeValueAsString(getIfMap));
-   	        	System.out.println("getIfMap  ifData YDH : " + getIfMap.get("ifData").toString());
+		   		
 		   		if (getIfMap != null && getIfMap.size() > 0) {
 		   			String ifMsg = getIfMap.get("message").toString();
 		   			getIfList = (List<Map<String, Object>>) getIfMap.get("ifData");
@@ -577,7 +576,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			            break;
 	    			}
    	        	}
-   	        	
+
 	        	if(retMsg == null || "".equals(retMsg) ) {
 	        		try {
 		        		//수정건이 있으면....
@@ -2149,8 +2148,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		logger.debug("intfTaaAppl START ==================================== ");
 		logger.debug("intfTaaAppl : " + tenantId);
 		
-	//	if(this.saveWtmIfTaaHisOnlyTaaApplPpType(tenantId)) {
-		if(true) {
+		if(this.saveWtmIfTaaHisOnlyTaaApplPpType(tenantId)) {
+		//if(true) {
 			System.out.println("setTaaApplBatchIfPostProcess");
 
 			List<String> statusList = new ArrayList<String>();
@@ -2685,9 +2684,9 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 
 					Boolean planCheck = false ;
 					for(WtmWorkDayResult w : workDayResult) {
-					   if("BASE".equals(w.getTimeTypeCd())) {
-					      planCheck = true;
-					   }
+						if("BASE".equals(w.getTimeTypeCd())) {
+							planCheck = true;
+						}
 					}
 				
 					WtmTaaCode taaCode = wtmTaaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(tenantId, enterCd, det.getTaaCd());

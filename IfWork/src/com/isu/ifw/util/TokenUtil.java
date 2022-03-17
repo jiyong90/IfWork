@@ -139,12 +139,12 @@ public class TokenUtil {
 	
 	public static void main(String[] args) throws NoSuchAlgorithmException {
 		Map<String, Object> payloads = new HashMap<String, Object>();
-		payloads.put("CD_COMPANY", "1000");
-		payloads.put("NO_EMP", "20081111");
-		String jwt = createReplaceJWT("asdadsa", "id","issuer","subject", payloads,60000l);
+		payloads.put("CD_COMPANY", "BRS");
+		payloads.put("user_name", "38@BRS@352134");
+		String jwt = createReplaceJWT("br0se20200401k0reahrWtminTerFace", "id","issuer","subject", payloads,60000l);
 		System.out.println(jwt);
 		System.out.println("ssss");
-		System.out.println(decodeReplaceJWT("asdddsa", jwt).toString());
+		System.out.println(decodeReplaceJWT("br0se20200401k0reahrWtminTerFace", jwt).toString());
 	}
 	
 	 
