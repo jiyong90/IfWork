@@ -650,7 +650,8 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		paramMap.put("ymd", today);
 		Map<String, Object> toDayMap = inoutHisMapper.getCalData(paramMap);
 
-
+		logger.debug("yesterDayMap ydh  : " + yesterDayMap.toString());
+		logger.debug("toDayMap ydh  : " + toDayMap.toString());
 
 		// 퇴근일때
 		if(paramMap.get("inoutType") != null && "OUT".equals(paramMap.get("inoutType"))) {
@@ -670,7 +671,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				} else {
 					stdYmd = toDayMap.get("ymd").toString();
 				}
-				
+			} else if((toDayMap.get("planSdate").toString() != null && !"".equals(toDayMap.get("planSdate").toString()))){
 				if(yesterDayMap.get("planSdate").toString() != null && !"".equals(yesterDayMap.get("planSdate").toString())) {
 					stdYmd = yesterDayMap.get("ymd").toString();
 					entrySdate = yesterDayMap.get("entrySdate").toString();
