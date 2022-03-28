@@ -522,7 +522,7 @@ public class WtmFlexibleApplServiceImpl implements WtmApplService {
 
 
 			String symd = emp.getSymd().substring(0, 4)+"0101";
-			String eymd = emp.getSymd().substring(0, 4)+"1231";
+			String eymd = emp.getEymd().substring(0, 4)+"1231";
 
 			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, symd, eymd);
 			

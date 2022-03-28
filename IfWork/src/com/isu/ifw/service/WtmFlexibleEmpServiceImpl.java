@@ -5387,7 +5387,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			if(saveFlexibleEmp != null)
 				this.createWtmWorkDayResultAsCalendar(saveFlexibleEmp);
 			 */
-			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, searchSabun.get("useSymd")+"", searchSabun.get("useEymd")+"");
+			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, searchSabun.get("useSymd")+"", searchSabun.get("useEymd").toString().substring(0, 4)+"1231");
 			
 			rp.setSuccess("");
 			cnt++;
