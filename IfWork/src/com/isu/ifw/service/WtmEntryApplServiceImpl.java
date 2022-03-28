@@ -11,7 +11,11 @@ import com.isu.ifw.mapper.WtmInoutHisMapper;
 import com.isu.ifw.repository.*;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.vo.WtmApplLineVO;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,6 +70,36 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 	@Override
 	public Map<String, Object> getAppl(Long tenantId, String enterCd, String sabun, Long applId, String userId) {
 		Map<String, Object> appl = entryApplMapper.findByApplId(applId);
+		List<WtmApplLineVO> applLine = applMapper.getWtmApplLineByApplId(applId);
+		boolean isRecovery = false;
+		//결재요청중일 때 회수 버튼 보여주기 JYP 추가 20220325
+		if(applLine!=null && applLine.size()>0 && tenantId == 41) {
+			int seq = 1;
+			int rSeq = 1; // 수신처 seq
+			boolean isRecIng = false;
+			for(WtmApplLineVO l : applLine) {
+				if(APPL_LINE_S.equals(l.getApprTypeCd())) {
+					if(seq==1 && APPR_STATUS_REQUEST.equals(l.getApprStatusCd())  )
+						isRecovery = true;
+					
+					seq++;
+				}
+				
+				if(APPL_LINE_R.equals(l.getApprTypeCd())) {
+					if(rSeq==1 && APPR_STATUS_REQUEST.equals(l.getApprStatusCd()))
+						isRecIng = true;
+					
+					rSeq++;
+				}
+			}
+			
+			//발신결재가 없는 경우
+			if(seq==1 && isRecIng) {
+				isRecovery = true;
+			}
+		}
+		
+		appl.put("recoveryYn", isRecovery);
 		appl.put("applLine", applMapper.getWtmApplLineByApplId(applId));		
 				
 		return appl;
@@ -286,8 +320,9 @@ public class WtmEntryApplServiceImpl implements WtmApplService {
 
 	@Override
 	public void delete(Long applId) {
-		// TODO Auto-generated method stub
-		
+		wtmEntryApplRepo.deleteByApplId(applId);
+		wtmApplLineRepo.deleteByApplId(applId);
+		wtmApplRepo.deleteById(applId);
 	}
 
 	@Transactional
