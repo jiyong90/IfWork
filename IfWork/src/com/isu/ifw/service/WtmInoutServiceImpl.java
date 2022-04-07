@@ -549,7 +549,12 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					// JYP 새벽퇴근 다음날 06시까지 인정
 					stdYmd = yesterday;
 					break;
-				} else if(time.get("pEymd") != null && time.get("pEymd").equals(today) && paramMap.get("inoutType").equals("OUT")) {
+				} else if( time.get("diffYmd").equals(time.get("ymd")) && paramMap.get("inoutType").equals("OUT") && tenantId == 41) {
+					// JYP 금요일 출근 토요일 새벽 퇴근 후 토요일 출/퇴근 타각 있는 경우 퇴근 타각
+					stdYmd = time.get("ymd").toString();
+					break;
+				} else if(time.get("pEymd") != null && time.get("pEymd").equals(today) && paramMap.get("inoutType").equals("OUT")
+						  && tenantId != 41 ) {
 					stdYmd = time.get("ymd").toString();
 					break;
 				} 
