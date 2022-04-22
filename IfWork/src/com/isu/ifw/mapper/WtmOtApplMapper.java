@@ -122,4 +122,18 @@ public interface WtmOtApplMapper {
 	 */
 	public Map<String, Object> getOtDetailYmd(Map<String, Object> paramMap);
 	
+	/**
+	 * 대체휴일 신청서가 result에 들어가 있는지
+	 * @param paramMap
+	 * @return
+	 */
+	public Map<String, Object> otSubsResultExist(Map<String, Object> paramMap);
+	
+	/**
+	 * 처음 신청된 대체휴일 신청서가 subs에 들어가 있는지
+	 * @param paramMap
+	 * @return
+	 */
+	public Map<String, Object> otSubsApplExist(Map<String, Object> paramMap);
+	
 }

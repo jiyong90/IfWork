@@ -1263,8 +1263,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//인정시간 초기화
 			calcApprDayInfoApprReset(tenantId, enterCd, sabun, timeTypeCds, sYmd, eYmd);
 
-			// 현대 ngv 때문에 있어야 겠찌?ㅠㅠ
-//			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, sYmd, eYmd);
+			calcService.P_WTM_FLEXIBLE_EMP_WORKTERM_C(tenantId, enterCd, sabun, sYmd, eYmd);
 			
 			for(WtmWorkCalendar calendar : works) {
 
@@ -1537,7 +1536,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 										logger.debug("타각시간이 계획종료시간보다 빠르다.");
 										logger.debug("calendar.getEntryEdate() : " + calendar.getEntryEdate());
 										logger.debug("maxPlanEdate : " + maxPlanEdate);
-										if(calendar.getEntryEdate().compareTo(nightSdate) > 0){
+										// JYP 야간 근무 없이 연장근무로 인정
+										if(calendar.getEntryEdate().compareTo(nightSdate) > 0 && calendar.getTenantId() != 41){
 											logger.debug("타각시간이 NIGHT 시간내에 있다.");
 											Date planSdate = maxPlanEdate;
 											Date planEdate = nightSdate;
@@ -3605,7 +3605,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				timeTypeCd.add(WtmApplService.TIME_TYPE_SUBS); 
 				timeTypeCd.add(WtmApplService.TIME_TYPE_TAA);
 				timeTypeCd.add(WtmApplService.TIME_TYPE_REGA); 
-				
+				logger.debug("ydh remove : "+tenantId +" , "+ enterCd +" , "+ sabun +" , "+ timeTypeCd +" , "+ ymd);
 				List<WtmWorkDayResult> workDayResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCd, ymd, ymd);
 
 				//Date sdate = otSubsAppl.getSubsSdate();
@@ -3614,7 +3614,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				int cnt = 0;
 				Boolean isPrev = null;
 				for(WtmWorkDayResult res : workDayResults) {
-
+					logger.debug("ydh INFO : "+res.getTimeTypeCd() +" , "+ res.getPlanSdate() +" , "+ res.getPlanEdate() +" , "+ workDayResults.size() + " , "+cnt );
 					if(( res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) ) && res.getPlanSdate().compareTo(removeSdate) == 0 && res.getPlanEdate().compareTo(removeEdate) == 0) {
 						if(cnt == 0) {
 							//시작시간이 대체휴일이면 다음 데이터 여부를 판단하고 다음데이터가 SUBS BASE로 변경하자
@@ -4615,18 +4615,34 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							resultParam.put("otApplId", otAppl.getOtApplId());
 							
 							List<Map<String, Object>> subsCreateTarget = otApplMapper.subsCreateTarget(resultParam);
-
-							if(subsCreateTarget!=null && subsCreateTarget.size()>0) {
 							
+							if(subsCreateTarget!=null && subsCreateTarget.size()>0) {
+								// OT시간에 일마감시 중복적으로 생기는 대체휴일 체크 파라미터
+								resultParam.put("taaCd", WtmApplService.TIME_TYPE_SUBS);
+								resultParam.put("applId", otAppl.getApplId());
+								resultParam.put("otApplId", otAppl.getOtApplId());
+								boolean isOtSubsExist = false;
+								
 								//대체휴일
 //								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplId(otAppl.getApplId());
 								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplIdAndCancelYnIsNullOrCancelYnNot(otAppl.getApplId(), "Y");
+								// OT시간에 일마감시 중복적으로 생기는 대체휴일 체크 
+								Map<String, Object> checkOtSubsResult = otApplMapper.otSubsResultExist(resultParam);
+								Map<String, Object> checkOtSubsAppl = otApplMapper.otSubsApplExist(resultParam);
+								
 								if(subs!=null && subs.size()>0) {
 									logger.debug("save subs start >>> ");
 									System.out.println("save subs start >>> ");
 									for(WtmOtSubsAppl sub : subs) {
+										if( (Integer.parseInt(checkOtSubsResult.get("cnt").toString()) > 0 && Integer.parseInt(checkOtSubsAppl.get("cnt").toString()) > 0 )
+												|| sub.getApplId().equals(Long.parseLong(checkOtSubsAppl.get("applId").toString()))) { 
+											// RESULT와 OT_SUBS_APPL 테이블에 이미 SUBS생성된 상태를 의미
+											isOtSubsExist = true;
+										}
 										// 20200609 이효정 TAA_CD에도 고정값 SUBS를 추가해야함
-										addWtmDayResultInBaseTimeType(tenantId, enterCd, sub.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, WtmApplService.TIME_TYPE_SUBS, sub.getSubsSdate(), sub.getSubsEdate(), otAppl.getApplId(), userId);
+										if( !isOtSubsExist ) {
+											addWtmDayResultInBaseTimeType(tenantId, enterCd, sub.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, WtmApplService.TIME_TYPE_SUBS, sub.getSubsSdate(), sub.getSubsEdate(), otAppl.getApplId(), userId);
+										}
 									}
 									logger.debug("save subs end >>> ");
 									System.out.println("save subs end >>> ");
@@ -5375,7 +5391,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					for(String d : taaYmd) {
 						interfaceService.resetTaaResult(tenantId, enterCd, sabun, d);
 					}
-
+					
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -6100,6 +6116,120 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		return resMap;
 	}
 
+	
+	/**
+	 * 무단결근인 사람 일마감 수정(관리자용)
+	 * @param tenantId
+	 * @param enterCd
+	 * @param userId
+	 * @param convertMap
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public ReturnParam allFinishDays(Long tenantId, String enterCd, String sabun, String userId, Map<String, Object> convertMap) throws Exception {
+		int cnt = 0;
+		ReturnParam rp = new ReturnParam();
+		rp.setSuccess("일마감 처리 완료 하였습니다. ");
+		
+		if(convertMap.containsKey("mergeRows") && ((List)convertMap.get("mergeRows")).size() > 0) {
+			List<Map<String, Object>> iList = (List<Map<String, Object>>) convertMap.get("mergeRows");
+			List<Map<String, Object>> day = new ArrayList();
+			String retMsg = "";
+			/*
+			if(iList != null && iList.size() > 0) {
+				for(Map<String, Object> l : iList) {
+					
+					l.put("shm", l.get("planSdate").toString().substring(8,12));
+					l.put("ehm", l.get("planEdate").toString().substring(8,12));
+					l.put("sabun", sabun);
+					l.put("updateId", userId);
+					l.put("tenantId", tenantId);
+					l.put("enterCd", enterCd);
+					
+					Map<String, Object> planMinuteMap = calcMinuteExceptBreaktime(Long.parseLong(l.get("timeCdMgrId").toString()), l, userId);
+					
+					l.put("planMinute", (Integer.parseInt(planMinuteMap.get("calcMinute")+"")));
+					
+					// 근무검증 start
+					String timeTypeCd = l.get("timeTypeCd").toString();
+					Map<String, Object> chkMap = new HashMap();
+					
+					if("BASE".equals(timeTypeCd)) {
+					
+					} else {
+						// ot시간검증
+						chkMap.put("ymd", l.get("ymd").toString());
+						chkMap.put("otSdate", l.get("planSdate").toString());
+						chkMap.put("otEdate", l.get("planEdate").toString());
+					}
+					
+					// 근무검증 end
+					
+					
+					if(!"".equals(retMsg)) {
+						// 오류내용 저장하기
+						throw new RuntimeException(retMsg);
+					} else {
+										
+						WtmWorkDayResult result = new WtmWorkDayResult();
+						if(l.get("workDayResultId") != "") {
+							result = workDayResultRepo.findByWorkDayResultId(Long.parseLong(l.get("workDayResultId").toString()));
+						} else {
+							result.setEnterCd(enterCd);
+							result.setSabun(l.get("sabun").toString());
+							result.setTenantId(tenantId);
+							result.setTimeTypeCd(l.get("timeTypeCd").toString());
+							result.setYmd(l.get("ymd").toString());
+						}
+						SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmm");
+						
+						result.setPlanSdate(sdf.parse(l.get("planSdate").toString()));
+						result.setPlanEdate(sdf.parse(l.get("planEdate").toString()));
+						result.setPlanMinute(Integer.parseInt(l.get("planMinute").toString()));
+						result.setUpdateId(userId);	
+						workDayResultRepo.save(result);
+						
+						//오늘 이전인 경우만 돌려주기, 오늘은 일마감에서
+						SimpleDateFormat format1 = new SimpleDateFormat ( "yyyyMMdd");
+						Date today = format1.parse(format1.format(new Date()));
+						Date edate = format1.parse(l.get("planEdate").toString().substring(0, 8));
+						
+						if(today.compareTo(edate) > 0) {
+							empService.calcApprDayInfo(tenantId, 
+									enterCd, l.get("ymd").toString(),
+									l.get("ymd").toString(), l.get("sabun").toString());
+							
+							// 근무검증
+							// 원래 있던 자리
+							// 문제가 없으면 근무계획시간 합산
+							chkMap.put("tenantId", tenantId);
+							chkMap.put("enterCd", enterCd);
+							chkMap.put("sabun", l.get("sabun").toString());
+							chkMap.put("symd", l.get("ymd").toString());
+							chkMap.put("eymd", l.get("ymd").toString());
+							chkMap.put("pId", userId);
+							flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(chkMap);
+						} else {
+							chkMap.put("tenantId", tenantId);
+							chkMap.put("enterCd", enterCd);
+							chkMap.put("sabun", l.get("sabun").toString());
+							chkMap.put("symd", l.get("ymd").toString());
+							chkMap.put("eymd", l.get("ymd").toString());
+							chkMap.put("pId", userId);
+							flexEmpMapper.createWorkTermBySabunAndSymdAndEymd(chkMap);
+						}
+						cnt++;
+						retMsg = ""; // 메시지초기화
+					}
+				}
+			}
+			*/
+		}
+		
+		return rp;
+	}
+	
 	@Override
 	public List<WtmFlexibleEmp> findByFlexibleStdMgrId(Long flexibleStdMgrId) {
 		return flexEmpRepo.findByFlexibleStdMgrId(flexibleStdMgrId);
