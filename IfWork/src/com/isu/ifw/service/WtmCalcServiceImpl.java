@@ -2905,8 +2905,24 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		 */
 		Double workMinute = 0.0;
 		Double otMinute = 0.0;
+		Double workMinuteTypeA = 0.0;
+		Double workMinuteTypeB = 0.0;
 		if(workDayCnt > 0) {
 			logger.debug("workMinute : " + workMinute);
+			if( calcType.equals("D") ) { // 법정 근로시간 산정방법 선택
+				// 고용노동부 소정시간 (방법1)
+				workMinuteTypeA = Math.floor(Double.parseDouble(cals.size()+"") * Double.parseDouble(weekWorkMinite+"") / Double.parseDouble(7+"") * Double.parseDouble(60+""));
+				// 현재 사용하는 소정시간 (방법2)
+				workMinuteTypeB = (double) (workDayCnt * 8 * 60);
+				
+				logger.debug("workMinuteTypeA : " + workMinuteTypeA +", workMinuteTypeB : "+workMinuteTypeB);
+				if(workMinuteTypeA < workMinuteTypeB) {
+					calcType = "A";
+				}else if(workMinuteTypeA > workMinuteTypeB){
+					calcType = "B";
+				}
+			}
+				
 			if(calcType.equals("B") || calcType.equals("C")) {
 				workMinute = (double) (workDayCnt * 8 * 60);
 			}else {
