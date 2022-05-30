@@ -3038,16 +3038,42 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			/**
 			 * 대체휴일 생성 
 			 */
+			// 인정시간 만들어지는 타이밍 보기 위함 시작
+			Map<String, Object> resultParam = new HashMap<String, Object>();
+			//인정시간 만들어지면 인정시간과 ot신청시간 비교
+			
+			List<String> otTimeTypeCds = new ArrayList<String>();
+			otTimeTypeCds.add(WtmApplService.TIME_TYPE_OT);
+			otTimeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_OT);
+			otTimeTypeCds.add(WtmApplService.TIME_TYPE_NIGHT);
+			otTimeTypeCds.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
+			resultParam.put("timeTypeCds", otTimeTypeCds);
+			resultParam.put("tenantId", tenantId);
+			resultParam.put("enterCd", enterCd);
+			resultParam.put("sabun", sabun);
+			
 			List<Map<String, Object>> subsCreateTarget = otApplMapper.subsCreateTarget(paramMap);
+			
+			
 			logger.debug("17. subsCreateTarget " + subsCreateTarget.size() + "subsCreateTarget"); 
 			if(subsCreateTarget!=null && subsCreateTarget.size()>0) {
 				logger.debug("calcApprDayInfo 18 ");
-				
+					
 				List<WtmOtAppl> otAppls = new ArrayList<WtmOtAppl>();
 				for(Map<String, Object> t : subsCreateTarget) {
 					WtmOtAppl otAppl = otApplRepo.findById(Long.valueOf(t.get("otApplId").toString())).get();
 					otAppls.add(otAppl);
 				}
+				// 인정시간 만들어지는 타이밍 보기 위함 시작
+				for(WtmOtAppl otAppl : otAppls) {
+					String sYmd = WtmUtil.parseDateStr(otAppl.getOtSdate(), "yyyyMMdd");
+					String eYmd = WtmUtil.parseDateStr(otAppl.getOtEdate(), "yyyyMMdd");
+					
+					resultParam.put("sYmd", sYmd);
+					resultParam.put("eYmd", eYmd);
+				}
+				
+				Map<String, Object> otMinute = flexEmpMapper.sumResultMinuteByTimeTypeCd(resultParam);
 	
 				try { logger.debug("18. applyOtSubs ","otAppls : " + mapper.writeValueAsString(otAppls) + "applyOtSubs"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
 				applyOtSubs(tenantId, enterCd, otAppls, false, "SYSTEM");
@@ -4535,6 +4561,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						
 					logger.debug("unplannedYn : " + unplannedYn);
 					logger.debug("출/퇴근 타각 : " + entrySdate + "~" + entryEdate);
+					logger.debug("isCalcAppr : " + isCalcAppr);
 					
 					//인정근무시간 계산해야하고 출/퇴근 타각이 있고
 					if(isCalcAppr && entrySdate!=null && entryEdate!=null) {
@@ -4601,6 +4628,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					resultParam.put("timeTypeCds", otTimeTypeCds);
 					
 					Map<String, Object> otMinute = flexEmpMapper.sumResultMinuteByTimeTypeCd(resultParam);
+					
 					if(otMinute!=null 
 							&& otMinute.containsKey("planMinute") && otMinute.get("planMinute")!=null
 							&& otMinute.containsKey("apprMinute") && otMinute.get("apprMinute")!=null) {
@@ -4626,6 +4654,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 								//대체휴일
 //								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplId(otAppl.getApplId());
 								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplIdAndCancelYnIsNullOrCancelYnNot(otAppl.getApplId(), "Y");
+								
+								
 								// OT시간에 일마감시 중복적으로 생기는 대체휴일 체크 
 								Map<String, Object> checkOtSubsResult = otApplMapper.otSubsResultExist(resultParam);
 								Map<String, Object> checkOtSubsAppl = otApplMapper.otSubsApplExist(resultParam);
@@ -4641,11 +4671,27 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 										}
 										// 20200609 이효정 TAA_CD에도 고정값 SUBS를 추가해야함
 										if( !isOtSubsExist ) {
-											addWtmDayResultInBaseTimeType(tenantId, enterCd, sub.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, WtmApplService.TIME_TYPE_SUBS, sub.getSubsSdate(), sub.getSubsEdate(), otAppl.getApplId(), userId);
+										addWtmDayResultInBaseTimeType(tenantId, enterCd, sub.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, WtmApplService.TIME_TYPE_SUBS, sub.getSubsSdate(), sub.getSubsEdate(), otAppl.getApplId(), userId);
 										}
 									}
 									logger.debug("save subs end >>> ");
 									System.out.println("save subs end >>> ");
+								}
+							} else {
+								// 1개의 applid 가 두개로 나눠지는 경우 취소된 appl_id 뽑고
+								Map<String, Object> checkSubsChgAppl = otApplMapper.otSubsChgAppl(resultParam);
+								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplIdAndCancelYnIsNullOrCancelYnNot((Long)checkSubsChgAppl.get("applId"), "Y");
+								if(checkSubsChgAppl!=null && checkSubsChgAppl.containsKey("applId") && checkSubsChgAppl.get("applId")!=null) {
+									
+									if(subs!=null && subs.size()>0) {
+										logger.debug("save subs start >>> ");
+										System.out.println("save subs start >>> ");
+										for(WtmOtSubsAppl sub : subs) {
+											addWtmDayResultInBaseTimeType(tenantId, enterCd, sub.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, WtmApplService.TIME_TYPE_SUBS, sub.getSubsSdate(), sub.getSubsEdate(), otAppl.getApplId(), userId);
+										}
+										logger.debug("save subs end >>> ");
+										System.out.println("save subs end >>> ");
+									}
 								}
 							}
 						}

@@ -26,6 +26,7 @@ import com.isu.ifw.entity.WtmWorkDayResult;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmOtApplMapper;
+import com.isu.ifw.mapper.WtmOtCanApplMapper;
 import com.isu.ifw.repository.WtmOtApplRepository;
 import com.isu.ifw.repository.WtmOtCanApplRepository;
 import com.isu.ifw.repository.WtmOtSubsApplRepository;
@@ -68,6 +69,9 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 	
 	@Autowired
 	WtmOtCanApplRepository wtmOtCanApplRepo;
+	
+	@Autowired
+	WtmOtCanApplMapper wtmOtCanApplMapper;
 	
 	@Autowired private WtmWorkCalendarRepository workCalendarRepo;
 	
@@ -716,7 +720,9 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 		ReturnParam rp = new ReturnParam();
 		rp.setSuccess("");
 		paramMap.put("applId", applId);
-		
+		Map<String, Object> resultParam = new HashMap<String, Object>();
+		resultParam.put("sabun", sabun);
+		resultParam.put("applId", applId);
 		//취소하는 근무시간 정보를 지운다.
 		List<WtmOtCanAppl> otCanApplList = wtmOtCanApplRepo.findByApplId(applId);
 		
@@ -734,6 +740,20 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 				deleteTimeTypeCds.add("BREAK_NIGHT");
 				List<WtmWorkDayResult> results =  wtmWorkDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, deleteTimeTypeCds, otCanAppl.getYmd(), otCanAppl.getYmd());
 				wtmWorkDayResultRepo.deleteAll(results);
+				//변경된 SUBS 의 APPLID로 셋팅 otCanApplfindByApplId
+				List<Map<String, Object>> otCanApplLists = wtmOtCanApplMapper.otCanApplfindByApplId(resultParam);
+				
+				if(otCanApplLists!=null && otCanApplLists.size()>0) {
+					for(Map<String, Object> o : otCanApplLists) {
+						resultParam.put("otApplId", o.get("otApplId"));
+					}
+				}
+				
+				Map<String, Object> checkSubsChgAppl = wtmOtApplMapper.otSubsChgAppl(resultParam);
+				
+				List<Map<String, Object>> otSubsChgAppls = wtmOtApplMapper.otSubsChgApplfindByApplId(applId);
+				if(otSubsChgAppls!=null && otSubsChgAppls.size()>0)
+					resultParam.put("otApplId", otSubsChgAppls);
 				
 				WtmWorkDayResult dayResult = wtmWorkDayResultRepo.findById(otCanAppl.getWorkDayResultId()).orElse(null);
 				//지우려는 정보의 신청정보가 있다면 관련된 정보도 같이 지워준다 대체휴일과 같은 정보..
@@ -741,8 +761,10 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 					if(dayResult.getApplId() != null) {
 						deletedApplId = dayResult.getApplId(); 
 					}
-					
-					wtmWorkDayResultRepo.delete(dayResult);
+					// SUBS -> BASE로 변경된거는 삭제 하지 않는다. TIME_TYPE_CD != BASE 
+					if(!dayResult.getTimeTypeCd().equals("BASE")) {
+						wtmWorkDayResultRepo.delete(dayResult);
+					}
 					 
 					rp.put("sabun", dayResult.getSabun());
 					rp.put("symd", dayResult.getYmd());
@@ -763,6 +785,23 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 					
 					}
 				}
+				
+				if(checkSubsChgAppl != null && checkSubsChgAppl.get("applId") != null && !checkSubsChgAppl.get("applId").equals("")) {
+					// 연장근무로 생성된 SUBS 를 변경한 후 삭제 처리할때 필요함
+					deletedApplId = (Long) checkSubsChgAppl.get("applId");
+					List<WtmOtSubsAppl> otSubsAppls = wtmOtSubsApplRepo.findByApplId(deletedApplId);
+					if(otSubsAppls != null && otSubsAppls.size() > 0) {
+						String currYmd = null;
+						paramMap.put("tenantId", tenantId);
+						paramMap.put("enterCd", enterCd);
+						Map<String, Map<String, Date>> resetBaseTime = new HashMap<String, Map<String, Date>>();
+						for(WtmOtSubsAppl otSubsAppl : otSubsAppls) {
+							wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(tenantId, enterCd, otSubsAppl.getSubYmd(), otCanAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, "", otSubsAppl.getSubsSdate(), otSubsAppl.getSubsEdate(), deletedApplId, userId);
+						}
+					
+					}
+				}
+				
 			}
 		}
 		return rp;

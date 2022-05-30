@@ -136,4 +136,12 @@ public interface WtmOtApplMapper {
 	 */
 	public Map<String, Object> otSubsApplExist(Map<String, Object> paramMap);
 	
+	/**
+	 * 하나의 applId를 가지고 대체휴일을 두개로 나눴을 때
+	 * @param paramMap
+	 * @return
+	 */
+	public Map<String, Object> otSubsChgAppl(Map<String, Object> paramMap);
+	
+	
 }
