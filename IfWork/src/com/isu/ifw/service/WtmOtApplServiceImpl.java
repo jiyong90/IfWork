@@ -136,6 +136,8 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 						otAppl = o;
 						ymd = o.get("ymd").toString();
 					}
+					otAppl.put("otSdate", o.get("otSdate").toString());
+					otAppl.put("otEdate", o.get("otEdate").toString());
 					sabuns.add(o.get("sabun").toString());
 				}
 				
@@ -606,9 +608,16 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 		rp.setSuccess("");
 		// TODO Auto-generated method stub
 		// 중복 신청은 화면에서 제어 하겠지?
+		String otSdate = "";
+		String otEdate = "";
 		String ymd = paramMap.get("ymd").toString();
-		String otSdate = paramMap.get("otSdate").toString();
-		String otEdate = paramMap.get("otEdate").toString();
+		if(paramMap.get("otSdate").toString().length()> 12 && paramMap.get("otEdate").toString().length()> 12) {
+			otSdate = paramMap.get("otSdate").toString().replaceAll("[-]","").substring(0,8) + paramMap.get("otSdate").toString().replaceAll("[:]","").substring(11,15);
+			otEdate = paramMap.get("otEdate").toString().replaceAll("[-]","").substring(0,8) + paramMap.get("otEdate").toString().replaceAll("[:]","").substring(11,15);
+		}else {
+			otSdate = paramMap.get("otSdate").toString();
+			otEdate = paramMap.get("otEdate").toString();
+		}
 		
 		Date td = WtmUtil.toDate(ymd, "yyyyMMdd");
 		Date sd = WtmUtil.toDate(otSdate, "yyyyMMddHHmm");
@@ -966,6 +975,10 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 					totOtMinute = Integer.parseInt(rMap.get("totOtMinute")+"");
 				}
 				Float f = (float) ((totOtMinute + (calcMinute -breakMinute)) / 60.0f);
+				logger.debug("### totOtMinute ydh : " + totOtMinute);
+				logger.debug("### calcMinute ydh : " + calcMinute);
+				logger.debug("### breakMinute ydh : " + breakMinute);
+				logger.debug("### f ydh : " + f );
 				//if(f > 12) {
 				// 20200714 이효정 연장근무 가능시간은 프로퍼티에서 가져와야함.
 				Float baseOt = (float)0;

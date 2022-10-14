@@ -749,7 +749,7 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 					}
 				}
 				
-				Map<String, Object> checkSubsChgAppl = wtmOtApplMapper.otSubsChgAppl(resultParam);
+				List<Map<String, Object>> checkSubsChgAppls = wtmOtApplMapper.otSubsChgAppl(resultParam);
 				
 				List<Map<String, Object>> otSubsChgAppls = wtmOtApplMapper.otSubsChgApplfindByApplId(applId);
 				if(otSubsChgAppls!=null && otSubsChgAppls.size()>0)
@@ -785,23 +785,18 @@ public class WtmApplAfterServiceImpl implements WtmApplAfterService {
 					
 					}
 				}
-				
-				if(checkSubsChgAppl != null && checkSubsChgAppl.get("applId") != null && !checkSubsChgAppl.get("applId").equals("")) {
-					// 연장근무로 생성된 SUBS 를 변경한 후 삭제 처리할때 필요함
-					deletedApplId = (Long) checkSubsChgAppl.get("applId");
-					List<WtmOtSubsAppl> otSubsAppls = wtmOtSubsApplRepo.findByApplId(deletedApplId);
-					if(otSubsAppls != null && otSubsAppls.size() > 0) {
+				if(checkSubsChgAppls!=null && checkSubsChgAppls.size()>0) {
+					for(Map<String, Object> checkSubsChgAppl : checkSubsChgAppls) {
+						deletedApplId = (Long) checkSubsChgAppl.get("applId");
+						List<WtmOtSubsAppl> otSubsAppls = wtmOtSubsApplRepo.findByApplId(deletedApplId);
 						String currYmd = null;
 						paramMap.put("tenantId", tenantId);
 						paramMap.put("enterCd", enterCd);
-						Map<String, Map<String, Date>> resetBaseTime = new HashMap<String, Map<String, Date>>();
 						for(WtmOtSubsAppl otSubsAppl : otSubsAppls) {
 							wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(tenantId, enterCd, otSubsAppl.getSubYmd(), otCanAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, "", otSubsAppl.getSubsSdate(), otSubsAppl.getSubsEdate(), deletedApplId, userId);
 						}
-					
 					}
 				}
-				
 			}
 		}
 		return rp;

@@ -430,4 +430,12 @@ public interface WtmFlexibleEmpService {
 	
 	public List<WtmFlexibleEmp> findByFlexibleStdMgrId(Long flexibleStdMgrId);
 	
+	/**
+	 * 무단결근인 사람 일마감 수정(관리자용)
+	 * @param dateMap	
+	 * @param userId
+	 * @throws Exception
+	 */
+	//public int allFinishDays(Long tenantId, String enterCd, String sabun, String userId, Map<String, Object> convertMap) throws Exception;
+	public ReturnParam allFinishDays(Long tenantId, String enterCd, String sabun, String userId, Map<String, Object> convertMap) throws Exception;
 }

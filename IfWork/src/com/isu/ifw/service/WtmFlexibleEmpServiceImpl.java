@@ -1514,20 +1514,20 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 										Date planSdate = calendar.getEntrySdate();
 										Date planEdate = prenightEdate;
 										savedResult = this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun()
-												, WtmApplService.TIME_TYPE_EARLY_NIGHT, planSdate, planEdate, null, null, null, null, restOtMinute);
+												, WtmApplService.TIME_TYPE_OT, planSdate, planEdate, null, null, null, null, restOtMinute);
 										restOtMinute = restOtMinute - savedResult.getPlanMinute();
 										if(restOtMinute > 0) {
 											planSdate = prenightEdate;
 											planEdate = minPlanSdate;
 											savedResult = this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun()
-													, WtmApplService.TIME_TYPE_EARLY_OT, planSdate, planEdate, null, null, null, null, restOtMinute);
+													, WtmApplService.TIME_TYPE_OT, planSdate, planEdate, null, null, null, null, restOtMinute);
 											restOtMinute = restOtMinute - savedResult.getPlanMinute();
 										}
 									}else {
 										Date planSdate = calendar.getEntrySdate();
 										Date planEdate = minPlanSdate;
 										savedResult = this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, calendar.getTenantId(), calendar.getEnterCd(), calendar.getYmd(), calendar.getSabun()
-												, WtmApplService.TIME_TYPE_EARLY_OT, planSdate, planEdate, null, null, null, null, restOtMinute);
+												, WtmApplService.TIME_TYPE_OT, planSdate, planEdate, null, null, null, null, restOtMinute);
 										restOtMinute = restOtMinute - savedResult.getPlanMinute();
 									}
 								}
@@ -2709,6 +2709,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
 								r.setUpdateId("SELE_F_OT_NIGHT");
 								workDayResultRepo.save(r);
+								workDayResultRepo.flush();
 							}
 						}
 					}
@@ -2775,13 +2776,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							
 							r.setUpdateId("findBytenantIdAndEnterCdAndYmdAndSabunNotInTimeTypeCdAndTaaCd");
 							workDayResultRepo.save(r);
-							
+							workDayResultRepo.flush();
 						}
 					}
 				}
 			}
-			
-			
 			
 			//if("BRS".equals(enterCd) || "LSG".equals(enterCd) || "1000".equals(enterCd)) {
 				// 20200518 브로제랑 ls글로벌만 완전선근 사용중 ngv
@@ -3357,7 +3356,9 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		timeType.add(WtmApplService.TIME_TYPE_EARLY_NIGHT);
 		timeType.add(WtmApplService.TIME_TYPE_REGA);
 
-		List<WtmWorkDayResult> base = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeType, ymd, ymd);
+		//List<WtmWorkDayResult> base = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeType, ymd, ymd);
+		// 근태 신청이 오전부터 적용되면 기본근무 9~18시 시간인 사람들은 무단결근 생성됨
+		List<WtmWorkDayResult> base = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateDesc(tenantId, enterCd, sabun, timeType, ymd, ymd);
 		
 		//List<WtmWorkDayResult> days = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmd(tenantId, enterCd, sabun, ymd);
 
@@ -3766,6 +3767,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						
 						r.setPlanMinute(Integer.parseInt(planMinuteMap.get("calcMinute")+""));
 						workDayResultRepo.save(r);
+						workDayResultRepo.flush();
 					}
 				}
 				 
@@ -4655,50 +4657,64 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 //								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplId(otAppl.getApplId());
 								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplIdAndCancelYnIsNullOrCancelYnNot(otAppl.getApplId(), "Y");
 								
+								List<WtmOtSubsAppl> subs2 = otSubsApplRepo.findByApplIdAndCancelYnIsNull(otAppl.getOtApplId());
+								
 								
 								// OT시간에 일마감시 중복적으로 생기는 대체휴일 체크 
 								Map<String, Object> checkOtSubsResult = otApplMapper.otSubsResultExist(resultParam);
 								Map<String, Object> checkOtSubsAppl = otApplMapper.otSubsApplExist(resultParam);
 								
-								if(subs!=null && subs.size()>0) {
+								if(subs2!=null && subs2.size()>0) {
 									logger.debug("save subs start >>> ");
 									System.out.println("save subs start >>> ");
-									for(WtmOtSubsAppl sub : subs) {
-										if( (Integer.parseInt(checkOtSubsResult.get("cnt").toString()) > 0 && Integer.parseInt(checkOtSubsAppl.get("cnt").toString()) > 0 )
-												|| sub.getApplId().equals(Long.parseLong(checkOtSubsAppl.get("applId").toString()))) { 
-											// RESULT와 OT_SUBS_APPL 테이블에 이미 SUBS생성된 상태를 의미
-											isOtSubsExist = true;
-										}
-										// 20200609 이효정 TAA_CD에도 고정값 SUBS를 추가해야함
-										if( !isOtSubsExist ) {
-										addWtmDayResultInBaseTimeType(tenantId, enterCd, sub.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, WtmApplService.TIME_TYPE_SUBS, sub.getSubsSdate(), sub.getSubsEdate(), otAppl.getApplId(), userId);
-										}
+									for(WtmOtSubsAppl sub2 : subs2) {
+										//if(sub2.getCancelYn() != null ) {
+											if(subs2!=null && subs2.size()>0) {
+												logger.debug("save subs start >>> ");
+												System.out.println("save subs start >>> ");
+												resultParam.put("applId", sub2.getApplId());
+												checkOtSubsResult = otApplMapper.otSubsResultExist(resultParam);
+												
+													if( sub2.getApplId().equals(Long.parseLong(checkOtSubsAppl.get("applId").toString()))
+															|| Integer.parseInt(checkOtSubsResult.get("cnt").toString()) > 0 ) {
+														// RESULT와 OT_SUBS_APPL 테이블에 이미 SUBS생성된 상태를 의미
+														isOtSubsExist = true;
+													} else {
+														isOtSubsExist = false;
+													}
+													// 20200609 이효정 TAA_CD에도 고정값 SUBS를 추가해야함
+													if( !isOtSubsExist ) {
+														addWtmDayResultInBaseTimeType(tenantId, enterCd, sub2.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, WtmApplService.TIME_TYPE_SUBS, sub2.getSubsSdate(), sub2.getSubsEdate(), sub2.getApplId(), userId);
+													}
+													
+											}
 									}
 									logger.debug("save subs end >>> ");
 									System.out.println("save subs end >>> ");
 								}
 							} else {
 								// 1개의 applid 가 두개로 나눠지는 경우 취소된 appl_id 뽑고
-								Map<String, Object> checkSubsChgAppl = otApplMapper.otSubsChgAppl(resultParam);
-								List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplIdAndCancelYnIsNullOrCancelYnNot((Long)checkSubsChgAppl.get("applId"), "Y");
-								if(checkSubsChgAppl!=null && checkSubsChgAppl.containsKey("applId") && checkSubsChgAppl.get("applId")!=null) {
-									
-									if(subs!=null && subs.size()>0) {
-										logger.debug("save subs start >>> ");
-										System.out.println("save subs start >>> ");
-										for(WtmOtSubsAppl sub : subs) {
-											addWtmDayResultInBaseTimeType(tenantId, enterCd, sub.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, WtmApplService.TIME_TYPE_SUBS, sub.getSubsSdate(), sub.getSubsEdate(), otAppl.getApplId(), userId);
+								List<Map<String, Object>> checkSubsChgAppls = otApplMapper.otSubsChgAppl(resultParam);
+								if(checkSubsChgAppls!=null && checkSubsChgAppls.size()>0) {
+									for(Map<String, Object> checkSubsChgAppl : checkSubsChgAppls) {
+										List<WtmOtSubsAppl> subs = otSubsApplRepo.findByApplIdAndCancelYnIsNullOrCancelYnNot((Long)checkSubsChgAppl.get("applId"), "Y");
+										if(subs!=null && subs.size()>0) {
+											logger.debug("save subs start >>> ");
+											System.out.println("save subs start >>> ");
+											for(WtmOtSubsAppl sub : subs) {
+												addWtmDayResultInBaseTimeType(tenantId, enterCd, sub.getSubYmd(), otAppl.getSabun(), WtmApplService.TIME_TYPE_SUBS, WtmApplService.TIME_TYPE_SUBS, sub.getSubsSdate(), sub.getSubsEdate(), otAppl.getApplId(), userId);
+											}
+											logger.debug("save subs end >>> ");
+											System.out.println("save subs end >>> ");
 										}
-										logger.debug("save subs end >>> ");
-										System.out.println("save subs end >>> ");
 									}
 								}
 							}
 						}
 					}
 				}
-				logger.debug("휴일 대체 생성 end >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 			}
+			logger.debug("휴일 대체 생성 end >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 		}
 	}
 	

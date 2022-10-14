@@ -18,10 +18,14 @@ public interface WtmApplService {
 	final static String APPL_STATUS_APPLY_ING = "21";
 	//결재반려
 	final static String APPL_STATUS_APPLY_REJECT = "22";
+	//결재반려 JYP
+	final static String APPL_STATUS_APPLY_REJECT2 = "23";
 	//승인처리중
 	final static String APPL_STATUS_APPR_ING = "31";
 	//승인반려
 	final static String APPL_STATUS_APPR_REJECT = "32";
+	//승인반려 JYP
+	final static String APPL_STATUS_APPR_REJECT2 = "33";
 	//취소처리완료
 	final static String APPL_STATUS_CANCEL = "44";
 	//처리완료

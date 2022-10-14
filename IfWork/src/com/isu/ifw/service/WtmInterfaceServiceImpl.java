@@ -2576,7 +2576,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 		//이건 상태랑 같으면 무시
 		if(preApplStatus == null || !preApplStatus.equals(status)) {
 
-			if(status.equals(WtmApplService.APPL_STATUS_APPR) || status.equals(WtmApplService.APPL_STATUS_APPR_REJECT) || status.equals(WtmApplService.APPL_STATUS_CANCEL)) {
+			if(status.equals(WtmApplService.APPL_STATUS_APPR) || status.equals(WtmApplService.APPL_STATUS_APPR_REJECT) || status.equals(WtmApplService.APPL_STATUS_CANCEL)
+					|| status.equals(WtmApplService.APPL_STATUS_APPLY_REJECT2) || status.equals(WtmApplService.APPL_STATUS_APPR_REJECT2)) {
 				for(Map<String, Object> w : works) {
 					List<Map<String, Object>> worksDet = (List<Map<String, Object>>) w.get("worksDet");
 					for(Map<String, Object> work : worksDet) {
@@ -5063,7 +5064,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					RestTemplate restTemplate = new RestTemplate();
 					System.out.println(parmaMap.toString());
 					getIfMap = (HashMap<String, Object>) restTemplate.postForObject(ifUrl, parmaMap, Map.class);
-					System.out.println(getIfMap.toString());
+					//System.out.println(getIfMap.toString());
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

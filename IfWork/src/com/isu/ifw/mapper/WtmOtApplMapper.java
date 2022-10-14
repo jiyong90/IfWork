@@ -141,7 +141,7 @@ public interface WtmOtApplMapper {
 	 * @param paramMap
 	 * @return
 	 */
-	public Map<String, Object> otSubsChgAppl(Map<String, Object> paramMap);
+	public List<Map<String, Object>> otSubsChgAppl(Map<String, Object> paramMap);
 	
 	
 }

@@ -35,6 +35,8 @@ public interface WtmWorkDayResultRepository extends JpaRepository<WtmWorkDayResu
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndTimeTypeCdInAndYmdBetween(Long tenantId, String enterCd, List<String> timeTypeCd, String symd, String eymd);
 	
 	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(Long tenantId, String enterCd, String sabun, List<String> timeTypeCd, String symd, String eymd);
+	
+	public List<WtmWorkDayResult> findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateDesc(Long tenantId, String enterCd, String sabun, List<String> timeTypeCd, String symd, String eymd);
 
 	public WtmWorkDayResult findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndPlanSdateAndPlanEdate(Long tenantId, String enterCd, String sabun, String timeTypeCd, Date sdate, Date edate);
 	
