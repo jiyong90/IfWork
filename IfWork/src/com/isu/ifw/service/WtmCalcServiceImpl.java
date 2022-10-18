@@ -98,6 +98,12 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			if( workMinute > sumWorkMinute ) {
 				List<String> timeTypeCds = new ArrayList<String>();
 				timeTypeCds.add("LLA");
+				// 지각 체크를 하지 않을때는 기준시간이 없기 때문에 기준시간을 생성하기 위함
+				if(!"".equals(timeCdMgr.getLateChkYn()) && timeCdMgr.getLateChkYn().equals("N") ) {
+					timeTypeCds.add("SUBS");
+					timeTypeCds.add("TAA");
+					timeTypeCds.add("REGA");
+				}
 
 //				List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(tenantId, enterCd, sabun, ymd, WtmApplService.TIME_TYPE_BASE);
 //				List<WtmWorkDayResult> results = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndEntrySdateIsNotNullAndEntryEdateIsNotNullAndPlanSdateIsNotNullAndPlanEdateIsNotNull(tenantId, enterCd, sabun, ymd);
