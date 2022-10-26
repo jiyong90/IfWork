@@ -3,6 +3,8 @@ package com.isu.ifw.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplLine;
+import com.isu.ifw.entity.WtmOtAppl;
+import com.isu.ifw.entity.WtmOtCanAppl;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmOtApplMapper;
 import com.isu.ifw.mapper.WtmOtCanApplMapper;
@@ -99,7 +101,11 @@ public class WtmApplServiceImpl implements WtmApplService {
 	@Autowired
 	WtmInboxService inbox;
 	
+	@Autowired
+	WtmOtCanApplRepository wtmOtCanApplRepo;
 	
+	@Autowired
+	WtmOtApplRepository wtmOtApplRepo;
 	@Override
 	public List<Map<String, Object>> getApprList(Long tenantId, String enterCd, String empNo, Map<String, Object> paramMap, String userId) {
 		// TODO Auto-generated method stub
@@ -223,6 +229,7 @@ public class WtmApplServiceImpl implements WtmApplService {
 			throw new Exception("사유를 입력하세요.");
 		}
 		String apprOpinion = paramMap.get("apprOpinion").toString();
+		String applCd = paramMap.get("applCd").toString();
 		List<String> emps = new ArrayList();
 		
 		String applSabun = null;
@@ -245,7 +252,22 @@ public class WtmApplServiceImpl implements WtmApplService {
 				wtmApplLineRepo.save(line);
 			}
 		}
-		
+		// 연장근무 반려일 때 OT_CAN_APPL 삭제 처리 및  OT_APPL 변경 해야 재신청 가능함
+		List<WtmOtCanAppl> wtmOtCanAppls = wtmOtCanApplRepo.findByApplId(applId);
+		if("OT_CAN".equals(applCd)) {
+			if(wtmOtCanAppls!=null && wtmOtCanAppls.size()>0) {
+				//ot신청서의 cancel_yn 다시 돌리기.
+				List<WtmOtAppl> otAppls = new ArrayList<WtmOtAppl>();
+				for(WtmOtCanAppl otCanAppl : wtmOtCanAppls) {
+					WtmOtAppl otAppl = wtmOtApplRepo.findById(otCanAppl.getOtApplId()).get();
+					otAppl.setCancelYn(null);
+					otAppls.add(otAppl);
+				}
+				wtmOtApplRepo.saveAll(otAppls);
+				
+				wtmOtCanApplRepo.deleteAll(wtmOtCanAppls);
+			}
+		}
 		WtmAppl appl = wtmApplRepo.findById(applId).get();
 		appl.setApplStatusCd(APPL_STATUS_APPLY_REJECT);
 		appl.setApplYmd(WtmUtil.parseDateStr(new Date(), null));
