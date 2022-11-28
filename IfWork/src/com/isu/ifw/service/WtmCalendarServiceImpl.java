@@ -94,7 +94,9 @@ public class WtmCalendarServiceImpl implements WtmCalendarService{
 	 */
 	public List<Map<String, Object>> getEmpWorkCalendar(Map<String, Object> paramMap) throws Exception {
 		
-		List<String> auths = empService.getAuth(Long.valueOf(paramMap.get("tenantId").toString()), paramMap.get("enterCd").toString(), paramMap.get("sabun").toString());
+
+		List<String> auths = empService.getAuth(Long.valueOf(paramMap.get("tenantId").toString()), paramMap.get("enterCd").toString(), paramMap.get("sabun").toString()); 
+
 		if(auths!=null && !auths.contains("FLEX_SETTING") && auths.contains("FLEX_SUB")) {
 			//하위 조직 조회
 			paramMap.put("orgList", empService.getLowLevelOrgList(Long.valueOf(paramMap.get("tenantId").toString()), paramMap.get("enterCd").toString(), paramMap.get("sabun").toString(), paramMap.get("sYmd").toString()));
@@ -232,5 +234,19 @@ public class WtmCalendarServiceImpl implements WtmCalendarService{
 		}
 		
 		return rp;
+	}
+	
+	@Override
+	public List<Map<String, Object>> getTaaCodeList(Long tenantId, String enterCd, Map<String, Object> paramMap) {
+		
+		List<Map<String, Object>> searchList = new ArrayList();
+
+		paramMap.put("tenantId", tenantId);
+		paramMap.put("enterCd", enterCd);
+
+		searchList = wtmCalendarMapper.getTaaCodeList(paramMap);
+		
+		return searchList;
+
 	}
 }
