@@ -5,6 +5,7 @@ import com.isu.ifw.entity.WtmAppl;
 import com.isu.ifw.entity.WtmApplLine;
 import com.isu.ifw.entity.WtmOtAppl;
 import com.isu.ifw.entity.WtmOtCanAppl;
+import com.isu.ifw.entity.WtmOtSubsAppl;
 import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmOtApplMapper;
 import com.isu.ifw.mapper.WtmOtCanApplMapper;
@@ -266,6 +267,14 @@ public class WtmApplServiceImpl implements WtmApplService {
 				wtmOtApplRepo.saveAll(otAppls);
 				
 				wtmOtCanApplRepo.deleteAll(wtmOtCanAppls);
+			}
+		}
+		// 22 반려로 들어오면 OTSUB테이블에 들어갔던 내용 삭제
+		List<WtmOtSubsAppl> otSubs = otSubsApplRepo.findByApplId(applId);
+		if(otSubs!= null || otSubs.size() != 0) {
+			for(WtmOtSubsAppl sub : otSubs) {
+				System.out.println("대체휴일 변경 신청 후 반려된 건들 삭제 처리 ");
+				otSubsApplRepo.deleteByApplId(sub.getApplId());
 			}
 		}
 		WtmAppl appl = wtmApplRepo.findById(applId).get();
