@@ -25,8 +25,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 @Table(name="WTM_FLEXIBLE_EMP")
 @NamedNativeQuery(name="WtmFlexibleEmp.getTotalWorkMinuteAndRealWorkMinute",
 query="SELECT E.FLEXIBLE_EMP_ID AS flexibleEmpId, E.SYMD AS symd, E.EYMD AS eymd, E.TENANT_ID AS tenantId, E.ENTER_CD AS enterCd, E.SABUN AS sabun, E.WORK_MINUTE AS workMinute \n" + 
-"			    	 , SUM(CASE WHEN R.TIME_TYPE_CD = 'BASE' THEN F_WTM_NVL(R.APPR_MINUTE,'0')\n" +
-"		                        WHEN R.TIME_TYPE_CD = 'REGA' THEN F_WTM_NVL(R.APPR_MINUTE,R.PLAN_MINUTE)\n" +
+"			    	 , SUM(CASE WHEN R.TIME_TYPE_CD IN ('BASE' ,'REGA') THEN F_WTM_NVL(R.APPR_MINUTE,R.PLAN_MINUTE)\n" +
 "		                        WHEN M.TAA_TIME_YN = 'Y' AND R.TIME_TYPE_CD = 'TAA' THEN F_WTM_NVL(R.APPR_MINUTE,R.PLAN_MINUTE)\n" +
 "		                        ELSE '0' END ) AS workHour\n" +
 "		             , SUM(CASE WHEN R.TIME_TYPE_CD = 'EXCEPT' AND  T.TAA_INFO_CD = 'BREAK' THEN F_WTM_NVL(R.APPR_MINUTE,'0') ELSE '0' END ) AS breakHour\n" +
