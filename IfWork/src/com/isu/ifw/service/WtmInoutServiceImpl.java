@@ -333,6 +333,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		paramMap.put("enterCd", enterCd);
 		paramMap.put("sabun", sabun);
 		paramMap.put("inoutDate", inoutDate);
+		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_REGA);
 
 		String ymd = null;
 		Date entrySdate = null;
@@ -344,6 +345,15 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		
 		try {
 			List<Map<String, Object>> list = inoutHisMapper.getInoutStatus(paramMap);
+			
+			Map<String, Object> yn = inoutHisMapper.getMyRegaPlannedYn(paramMap);
+			if(yn != null) {
+				if(tenantId == 22 && yn.get("isRegaYn").toString().equals("Y")) {
+					// ngv 재택근무시 타각 가능 하도록 수정
+					list = inoutHisMapper.getInoutStatusNgv(paramMap);
+				}
+			}
+			
 			logger.debug("getMenuContextWeb inoutStatus : " + list.toString());
 			
 			SimpleDateFormat format1 = new SimpleDateFormat ("yyyyMMdd");
@@ -362,6 +372,12 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 						label = " - ";
 						desc = "휴일";
 					} else {
+						if(time.get("taaCd") != null && (time.get("taaCd").toString().equals("G28") 
+								|| time.get("taaCd").toString().equals("G29") || time.get("taaCd").toString().equals("G30") 
+								)) {
+							returnMap.put("taaCd", time.get("taaCd").toString());
+						}
+								
 						inoutType = "IN";
 						desc = "근무일";
 						label = "출근하기";
@@ -373,12 +389,22 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					entrySdate = (Date) time.get("entrySdateDate");
 					desc = "근무중";
 					label = "퇴근하기";
+					if(time.get("taaCd") != null && (time.get("taaCd").toString().equals("G28") 
+							|| time.get("taaCd").toString().equals("G29") || time.get("taaCd").toString().equals("G30") 
+							)) {
+						returnMap.put("taaCd", time.get("taaCd").toString());
+					}
 					break;
 				} else if (time.get("entrySdate") != null && time.get("entryEdate") != null) {
 					ymd = time.get("ymd").toString();
 					inoutType = "END";
 					desc = "근무종료";
 					label = "퇴근취소";
+					if(time.get("taaCd") != null && (time.get("taaCd").toString().equals("G28") 
+							|| time.get("taaCd").toString().equals("G29") || time.get("taaCd").toString().equals("G30") 
+							)) {
+						returnMap.put("taaCd", time.get("taaCd").toString());
+					}
 					entrySdate = (Date) time.get("entrySdateDate");
 					entryEdate = (Date) time.get("entryEdateDate");
 				}
@@ -501,8 +527,6 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 
 		//2.근무일과 타각상태 가져오기
 		List<Map<String, Object>> list = inoutHisMapper.getInoutStatus(paramMap);
-		logger.debug("inoutStatus : " + list.toString());
-
 		String today = paramMap.get("inoutDate").toString().substring(0, 8);
 		String stdYmd = "";
 		String entrySdate = null;
@@ -514,7 +538,15 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		calendar.setTime(nowDay.parse(today));
 		calendar.add(Calendar.DATE, -1);
 		String yesterday = nowDay.format(calendar.getTime()).substring(0, 8);
-		
+		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_REGA);
+		Map<String, Object> yn = inoutHisMapper.getMyRegaPlannedYn(paramMap);
+		if(yn != null) {
+			if(tenantId == 22 && yn.get("isRegaYn").toString().equals("Y")) {
+				// ngv 재택근무시 타각 가능 하도록 수정
+				list = inoutHisMapper.getInoutStatusNgv(paramMap);
+			}
+		}
+		logger.debug("inoutStatus : " + list.toString());
 		
 		//계획시간 안에 들어온 타각 먼저 처리(지각, 조퇴), 다음날 퇴근자들이 문제가 많음
 		for(Map<String, Object> time : list) {
@@ -782,8 +814,16 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		
 		//1. 근무일과 타각상태 가져오기
 		List<Map<String, Object>> list = inoutHisMapper.getInoutStatus(paramMap);
+		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_REGA);
+		Long tenantId = (Long) paramMap.get("tenantId");
+		Map<String, Object> yn = inoutHisMapper.getMyRegaPlannedYn(paramMap);
+		if(yn != null) {
+			if(tenantId == 22 && yn.get("isRegaYn").toString().equals("Y")) {
+				// ngv 재택근무시 타각 가능 하도록 수정
+				list = inoutHisMapper.getInoutStatusNgv(paramMap);
+			}
+		}
 		logger.debug("inoutStatus : " + list.toString());
-		
 		String today = paramMap.get("inoutDate").toString().substring(0, 8);
 		String stdYmd = today;
 		String inoutType = "NONE";
@@ -1211,6 +1251,15 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		
 		//2.근무일과 타각상태 가져오기
 		List<Map<String, Object>> list = inoutHisMapper.getInoutStatus(paramMap);
+		paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_REGA);
+		Long tenantId = (Long) paramMap.get("tenantId");
+		Map<String, Object> yn = inoutHisMapper.getMyRegaPlannedYn(paramMap);
+		if(yn != null) {
+			if(tenantId == 22 && yn.get("isRegaYn").toString().equals("Y")) {
+				// ngv 재택근무시 타각 가능 하도록 수정
+				list = inoutHisMapper.getInoutStatusNgv(paramMap);
+			}
+		}
 		logger.debug("inoutStatus : " + list.toString());
 		
 		String today = paramMap.get("inoutDate").toString().substring(0, 8);
@@ -1331,6 +1380,14 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 				
 				//2.근무일과 타각상태 가져오기
 				List<Map<String, Object>> list = inoutHisMapper.getInoutStatus(paramMap);
+				paramMap.put("timeTypeCd", WtmApplService.TIME_TYPE_REGA);
+				Map<String, Object> yn = inoutHisMapper.getMyRegaPlannedYn(paramMap);
+				if(yn != null) {
+					if(tenantId == 22 && yn.get("isRegaYn").toString().equals("Y")) {
+						// ngv 재택근무시 타각 가능 하도록 수정
+						list = inoutHisMapper.getInoutStatusNgv(paramMap);
+					}
+				}
 				logger.debug("inoutStatus : " + list.toString());
 				
 				String today = paramMap.get("inoutDate").toString().substring(0, 8);

@@ -320,7 +320,9 @@ public class WtmOtApplServiceImpl implements WtmApplService {
 				rp = this.validate(tenantId, enterCd, applSabun, "", paramMap);
 				//rp = validate(applId);
 				if(rp.getStatus().equals("FAIL")) {
-					throw new Exception(rp.get("message").toString());
+					//throw new Exception(rp.get("message").toString());
+					rp.setFail(rp.get("message").toString());
+					return rp;
 				}
 			}
 		} 
