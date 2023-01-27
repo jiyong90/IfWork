@@ -235,18 +235,4 @@ public class WtmCalendarServiceImpl implements WtmCalendarService{
 		
 		return rp;
 	}
-	
-	@Override
-	public List<Map<String, Object>> getTaaCodeList(Long tenantId, String enterCd, Map<String, Object> paramMap) {
-		
-		List<Map<String, Object>> searchList = new ArrayList();
-
-		paramMap.put("tenantId", tenantId);
-		paramMap.put("enterCd", enterCd);
-
-		searchList = wtmCalendarMapper.getTaaCodeList(paramMap);
-		
-		return searchList;
-
-	}
 }

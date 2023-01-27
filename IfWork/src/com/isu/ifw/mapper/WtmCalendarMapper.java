@@ -134,12 +134,4 @@ public interface WtmCalendarMapper {
 	
 	public List<Map<String, Object>> getTeamDayResultListNotInLLA(Map<String, Object> paramMap);
 	
-	/**
-	 * 근태코드 조회
-	 * @param paramMap
-	 * @return
-	 * @throws Exception
-	 */
-	public List<Map<String, Object>> getTaaCodeList(Map<String, Object> paramMap);
-	
 }

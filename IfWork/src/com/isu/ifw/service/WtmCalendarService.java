@@ -20,6 +20,4 @@ public interface WtmCalendarService {
 	public Map<String, Object> getEmpWorkCalendarDayInfoEntry(Map<String, Object> paramMap) throws Exception;
 	
 	public ReturnParam getHolidayYn(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap);
-
-	public List<Map<String, Object>> getTaaCodeList(Long tenantId, String enterCd, Map<String, Object> paramMap);
 }
