@@ -2055,9 +2055,17 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										newTaa.setPlanSdate(dt.parse(taaSdate));
 										newTaa.setPlanEdate(dt.parse(taaEdate));
 										newTaa.setPlanMinute(480);
-										newTaa.setApprSdate(dt.parse(taaSdate));
-										newTaa.setApprEdate(dt.parse(taaEdate));
-										newTaa.setApprMinute(480);
+										if ( taaDetMap.get("taaCd") != null && (taaDetMap.get("taaCd").toString().equals("G28") || taaDetMap.get("taaCd").toString().equals("G29") || 
+												taaDetMap.get("taaCd").toString().equals("G30") ) && Long.parseLong(taaDetMap.get("tenantId").toString()) == 22 ) {
+											// nvg 재택근무 신청 타각 처리 위함
+											newTaa.setApprSdate(null);
+											newTaa.setApprEdate(null);
+											newTaa.setApprMinute(null);
+										}else {
+											newTaa.setApprSdate(dt.parse(taaSdate));
+											newTaa.setApprEdate(dt.parse(taaEdate));
+											newTaa.setApprMinute(480);
+										}
 										newTaa.setUpdateDate(new Date());
 										newTaa.setUpdateId("taa if");
 										dayResultRepo.save(newTaa);
@@ -2835,6 +2843,10 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 											c.add(Calendar.DATE, 1);
 											edate = c.getTime();
 										}
+										if(taaCode.getWorkApprHour()!=null) {
+											workMinute = Integer.parseInt(taaCode.getWorkApprHour().toString()) * 60;
+										}
+
 										// 근무시간이 없으면 근태코드별 시간을 조정해야함.
 										logger.debug("반차는 근무시간을 변경함 : " + taaCode.getRequestTypeCd());
 										if("P".equals(taaCode.getRequestTypeCd())) {
@@ -2861,7 +2873,49 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 												calendar.add(Calendar.MINUTE, -240);
 												edate = calendar.getTime();
 											}
+										} else if ( "AH".equals(taaCode.getRequestTypeCd())  ) {
+											// 오전 반반차
+											if("F".equals(taaCode.getTaaInfoCd())) {
+												//오전 반반차 앞
+												if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+													edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 120, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+												}
+											}else if("S".equals(taaCode.getTaaInfoCd())) {
+												//오전 반반차 뒤
+												if(sdate!=null) {
+													Calendar calendar = Calendar.getInstance();
+													calendar.setTime(sdate);
+													calendar.add(Calendar.MINUTE, 120);
+													sdate = calendar.getTime();
+												}
+												if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+													edate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR(sdate, 120, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+												}
+											}
+										
+										} else if ( "PH".equals(taaCode.getRequestTypeCd()) ) {
+												// 오후 반반차
+											if("F".equals(taaCode.getTaaInfoCd())) {
+												//오후 반반차 앞
+												if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+													//반반차는 근무시간을 변경함
+													sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR2(edate, -120, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+												}
+											}else if("S".equals(taaCode.getTaaInfoCd())) {
+												//오후 반반차 뒤
+												if(edate!=null) {
+													Calendar calendar = Calendar.getInstance();
+													calendar.setTime(edate);
+													calendar.add(Calendar.MINUTE, -120);
+													edate = calendar.getTime();
+												}
+												if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
+													//반반차는 근무시간을 변경함
+													sdate = calcService.P_WTM_DATE_ADD_FOR_BREAK_MGR2(edate, -120, cal.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+												}
+											}
 										}
+										
 									}
 									if("D".equals(taaCode.getRequestTypeCd())
 											&& (flexibleStdMgr.getTaaWorkYn() == null || "N".equals(flexibleStdMgr.getTaaWorkYn()) || "".equals(flexibleStdMgr.getTaaWorkYn()) )
@@ -2887,11 +2941,19 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										newTaa.setPlanEdate(edate);
 										Map<String, Object> calcMap = calcService.calcApprMinute(sdate, edate, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 										int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
-										
+										if ( det.getTaaCd() != null && (det.getTaaCd().equals("G28") || det.getTaaCd().equals("G29") || 
+												det.getTaaCd().equals("G30") ) && tenantId == 22 ) {
+											// nvg 재택근무 신청 타각 처리 위함
+											newTaa.setApprSdate(null);
+											newTaa.setApprEdate(null);
+											newTaa.setApprMinute(null);
+										}else {
+											newTaa.setApprSdate(sdate);
+											newTaa.setApprEdate(edate);
+											newTaa.setApprMinute(apprMinute);
+											
+										}
 										newTaa.setPlanMinute(apprMinute);
-										newTaa.setApprSdate(sdate);
-										newTaa.setApprEdate(edate);
-										newTaa.setApprMinute(apprMinute);
 										newTaa.setUpdateDate(new Date());
 										newTaa.setUpdateId("taa if");
 										dayResultRepo.save(newTaa);
@@ -4954,9 +5016,17 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
 
 										newTaa.setPlanMinute(apprMinute);
-										newTaa.setApprSdate(sdate);
-										newTaa.setApprEdate(edate);
-										newTaa.setApprMinute(apprMinute);
+										if ( det.getTaaCd() != null && (det.getTaaCd().equals("G28") || det.getTaaCd().equals("G29") || 
+												det.getTaaCd().equals("G30") ) && tenantId == 22 ) {
+											// nvg 재택근무 신청 타각 처리 위함
+											newTaa.setApprSdate(null);
+											newTaa.setApprEdate(null);
+											newTaa.setApprMinute(null);
+										} else {
+											newTaa.setApprSdate(sdate);
+											newTaa.setApprEdate(edate);
+											newTaa.setApprMinute(apprMinute);
+										}
 										newTaa.setUpdateDate(new Date());
 										newTaa.setUpdateId("taa if");
 										dayResultRepo.save(newTaa);
