@@ -1652,7 +1652,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 												}else {
 													Date nSdate =  calendar.getEntrySdate();
 													Date nEdate = result.getPlanEdate();
-													this.saveWorkDayResult(flexStdMgr, timeCdMgr, result, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, result.getApplId(),result.getTaaCd());
+													this.saveWorkDayResult(flexStdMgr, timeCdMgr, result, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
 													tmpResult = result;
 												}
 											}
@@ -1690,10 +1690,13 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 												if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) ) {
 													this.saveWorkDayResult(flexStdMgr, timeCdMgr, preResult, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
 													
-												}else if ( isNgvHmRega) {
+												}
+												/*
+												else if ( isNgvHmRega || preResult.getTaaCd().equals) {
 													
 													this.saveWorkDayResult(flexStdMgr, timeCdMgr, preResult, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_REGA, nSdate, nEdate, null, null,result.getApplId(),result.getTaaCd());
 												}
+												*/
 												//현 데이터가 베이스면
 												if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || isNgvHmRega) {
 													if(isLast) {
@@ -1756,7 +1759,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 														if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
 															this.saveWorkDayResult(flexStdMgr, timeCdMgr, result, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, null, null, null, null, null, null);
 														}else if(isNgvHmRega) {
-															this.saveWorkDayResult(flexStdMgr, timeCdMgr, result, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, null, null, null, null, result.getApplId(),result.getTaaCd());
+															this.saveWorkDayResult(flexStdMgr, timeCdMgr, result, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_REGA, null, null, null, null, result.getApplId(),result.getTaaCd());
 															
 														}
 													}else {
@@ -2079,7 +2082,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				}
 				
 				workDayResultRepo.save(res);
-			} else if(( res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") || res.getTaaCd().equals("G23")) && calendar.getTenantId() == 22 ) { 
+			} else if( res.getTaaCd() != null && ( res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") || res.getTaaCd().equals("G23")) && calendar.getTenantId() == 22 ) {
 				res.setApprMinute(null);
 				res.setApprSdate(null);
 				res.setApprEdate(null);
@@ -2661,11 +2664,11 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			int apprMinute = 0;
 			if(calendar.getTenantId() == 22 && isHomeRega && calendar.getEntryEdate() == null && calendar.getEntrySdate() == null) {
 				// ngv 재택근무시 무단결근
-				laaResult.setPlanSdate(minPlanSdate_REGA);
-				laaResult.setPlanEdate(maxPlanEdate_REGA);
-				laaResult.setApprSdate(minPlanSdate_REGA);
-				laaResult.setApprEdate(maxPlanEdate_REGA);
-				Map<String, Object> calcMap = calcService.calcApprMinute(minPlanSdate_REGA, maxPlanEdate_REGA, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+				laaResult.setPlanSdate(minPlanSdate_HOMEREGA);
+				laaResult.setPlanEdate(maxPlanEdate_HOMEREGA);
+				laaResult.setApprSdate(minPlanSdate_HOMEREGA);
+				laaResult.setApprEdate(maxPlanEdate_HOMEREGA);
+				Map<String, Object> calcMap = calcService.calcApprMinute(minPlanSdate_HOMEREGA, maxPlanEdate_HOMEREGA, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
 				apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
 				laaResult.setPlanMinute(apprMinute);
 				laaResult.setApprMinute(apprMinute);
