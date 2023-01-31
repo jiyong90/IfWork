@@ -2438,6 +2438,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			
 			//간주근무일때 출퇴근 타각을 생성하기 위함
 			if(r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA)) {
+				regCnt ++;
 				if((minPlanSdate_REGA == null || minPlanSdate_REGA.compareTo(r.getPlanSdate()) > 0) && hmCnt == 0) {
 					minPlanSdate_REGA = r.getPlanSdate();
 					logger.debug("3. 간주근무의 경우 출근 타각데이터를 계획 데이터로 생성해 준다. minPlanSdate : " +  minPlanSdate_REGA); 
@@ -2450,7 +2451,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					if(minPlanSdate_HOMEREGA == null || minPlanSdate_HOMEREGA.compareTo(r.getPlanSdate()) > 0) {
 						minPlanSdate_HOMEREGA = r.getPlanSdate();
 						hmCnt = 0;
-						regCnt ++;
 						if(minPlanSdate_REGA!=null) {
 							calendar.setEntrySdate(null);
 						}
@@ -2459,7 +2459,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					if(maxPlanEdate_HOMEREGA == null || maxPlanEdate_HOMEREGA.compareTo(r.getPlanEdate()) < 0 ) {
 						maxPlanEdate_HOMEREGA = r.getPlanEdate();
 						hmCnt = 0;
-						regCnt ++;
 						if(maxPlanEdate_REGA!=null) {
 							calendar.setEntryEdate(null);
 						}
@@ -2574,10 +2573,19 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					calendar.setEntryStypeCd(WtmApplService.TIME_TYPE_REGA);
 					isRegaLaa = true;
 				}
+				if(minPlanSdate_REGA != null && minPlanSdate_REGA.compareTo(calendar.getEntrySdate()) < 0) {
+					calendar.setEntrySdate(minPlanSdate_REGA);
+					calendar.setEntryStypeCd(WtmApplService.TIME_TYPE_REGA);
+				}
+
 				if ( maxPlanEdate_REGA != null && regCnt > 0) {
 					calendar.setEntryEdate(maxPlanEdate_REGA);
 					calendar.setEntryEtypeCd(WtmApplService.TIME_TYPE_REGA);
 					isRegaLaa = true;
+				}
+				if(maxPlanEdate_REGA != null && maxPlanEdate_REGA.compareTo(calendar.getEntrySdate()) > 0) {
+					calendar.setEntryEdate(maxPlanEdate_REGA);
+					calendar.setEntryEtypeCd(WtmApplService.TIME_TYPE_REGA);
 				}
 			}else {
 				if(calendar.getEntrySdate() == null) {
@@ -2591,7 +2599,21 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			}
 			workCalendarRepo.save(calendar);
 		}else {
-			try { logger.debug("3. 간주근무 없음." + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+
+			try { logger.debug("3. 간주근무의 경우 출/퇴근 타각데이터를 계획 데이터로 생성해 준다. " + mapper.writeValueAsString(paramMap) + " updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+			//flexEmpMapper.updateTimeTypePlanToEntryTimeByTenantIdAndEnterCdAndYmdBetweenAndSabun(paramMap);
+			if(calendar.getTenantId() == 22 && (regCnt > 0) ) {
+				// NGV 재택근무는 타각 하기 위함
+				if(minPlanSdate_REGA != null && minPlanSdate_REGA.compareTo(calendar.getEntrySdate()) < 0) {
+					calendar.setEntrySdate(minPlanSdate_REGA);
+					calendar.setEntryStypeCd(WtmApplService.TIME_TYPE_REGA);
+				}
+				if(maxPlanEdate_REGA != null && maxPlanEdate_REGA.compareTo(calendar.getEntryEdate()) > 0) {
+					calendar.setEntryEdate(maxPlanEdate_REGA);
+					calendar.setEntryEtypeCd(WtmApplService.TIME_TYPE_REGA);
+				}
+			}
+			workCalendarRepo.save(calendar);
 		}
 
 		
