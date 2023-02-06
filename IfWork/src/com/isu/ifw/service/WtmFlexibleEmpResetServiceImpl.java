@@ -205,7 +205,8 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 			String userId) throws Exception {
 		ObjectMapper mapper = new ObjectMapper();
 		SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
-		
+
+
 		Date sDate = ymd.parse(sYmd);
 		Date eDate = ymd.parse(eYmd);		
 		logger.debug("call initWtmFlexibleEmp : " + tenantId + " : " + enterCd + " : " + sabun + " : " + sYmd + " ~ " + eYmd);
@@ -215,11 +216,16 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 
 		List<WtmFlexibleEmp> delBaseFlexibleemps = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndEymdGreaterThanEqualAndSymdLessThanEqualAndBaseWorkYnIsYAndWorkTypeCdIsBASE(tenantId, enterCd, sabun, sYmd, eYmd);
 		if(delBaseFlexibleemps != null && delBaseFlexibleemps.size() > 0) {
+			for(WtmFlexibleEmp wfe : delBaseFlexibleemps) {
+				if(ymd.format(sDate).compareTo(wfe.getSymd()) > 0) {
+					sYmd = wfe.getSymd();
+				}
+			}
 			logger.debug("1-1. " + delBaseFlexibleemps.size()+ "건 삭제");
 			wtmFlexibleEmpRepo.deleteAll(delBaseFlexibleemps);
 		}
 		//년단위로 생성하지
-		
+
 		logger.debug("2. FLEXIBLE_EMP에 유연근무제는 유지. BASE 근무제를 생성한다. ");
 		//WtmBaseWorkMgr baseWorkMgr = baseWorkMgrRepo.findByTenantIdAndEnterCdAndSymd(tenantId, enterCd, sYmd);
 		List<WtmFlexibleEmp> emps = wtmFlexibleEmpRepo.findByTenantIdAndEnterCdAndSabunAndEymdGreaterThanEqualAndSymdLessThanEqual(tenantId, enterCd, sabun, sYmd, eYmd);
@@ -308,6 +314,7 @@ public class WtmFlexibleEmpResetServiceImpl implements WtmFlexibleEmpResetServic
 			}
 		}
 
+		sDate = ymd.parse(sYmd);
 		//마지막으로 유연근무제 정보로 지운다
 		if(dayMap != null && emps != null && emps.size() > 0) {
 			hasFlexible = true;
