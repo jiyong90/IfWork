@@ -48,5 +48,10 @@ public interface WtmApplMapper {
 	public List<Map<String, Object>> getApprovalApplList01(Map<String, Object> paramMap);
 	public List<Map<String, Object>> getApprovalApplList02(Map<String, Object> paramMap);
 	public List<Map<String, Object>> getApprovalApplList03(Map<String, Object> paramMap);
-
+	
+	/**
+	 * nvg근태리스트조회
+	 * @return 
+	 **/
+	public List<Map<String, Object>> getTaaListNgv(Map<String, Object> paramMap);
 }

@@ -200,7 +200,8 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
 								//안에서 생성한 시간을 더해준다.
 								sumWorkMinute = sumWorkMinute + this.P_WTM_WORK_DAY_RESULT_UPDATE_T(flexStdMgr, timeCdMgr, result, sDate, eDate, calendar.getEntrySdate(), calendar.getEntryEdate(),  sumWorkMinute, workMinute, userId);
-							}else if (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA)) {
+							}else if (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) && result.getTenantId()== 22 && result.getTaaCd() != null
+									&& (result.getTaaCd().equals("G29") || result.getTaaCd().equals("G30") || result.getTaaCd().equals("G28"))) {
 								sumWorkMinute = sumWorkMinute + this.P_WTM_WORK_DAY_RESULT_UPDATE_T(flexStdMgr, timeCdMgr, result, sDate, eDate, calendar.getEntrySdate(), calendar.getEntryEdate(),  sumWorkMinute, workMinute, userId);
 							}
 
@@ -409,7 +410,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		
 		logger.debug("UPDATE_T :: workDayResultRepo.save = " + result);
 		workDayResultRepo.save(result);
-		
+		workDayResultRepo.flush();
 		return apprMinute;
 	}
 
@@ -544,15 +545,22 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						if(ngvRegaResults != null && ngvRegaResults.size() > 0) {
 							for(WtmWorkDayResult regaResults : ngvRegaResults) {
 								//인정시간이 0보다 큰 경우만 인정한다
-								if(regaResults.getApprMinute() != null && !regaResults.getApprMinute().equals("") && regaResults.getApprMinute() > 0) {
-									//base 구간이 비어 있을 경우는 없다..
-									//base 09:00 ~ 10:00
-									//rega 10:00 ~ 13:00
-									//base 13:00 ~ 15:00 라면 15를 찾아야한디.. 
-									// 위의 경우 09:00 ~ 10:00 이게 0은 말이 안된다. 0일 경우엔 타각을 늦게 했겠지.
-									if(regaFixOtSdate == null || regaFixOtSdate.compareTo(regaResults.getApprEdate()) < 0) {
-										regaFixOtSdate= regaResults.getApprEdate();
+								if(regaResults.getTaaCd() != null  && tenantId == 22  &&(
+										regaResults.getTaaCd().equals("G28") || regaResults.getTaaCd().equals("G29")
+										|| regaResults.getTaaCd().equals("G30"))) {
+									if( regaResults.getTaaCd().equals("G28")|| regaResults.getTaaCd().equals("G30")) {
 										taaCdNm = regaResults.getTaaCd();
+										if(regaResults.getApprEdate() == null || regaFixOtSdate != null) {
+											if(fixOtSdate.compareTo(regaResults.getPlanSdate()) < 0) {
+												regaFixOtSdate = fixOtSdate;
+											}else {
+												regaFixOtSdate = regaResults.getPlanSdate();
+											}
+											fixOtEdate = regaResults.getPlanEdate();
+										}
+									}else if ( regaResults.getTaaCd().equals("G29")) {
+										taaCdNm = regaResults.getTaaCd();
+										regaFixOtSdate = fixOtSdate;
 									}
 								}
 							}
@@ -576,9 +584,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						logger.debug("CREATE_N :: fixOtSdate = " + fixOtSdate);
 						logger.debug("CREATE_N :: fixOtEdate = " + fixOtEdate);
 						
-						if(tenantId ==22 && (taaCdNm.equals("G28")|| taaCdNm.equals("G29") || taaCdNm.equals("G30") )) {
-							this.createFixOt(calendar, flexibleStdMgr, timeCdMgr, WtmApplService.TIME_TYPE_FIXOT, regaFixOtSdate, fixOtEdate, limitMinute, useMinute);
-						}else {
+						if(taaCdNm != null && !taaCdNm.equals("") && tenantId == 22 ) {
+							if( taaCdNm.equals("G28")|| taaCdNm.equals("G29") || taaCdNm.equals("G30")) {
+								this.createFixOt(calendar, flexibleStdMgr, timeCdMgr, WtmApplService.TIME_TYPE_FIXOT, regaFixOtSdate, fixOtEdate, limitMinute, useMinute);
+							}
+						} else {
 							this.createFixOt(calendar, flexibleStdMgr, timeCdMgr, WtmApplService.TIME_TYPE_FIXOT, fixOtSdate, fixOtEdate, limitMinute, useMinute);
 						}
 						/*
@@ -726,7 +736,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		Date preEdate = null;
 
 		int calcWorkMinute = (limitMinute - useMinute);
-
+         
 		if(calcWorkMinute > 0) {
 
 
@@ -738,7 +748,9 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			if(results.size() > 0) {
 				Date loopSdate = sDate;
 				String preTimeTypeCd = "";
+				boolean ngvPreTimeTypeDiv = false;
 				boolean isNgvRega = false;
+				boolean reApprFixot = true;
 				int cnt = 0;
 				for(WtmWorkDayResult r : results) {
 
@@ -747,7 +759,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						preTimeTypeCd = r.getTimeTypeCd();
 					}
 					if(r.getTaaCd() != null) {
-						if(preTimeTypeCd.equals(WtmApplService.TIME_TYPE_REGA) && (r.getTaaCd().equals("G28") || r.getTaaCd().equals("G29") || r.getTaaCd().equals("G30"))) {
+						if(r.getTimeTypeCd() != null && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) && (r.getTaaCd().equals("G28") || r.getTaaCd().equals("G29") || r.getTaaCd().equals("G30"))) {
 							isNgvRega = true;
 						}
 					}
@@ -856,6 +868,21 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 
 				preTimeTypeCd = "";
 				cnt = 0 ;
+				//  A 오전 , 오후 P,  H AND WORK_YN
+				for(WtmWorkDayResult r2 : results) {
+					
+					if(r2!= null ) {
+						if(r2.getTaaCd()!=null) {
+							WtmTaaCode taaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaCd(r2.getTenantId(), r2.getEnterCd(), r2.getTaaCd());
+							String getWorkYn = taaCode.getWorkYn();
+							String getRequestTypeCd = taaCode.getRequestTypeCd();
+							if(getRequestTypeCd.equals("H") && getWorkYn.equals("Y")) {
+								ngvPreTimeTypeDiv = true;
+								break;
+							}
+						}
+					}
+				}
 				for(WtmWorkDayResult r : results) {
 
 					cnt++;
@@ -930,14 +957,28 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 								if(!calcSdate.equals(calcEdate) && apprMinute != 0) {
 									workDayResultRepo.save(newResult);
 								}
-
+								
 								loopSdate = calcEdate;
+								reApprFixot = false;
 							}
 							nextDataCheck = false;
+							
 						}
 
 						// 시작시각 보다 빠를 경우
 						logger.debug("sDate.compareTo(apprSdate) : " + sDate.compareTo(apprSdate));
+						logger.debug("cnt : " + cnt);
+						if(!reApprFixot) {
+							isNgvRega = true;
+							reApprFixot = true;
+						}
+						if(r.getTaaCd()!= null && r.getTaaCd().equals("G30") ) {
+							isNgvRega = true;
+						}
+						if(r.getTaaCd()!= null && (r.getTaaCd().equals("G28") || r.getTaaCd().equals("G29") || r.getTaaCd().equals("G30") )
+								&&  preTimeTypeCd.equals(WtmApplService.TIME_TYPE_GOBACK) && ( r.getTimeTypeCd() != null && r.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA)) ){
+							isNgvRega = true;
+						}
 						if(loopSdate.compareTo(apprSdate) <= 0 || (loopSdate.compareTo(apprSdate) > 0 && results.size() == 1)) {
 
 							Date calcSdate = loopSdate;
@@ -945,13 +986,18 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 							if(results.size() == 1) {
 								calcEdate = apprEdate;
 							}
-
+							
 							int apprMinute = 0;
 							// P_LIMIT_MINUTE (총기본근로시간) 에서 P_USE_MINUTE (합산 기본 근로시간) 을 뺀 남은 기본 근로 시간에 대해서만 근무 정보를 생성한다..
 							// 근무시간을 계산 하자
 							Map<String, Object> calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 							apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
-
+							if(ngvPreTimeTypeDiv && results.size() != 1 && isNgvRega
+									&&  r.getTaaCd()!= null && r.getTaaCd().equals("G29") && apprMinute == 0) {
+								calcEdate = apprEdate;
+								calcMap = this.calcApprMinute(calcSdate, calcEdate, timeCdMgr.getBreakTypeCd(), calendar.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+								apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+							}
 							logger.debug("createFixOt :: calcWorkMinute = " + calcWorkMinute);
 							logger.debug("createFixOt :: apprMinute = " + apprMinute);
 							//잔여 근무시간이 있을 경우
@@ -981,7 +1027,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 
 							logger.debug("createFixOt :: createLimitMinute = " + createLimitMinute);
 
-							if(preTimeTypeCd.equals(WtmApplService.TIME_TYPE_BASE) || isNgvRega) {
+							if(preTimeTypeCd.equals(WtmApplService.TIME_TYPE_BASE) ) {
 								WtmWorkDayResult newResult = new WtmWorkDayResult();
 								newResult.setTenantId(calendar.getTenantId());
 								newResult.setEnterCd(calendar.getEnterCd());
@@ -1002,7 +1048,100 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 									workDayResultRepo.save(newResult);
 								}
 							}
+							
+							if(preTimeTypeCd.equals(WtmApplService.TIME_TYPE_REGA) && isNgvRega) {
+								isNgvRega = false;
+								if( r.getTaaCd()!= null && reApprFixot && r.getTaaCd().equals("G29") ) {
+									WtmWorkDayResult newResult = new WtmWorkDayResult();
+									newResult.setTenantId(calendar.getTenantId());
+									newResult.setEnterCd(calendar.getEnterCd());
+									newResult.setYmd(calendar.getYmd());
+									newResult.setSabun(calendar.getSabun());
+									if(!ngvPreTimeTypeDiv) {
+										calcEdate = eDate;
+										apprMinute = createLimitMinute;
+									}
+									newResult.setPlanSdate(calcSdate);
+									newResult.setPlanEdate(calcEdate);
+									newResult.setApprSdate(calcSdate);
+									newResult.setApprEdate(calcEdate);
+									newResult.setTimeTypeCd(timeTypeCd);
 
+									newResult.setPlanMinute(apprMinute);
+									newResult.setApprMinute(apprMinute);
+									newResult.setUpdateDate(new Date());
+									newResult.setUpdateId("REGA createFixOt2");
+
+									if(!calcSdate.equals(calcEdate) && apprMinute != 0) {
+										workDayResultRepo.save(newResult);
+									}
+								} else if( r.getTaaCd()!= null && (r.getTaaCd().equals("G28") || r.getTaaCd().equals("G29") )){
+									WtmWorkDayResult newResult = new WtmWorkDayResult();
+									if(!calcSdate.equals(eDate) && r.getTaaCd().equals("G28")) {
+										createLimitMinute = apprMinute;
+									}
+									newResult.setTenantId(calendar.getTenantId());
+									newResult.setEnterCd(calendar.getEnterCd());
+									newResult.setYmd(calendar.getYmd());
+									newResult.setSabun(calendar.getSabun());
+									newResult.setPlanSdate(calcSdate);
+									newResult.setPlanEdate(eDate);
+									newResult.setApprSdate(calcSdate);
+									newResult.setApprEdate(eDate);
+									newResult.setTimeTypeCd(timeTypeCd);
+									newResult.setPlanMinute(createLimitMinute);
+									newResult.setApprMinute(createLimitMinute);
+									newResult.setUpdateDate(new Date());
+									newResult.setUpdateId("REGA createFixOt3");
+									boolean passApprMin = true;
+									if (r.getApprMinute()!=null && r.getApprMinute() > 0) {
+										passApprMin = false;
+										if(createLimitMinute > r.getApprMinute()) {
+											passApprMin = true;
+										}
+									}
+									if(!calcSdate.equals(eDate) && createLimitMinute != 0 && passApprMin) {
+										workDayResultRepo.save(newResult);
+									}
+								} else if( r.getTaaCd()!= null &&  r.getTaaCd().equals("G30") ){
+									WtmWorkDayResult newResult = new WtmWorkDayResult();
+									
+									newResult.setTenantId(calendar.getTenantId());
+									newResult.setEnterCd(calendar.getEnterCd());
+									newResult.setYmd(calendar.getYmd());
+									newResult.setSabun(calendar.getSabun());
+									newResult.setPlanSdate(calcEdate);
+									newResult.setPlanEdate(eDate);
+									newResult.setApprSdate(calcEdate);
+									newResult.setApprEdate(eDate);
+									newResult.setTimeTypeCd(timeTypeCd);
+									newResult.setPlanMinute(createLimitMinute);
+									newResult.setApprMinute(createLimitMinute);
+									newResult.setUpdateDate(new Date());
+									newResult.setUpdateId("REGA createFixOt3");
+									boolean passApprMin = true;
+									if (r.getApprMinute()!=null && r.getApprMinute() > 0) {
+										passApprMin = false;
+										if(createLimitMinute > r.getApprMinute()) {
+											passApprMin = true;
+										}
+									}
+									if(!calcEdate.equals(eDate) && createLimitMinute != 0 && passApprMin) {
+										workDayResultRepo.save(newResult);
+									}
+								}
+								if(eDate.compareTo(apprEdate) >= 0) {
+									List<WtmWorkDayResult> ngvDelRes = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndYmdAndTimeTypeCd(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun()
+											, calendar.getYmd(), WtmApplService.TIME_TYPE_BASE);
+									if(ngvDelRes != null) {
+										workDayResultRepo.deleteAll(ngvDelRes);
+									}
+								}
+								
+								reApprFixot = true;
+								
+							}
+							
 							loopSdate = calcEdate;
 
 							//그런데? 종료시간도 포함된 시각이라면?

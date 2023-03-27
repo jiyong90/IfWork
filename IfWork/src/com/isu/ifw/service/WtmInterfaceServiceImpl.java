@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.common.entity.CommTenantModule;
 import com.isu.ifw.common.repository.CommTenantModuleRepository;
 import com.isu.ifw.entity.*;
+import com.isu.ifw.mapper.WtmApplMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
 import com.isu.ifw.mapper.WtmInterfaceMapper;
 import com.isu.ifw.mapper.WtmScheduleMapper;
@@ -43,6 +44,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 	@Autowired
 	WtmInoutService inoutService;
 	
+	@Autowired
+	WtmApplMapper wtmApplMapper;
 	@Autowired
 	private WtmIntfCodeRepository wtmCodeIntfRepo;
 	@Autowired
@@ -2642,17 +2645,19 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			List<String> timeTypeCds = new ArrayList<String>();
 			timeTypeCds.add(WtmApplService.TIME_TYPE_REGA);
 			timeTypeCds.add(WtmApplService.TIME_TYPE_TAA);
-			
+			List<Long> applIdList = new ArrayList<Long>();
 
 			/**
 			 * 초기화
 			 */
 
 			SimpleDateFormat ymdFt = new SimpleDateFormat("yyyyMMdd");
-			
+			WtmTaaAppl taaAppl2 = null;
 			for(WtmTaaApplDet det : dets) {
 				List<WtmWorkDayResult> taaResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeTypeCds, det.getSymd(),  det.getEymd());
 				//workDayResultRepo.deleteAll(taaResults);
+				taaAppl2 = wtmTaaApplRepo.findById(det.getTaaApplId()).get();
+				applIdList.add(taaAppl2.getApplId());
 				logger.debug("taaResults : " + taaResults.size());
 				if(taaResults != null && taaResults.size() > 0 ) {
 					for(WtmWorkDayResult delResult : taaResults) {
@@ -2941,8 +2946,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										newTaa.setPlanEdate(edate);
 										Map<String, Object> calcMap = calcService.calcApprMinute(sdate, edate, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
 										int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
-										if ( det.getTaaCd() != null && (det.getTaaCd().equals("G28") || det.getTaaCd().equals("G29") || 
-												det.getTaaCd().equals("G30") ) && tenantId == 22 ) {
+										if ( det.getTaaCd() != null && (det.getTaaCd().equals("G28")) && tenantId == 22 ) {
 											// nvg 재택근무 신청 타각 처리 위함
 											newTaa.setApprSdate(null);
 											newTaa.setApprEdate(null);
@@ -2957,8 +2961,111 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 										newTaa.setUpdateDate(new Date());
 										newTaa.setUpdateId("taa if");
 										dayResultRepo.save(newTaa);
+									} else if(  ( det.getTaaCd() != null && ( det.getTaaCd().equals("G29") || 
+											det.getTaaCd().equals("G30") ) && tenantId == 22 ) 
+											&& (flexibleStdMgr.getTaaWorkYn() == null || "N".equals(flexibleStdMgr.getTaaWorkYn()) || "".equals(flexibleStdMgr.getTaaWorkYn()) )
+											) {
+										logger.debug("재택근무이면서 근무가능여부가 N이면 근무계획을 삭제하고 근태만 남겨둬야함.");
+										List<String> timeType = new ArrayList<String>();
+										Date preEdate = null;
+										Date preSdate = null;
+										Date MaxEdate = null;
+										Date MaxSdate = null;
+										Long wdrId = null;
+										String taaApplCode ="";
+										timeType.add(WtmApplService.TIME_TYPE_BASE);
+										timeType.add(WtmApplService.TIME_TYPE_LLA);
 										
-									}else {
+										List<WtmWorkDayResult> delResults = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(tenantId, enterCd, sabun, timeType, d, d);
+										
+										if(delResults != null && delResults.size() > 0) {
+											//workDayResultRepo.deleteAll(delResults);
+											for(WtmWorkDayResult res : delResults) {
+												wdrId = res.getWorkDayResultId();
+												MaxEdate = res.getPlanEdate();
+												MaxSdate = res.getPlanSdate();
+												workDayResultRepo.deleteById(wdrId);
+											}
+										}
+										
+										WtmWorkDayResult newTaa = new WtmWorkDayResult();
+										newTaa.setTenantId(tenantId);
+										newTaa.setEnterCd(enterCd);
+										newTaa.setYmd(d);
+										newTaa.setSabun(sabun);
+										newTaa.setApplId(appl.getApplId());
+										newTaa.setTimeTypeCd(timeTypeCd);
+										newTaa.setTaaCd(det.getTaaCd());
+										newTaa.setPlanSdate(sdate);
+										newTaa.setPlanEdate(edate);
+										Map<String, Object> calcMap = calcService.calcApprMinute(sdate, edate, timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+										int apprMinute = Integer.parseInt(calcMap.get("apprMinute")+"");
+										// nvg 재택근무 신청 타각 처리 위함
+										newTaa.setApprSdate(null);
+										newTaa.setApprEdate(null);
+										newTaa.setApprMinute(null);
+										
+										newTaa.setPlanMinute(apprMinute);
+										newTaa.setUpdateDate(new Date());
+										newTaa.setUpdateId("taa if");
+										dayResultRepo.save(newTaa);
+										dayResultRepo.flush();
+										preEdate = edate;
+										preSdate = sdate;
+										Map<String, Object> ngvApplMap = new HashMap<String, Object>();
+										ngvApplMap.put("tenantId", tenantId);
+										ngvApplMap.put("enterCd", enterCd);
+										ngvApplMap.put("sabun", sabun);
+										ngvApplMap.put("statusCd", WtmApplService.APPL_STATUS_CANCEL);
+										
+										if(applIdList != null && applIdList.size() > 0) {
+											for(int l = 0; l < applIdList.size(); l++) {
+												
+												WtmAppl appl2 = wtmApplRepo.findById(applIdList.get(l)).get();
+												ngvApplMap.put("applId", applIdList.get(l));
+												List<Map<String, Object>> ngvTaaList = wtmApplMapper.getTaaListNgv(ngvApplMap);
+												if(ngvTaaList != null && ngvTaaList.size() > 0) {
+													taaApplCode = ngvTaaList.get(0).get("taaCd").toString();
+												}
+												
+												if(appl2.getApplStatusCd().equals(WtmApplService.APPL_STATUS_CANCEL)
+														&& !det.getTaaCd().equals(taaApplCode) && taaApplCode != null) {
+													// 같은 날짜에 취소 이고 taacd가 다른경우 
+													taaApplCode = null;
+													WtmWorkDayResult newTaa2 = new WtmWorkDayResult();
+													newTaa2.setTenantId(tenantId);
+													newTaa2.setEnterCd(enterCd);
+													newTaa2.setYmd(d);
+													newTaa2.setSabun(sabun);
+													newTaa2.setApplId(null);
+													newTaa2.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
+													newTaa2.setTaaCd(null);
+													if(det.getTaaCd().equals("G29")) {
+														// 오전재택
+														newTaa2.setPlanSdate(preEdate);
+														newTaa2.setPlanEdate(MaxEdate);
+													}else if (det.getTaaCd().equals("G30") ) {
+														//오후 재택
+														newTaa2.setPlanSdate(MaxSdate);
+														newTaa2.setPlanEdate(preSdate);
+													}
+													Map<String, Object> calcMap2 = calcService.calcApprMinute(newTaa2.getPlanSdate(), newTaa2.getPlanEdate(), timeCdMgr.getBreakTypeCd(), timeCdMgr.getTimeCdMgrId(), flexibleStdMgr.getUnitMinute());
+													int apprMinute2 = Integer.parseInt(calcMap2.get("apprMinute")+"");
+													
+													// nvg 재택근무 신청 타각 처리 위함
+													newTaa2.setApprSdate(null);
+													newTaa2.setApprEdate(null);
+													newTaa2.setApprMinute(null);
+													newTaa2.setPlanMinute(apprMinute2);
+													newTaa2.setUpdateDate(new Date());
+													newTaa2.setUpdateId("taa if regaHome");
+													dayResultRepo.save(newTaa2);
+													//workDayResultRepo.deleteById(wdrId);
+													dayResultRepo.flush();
+												}
+											}
+										}
+									} else {
 										// 현퇴사용여부, 현출사용여부를 조회하자
 										String taaLocalOut = ""; // 현퇴근태코드
 										String taaLocalIn = "";	// 현출근태코드
@@ -4669,7 +4776,7 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 					return rp;
 				}
 			}
-
+			//중간 입사자 체크 
 			//WTM_WORKTIME_DAY_CLOSE 기본값 잆력
 			wtmInterfaceMapper.insertWorktimeDayClose(dayMap);
 

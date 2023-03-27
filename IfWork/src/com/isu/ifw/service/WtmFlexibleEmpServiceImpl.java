@@ -1602,7 +1602,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 							boolean isNgvHmRega =false;
 							if(result.getTaaCd() != null) {
 								if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) && result.getTenantId() == 22 && 
-										(result.getTaaCd().equals("G28") || result.getTaaCd().equals("G29") || result.getTaaCd().equals("G30"))) {
+										(result.getTaaCd().equals("G28") || result.getTaaCd().equals("G30"))) {
 									isNgvHmRega= true;
 								}
 							}else {
@@ -1971,7 +1971,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		timeTypeCds2.add(WtmApplService.TIME_TYPE_LLA);
 		Date ngvSdate = null;
 		Date ngvEdate = null;
-		boolean isCheck = false;
 		List<String> timeTypeCds = new ArrayList<String>();
 		timeTypeCds.add(WtmApplService.TIME_TYPE_REGA);
 		timeTypeCds.add(WtmApplService.TIME_TYPE_REGA_OT);
@@ -1980,6 +1979,8 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		for(WtmWorkDayResult res2 : r2) {
 			ngvSdate = res2.getPlanSdate();
 			ngvEdate = res2.getPlanEdate();
+			if(res2.getTimeTypeCd()!= null && res2.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA) && calendar.getTenantId() == 22) {
+			}
 		}
 		List<WtmWorkDayResult> r = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), timeTypeCds, calendar.getYmd(), calendar.getYmd());
 		for(WtmWorkDayResult res : r) {
@@ -1987,115 +1988,66 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				// 지각 이후 인정시간 생성 그리고 플랜시간과 무결끝시간이 동일한경우 
 				res.setPlanSdate(ngvEdate);
 			}
-			
-			if(res.getPlanSdate().compareTo( calendar.getEntryEdate()) < 0) {
+			if(calendar.getEntryEdate() != null && res.getPlanSdate() !=null && res.getPlanSdate().compareTo( calendar.getEntryEdate()) < 0) {
 				ngvEdate = res.getPlanEdate();
-				isCheck = true;
 			}else {
 				ngvEdate = calendar.getEntryEdate();
 			}
-			this.addWtmDayResultInBaseTimeType(res.getTenantId()
-												 , res.getEnterCd()
-												 , res.getYmd()
-												 , res.getSabun()
-												 , res.getTimeTypeCd()
-												 ,""
-												 , res.getPlanSdate()
-												 , ngvEdate
-												 , null
-												 , "rega reset timeblock"
-												 , false);
-			/*
-			if ( res.getTaaCd() != null && res.getTaaCd().equals("G28") && calendar.getTenantId() == 22 ) {
-				// ngv 간주근무 중 재택근무일때 일마감 처리 추가 개발
-				SimpleDateFormat sdf2 = new SimpleDateFormat("HHmm");
-				int apprMinute2 = 0;
-				int breakMinute2 = 0;
-				apprMinute2 = calcService.WtmCalcMinute(sdf2.format(res.getPlanSdate()), sdf2.format(res.getPlanEdate()), null, null, flexStdMgr.getUnitMinute());
+			if( ngvEdate != null ) {
+				this.addWtmDayResultInBaseTimeType(res.getTenantId()
+													 , res.getEnterCd()
+													 , res.getYmd()
+													 , res.getSabun()
+													 , res.getTimeTypeCd()
+													 ,""
+													 , res.getPlanSdate()
+													 , ngvEdate
+													 , null
+													 , "rega reset timeblock"
+													 , false);
 				
-				if(ngvEdate == res.getPlanEdate() && !isCheck ) {
-					res.setPlanSdate(ngvSdate);
-					res.setApprSdate(null);
-					res.setApprEdate(null);
-					res.setApprMinute(apprMinute2);
-				}else {
-					
-					if(calendar.getEntrySdate() != null && calendar.getEntryEdate() != null && isCheck) {
-						apprMinute2 = calcService.WtmCalcMinute(sdf2.format(calendar.getEntrySdate()), sdf2.format(res.getPlanEdate()), null, null, flexStdMgr.getUnitMinute());
-					}else if(calendar.getEntrySdate() != null && calendar.getEntryEdate() != null) {
-						apprMinute2 = calcService.WtmCalcMinute(sdf2.format(calendar.getEntrySdate()), sdf2.format(calendar.getEntryEdate()), null, null, flexStdMgr.getUnitMinute());
-					}
-					if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
-						if(calendar.getEntrySdate() != null && calendar.getEntryEdate() != null && isCheck) {
-							breakMinute2 = calcService.getBreakMinuteIfBreakTimeMGR(calendar.getEntrySdate(), res.getPlanEdate(), timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
-						}else if(calendar.getEntrySdate() != null && calendar.getEntryEdate() != null) {
-							breakMinute2 = calcService.getBreakMinuteIfBreakTimeMGR(calendar.getEntrySdate(), calendar.getEntryEdate(), timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+				if (ngvSdate!=null && ngvEdate != null && res.getTaaCd() != null && ( res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22 ) {
+					SimpleDateFormat sdf3 = new SimpleDateFormat("HHmm");
+					int apprMinute3 = 0;
+					apprMinute3 = calcService.WtmCalcMinute(sdf3.format(res.getPlanSdate()), sdf3.format(res.getPlanEdate()), null, null, flexStdMgr.getUnitMinute());
+					WtmFlexibleEmpCalc flexInfo = flexEmpRepo.getTotalWorkMinuteAndRealWorkMinute(res.getTenantId(), res.getEnterCd(), res.getSabun(), calendar.getYmd());
+					if(flexInfo != null) {
+						// ymd가 속한 근무제의 총 기본근로 시간.
+						int workMinute = flexInfo.getWorkMinute();
+						// ymd가 속한 근무제의 인정 기본근로 시간.
+						int sumWorkMinute = flexInfo.getWorkHour() - flexInfo.getBreakhour();
+						if( workMinute > sumWorkMinute ) {
+							if(ngvEdate == res.getPlanEdate()) {
+								res.setPlanSdate(ngvSdate);
+								res.setApprSdate(null);
+								res.setApprEdate(null);
+								res.setApprMinute(apprMinute3);
+							}else {
+								res.setApprSdate(res.getPlanSdate());
+								res.setApprEdate(res.getPlanEdate());
+								res.setApprMinute(apprMinute3);
+							}
+						} else {
+							res.setApprMinute(null);
+							res.setApprSdate(null);
+							res.setApprEdate(null);
 						}
-						logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : apprMinute2 " + apprMinute2);
-						logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_MGR + " : breakMinute2 " + breakMinute2);
-						apprMinute2 = apprMinute2 - breakMinute2;
-						breakMinute2 = 0;
-					}else if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_TIME)) {
-						breakMinute2 = calcService.getBreakMinuteIfBreakTimeTIME(timeCdMgr.getTimeCdMgrId(), apprMinute2);
-						logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : apprMinute2 " + apprMinute2);
-						logger.debug("UPDATE_T :: " + WtmApplService.BREAK_TYPE_TIME + " : breakMinute2 " + breakMinute2);
 					}
-					
-					if(calendar.getEntrySdate() != null && calendar.getEntryEdate() != null && isCheck) {
-						
-						res.setApprSdate(calendar.getEntrySdate());
-						res.setApprEdate(ngvEdate);
-						res.setApprMinute(apprMinute2);
-					}else {
-						res.setApprSdate(calendar.getEntrySdate());
-						res.setApprEdate(calendar.getEntryEdate());
-						res.setApprMinute(apprMinute2);
-					}
-					if(calendar.getEntrySdate() != null && calendar.getEntryEdate() != null) {
-						res.setPlanSdate(calendar.getEntrySdate());
-						res.setPlanEdate(calendar.getEntryEdate());
-						res.setPlanMinute(apprMinute2);
-					}else {
-						res.setPlanSdate(res.getPlanSdate());
-						res.setPlanEdate(res.getPlanEdate());
-						res.setPlanMinute(res.getPlanMinute());
-					}
-				}
-				res.setUpdateId("rega home appr");
-				workDayResultRepo.save(res);
-				workDayResultRepo.flush();
-			} else 
-				*/
-			if (ngvSdate!=null && ngvEdate != null && res.getTaaCd() != null && ( res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22 ) {
-				SimpleDateFormat sdf3 = new SimpleDateFormat("HHmm");
-				int apprMinute3 = 0;
-				apprMinute3 = calcService.WtmCalcMinute(sdf3.format(res.getPlanSdate()), sdf3.format(res.getPlanEdate()), null, null, flexStdMgr.getUnitMinute());
-				if(ngvEdate == res.getPlanEdate()) {
-					res.setPlanSdate(ngvSdate);
+					workDayResultRepo.save(res);
+				} else if( res.getTaaCd() != null && ( res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22 ) {
+					res.setApprMinute(null);
 					res.setApprSdate(null);
 					res.setApprEdate(null);
-					res.setApprMinute(apprMinute3);
-				}else {
+					workDayResultRepo.save(res);
+				} else {
 					res.setApprSdate(res.getPlanSdate());
 					res.setApprEdate(res.getPlanEdate());
-					res.setApprMinute(apprMinute3);
+					res.setApprMinute(res.getPlanMinute());
+					res.setUpdateId("rega appr");
+					workDayResultRepo.save(res);
 				}
-				
-				workDayResultRepo.save(res);
-			} else if( res.getTaaCd() != null && ( res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") || res.getTaaCd().equals("G23")) && calendar.getTenantId() == 22 ) {
-				res.setApprMinute(null);
-				res.setApprSdate(null);
-				res.setApprEdate(null);
-				workDayResultRepo.save(res);
-			}else {
-				res.setApprSdate(res.getPlanSdate());
-				res.setApprEdate(res.getPlanEdate());
-				res.setApprMinute(res.getPlanMinute());
-				res.setUpdateId("rega appr");
-				workDayResultRepo.save(res);
+				res.setUpdateDate(new Date());
 			}
-			res.setUpdateDate(new Date());
-			
 			
 		}
 		List<WtmWorkDayResult> taa = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdAndYmdBetween(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), WtmApplService.TIME_TYPE_TAA, calendar.getYmd(), calendar.getYmd());
@@ -2780,6 +2732,24 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				workDayResultRepo.save(laaResult);
 			}
 			
+			if(timeCdMgr.getLateChkYn().equals("Y") && calendar.getEntrySdate() != null && calendar.getEntryEdate() == null
+					&& minPlanSdate_HOMEREGA != null && maxPlanEdate_HOMEREGA != null
+					) {
+				WtmTaaCode leaveTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LEAVE);
+				try { logger.debug("7. LATE_CHK_YN = Y  출근 데이터는 있고 퇴근 타각이 없을 경우 조퇴 (시/종 정보 없이 생성) " + mapper.writeValueAsString(paramMap) + "createDayResultByTimeTypeAndEntrtEdateIsNull"); } catch (JsonProcessingException e) {	e.printStackTrace();	}
+				// 출근 데이터는 있고 퇴근 타각이 없을 경우 조퇴 (시/종 정보 없이 생성)
+				//flexEmpMapper.createDayResultByTimeTypeAndEntrtEdateIsNull(paramMap);
+				WtmWorkDayResult laaResult = new WtmWorkDayResult();
+				laaResult.setTenantId(calendar.getTenantId());
+				laaResult.setEnterCd(calendar.getEnterCd());
+				laaResult.setYmd(calendar.getYmd());
+				laaResult.setSabun(calendar.getSabun());
+				laaResult.setApplId(null);
+				laaResult.setTimeTypeCd(WtmApplService.TIME_TYPE_LLA);
+				laaResult.setTaaCd(leaveTaaCode.getTaaCd());
+				laaResult.setUpdateId(WtmApplService.TIME_TYPE_LLA + leaveTaaCode.getTaaCd());
+				workDayResultRepo.save(laaResult);
+			}
 			// 계획 시작 시간보다 인정시작시간이 늦을 경우 BASE중에 
 			// 지각 데이터 생성
 			WtmTaaCode lateTaaCode = taaCodeRepo.findByTenantIdAndEnterCdAndTaaInfoCd(tenantId, enterCd, WtmTaaCode.TAA_INFO_LATE);
@@ -3956,7 +3926,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				Boolean isPrev = null;
 				for(WtmWorkDayResult res : workDayResults) {
 					boolean ngvdiv = false;
-					if((res.getTimeTypeCd().equals("G28") || res.getTimeTypeCd().equals("G29") || res.getTimeTypeCd().equals("G30") ) && tenantId.equals(22)) {
+					if(res.getTaaCd()!= null && ( res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && tenantId==22 ) {
 						ngvdiv = true;
 					}
 					logger.debug("ydh INFO : "+res.getTimeTypeCd() +" , "+ res.getPlanSdate() +" , "+ res.getPlanEdate() +" , "+ workDayResults.size() + " , "+cnt +" , "+ngvdiv);
