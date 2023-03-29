@@ -3921,17 +3921,19 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 
 				//Date sdate = otSubsAppl.getSubsSdate();
 				//Date edate = otSubsAppl.getSubsEdate();
-				 
+				boolean ngvdiv = false;
+				for(WtmWorkDayResult res2 : workDayResults) {
+					if(res2.getTaaCd()!= null && ( res2.getTaaCd().equals("G28") || res2.getTaaCd().equals("G29") || res2.getTaaCd().equals("G30") ) && tenantId==22 ) {
+						ngvdiv = true;
+					}
+				}
 				int cnt = 0;
 				Boolean isPrev = null;
 				for(WtmWorkDayResult res : workDayResults) {
-					boolean ngvdiv = false;
-					if(res.getTaaCd()!= null && ( res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && tenantId==22 ) {
-						ngvdiv = true;
-					}
+					
 					logger.debug("ydh INFO : "+res.getTimeTypeCd() +" , "+ res.getPlanSdate() +" , "+ res.getPlanEdate() +" , "+ workDayResults.size() + " , "+cnt +" , "+ngvdiv);
 						
-					if(( res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) ) &&( res.getPlanSdate().compareTo(removeSdate) == 0 && res.getPlanEdate().compareTo(removeEdate) == 0 || ngvdiv )) {
+					if(( res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) || ngvdiv ) &&( res.getPlanSdate().compareTo(removeSdate) == 0 && res.getPlanEdate().compareTo(removeEdate) == 0 )) {
 						if(cnt == 0) {
 							//시작시간이 대체휴일이면 다음 데이터 여부를 판단하고 다음데이터가 SUBS BASE로 변경하자
 							if(workDayResults.size() == (cnt+1) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) ) {
