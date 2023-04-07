@@ -3923,7 +3923,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				//Date edate = otSubsAppl.getSubsEdate();
 				boolean ngvdiv = false;
 				for(WtmWorkDayResult res2 : workDayResults) {
-					if(res2.getTaaCd()!= null && ( res2.getTaaCd().equals("G28") || res2.getTaaCd().equals("G29") || res2.getTaaCd().equals("G30") ) && tenantId==22 ) {
+					if(res2.getTaaCd()!= null && ( res2.getTaaCd().equals("G28") || res2.getTaaCd().equals("G29") || res2.getTaaCd().equals("G30") ) && tenantId==22L ) {
 						ngvdiv = true;
 					}
 				}
