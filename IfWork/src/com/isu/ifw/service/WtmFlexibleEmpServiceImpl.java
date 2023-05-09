@@ -1979,12 +1979,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		for(WtmWorkDayResult res2 : r2) {
 			ngvSdate = res2.getPlanSdate();
 			ngvEdate = res2.getPlanEdate();
-			if(res2.getTimeTypeCd()!= null && res2.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA) && calendar.getTenantId() == 22) {
+			if(res2.getTimeTypeCd()!= null && res2.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA) && calendar.getTenantId() == 22L) {
 			}
 		}
 		List<WtmWorkDayResult> r = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), timeTypeCds, calendar.getYmd(), calendar.getYmd());
 		for(WtmWorkDayResult res : r) {
-			if (ngvSdate!=null && ngvEdate != null && res.getTaaCd() != null && ( res.getTaaCd().equals("G29") || res.getTaaCd().equals("G28") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22 ) { 
+			if (ngvSdate!=null && ngvEdate != null && res.getTaaCd() != null && ( res.getTaaCd().equals("G29") || res.getTaaCd().equals("G28") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22L ) { 
 				// 지각 이후 인정시간 생성 그리고 플랜시간과 무결끝시간이 동일한경우 
 				res.setPlanSdate(ngvEdate);
 			}
@@ -2006,7 +2006,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 													 , "rega reset timeblock"
 													 , false);
 				
-				if (ngvSdate!=null && ngvEdate != null && res.getTaaCd() != null && ( res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22 ) {
+				if (ngvSdate!=null && ngvEdate != null && res.getTaaCd() != null && ( res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22L ) {
 					SimpleDateFormat sdf3 = new SimpleDateFormat("HHmm");
 					int apprMinute3 = 0;
 					apprMinute3 = calcService.WtmCalcMinute(sdf3.format(res.getPlanSdate()), sdf3.format(res.getPlanEdate()), null, null, flexStdMgr.getUnitMinute());
@@ -2034,7 +2034,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}
 					}
 					workDayResultRepo.save(res);
-				} else if( res.getTaaCd() != null && ( res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22 ) {
+				} else if( res.getTaaCd() != null && ( res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22L ) {
 					res.setApprMinute(null);
 					res.setApprSdate(null);
 					res.setApprEdate(null);
@@ -4921,13 +4921,19 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					resultParam.put("timeTypeCds", otTimeTypeCds);
 					
 					Map<String, Object> otMinute = flexEmpMapper.sumResultMinuteByTimeTypeCd(resultParam);
-					
+					// 연장근무 신청이 다음날 새벽까지 신청되고 다시 오전부터 다음날 새벽까지 한경우 2개의  연장근무 코드로 3일의 연장근무 시간을 빼오는 경우라 수정함
+					int otPlanMinute = 0;
+					int otApprMinute = 0;
+					if(!sYmd.equals(eYmd) && resultParam.get("tenantId").equals(41L)){
+						resultParam.put("applId", otAppl.getApplId());
+						otMinute = flexEmpMapper.sumResultMinuteByTimeTypeCd3(resultParam);
+					}
 					if(otMinute!=null 
 							&& otMinute.containsKey("planMinute") && otMinute.get("planMinute")!=null
 							&& otMinute.containsKey("apprMinute") && otMinute.get("apprMinute")!=null) {
 						
-						int otPlanMinute = Integer.parseInt(otMinute.get("planMinute").toString());
-						int otApprMinute = Integer.parseInt(otMinute.get("apprMinute").toString());
+						otPlanMinute = Integer.parseInt(otMinute.get("planMinute").toString());
+						otApprMinute = Integer.parseInt(otMinute.get("apprMinute").toString());
 						
 						logger.debug("otPlanMinute : " + otPlanMinute + "/otApprMinute : " + otApprMinute);
 						System.out.println("otPlanMinute : " + otPlanMinute + "/otApprMinute : " + otApprMinute);
@@ -4960,14 +4966,19 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 									System.out.println("save subs start >>> ");
 									for(WtmOtSubsAppl sub2 : subs2) {
 										//if(sub2.getCancelYn() != null ) {
+										int cnt = 0;
 											if(subs2!=null && subs2.size()>0) {
 												logger.debug("save subs start >>> ");
 												System.out.println("save subs start >>> ");
 												resultParam.put("applId", sub2.getApplId());
+												resultParam.put("ymd", sub2.getSubYmd());
 												checkOtSubsResult = otApplMapper.otSubsResultExist(resultParam);
-												
-													if( sub2.getApplId().equals(Long.parseLong(checkOtSubsAppl.get("applId").toString()))
-															|| Integer.parseInt(checkOtSubsResult.get("cnt").toString()) > 0 ) {
+												if(checkOtSubsResult !=null && Integer.parseInt(checkOtSubsResult.get("cnt").toString()) > 0) {
+													cnt = Integer.parseInt(checkOtSubsResult.get("cnt").toString());
+												}
+													if((sub2.getApplId().equals(Long.parseLong(checkOtSubsAppl.get("applId").toString()))
+															&& sub2.getSubYmd().equals(checkOtSubsAppl.get("subYmd").toString()))
+															|| cnt > 0 ) {
 														// RESULT와 OT_SUBS_APPL 테이블에 이미 SUBS생성된 상태를 의미
 														isOtSubsExist = true;
 													} else {
