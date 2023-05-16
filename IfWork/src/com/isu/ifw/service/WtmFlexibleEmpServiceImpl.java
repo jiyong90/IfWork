@@ -1918,9 +1918,10 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 										// TODO Auto-generated catch block
 										e.printStackTrace();
 									}
-									result.setPlanSdate(sDate);
-									result.setPlanEdate(eDate);
-
+									if(!isNgvHmRega) {
+										result.setPlanSdate(sDate);
+										result.setPlanEdate(eDate);
+									}
 
 									SimpleDateFormat sdf = new SimpleDateFormat("HHmm");
 /* TO_DO
@@ -1979,12 +1980,12 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		for(WtmWorkDayResult res2 : r2) {
 			ngvSdate = res2.getPlanSdate();
 			ngvEdate = res2.getPlanEdate();
-			if(res2.getTimeTypeCd()!= null && res2.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA) && calendar.getTenantId() == 22L) {
+			if(res2.getTimeTypeCd()!= null && res2.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_LLA) && calendar.getTenantId() == 22) {
 			}
 		}
 		List<WtmWorkDayResult> r = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), timeTypeCds, calendar.getYmd(), calendar.getYmd());
 		for(WtmWorkDayResult res : r) {
-			if (ngvSdate!=null && ngvEdate != null && res.getTaaCd() != null && ( res.getTaaCd().equals("G29") || res.getTaaCd().equals("G28") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22L ) { 
+			if (ngvSdate!=null && ngvEdate != null && res.getTaaCd() != null && ( res.getTaaCd().equals("G29") || res.getTaaCd().equals("G28") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22 ) { 
 				// 지각 이후 인정시간 생성 그리고 플랜시간과 무결끝시간이 동일한경우 
 				res.setPlanSdate(ngvEdate);
 			}
@@ -2006,7 +2007,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 													 , "rega reset timeblock"
 													 , false);
 				
-				if (ngvSdate!=null && ngvEdate != null && res.getTaaCd() != null && ( res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22L ) {
+				if (ngvSdate!=null && ngvEdate != null && res.getTaaCd() != null && ( res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22 ) {
 					SimpleDateFormat sdf3 = new SimpleDateFormat("HHmm");
 					int apprMinute3 = 0;
 					apprMinute3 = calcService.WtmCalcMinute(sdf3.format(res.getPlanSdate()), sdf3.format(res.getPlanEdate()), null, null, flexStdMgr.getUnitMinute());
@@ -2034,7 +2035,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}
 					}
 					workDayResultRepo.save(res);
-				} else if( res.getTaaCd() != null && ( res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22L ) {
+				} else if( res.getTaaCd() != null && ( res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22 ) {
 					res.setApprMinute(null);
 					res.setApprSdate(null);
 					res.setApprEdate(null);
@@ -4965,7 +4966,6 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 									logger.debug("save subs start >>> ");
 									System.out.println("save subs start >>> ");
 									for(WtmOtSubsAppl sub2 : subs2) {
-										//if(sub2.getCancelYn() != null ) {
 										int cnt = 0;
 											if(subs2!=null && subs2.size()>0) {
 												logger.debug("save subs start >>> ");
