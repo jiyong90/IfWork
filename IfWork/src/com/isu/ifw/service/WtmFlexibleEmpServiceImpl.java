@@ -1724,7 +1724,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 															nSdate = result.getPlanEdate();
 															nEdate = calendar.getEntryEdate();
 															//새로 생성
-															if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE)) {
+															if(result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_BASE) || result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_GOBACK)) {
 																this.saveWorkDayResult(flexStdMgr, timeCdMgr, null, result.getTenantId(), result.getEnterCd(), result.getYmd(), result.getSabun(), WtmApplService.TIME_TYPE_BASE, nSdate, nEdate, null, null, null, null);
 																
 															}else if(isNgvHmRega) {
