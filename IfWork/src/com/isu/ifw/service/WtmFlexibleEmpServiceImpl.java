@@ -4925,13 +4925,20 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					// 연장근무 신청이 다음날 새벽까지 신청되고 다시 오전부터 다음날 새벽까지 한경우 2개의  연장근무 코드로 3일의 연장근무 시간을 빼오는 경우라 수정함
 					int otPlanMinute = 0;
 					int otApprMinute = 0;
+					logger.debug("ydh sYmd : " + sYmd + "/eYmd : " + eYmd);
+					logger.debug("ydh resultParam out : " + resultParam);
+					logger.debug("ydh otAppl.getApplId() : " + otAppl.getApplId());
 					
 					Map<String, Object> applIdJyp = flexEmpMapper.otSubsChgApplId(otAppl.getApplId());
 					
+					logger.debug("ydh applIdJyp out : " + applIdJyp.get("applId"));
 					if(!sYmd.equals(eYmd) && resultParam.get("tenantId").equals(41L)){
 						resultParam.put("applId", applIdJyp.get("applId"));
+						logger.debug("ydh resultParam in : " + resultParam);
 						otMinute = flexEmpMapper.sumResultMinuteByTimeTypeCd3(resultParam);
+						logger.debug("otMinute int ydh : " + otMinute );
 					}
+					logger.debug("otPlanMinute out ydh : " + otPlanMinute + "/otApprMinute : " + otApprMinute);
 					
 					if(otMinute!=null 
 							&& otMinute.containsKey("planMinute") && otMinute.get("planMinute")!=null

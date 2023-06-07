@@ -395,4 +395,5 @@ public interface WtmInterfaceMapper {
 
 
 	public List<Map<String, Object>> getCloseDataList(Map<String, Object> paramMap);
+	
 }

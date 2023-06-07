@@ -968,7 +968,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						// 시작시각 보다 빠를 경우
 						logger.debug("sDate.compareTo(apprSdate) : " + sDate.compareTo(apprSdate));
 						logger.debug("cnt : " + cnt);
-						if(!reApprFixot) {
+						if(!reApprFixot && r.getTenantId() !=null && r.getTenantId().equals(22L)) {
 							isNgvRega = true;
 							reApprFixot = true;
 						}

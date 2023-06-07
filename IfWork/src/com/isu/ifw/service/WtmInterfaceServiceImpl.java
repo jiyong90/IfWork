@@ -2171,6 +2171,8 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 			if(tenantId == 92) {
 //				list = wtmIfTaaHisRepo.findByTenantIdAndIfStatusNotInOrIfStatusNull(tenantId,statusList);
 				list = wtmIfTaaHisRepo.findByIfStatusNotInOrIfStatusNull(statusList);
+			} else if(tenantId == 41) {
+				list = wtmIfTaaHisRepo.findByTenantIdAndIfStatusNotInAndStatusNotIn(tenantId,statusList,"21");
 			} else {
 				list = wtmIfTaaHisRepo.findByTenantIdAndIfStatusNotIn(tenantId,statusList);
 			}
