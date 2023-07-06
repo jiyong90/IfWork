@@ -1,15 +1,20 @@
 package com.isu.ifw.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isu.ifw.entity.*;
 import com.isu.ifw.mapper.WtmCalendarMapper;
 import com.isu.ifw.mapper.WtmFlexibleEmpMapper;
+import com.isu.ifw.mapper.WtmGpsMgrMapper;
 import com.isu.ifw.mapper.WtmInoutHisMapper;
 import com.isu.ifw.repository.*;
 import com.isu.ifw.util.WtmUtil;
 import com.isu.ifw.vo.ReturnParam;
+import com.isu.ifw.common.service.TenantConfigManagerService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -68,6 +73,13 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 	@Autowired
 	WtmFlexibleStdMgrRepository flexStdMgrRepo;
 	
+	@Autowired
+	WtmGpsMgrMapper wtmGpsMapper;
+	
+	@Autowired
+	@Qualifier("WtmTenantConfigManagerService")
+	TenantConfigManagerService tcms;
+	
 	//@Autowired private WtmTimeCdMgrRepository timeCdMgrRepo;
 	@Autowired private WtmFlexibleEmpRepository flexibleEmpRepo;
 	@Autowired private WtmFlexibleStdMgrRepository flexibleStdMgrRepo;
@@ -99,6 +111,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			String dOut = "-";
 			String dGoback = "-";
 			String type = "GO";
+			boolean gpsUseDiv = false;
 			List<Map<String, Object>> list = inoutHisMapper.getContext(paramMap);
 			for(Map<String, Object> data : list) {
 				if(data.get("inoutTypeCd").equals("IN")) {
@@ -116,20 +129,41 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 					} 
 				}
 			}
-			
-			menuIn.put("label", "출근하기");
+			// JYP 근무제가 매니저인경우 GPS 타각 이용
+			paramMap.put("gpsType", false);
+			if(tenantId == 41) gpsUseDiv = gpsDiv(paramMap);
+			logger.debug("gpsUseDiv : " + gpsUseDiv);
+			if(gpsUseDiv) {
+				menuIn.put("label", "GPS\n 출근하기");
+				menuIn.put("useGPSLocation", "true");
+				menuIn.put("useBeacon", "false");
+				menuOut.put("label", "GPS\n 퇴근하기");
+				menuOut.put("useGPSLocation", "true");
+				menuOut.put("useBeacon", "false");
+				menuGoback.put("useGPSLocation", "true");
+				menuGoback.put("useBeacon", "false");
+			} else {
+				menuIn.put("label", "출근하기");
+				menuIn.put("useGPSLocation", "false");
+				menuIn.put("useBeacon", "true");
+				menuOut.put("label", "퇴근하기");
+				menuOut.put("useGPSLocation", "false");
+				menuOut.put("useBeacon", "true");
+				menuGoback.put("useGPSLocation", "false");
+				menuGoback.put("useBeacon", "true");
+			}
+			logger.debug("menuIn : " + menuIn);
+			logger.debug("menuOut : " + menuOut);
 			menuIn.put("description", dIn);
 			menuIn.put("inoutType", "IN");
 			
-			menuOut.put("label", "퇴근하기");
 			menuOut.put("description", dOut);
-			menuOut.put("inoutType", "OUT");
-
+			menuOut.put("inoutType", "OUT"); 
 			menuGoback.put("description", dGoback);
 			menuGoback.put("actionType", "ACTIVE");
 			menuGoback.put("label", type.equals("GO")?"외출하기":"복귀하기");
 			menuGoback.put("backgroundColor", type.equals("GO")?"#93DaFF":"#FFF56E");
-
+			logger.debug("menuGoback : " + menuGoback);
 		}catch(Exception e) {
 			logger.debug(e.getMessage());
 			e.printStackTrace();
@@ -165,7 +199,6 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		String inoutType = "NONE";
 		String label = "근무계획없음";
 		String description = "출근체크 필요시 인사팀에 문의 바랍니다";
-		
 		try {
 			List<Map<String, Object>> list = inoutHisMapper.getInoutStatus(paramMap);
 			logger.debug("inoutStatus : " + list.toString());
@@ -221,7 +254,7 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			menuInOut.put("label", label);
 			menuInOut.put("description", description);
 			menuInOut.put("inoutType", inoutType);
-			
+		
 		}catch(Exception e) {
 			logger.debug(e.getMessage());
 			e.printStackTrace();
@@ -511,6 +544,10 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 
 		//캘린더에 초가 들어가면 안된...
 		paramMap.put("inoutDateTime", paramMap.get("inoutDate").toString().substring(0,12)+"00");
+		// 0. GPS 정보
+		boolean gpsUseDiv = false;
+		paramMap.put("gpsType", true);
+		if((Long) paramMap.get("tenantId") == 41) gpsUseDiv = gpsDiv(paramMap);
 		
 		//1.무조건 타각 저장
 		try {
@@ -874,6 +911,11 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 			throw new Exception("퇴근 후에는 외출/복귀 메뉴를 사용할 수 없습니다.");
 		}
 		paramMap.put("inoutType", gobackType);
+		// 1.5 GPS 정보
+		// JYP 근무제가 매니저인경우 GPS 타각 이용 및 GPS 정보 입력
+		boolean gpsUseDiv = false;
+		paramMap.put("gpsType", true);
+		if(tenantId == 41) gpsUseDiv = gpsDiv(paramMap);
 		
 		//2.일단 타각 데이터만 저장
 		try {
@@ -1181,6 +1223,53 @@ public class WtmInoutServiceImpl implements WtmInoutService{
 		return true;
 	}
 
+	public boolean gpsDiv(Map<String, Object> paramMap) throws Exception {
+		try {
+			
+			Long tenantId = Long.parseLong(paramMap.get("tenantId").toString());
+			String enterCd = paramMap.get("enterCd").toString();
+			String sabun = paramMap.get("sabun").toString();
+			boolean gpsType = (boolean)paramMap.get("gpsType");
+			String flexibleStdMgrId = "";
+			String company = "";
+			
+			WtmFlexibleEmp flexEmp = flexEmpRepo.findByTenantIdAndEnterCdAndSabunAndYmdBetween(tenantId , enterCd, sabun, WtmUtil.parseDateStr(new Date(), "yyyyMMdd"));
+			if(flexEmp == null) {
+				throw new Exception("사용자 정보 조회 중 오류가 발생하였습니다.");
+			}else {
+				flexibleStdMgrId = String.valueOf(flexEmp.getFlexibleStdMgrId());
+			}
+			
+			String infoData = tcms.getConfigValue(tenantId, "WTMS.GPS.COMPANY_LIST", true, "");
+			if(!"".equals(infoData)) {
+				ObjectMapper mapper = new ObjectMapper();
+				
+				List<Map<String, Object>> gpsCompanyList = mapper.readValue(infoData, new ArrayList<Map<String, Object>>().getClass());
+				if(gpsCompanyList!=null && gpsCompanyList.size()>0) {
+					for(Map<String, Object> gpsCompany : gpsCompanyList) {
+						for(String enterCds : gpsCompany.keySet()) {
+							company = (String) gpsCompany.get(enterCds);
+							if(company.equals(flexibleStdMgrId)) {
+								if(gpsType) {
+									paramMap.put("flexibleStdMgrId", flexibleStdMgrId);
+									int gpsCnt = wtmGpsMapper.saveWtmGpsInoutHis(paramMap);
+									if(gpsCnt <= 0) {
+										throw new Exception("GPS 타각데이터 저장에 실패하였습니다.");
+									}
+								}
+								return true;
+							}
+						}
+					}
+				}
+			}
+		} catch(Exception e) {
+			logger.debug("gpsList " + e.getMessage());
+			throw new Exception(e.getMessage());
+		}
+		return false;
+	}
+	
 	@Override
 	public boolean insertTimeStamp(Map<String, Object> paramMap) throws Exception {
 		try {

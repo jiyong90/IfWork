@@ -55,5 +55,7 @@ public interface WtmInoutService {
 	
 	//출퇴근 타각정보 갱신
 	public void updEntryDate(Long tenantId, String enterCd, String sabun, String inoutType, String inoutDate, String entryNote, String entryType) throws Exception;
+	
+	boolean gpsDiv(Map<String, Object> paramMap) throws Exception;
 
 }
