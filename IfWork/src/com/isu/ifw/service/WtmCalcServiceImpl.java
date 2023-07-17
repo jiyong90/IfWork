@@ -331,7 +331,12 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 			logger.debug("UPDATE_T :: timeCdMgr.getBreakTypeCd() = " +  timeCdMgr.getBreakTypeCd());
 			if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
 
-				calcEdate = this.P_WTM_DATE_ADD_FOR_BREAK_MGR(calcSdate, (workMinute - sumWorkMinute), timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+				// 현대ngv apprMinute시간 수정 20230711
+				if(result.getTenantId() == 22){
+					calcEdate = this.P_WTM_DATE_ADD_FOR_BREAK_MGR(calcSdate, (apprMinute - breakMinute), timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+				} else {
+					calcEdate = this.P_WTM_DATE_ADD_FOR_BREAK_MGR(calcSdate, (workMinute - sumWorkMinute), timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
+				}
 
 				try {
 					Date limitSdate = ymdhm.parse(result.getYmd()+flexStdMgr.getWorkShm());
@@ -545,10 +550,11 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 						if(ngvRegaResults != null && ngvRegaResults.size() > 0) {
 							for(WtmWorkDayResult regaResults : ngvRegaResults) {
 								//인정시간이 0보다 큰 경우만 인정한다
+								//간주 근무중 국내출장도 추가 20230711
 								if(regaResults.getTaaCd() != null  && tenantId == 22L  &&(
 										regaResults.getTaaCd().equals("G28") || regaResults.getTaaCd().equals("G29")
-												|| regaResults.getTaaCd().equals("G30"))) {
-									if( regaResults.getTaaCd().equals("G28")|| regaResults.getTaaCd().equals("G30")) {
+												|| regaResults.getTaaCd().equals("G30") || regaResults.getTaaCd().equals("G23"))) {
+									if( regaResults.getTaaCd().equals("G28")|| regaResults.getTaaCd().equals("G30")|| regaResults.getTaaCd().equals("G23")) {
 										taaCdNm = regaResults.getTaaCd();
 										if(regaResults.getApprEdate() == null || regaFixOtSdate != null) {
 											if(fixOtSdate.compareTo(regaResults.getPlanSdate()) < 0) {
