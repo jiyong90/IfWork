@@ -570,7 +570,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		}
 		//  연차현황 조회
 
-		DecimalFormat df = new DecimalFormat("0.0");
+		DecimalFormat df = new DecimalFormat("0.00");
 		try {
 			dayInfo.put("annualTotalCnt", df.format(Float.parseFloat(totalCnt)));
 			dayInfo.put("annualUsedCnt", df.format(Float.parseFloat(usedCnt)));
