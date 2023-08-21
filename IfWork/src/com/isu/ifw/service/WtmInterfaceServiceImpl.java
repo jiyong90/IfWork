@@ -2101,13 +2101,13 @@ public class WtmInterfaceServiceImpl implements WtmInterfaceService {
 								} else {
 									// 취소이면 근태삭제
 									//20230726 현대ngv경우 국내출장, 재택근무는 재결재를 해야해서 result정보를 삭제처리한다.
-									WtmWorkDayResult dayResult = new WtmWorkDayResult();
-									if(Long.parseLong(taaDetMap.get("tenantId").toString()) == 22 && taaDetMap.get("taaCd").toString().equals("G23")
-										|| taaDetMap.get("taaCd").toString().equals("G28") || taaDetMap.get("taaCd").toString().equals("G29")
-										|| taaDetMap.get("taaCd").toString().equals("G23") || taaDetMap.get("taaCd").toString().equals("G30")
-										&& dayResult.getTimeTypeCd().toString().equals("REGA") && "44".equals(nowApplStatusCd)){
-										wtmInterfaceMapper.deleteResult(taaDetMap);
-									}
+//									WtmWorkDayResult dayResult = new WtmWorkDayResult();
+//									if(Long.parseLong(taaDetMap.get("tenantId").toString()) == 22 && taaDetMap.get("taaCd").toString().equals("G23")
+//										|| taaDetMap.get("taaCd").toString().equals("G28") || taaDetMap.get("taaCd").toString().equals("G29")
+//										|| taaDetMap.get("taaCd").toString().equals("G23") || taaDetMap.get("taaCd").toString().equals("G30")
+//										&& dayResult.getTimeTypeCd().toString().equals("REGA") && "44".equals(nowApplStatusCd)){
+//										wtmInterfaceMapper.deleteResult(taaDetMap);
+//									}
 									wtmFlexibleEmpService.removeWtmDayResultInBaseTimeType(
 											Long.parseLong(taaDetMap.get("tenantId").toString())
 											, taaDetMap.get("enterCd").toString()
