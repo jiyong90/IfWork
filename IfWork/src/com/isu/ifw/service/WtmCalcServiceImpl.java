@@ -201,7 +201,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 								//안에서 생성한 시간을 더해준다.
 								sumWorkMinute = sumWorkMinute + this.P_WTM_WORK_DAY_RESULT_UPDATE_T(flexStdMgr, timeCdMgr, result, sDate, eDate, calendar.getEntrySdate(), calendar.getEntryEdate(),  sumWorkMinute, workMinute, userId);
 							}else if (result.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) && result.getTenantId()== 22 && result.getTaaCd() != null
-									&& (result.getTaaCd().equals("G29") || result.getTaaCd().equals("G30") || result.getTaaCd().equals("G28"))) {
+									&& (result.getTaaCd().equals("G23") ||result.getTaaCd().equals("G29") || result.getTaaCd().equals("G30") || result.getTaaCd().equals("G28"))) {
 								sumWorkMinute = sumWorkMinute + this.P_WTM_WORK_DAY_RESULT_UPDATE_T(flexStdMgr, timeCdMgr, result, sDate, eDate, calendar.getEntrySdate(), calendar.getEntryEdate(),  sumWorkMinute, workMinute, userId);
 							}
 
@@ -325,14 +325,14 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 		//잔여시간이 현재 근무 시간보다 작으면 
 		logger.debug("UPDATE_T :: (workMinute - sumWorkMinute) = " + (workMinute - sumWorkMinute));
 		logger.debug("UPDATE_T :: (apprMinute - breakMinute) = " +  (apprMinute - breakMinute));
-
+			//10560			//10476				//84		//0
 		if ((workMinute - sumWorkMinute) < (apprMinute - breakMinute)) {
 			//종료시간을 다시 계산해야한다.
 			logger.debug("UPDATE_T :: timeCdMgr.getBreakTypeCd() = " +  timeCdMgr.getBreakTypeCd());
 			if(timeCdMgr.getBreakTypeCd().equals(WtmApplService.BREAK_TYPE_MGR)) {
 
 				// 현대ngv apprMinute시간 수정 20230711
-				if(result.getTenantId() == 22){
+				if(result.getTenantId() == 22L){
 					calcEdate = this.P_WTM_DATE_ADD_FOR_BREAK_MGR(calcSdate, (apprMinute - breakMinute), timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
 				} else {
 					calcEdate = this.P_WTM_DATE_ADD_FOR_BREAK_MGR(calcSdate, (workMinute - sumWorkMinute), timeCdMgr.getTimeCdMgrId(), flexStdMgr.getUnitMinute());
@@ -1096,7 +1096,7 @@ public class WtmCalcServiceImpl implements WtmCalcService {
 									newResult.setApprEdate(eDate);
 									newResult.setTimeTypeCd(timeTypeCd);
 									newResult.setPlanMinute(createLimitMinute);
-									newResult.setApprMinute(createLimitMinute);
+									newResult.setApprMinute(createLimitMinute - apprMinute);
 									newResult.setUpdateDate(new Date());
 									newResult.setUpdateId("REGA createFixOt3");
 									boolean passApprMin = true;

@@ -35,7 +35,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 	
 	@Autowired
 	WtmFlexibleEmpMapper flexEmpMapper;
-	
+
 	@Autowired
 	WtmFlexibleStdMapper flexStdMapper;
 	
@@ -1985,7 +1985,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 		}
 		List<WtmWorkDayResult> r = workDayResultRepo.findByTenantIdAndEnterCdAndSabunAndTimeTypeCdInAndYmdBetweenOrderByPlanSdateAsc(calendar.getTenantId(), calendar.getEnterCd(), calendar.getSabun(), timeTypeCds, calendar.getYmd(), calendar.getYmd());
 		for(WtmWorkDayResult res : r) {
-			if (ngvSdate!=null && ngvEdate != null && res.getTaaCd() != null && ( res.getTaaCd().equals("G29") || res.getTaaCd().equals("G28") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22 ) { 
+			if (ngvSdate!=null && ngvEdate != null && res.getTaaCd() != null && (res.getTaaCd().equals("G23") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G28") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22 ) {
 				// 지각 이후 인정시간 생성 그리고 플랜시간과 무결끝시간이 동일한경우 
 				res.setPlanSdate(ngvEdate);
 			}
@@ -2035,7 +2035,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 						}
 					}
 					workDayResultRepo.save(res);
-				} else if( res.getTaaCd() != null && ( res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22 ) {
+				} else if( res.getTaaCd() != null && (res.getTaaCd().equals("G23") || res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30") ) && calendar.getTenantId() == 22 ) {
 					res.setApprMinute(null);
 					res.setApprSdate(null);
 					res.setApprEdate(null);
@@ -3924,7 +3924,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 				//Date edate = otSubsAppl.getSubsEdate();
 				boolean ngvdiv = false;
 				for(WtmWorkDayResult res2 : workDayResults) {
-					if(res2.getTaaCd()!= null && ( res2.getTaaCd().equals("G28") || res2.getTaaCd().equals("G29") || res2.getTaaCd().equals("G30") ) && tenantId==22L ) {
+					if(res2.getTaaCd()!= null && ( res2.getTaaCd().equals("G23") || res2.getTaaCd().equals("G28") || res2.getTaaCd().equals("G29") || res2.getTaaCd().equals("G30") ) && tenantId==22L ) {
 						ngvdiv = true;
 					}
 				}
@@ -3934,8 +3934,50 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 					
 					logger.debug("ydh INFO : "+res.getTimeTypeCd() +" , "+ res.getPlanSdate() +" , "+ res.getPlanEdate() +" , "+ workDayResults.size() + " , "+cnt +" , "+ngvdiv);
 						
-					if(((res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) ) && res.getPlanSdate().compareTo(removeSdate) == 0 && res.getPlanEdate().compareTo(removeEdate) == 0 ) || ngvdiv ) {
+					if(((res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) || res.getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) ) && res.getPlanSdate().compareTo(removeSdate) == 0 && res.getPlanEdate().compareTo(removeEdate) == 0 ) ) {
 						if(cnt == 0) {
+							//현대NGV 경우 재상신을 위해 재택 OR 국내출장 따로 삭제처리를 해줘야한다. 뒤에부터 삭제할수도 있으니...하나씩 찾아서 따로 처리해줘야한다
+							if(ngvdiv && workDayResults.size() == (cnt+1) && (res.getTaaCd().equals("G23") || res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30"))){
+								res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
+								res.setTaaCd(null);	// base 수정시 근태코드 클리어
+								res.setApplId(null);
+								res.setApprSdate(null);
+								res.setApprEdate(null);
+								res.setApprMinute(null);
+								res.setUpdateId("removeWtmDayResultInBaseTimeType1");
+								workDayResultRepo.save(res);
+								break;
+							} else if(ngvdiv && workDayResults.size() == (cnt+2) && (res.getTaaCd().equals("G23") || res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30"))){
+								res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
+								res.setTaaCd(null);	// base 수정시 근태코드 클리어
+								res.setApplId(null);
+								res.setApprSdate(null);
+								res.setApprEdate(null);
+								res.setApprMinute(null);
+								res.setUpdateId("removeWtmDayResultInBaseTimeType2");
+								workDayResultRepo.save(res);
+								break;
+							} else if(ngvdiv && workDayResults.size() == (cnt+3) && (res.getTaaCd().equals("G23") || res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30"))){
+								res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
+								res.setTaaCd(null);	// base 수정시 근태코드 클리어
+								res.setApplId(null);
+								res.setApprSdate(null);
+								res.setApprEdate(null);
+								res.setApprMinute(null);
+								res.setUpdateId("removeWtmDayResultInBaseTimeType3");
+								workDayResultRepo.save(res);
+								break;
+							} else if(ngvdiv && workDayResults.size() == (cnt+4) && (res.getTaaCd().equals("G23") || res.getTaaCd().equals("G28") || res.getTaaCd().equals("G29") || res.getTaaCd().equals("G30"))){
+								res.setTimeTypeCd(WtmApplService.TIME_TYPE_BASE);
+								res.setTaaCd(null);	// base 수정시 근태코드 클리어
+								res.setApplId(null);
+								res.setApprSdate(null);
+								res.setApprEdate(null);
+								res.setApprMinute(null);
+								res.setUpdateId("removeWtmDayResultInBaseTimeType4");
+								workDayResultRepo.save(res);
+								break;
+							}
 							//시작시간이 대체휴일이면 다음 데이터 여부를 판단하고 다음데이터가 SUBS BASE로 변경하자
 							if(workDayResults.size() == (cnt+1) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_SUBS) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_TAA) || workDayResults.get(cnt+1).getTimeTypeCd().equals(WtmApplService.TIME_TYPE_REGA) ) {
 								//뒤에 데이터가 없으면
@@ -4066,7 +4108,7 @@ public class WtmFlexibleEmpServiceImpl implements WtmFlexibleEmpService {
 			//}  		
 				
 	}
-	
+
 	@Override
 	public List<Map<String, Object>> getFlexibleListForPlan(Long tenantId, String enterCd, String sabun, Map<String, Object> paramMap, String userId) {
 		// TODO Auto-generated method stub
